@@ -145,7 +145,7 @@ ID: US-005
 Tytuł: Utworzenie pudełka i przypisanie do półki
 Opis: Jako użytkownik z pełnym dostępem chcę utworzyć pudełko, przypisać je do półki i uzupełnić opis oraz tagi.
 Kryteria akceptacji:
-- Pudełko ma UUID v4, opcjonalną nazwę, opis do 2000 znaków.
+- Pudełko ma UUID v4, opcjonalną nazwę, opis do 10000 znaków.
 - Przypisanie do konkretnej półki jest wymagane.
 - Użytkownik z rolą odczyt nie może tworzyć/edytować pudełek.
 
