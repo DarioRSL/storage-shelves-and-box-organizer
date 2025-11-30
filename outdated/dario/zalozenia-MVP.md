@@ -13,7 +13,7 @@ Oraganizacje i skatalogowanie rzeczy przechowywanych w boxach, piwnicach, komór
 - prosty system dodawania kont uzytkowmnia
 
 ## Co NIE wchodzi w zakres MVP
-- wpsóldzielnie lokalzizacji miedzy uzykowników
+- wpsóldzielnie lokalizacji miedzy uzykowników
 - Analiza składowanych rzeczy
 - optymalizacja ułozenia rzeczy na półkach
 - apliakcja mobilna

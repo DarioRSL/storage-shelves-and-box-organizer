@@ -22,5 +22,5 @@ Oraganizacje i skatalogowanie rzeczy przechowywanych w boxach, piwnicach, komór
 ## Kryteria sukcesu
 - działająca aplikacja webowa
 - działajacy onboarding
-- działajace wyszukiwanie pudeł
+- 90% skuteczność wyszukiwania pudeł po tagach i opisach
 - działajace zarządzanie uzytkownikami
