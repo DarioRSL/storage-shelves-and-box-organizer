@@ -40,7 +40,6 @@ Stworzenie aplikacji webowej (PWA), która umożliwia katalogowanie zawartości 
 3.  **Zarządzanie Pudełkami (Boxy):**
     *   Tworzenie pudełka z unikalnym ID.
     *   Edycja nazwy, opisu (limit ~10000 znaków) i tagów.
-    *   Dodawanie 1 zdjęcia zawartości na pudełko.
     *   Przypisywanie pudełka do lokalizacji (lub status "Nieprzypisane").
     *   Obsługa "Soft Delete" - usunięcie lokalizacji przenosi pudełka do "Nieprzypisane".
 4.  **System Kodów QR:**
@@ -54,6 +53,8 @@ Stworzenie aplikacji webowej (PWA), która umożliwia katalogowanie zawartości 
 
 ### 3.2 Wykluczenia z MVP (Out of Scope)
 *   Tryb Offline (wymaga dostępu do internetu).
+*   Dodawanie zdjęć zawartości do pudełek.
+*   Optymalizacja zdjęć (kompresja przed uploadem).
 *   Dedykowana aplikacja mobilna (tylko Web/PWA).
 *   Wysyłka e-maili (weryfikacja, reset hasła) - "zgubione hasło = utrata konta" w przypadku logowania hasłem (chyba że OAuth).
 *   Zaawansowane uprawnienia i współdzielenie (tylko podstawa bazy danych pod przyszłe wdrożenie).
@@ -73,7 +74,6 @@ Stworzenie aplikacji webowej (PWA), która umożliwia katalogowanie zawartości 
 *   **RWD:** Interfejs "Mobile-First" dla widoków skanowania/edycji; Desktop dla zarządzania.
 *   **Język:** Kod i DB w języku angielskim. Interfejs użytkownika: Polski.
 *   **Wygląd:** Obsługa Trybu Ciemnego (Dark Mode).
-*   **Wydajność:** Optymalizacja zdjęć (kompresja przed uploadem).
 
 ### 4.3 Model Danych (Uproszczony)
 *   `profiles` (id, user_id, email, ...)

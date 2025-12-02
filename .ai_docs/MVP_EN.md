@@ -40,7 +40,6 @@ Create a web application (PWA) that enables cataloging box contents and assignin
 3.  **Box Management:**
     *   Create boxes with unique IDs.
     *   Edit name, description (limit ~10000 chars), and tags.
-    *   Add 1 photo of contents per box.
     *   Assign box to a location (or "Unassigned" status).
     *   "Soft Delete" handling - deleting a location moves boxes to "Unassigned".
 4.  **QR Code System:**
@@ -54,6 +53,7 @@ Create a web application (PWA) that enables cataloging box contents and assignin
 
 ### 3.2 Out of Scope for MVP
 *   Offline Mode (requires internet access).
+*   Add photo of contents to box.
 *   Dedicated mobile app (Web/PWA only).
 *   Email sending (verification, password reset) - "lost password = lost account" for basic auth (unless OAuth used).
 *   Advanced permissions and sharing (DB structure prepared, but feature disabled in UI).
@@ -86,7 +86,7 @@ Create a web application (PWA) that enables cataloging box contents and assignin
 ## 5. User Stories (Examples)
 
 1.  **US-01 Label Generation:** *As a user, I want to generate a sheet of 20 empty QR codes so I can print them and take them to the basement before starting to organize.*
-2.  **US-02 Adding a Box:** *As a user, after scanning an empty QR code with my phone, I want to be automatically redirected to the "New Box" form with the ID pre-filled, so I can quickly add a description and photo.*
+2.  **US-02 Adding a Box:** *As a user, after scanning an empty QR code with my phone, I want to be automatically redirected to the "New Box" form with the ID pre-filled, so I can quickly add a description.*
 3.  **US-03 Finding Items:** *As a user, I want to type "Christmas lights" into the search bar and immediately see which box and on which shelf they are located.*
 4.  **US-04 Moving Items:** *As a user, I want to change a box's location in the system by selecting a new shelf from a list when I physically move it.*
 
