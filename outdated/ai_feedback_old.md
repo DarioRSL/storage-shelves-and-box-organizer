@@ -24,7 +24,6 @@ Zweryfikuj w 2–3 tygodnie na 10+ realnych pudełkach: czasu dodania pudełka (
 Decyzję o dalszej inwestycji oprzyj o realne użycie i feedback z pierwszych wdrożeń.
 Wniosek: sens jest, jeśli skupisz się na szybkości odnajdywania i banalnie prostym procesie etykietowania. Bez tego ryzyko “zapomnianej aplikacji” jest wysokie.
 
-
 Ocena adekwatności stacku
 W skrócie: Tak — stack z tech-stack.md jest wystarczający i adekwatny do wymagań z PRD.md dla MVP.
 Dlaczego wystarczy

@@ -36,42 +36,45 @@
 </decisions>
 
 <matched_recommendations>
-1. Jedna tabela `locations` z self-FK i poziomem.  
-2. Trigger z rekurencyjnym CTE do zapobiegania cyklom.  
-3. `public_uuid` w `boxes` + przyszła tabela `box_shares`.  
-4. `TEXT[]` + GIN dla `items.tags`.  
-5. `tsvector` + GIN dla full-text search.  
-6. Kompozytowe unikalne indeksy na nazwy.  
-7. `user_id` FK do `auth.users` + RLS.  
-8. `TEXT` z `CHECK` dla limitu opisu.  
-9. Transakcje z `FOR UPDATE` przy przenoszeniu pudełek.  
-10. Wykorzystanie widoku z CTE i `COPY … TO CSV`.  
-11. Tabela `events` do metryk i audytu.  
-12. `created_at`/`updated_at` jako `TIMESTAMPTZ`.  
-13. Brak partycjonowania i optymistycznej blokady w MVP.  
+
+1. Jedna tabela `locations` z self-FK i poziomem.
+2. Trigger z rekurencyjnym CTE do zapobiegania cyklom.
+3. `public_uuid` w `boxes` + przyszła tabela `box_shares`.
+4. `TEXT[]` + GIN dla `items.tags`.
+5. `tsvector` + GIN dla full-text search.
+6. Kompozytowe unikalne indeksy na nazwy.
+7. `user_id` FK do `auth.users` + RLS.
+8. `TEXT` z `CHECK` dla limitu opisu.
+9. Transakcje z `FOR UPDATE` przy przenoszeniu pudełek.
+10. Wykorzystanie widoku z CTE i `COPY … TO CSV`.
+11. Tabela `events` do metryk i audytu.
+12. `created_at`/`updated_at` jako `TIMESTAMPTZ`.
+13. Brak partycjonowania i optymistycznej blokady w MVP.
 14. Automatyzacja onboardingu triggerem.
-</matched_recommendations>
+    </matched_recommendations>
 
 <database_planning_summary>
 Schemat PostgreSQL (Supabase) dla MVP:
-- Encje: `locations`, `boxes`, `items`, `events` (opcja `box_shares`).  
-- Relacje: self-FK w `locations`, `boxes.location_id → locations.id`, `items.box_id → boxes.id`.  
-- Klucze: `user_id` FK do `auth.users` we wszystkich tabelach, kompozytowe unikalne indeksy na nazwy.  
-- Atrybuty: `id UUID`, `name TEXT`, `description TEXT(≤10000)`, `tags TEXT[]`, `tsv tsvector`, `public_uuid UUID`, `created_at/updated_at TIMESTAMPTZ`.  
-- Indeksy: B-Tree na `user_id`, GIN na `tags` i `tsv`.  
-- RLS: wiersze widoczne tylko dla właściciela (`auth.uid()`), plus SELECT po `public_uuid`.  
-- Operacje krytyczne: przenoszenie pudełek w transakcji z `FOR UPDATE`, onboarding triggerem, dynamiczne kodowanie QR.  
-- Eksport CSV synchroniczny (<10 000 wierszy) przez widok CTE + `COPY`.  
-- Metryki/audyt: tabela `events`.  
-- Daty: `TIMESTAMPTZ` UTC.  
+
+- Encje: `locations`, `boxes`, `items`, `events` (opcja `box_shares`).
+- Relacje: self-FK w `locations`, `boxes.location_id → locations.id`, `items.box_id → boxes.id`.
+- Klucze: `user_id` FK do `auth.users` we wszystkich tabelach, kompozytowe unikalne indeksy na nazwy.
+- Atrybuty: `id UUID`, `name TEXT`, `description TEXT(≤10000)`, `tags TEXT[]`, `tsv tsvector`, `public_uuid UUID`, `created_at/updated_at TIMESTAMPTZ`.
+- Indeksy: B-Tree na `user_id`, GIN na `tags` i `tsv`.
+- RLS: wiersze widoczne tylko dla właściciela (`auth.uid()`), plus SELECT po `public_uuid`.
+- Operacje krytyczne: przenoszenie pudełek w transakcji z `FOR UPDATE`, onboarding triggerem, dynamiczne kodowanie QR.
+- Eksport CSV synchroniczny (<10 000 wierszy) przez widok CTE + `COPY`.
+- Metryki/audyt: tabela `events`.
+- Daty: `TIMESTAMPTZ` UTC.
 - MVP bez partycjonowania, soft-delete, optymistycznej blokady i `ltree`; planowane w przyszłości.
-</database_planning_summary>
+  </database_planning_summary>
 
 <unresolved_issues>
-- Dokładna implementacja triggera do zapobiegania cyklom w `locations`.  
-- Precyzyjny schemat tabeli `events` (lista event_type, struktura payload).  
+
+- Dokładna implementacja triggera do zapobiegania cyklom w `locations`.
+- Precyzyjny schemat tabeli `events` (lista event_type, struktura payload).
 - Procedury backup/retencji i usuwania danych zgodnie z GDPR/RODO.
-</unresolved_issues>
+  </unresolved_issues>
 
 </conversation_summary>
 ```
