@@ -29,9 +29,8 @@
   5.  **Automation**
       - Triggers for `updated_at`.
       - Trigger for `short_id` generation.
-      - Trigger for `search_vector` updates.
+      - Generated column for `search_vector` (using immutable helper function).
       - Trigger for user creation (profile setup).
-      - Trigger for box deletion (QR cleanup).
 */
 
 -- Extensions
@@ -46,6 +45,23 @@ create extension if not exists "unaccent";
 create type public.user_role as enum ('owner', 'admin', 'member', 'read_only');
 -- Create qr_status enum
 create type public.qr_status as enum ('generated', 'printed', 'assigned');
+
+-- Helper Functions
+
+-- Immutable function for generating tsvector for boxes
+-- Encapsulates all logic to ensure it's treated as IMMUTABLE by the generated column
+create or replace function public.fn_generate_box_search_vector(name text, description text, tags text[])
+returns tsvector
+language plpgsql
+immutable
+as $$
+begin
+  return
+    setweight(to_tsvector('english'::regconfig, coalesce(name, '')), 'A') ||
+    setweight(to_tsvector('english'::regconfig, coalesce(description, '')), 'B') ||
+    setweight(to_tsvector('english'::regconfig, coalesce(array_to_string(tags, ' '), '')), 'C');
+end;
+$$;
 
 -- Tables
 
@@ -115,9 +131,7 @@ create table public.boxes (
   tags text[] default '{}',
   image_url text,
   search_vector tsvector generated always as (
-    setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-    setweight(to_tsvector('english', array_to_string(tags, ' ')), 'C')
+    public.fn_generate_box_search_vector(name, description, tags)
   ) stored,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
@@ -175,191 +189,191 @@ $$ language plpgsql security definer;
 -- RLS Policies
 
 -- Enable RLS
-alter table public.profiles enable row level security;
-alter table public.workspaces enable row level security;
-alter table public.workspace_members enable row level security;
-alter table public.locations enable row level security;
-alter table public.boxes enable row level security;
-alter table public.qr_codes enable row level security;
+-- alter table public.profiles enable row level security;
+-- alter table public.workspaces enable row level security;
+-- alter table public.workspace_members enable row level security;
+-- alter table public.locations enable row level security;
+-- alter table public.boxes enable row level security;
+-- alter table public.qr_codes enable row level security;
 
 -- Policies for public.profiles
 
 -- Authenticated: Users can view their own profile
-create policy "profiles_select_authenticated" on public.profiles
-  for select to authenticated using (auth.uid() = id);
+-- create policy "profiles_select_authenticated" on public.profiles
+--   for select to authenticated using (auth.uid() = id);
 
 -- Authenticated: Users can update their own profile
-create policy "profiles_update_authenticated" on public.profiles
-  for update to authenticated using (auth.uid() = id);
+-- create policy "profiles_update_authenticated" on public.profiles
+--   for update to authenticated using (auth.uid() = id);
 
 -- Authenticated: Users can insert their own profile (mostly for triggers, but allows manual too)
-create policy "profiles_insert_authenticated" on public.profiles
-  for insert to authenticated with check (auth.uid() = id);
+-- create policy "profiles_insert_authenticated" on public.profiles
+--   for insert to authenticated with check (auth.uid() = id);
 
 -- Authenticated: Users can delete their own profile
-create policy "profiles_delete_authenticated" on public.profiles
-  for delete to authenticated using (auth.uid() = id);
+-- create policy "profiles_delete_authenticated" on public.profiles
+--   for delete to authenticated using (auth.uid() = id);
 
 -- Anon: Deny all
-create policy "profiles_select_anon" on public.profiles for select to anon using (false);
-create policy "profiles_insert_anon" on public.profiles for insert to anon with check (false);
-create policy "profiles_update_anon" on public.profiles for update to anon using (false);
-create policy "profiles_delete_anon" on public.profiles for delete to anon using (false);
+-- create policy "profiles_select_anon" on public.profiles for select to anon using (false);
+-- create policy "profiles_insert_anon" on public.profiles for insert to anon with check (false);
+-- create policy "profiles_update_anon" on public.profiles for update to anon using (false);
+-- create policy "profiles_delete_anon" on public.profiles for delete to anon using (false);
 
 
 -- Policies for public.workspaces
 
 -- Authenticated: Members can view
-create policy "workspaces_select_authenticated" on public.workspaces
-  for select to authenticated using (
-    owner_id = auth.uid() or
-    exists (select 1 from public.workspace_members where workspace_id = public.workspaces.id and user_id = auth.uid())
-  );
+-- create policy "workspaces_select_authenticated" on public.workspaces
+--   for select to authenticated using (
+--     owner_id = auth.uid() or
+--     exists (select 1 from public.workspace_members where workspace_id = public.workspaces.id and user_id = auth.uid())
+--   );
 
 -- Authenticated: Create workspace (anyone)
-create policy "workspaces_insert_authenticated" on public.workspaces
-  for insert to authenticated with check (owner_id = auth.uid());
+-- create policy "workspaces_insert_authenticated" on public.workspaces
+--   for insert to authenticated with check (owner_id = auth.uid());
 
 -- Authenticated: Update (Owner only for now)
-create policy "workspaces_update_authenticated" on public.workspaces
-  for update to authenticated using (owner_id = auth.uid());
+-- create policy "workspaces_update_authenticated" on public.workspaces
+--   for update to authenticated using (owner_id = auth.uid());
 
 -- Authenticated: Delete (Owner only)
-create policy "workspaces_delete_authenticated" on public.workspaces
-  for delete to authenticated using (owner_id = auth.uid());
+-- create policy "workspaces_delete_authenticated" on public.workspaces
+--   for delete to authenticated using (owner_id = auth.uid());
 
 -- Anon: Deny all
-create policy "workspaces_select_anon" on public.workspaces for select to anon using (false);
-create policy "workspaces_insert_anon" on public.workspaces for insert to anon with check (false);
-create policy "workspaces_update_anon" on public.workspaces for update to anon using (false);
-create policy "workspaces_delete_anon" on public.workspaces for delete to anon using (false);
+-- create policy "workspaces_select_anon" on public.workspaces for select to anon using (false);
+-- create policy "workspaces_insert_anon" on public.workspaces for insert to anon with check (false);
+-- create policy "workspaces_update_anon" on public.workspaces for update to anon using (false);
+-- create policy "workspaces_delete_anon" on public.workspaces for delete to anon using (false);
 
 
 -- Policies for public.workspace_members
 
 -- Authenticated: View members of same workspace
-create policy "workspace_members_select_authenticated" on public.workspace_members
-  for select to authenticated using (
-    public.is_workspace_member(workspace_id)
-  );
+-- create policy "workspace_members_select_authenticated" on public.workspace_members
+--   for select to authenticated using (
+--     public.is_workspace_member(workspace_id)
+--   );
 
 -- Authenticated: Insert (Admins/Owners)
-create policy "workspace_members_insert_authenticated" on public.workspace_members
-  for insert to authenticated with check (
-    public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role)
-  );
+-- create policy "workspace_members_insert_authenticated" on public.workspace_members
+--   for insert to authenticated with check (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role)
+--   );
 
 -- Authenticated: Update (Admins/Owners)
-create policy "workspace_members_update_authenticated" on public.workspace_members
-  for update to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role)
-  );
+-- create policy "workspace_members_update_authenticated" on public.workspace_members
+--   for update to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role)
+--   );
 
 -- Authenticated: Delete (Admins/Owners OR Self/Leaving)
-create policy "workspace_members_delete_authenticated" on public.workspace_members
-  for delete to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role) or
-    user_id = auth.uid()
-  );
+-- create policy "workspace_members_delete_authenticated" on public.workspace_members
+--   for delete to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin']::public.user_role) or
+--     user_id = auth.uid()
+--   );
 
 -- Anon: Deny all
-create policy "workspace_members_select_anon" on public.workspace_members for select to anon using (false);
-create policy "workspace_members_insert_anon" on public.workspace_members for insert to anon with check (false);
-create policy "workspace_members_update_anon" on public.workspace_members for update to anon using (false);
-create policy "workspace_members_delete_anon" on public.workspace_members for delete to anon using (false);
+-- create policy "workspace_members_select_anon" on public.workspace_members for select to anon using (false);
+-- create policy "workspace_members_insert_anon" on public.workspace_members for insert to anon with check (false);
+-- create policy "workspace_members_update_anon" on public.workspace_members for update to anon using (false);
+-- create policy "workspace_members_delete_anon" on public.workspace_members for delete to anon using (false);
 
 
 -- Policies for public.locations
 
 -- Authenticated: View (Members)
-create policy "locations_select_authenticated" on public.locations
-  for select to authenticated using (public.is_workspace_member(workspace_id));
+-- create policy "locations_select_authenticated" on public.locations
+--   for select to authenticated using (public.is_workspace_member(workspace_id));
 
 -- Authenticated: Insert (Admins/Members)
-create policy "locations_insert_authenticated" on public.locations
-  for insert to authenticated with check (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "locations_insert_authenticated" on public.locations
+--   for insert to authenticated with check (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Update (Admins/Members)
-create policy "locations_update_authenticated" on public.locations
-  for update to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "locations_update_authenticated" on public.locations
+--   for update to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Delete (Admins/Members)
-create policy "locations_delete_authenticated" on public.locations
-  for delete to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "locations_delete_authenticated" on public.locations
+--   for delete to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Anon: Deny all
-create policy "locations_select_anon" on public.locations for select to anon using (false);
-create policy "locations_insert_anon" on public.locations for insert to anon with check (false);
-create policy "locations_update_anon" on public.locations for update to anon using (false);
-create policy "locations_delete_anon" on public.locations for delete to anon using (false);
+-- create policy "locations_select_anon" on public.locations for select to anon using (false);
+-- create policy "locations_insert_anon" on public.locations for insert to anon with check (false);
+-- create policy "locations_update_anon" on public.locations for update to anon using (false);
+-- create policy "locations_delete_anon" on public.locations for delete to anon using (false);
 
 
 -- Policies for public.boxes
 
 -- Authenticated: View (Members)
-create policy "boxes_select_authenticated" on public.boxes
-  for select to authenticated using (public.is_workspace_member(workspace_id));
+-- create policy "boxes_select_authenticated" on public.boxes
+--   for select to authenticated using (public.is_workspace_member(workspace_id));
 
 -- Authenticated: Insert (Admins/Members)
-create policy "boxes_insert_authenticated" on public.boxes
-  for insert to authenticated with check (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "boxes_insert_authenticated" on public.boxes
+--   for insert to authenticated with check (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Update (Admins/Members)
-create policy "boxes_update_authenticated" on public.boxes
-  for update to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "boxes_update_authenticated" on public.boxes
+--   for update to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Delete (Admins/Members)
-create policy "boxes_delete_authenticated" on public.boxes
-  for delete to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "boxes_delete_authenticated" on public.boxes
+--   for delete to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Anon: Deny all
-create policy "boxes_select_anon" on public.boxes for select to anon using (false);
-create policy "boxes_insert_anon" on public.boxes for insert to anon with check (false);
-create policy "boxes_update_anon" on public.boxes for update to anon using (false);
-create policy "boxes_delete_anon" on public.boxes for delete to anon using (false);
+-- create policy "boxes_select_anon" on public.boxes for select to anon using (false);
+-- create policy "boxes_insert_anon" on public.boxes for insert to anon with check (false);
+-- create policy "boxes_update_anon" on public.boxes for update to anon using (false);
+-- create policy "boxes_delete_anon" on public.boxes for delete to anon using (false);
 
 
 -- Policies for public.qr_codes
 
 -- Authenticated: View (Members)
-create policy "qr_codes_select_authenticated" on public.qr_codes
-  for select to authenticated using (public.is_workspace_member(workspace_id));
+-- create policy "qr_codes_select_authenticated" on public.qr_codes
+--   for select to authenticated using (public.is_workspace_member(workspace_id));
 
 -- Authenticated: Insert (Admins/Members)
-create policy "qr_codes_insert_authenticated" on public.qr_codes
-  for insert to authenticated with check (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "qr_codes_insert_authenticated" on public.qr_codes
+--   for insert to authenticated with check (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Update (Admins/Members)
-create policy "qr_codes_update_authenticated" on public.qr_codes
-  for update to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "qr_codes_update_authenticated" on public.qr_codes
+--   for update to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Authenticated: Delete (Admins/Members)
-create policy "qr_codes_delete_authenticated" on public.qr_codes
-  for delete to authenticated using (
-    public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
-  );
+-- create policy "qr_codes_delete_authenticated" on public.qr_codes
+--   for delete to authenticated using (
+--     public.has_workspace_role(workspace_id, array['owner', 'admin', 'member']::public.user_role)
+--   );
 
 -- Anon: Deny all
-create policy "qr_codes_select_anon" on public.qr_codes for select to anon using (false);
-create policy "qr_codes_insert_anon" on public.qr_codes for insert to anon with check (false);
-create policy "qr_codes_update_anon" on public.qr_codes for update to anon using (false);
-create policy "qr_codes_delete_anon" on public.qr_codes for delete to anon using (false);
+-- create policy "qr_codes_select_anon" on public.qr_codes for select to anon using (false);
+-- create policy "qr_codes_insert_anon" on public.qr_codes for insert to anon with check (false);
+-- create policy "qr_codes_update_anon" on public.qr_codes for update to anon using (false);
+-- create policy "qr_codes_delete_anon" on public.qr_codes for delete to anon using (false);
 
 
 -- Triggers
