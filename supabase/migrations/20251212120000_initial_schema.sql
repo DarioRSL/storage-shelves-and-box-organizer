@@ -403,14 +403,23 @@ declare
   result text := '';
   i integer;
   exists_check boolean;
+  max_attempts integer := 100;
+  attempt_count integer := 0;
 begin
   -- Do nothing if short_id is already set
   if new.short_id is not null then
     return new;
   end if;
 
-  -- Attempt to generate a unique ID
+  -- Attempt to generate a unique ID with retry limit
   loop
+    attempt_count := attempt_count + 1;
+    
+    -- Raise error if maximum attempts exceeded
+    if attempt_count > max_attempts then
+      raise exception 'Failed to generate unique short_id after % attempts', max_attempts;
+    end if;
+    
     result := '';
     for i in 1..10 loop
       result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
@@ -438,15 +447,36 @@ returns trigger as $$
 declare
   new_workspace_id uuid;
 begin
-  insert into public.profiles (id, email, full_name, avatar_url)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
+  -- Insert profile with error handling
+  -- If this fails, the exception will propagate and rollback the auth.users insert
+  begin
+    insert into public.profiles (id, email, full_name, avatar_url)
+    values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
+  exception
+    when others then
+      raise exception 'Failed to create profile for user %: %', new.id, sqlerrm;
+  end;
 
-  insert into public.workspaces (owner_id, name)
-  values (new.id, 'My Workspace')
-  returning id into new_workspace_id;
+  -- Insert workspace with error handling
+  -- If this fails, the exception will propagate and rollback the auth.users insert
+  begin
+    insert into public.workspaces (owner_id, name)
+    values (new.id, 'My Workspace')
+    returning id into new_workspace_id;
+  exception
+    when others then
+      raise exception 'Failed to create workspace for user %: %', new.id, sqlerrm;
+  end;
 
-  insert into public.workspace_members (workspace_id, user_id, role)
-  values (new_workspace_id, new.id, 'owner');
+  -- Insert workspace member with error handling
+  -- If this fails, the exception will propagate and rollback the auth.users insert
+  begin
+    insert into public.workspace_members (workspace_id, user_id, role)
+    values (new_workspace_id, new.id, 'owner');
+  exception
+    when others then
+      raise exception 'Failed to add user % to workspace %: %', new.id, new_workspace_id, sqlerrm;
+  end;
 
   return new;
 end;
