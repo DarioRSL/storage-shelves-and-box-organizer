@@ -150,6 +150,7 @@ export interface Database {
           box_id: string | null;
           created_at: string | null;
           id: string;
+          short_id: string;
           status: Database["public"]["Enums"]["qr_status"];
           workspace_id: string;
         };
@@ -157,6 +158,7 @@ export interface Database {
           box_id?: string | null;
           created_at?: string | null;
           id?: string;
+          short_id: string;
           status?: Database["public"]["Enums"]["qr_status"];
           workspace_id: string;
         };
@@ -164,6 +166,7 @@ export interface Database {
           box_id?: string | null;
           created_at?: string | null;
           id?: string;
+          short_id?: string;
           status?: Database["public"]["Enums"]["qr_status"];
           workspace_id?: string;
         };
