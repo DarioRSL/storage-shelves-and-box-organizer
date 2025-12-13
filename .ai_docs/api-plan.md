@@ -8,6 +8,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 |----------|---------------|-------------|
 | **Users** | `auth.users`, `public.profiles` | User identities and profile data. |
 | **Workspaces** | `public.workspaces` | Tenants for data isolation. |
+| **Workspace Members** | `public.workspace_members` | User-Workspace relationship with roles. |
 | **Locations** | `public.locations` | Hierarchical storage units (Rooms, Shelves). |
 | **Boxes** | `public.boxes` | Main inventory items with content descriptions. |
 | **QRCodes** | `public.qr_codes` | Unique codes linked to boxes. |
@@ -76,6 +77,95 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 ```
 - **Errors**:
   - `400 Bad Request`: Missing `name` field.
+  - `401 Unauthorized`: User is not authenticated.
+
+#### GET /workspaces/:workspace_id/members
+- **Description**: Lists all members of a specific workspace with their roles.
+- **Query Parameters**: None
+- **Request JSON**: None
+- **Response JSON**:
+```json
+[
+  {
+    "user_id": "uuid",
+    "workspace_id": "uuid",
+    "role": "owner",
+    "joined_at": "2023-10-27T10:00:00Z",
+    "profile": {
+      "email": "user@example.com",
+      "full_name": "John Doe",
+      "avatar_url": "https://example.com/avatar.jpg"
+    }
+  }
+]
+```
+- **Errors**:
+  - `401 Unauthorized`: User is not a member of this workspace.
+  - `404 Not Found`: Workspace does not exist.
+
+#### POST /workspaces/:workspace_id/members
+- **Description**: Invites a new member to the workspace. Requires admin or owner role.
+- **Query Parameters**: None
+- **Request JSON**:
+```json
+{
+  "email": "newuser@example.com",
+  "role": "member"
+}
+```
+- **Response JSON**:
+```json
+{
+  "user_id": "uuid",
+  "workspace_id": "uuid",
+  "role": "member",
+  "joined_at": "2023-10-27T11:00:00Z"
+}
+```
+- **Note**: If the user with this email doesn't exist in the system yet, this endpoint should send an invitation email. Implementation details depend on your auth flow.
+- **Errors**:
+  - `400 Bad Request`: Missing `email` or invalid `role`.
+  - `403 Forbidden`: Current user doesn't have permission (must be owner or admin).
+  - `409 Conflict`: User is already a member of this workspace.
+  - `401 Unauthorized`: User is not authenticated.
+
+#### PATCH /workspaces/:workspace_id/members/:user_id
+- **Description**: Updates a member's role in the workspace. Requires admin or owner role.
+- **Query Parameters**: None
+- **Request JSON**:
+```json
+{
+  "role": "admin"
+}
+```
+- **Response JSON**:
+```json
+{
+  "user_id": "uuid",
+  "workspace_id": "uuid",
+  "role": "admin",
+  "joined_at": "2023-10-27T10:00:00Z"
+}
+```
+- **Errors**:
+  - `400 Bad Request`: Invalid `role` value.
+  - `403 Forbidden`: Current user doesn't have permission (must be owner or admin).
+  - `404 Not Found`: Member not found in this workspace.
+  - `401 Unauthorized`: User is not authenticated.
+
+#### DELETE /workspaces/:workspace_id/members/:user_id
+- **Description**: Removes a member from the workspace. Admins/owners can remove others. Any member can remove themselves (leave workspace).
+- **Query Parameters**: None
+- **Request JSON**: None
+- **Response JSON**:
+```json
+{
+  "message": "Member removed successfully."
+}
+```
+- **Errors**:
+  - `403 Forbidden`: Cannot remove the workspace owner, or current user doesn't have permission.
+  - `404 Not Found`: Member not found in this workspace.
   - `401 Unauthorized`: User is not authenticated.
 
 ### 2.2 Locations
@@ -223,7 +313,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   },
   "qr_code": {
     "id": "uuid",
-    "short_id": "X7K-9P2"
+    "short_id": "QR-A1B2C3"
   },
   "created_at": "timestamp",
   "updated_at": "timestamp"
@@ -316,8 +406,8 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 ```json
 {
   "data": [
-    { "id": "uuid-1", "short_id": "A1B-2C3", "status": "generated" },
-    { "id": "uuid-2", "short_id": "D4E-5F6", "status": "generated" }
+    { "id": "uuid-1", "short_id": "QR-A1B2C3", "status": "generated", "workspace_id": "uuid", "created_at": "timestamp" },
+    { "id": "uuid-2", "short_id": "QR-D4E5F6", "status": "generated", "workspace_id": "uuid", "created_at": "timestamp" }
   ]
 }
 ```
@@ -327,19 +417,22 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 #### GET /qr-codes/:short_id
 - **Description**: Resolves a scanned QR code short ID to its status and associated box (if any). Used to decide routing (New Box form vs Box Details).
+- **URL Parameter**: `short_id` - The QR code's short ID (format: QR-XXXXXX, e.g., QR-A1B2C3)
 - **Query Parameters**: None
 - **Request JSON**: None
 - **Response JSON**:
 ```json
 {
   "id": "uuid",
-  "short_id": "A1B-2C3",
-  "box_id": "uuid-of-box-if-assigned", 
-  "status": "generated" // or "assigned"
+  "short_id": "QR-A1B2C3",
+  "box_id": "uuid-of-box-if-assigned",
+  "status": "assigned",
+  "workspace_id": "uuid"
 }
 ```
+- **Note**: If `box_id` is null and `status` is "generated", the frontend should show the "Create New Box" form. If `box_id` is present, redirect to the box details page.
 - **Errors**:
-  - `404 Not Found`: QR code not found in the system.
+  - `404 Not Found`: QR code with this short_id not found in the system.
   - `401 Unauthorized`: Permission denied.
 
 ### 2.5 Export
@@ -402,11 +495,15 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ### 4.3 QR Codes
 *   **Batch Generation:**
-    *   Must generate unique `short_id`s.
+    *   Must generate unique `short_id`s with format `QR-XXXXXX` (6 uppercase alphanumeric characters).
     *   Must be created with status `generated`.
 *   **Assignment:**
-    *   A QR code can only be assigned to one box (Unique constraint).
-    *   When a box is deleted, the QR code status reverts or the record is deleted (depending on specific requirement, here schema says "Delete associated qr_codes record").
+    *   A QR code can only be assigned to one box (Unique constraint on `box_id`).
+    *   When a box is deleted, the QR code is reset: `box_id` set to NULL and `status` changed to `generated`, allowing the QR code to be reused for a new box.
+*   **Short ID Format:**
+    *   QR codes: `QR-XXXXXX` (e.g., `QR-A1B2C3`)
+    *   Boxes: 10 character alphanumeric string (e.g., `X7K9P2mN4q`)
+    *   These are distinct to avoid confusion between scanning a QR code vs searching for a box.
 
 ### 4.4 Data Integrity
 *   **Foreign Keys:** Strict constraints ensure no orphaned records (e.g., `workspace_id` is required for all entities).
