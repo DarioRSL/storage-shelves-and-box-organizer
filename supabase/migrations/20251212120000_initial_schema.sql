@@ -27,10 +27,12 @@
       - `authenticated` policies rely on workspace membership and roles.
 
   5.  **Automation**
-      - Triggers for `updated_at`.
-      - Trigger for `short_id` generation.
+      - Triggers for `updated_at` on profiles, workspaces, locations, boxes.
+      - Trigger for `short_id` generation on boxes (10 chars alphanumeric).
+      - Trigger for `short_id` generation on qr_codes (format: QR-XXXXXX, 6 chars).
       - Generated column for `search_vector` (using immutable helper function).
-      - Trigger for user creation (profile setup).
+      - Trigger for user creation (profile setup and default workspace).
+      - Trigger for box deletion (resets associated QR code to 'generated' status).
 */
 
 -- Extensions
@@ -149,13 +151,17 @@ create index boxes_workspace_id_idx on public.boxes (workspace_id);
 create table public.qr_codes (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
-  box_id uuid unique references public.boxes(id) on delete cascade,
+  box_id uuid unique references public.boxes(id) on delete set null,
+  short_id text not null check (char_length(short_id) <= 20),
   status public.qr_status not null default 'generated',
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint qr_codes_short_id_key unique (short_id)
 );
-comment on table public.qr_codes is 'QR code registry';
+comment on table public.qr_codes is 'QR code registry with unique short_id for scanning';
 
 create index qr_codes_workspace_id_idx on public.qr_codes (workspace_id);
+create index qr_codes_short_id_idx on public.qr_codes (short_id);
+create index qr_codes_box_id_idx on public.qr_codes (box_id);
 
 
 -- Security Helper Functions
@@ -439,6 +445,78 @@ $$ language plpgsql;
 create trigger set_box_short_id
   before insert on public.boxes
   for each row execute procedure public.generate_short_id();
+
+-- 2b. Short ID Generation for QR Codes
+-- Similar to boxes, but with 'QR-' prefix for distinction
+create or replace function public.generate_qr_short_id()
+returns trigger as $$
+declare
+  chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  result text := '';
+  random_part text := '';
+  i integer;
+  exists_check boolean;
+  max_attempts integer := 100;
+  attempt_count integer := 0;
+begin
+  -- Do nothing if short_id is already set
+  if new.short_id is not null then
+    return new;
+  end if;
+
+  -- Attempt to generate a unique ID with retry limit
+  loop
+    attempt_count := attempt_count + 1;
+    
+    -- Raise error if maximum attempts exceeded
+    if attempt_count > max_attempts then
+      raise exception 'Failed to generate unique QR short_id after % attempts', max_attempts;
+    end if;
+    
+    random_part := '';
+    -- Generate 6 character code (e.g., A1B2C3)
+    for i in 1..6 loop
+      random_part := random_part || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    end loop;
+    
+    -- Format as QR-XXXXXX
+    result := 'QR-' || random_part;
+    
+    select exists(select 1 from public.qr_codes where short_id = result) into exists_check;
+    if not exists_check then
+      new.short_id := result;
+      exit;
+    end if;
+  end loop;
+  
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger set_qr_short_id
+  before insert on public.qr_codes
+  for each row execute procedure public.generate_qr_short_id();
+
+-- 2c. Handle Box Deletion - Reset QR Code
+-- When a box is deleted, unlink the QR code and reset its status to 'generated'
+-- so it can be reused for a new box
+create or replace function public.handle_box_deletion()
+returns trigger as $$
+begin
+  -- Update the QR code: set box_id to NULL and status to 'generated'
+  update public.qr_codes
+  set 
+    box_id = null,
+    status = 'generated'
+  where box_id = old.id;
+  
+  return old;
+end;
+$$ language plpgsql;
+
+create trigger on_box_deleted
+  before delete on public.boxes
+  for each row execute procedure public.handle_box_deletion();
 
 -- 3. New User Handling
 -- Automatically creates a profile and a default workspace for new auth users

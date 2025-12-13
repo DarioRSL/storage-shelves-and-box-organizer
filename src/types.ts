@@ -38,8 +38,36 @@ export type WorkspaceMemberDto = Tables<"workspace_members">;
 /**
  * User role within a workspace.
  * Maps to 'user_role' enum.
+ * Values: 'owner' | 'admin' | 'member' | 'read_only'
  */
 export type UserRole = Enums<"user_role">;
+
+/**
+ * Extended workspace member information with user profile.
+ * Used for GET /workspaces/:workspace_id/members response.
+ */
+export interface WorkspaceMemberWithProfileDto extends WorkspaceMemberDto {
+  profile: {
+    email: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+/**
+ * Request to invite a new member to a workspace.
+ */
+export interface InviteWorkspaceMemberRequest {
+  email: string;
+  role: UserRole;
+}
+
+/**
+ * Request to update a workspace member's role.
+ */
+export interface UpdateWorkspaceMemberRequest {
+  role: UserRole;
+}
 
 // --- 3. Locations ---
 
@@ -108,14 +136,11 @@ export interface BoxLocationSummary {
 
 /**
  * Nested object structure for QR Code summary within a Box response.
- *
- * Note: The 'short_id' field here refers to the box's short_id, not the QR code's.
- * In the database, QR codes don't have short_id - only boxes do.
- * This structure is used when returning box details with its associated QR code info.
+ * Contains the QR code's own short_id for scanning purposes.
  */
 export interface BoxQrCodeSummary {
   id: string; // QR code's UUID
-  short_id: string; // Box's short_id (for convenience, duplicated from parent)
+  short_id: string; // QR code's short_id (format: QR-XXXXXX)
 }
 
 /**
@@ -193,16 +218,16 @@ export interface GetBoxesQuery {
 /**
  * Represents a QR Code.
  * Maps to 'qr_codes' table.
- *
- * IMPORTANT: In the database schema, qr_codes table does NOT have a 'short_id' field.
- * The 'short_id' belongs to the 'boxes' table. The API plan shows short_id in QR responses,
- * but this is likely derived from the associated box when the QR code is assigned.
+ * Each QR code has its own unique short_id (format: QR-XXXXXX) for scanning.
  */
 export type QrCodeDto = Tables<"qr_codes">;
 
 /**
  * QR Code status enum.
- * Represents the lifecycle state of a QR code.
+ * Represents the lifecycle state of a QR code:
+ * - 'generated': QR code created but not yet printed
+ * - 'printed': QR code has been printed on a physical label
+ * - 'assigned': QR code is linked to a box
  */
 export type QrStatus = Enums<"qr_status">;
 
@@ -216,11 +241,12 @@ export interface BatchGenerateQrCodesRequest {
 
 /**
  * Response wrapper for batch QR code generation.
- * Wraps the array of generated QR codes.
+ * Returns array of generated QR codes with their short_ids for printing.
  */
 export interface BatchGenerateQrCodesResponse {
   data: {
     id: string;
+    short_id: string;
     status: QrStatus;
     workspace_id: string;
     created_at: string | null;
@@ -228,28 +254,15 @@ export interface BatchGenerateQrCodesResponse {
 }
 
 /**
- * Detailed QR Code response for scanning endpoint.
- *
- * CLARIFICATION NEEDED: The API plan shows 'short_id' in the response (GET /qr-codes/:short_id),
- * but the database schema shows that only 'boxes' have 'short_id', not 'qr_codes'.
- *
- * Possible interpretations:
- * 1. The endpoint URL uses box's short_id, not QR code's id
- * 2. The response should include the associated box's short_id when assigned
- * 3. QR codes should have their own short_id (requires schema update)
- *
- * For now, this type assumes scenario #2: short_id is included when box is assigned.
+ * Detailed QR Code response for scanning endpoint (GET /qr-codes/:short_id).
+ * Used to resolve a scanned QR code and determine routing logic.
  */
 export interface QrCodeDetailDto {
   id: string;
+  short_id: string;
   box_id: string | null;
   status: QrStatus;
   workspace_id: string;
-  /**
-   * Short ID of the associated box (if assigned).
-   * Undefined/null if QR code is not yet assigned to a box.
-   */
-  short_id?: string | null;
 }
 
 // --- 6. General API Responses ---
