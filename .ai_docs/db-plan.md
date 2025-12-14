@@ -160,5 +160,6 @@ All tables must have RLS enabled.
 - **QR Short ID Generation:** `BEFORE INSERT` on `qr_codes`. Generates unique short_id with format `QR-XXXXXX` (6 chars).
 - **Updated At:** `moddatetime` extension trigger on `profiles`, `workspaces`, `locations`, `boxes`.
 - **New User Handling:** `AFTER INSERT` on `auth.users`. Creates `profile` and default `workspace`.
+- **Workspace Owner Assignment:** `AFTER INSERT` on `workspaces`. Automatically adds the workspace owner to `workspace_members` with role 'owner'. Ensures atomicity and data integrity.
 - **Box Deletion Handler:** `BEFORE DELETE` on `boxes`. Resets linked QR code: sets `box_id` to NULL and `status` to 'generated' for reuse.
 - **Search Vector Update:** Generated column on `boxes`. Automatically updates `search_vector` from name, tags, description.
