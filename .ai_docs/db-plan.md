@@ -114,8 +114,7 @@ Main inventory entity. Boxes can be unassigned (not linked to a location).
 
 *Trigger: Automatically update the `updated_at` column on record updates.*
 *Trigger: Generate unique `short_id` before insert.*
-*Trigger: Update `search_vector` before insert/update.*
-*Trigger: Delete associated `qr_codes` record after delete.*
+*Trigger: Reset associated `qr_codes` record before delete (sets box_id to NULL, status to 'generated').*
 
 ### 2.7. public.qr_codes
 
@@ -124,8 +123,17 @@ Registry of generated QR codes. 1:1 relationship with boxes.
 - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - workspace_id: UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE
 - box_id: UUID UNIQUE REFERENCES boxes(id) ON DELETE SET NULL
+- short_id: TEXT NOT NULL UNIQUE (format: QR-XXXXXX, 6 chars)
 - status: QR_STATUS NOT NULL DEFAULT 'generated'
 - created_at: TIMESTAMPTZ DEFAULT now()
+
+*Indexes:*
+- Index on `workspace_id`
+- Unique index on `short_id`
+- Index on `box_id`
+
+*Trigger: Generate unique `short_id` before insert (format: QR-XXXXXX).*
+*Trigger: When a box is deleted, reset associated QR code: set `box_id` to NULL and `status` to 'generated'.*
 
 ## 3. Relationships
 
@@ -148,8 +156,9 @@ All tables must have RLS enabled.
 
 ## 5. Functions and Triggers
 
-- **Short ID Generation:** `BEFORE INSERT` on `boxes`. Generates random 10-12 char string.
+- **Box Short ID Generation:** `BEFORE INSERT` on `boxes`. Generates random 10 char alphanumeric string.
+- **QR Short ID Generation:** `BEFORE INSERT` on `qr_codes`. Generates unique short_id with format `QR-XXXXXX` (6 chars).
 - **Updated At:** `moddatetime` extension trigger on `profiles`, `workspaces`, `locations`, `boxes`.
 - **New User Handling:** `AFTER INSERT` on `auth.users`. Creates `profile` and default `workspace`.
-- **Cascading QR Deletion:** `AFTER DELETE` on `boxes`. Removes linked `qr_codes`.
-- **Search Vector Update:** `BEFORE INSERT/UPDATE` on `boxes`. Updates `search_vector` from name, tags, description.
+- **Box Deletion Handler:** `BEFORE DELETE` on `boxes`. Resets linked QR code: sets `box_id` to NULL and `status` to 'generated' for reuse.
+- **Search Vector Update:** Generated column on `boxes`. Automatically updates `search_vector` from name, tags, description.
