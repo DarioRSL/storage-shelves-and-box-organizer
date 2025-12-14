@@ -23,3 +23,7 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 supabase/.temp/*
+
+
+#Dokumantacja developmantu, czaty i inne rzeczy niepotrzebne w repozytorium
+Dokumantacja_developmant/*
