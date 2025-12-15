@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Storage & Box Organizer** is a Progressive Web App (PWA) for managing items stored in boxes using a QR code system. Users can generate QR labels, scan them with their phone, and digitally manage box contents, locations, and search for items without opening boxes physically.
 
 **Key Features:**
+
 - QR code-based box identification and management
 - Hierarchical location structure (up to 5 levels deep)
 - Multi-tenant workspace system with role-based access

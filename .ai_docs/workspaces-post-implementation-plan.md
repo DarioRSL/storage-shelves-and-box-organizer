@@ -5,6 +5,7 @@
 Endpoint `POST /workspaces` służy do tworzenia nowego workspace'a (przestrzeni roboczej). Workspace jest jednostką izolacji danych (tenant) w systemie. Po utworzeniu workspace'a, użytkownik tworzący automatycznie staje się jego właścicielem (owner) i jest dodawany do tabeli `workspace_members` z rolą `owner`.
 
 **Kluczowe aspekty:**
+
 - Wymaga uwierzytelnienia użytkownika
 - Operacja musi być atomowa (utworzenie workspace + przypisanie użytkownika jako owner)
 - Zwraca pełny obiekt workspace po pomyślnym utworzeniu
@@ -14,23 +15,28 @@ Endpoint `POST /workspaces` służy do tworzenia nowego workspace'a (przestrzeni
 ## 2. Szczegóły żądania
 
 ### Metoda HTTP
+
 `POST`
 
 ### Struktura URL
+
 `/api/workspaces`
 
 ### Parametry
 
 **Wymagane parametry (Request Body):**
+
 - `name` (string) - Nazwa workspace'a
   - Minimalna długość: 1 znak
   - Maksymalna długość: 255 znaków
   - Automatyczne usuwanie białych znaków (trim)
 
 **Opcjonalne parametry:**
+
 - Brak
 
 **Headers:**
+
 - `Content-Type: application/json`
 - `Authorization: Bearer <token>` (automatycznie zarządzane przez Supabase)
 
@@ -43,6 +49,7 @@ Endpoint `POST /workspaces` służy do tworzenia nowego workspace'a (przestrzeni
 ```
 
 **Przykład żądania:**
+
 ```json
 {
   "name": "My Home Storage"
@@ -58,11 +65,13 @@ Endpoint `POST /workspaces` służy do tworzenia nowego workspace'a (przestrzeni
 Z pliku `src/types.ts`:
 
 **Input:**
+
 ```typescript
 export type CreateWorkspaceRequest = Pick<Tables<"workspaces">, "name">;
 ```
 
 **Output:**
+
 ```typescript
 export type WorkspaceDto = Tables<"workspaces">;
 // Struktura:
@@ -76,6 +85,7 @@ export type WorkspaceDto = Tables<"workspaces">;
 ```
 
 **Error:**
+
 ```typescript
 export interface ErrorResponse {
   error: string;
@@ -88,13 +98,14 @@ export interface ErrorResponse {
 Należy utworzyć w pliku endpoint:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const CreateWorkspaceSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .trim()
     .min(1, "Nazwa workspace'a nie może być pusta")
-    .max(255, "Nazwa workspace'a nie może przekraczać 255 znaków")
+    .max(255, "Nazwa workspace'a nie może przekraczać 255 znaków"),
 });
 ```
 
@@ -107,6 +118,7 @@ const CreateWorkspaceSchema = z.object({
 **Status Code:** `201 Created`
 
 **Response Body:**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -120,7 +132,9 @@ const CreateWorkspaceSchema = z.object({
 ### Błędy
 
 #### 400 Bad Request
+
 Nieprawidłowe dane wejściowe:
+
 ```json
 {
   "error": "Nieprawidłowe dane wejściowe",
@@ -131,7 +145,9 @@ Nieprawidłowe dane wejściowe:
 ```
 
 #### 401 Unauthorized
+
 Brak uwierzytelnienia:
+
 ```json
 {
   "error": "Nie jesteś uwierzytelniony"
@@ -139,7 +155,9 @@ Brak uwierzytelnienia:
 ```
 
 #### 500 Internal Server Error
+
 Błąd serwera:
+
 ```json
 {
   "error": "Wystąpił błąd podczas tworzenia workspace'a",
@@ -190,31 +208,26 @@ Response (201 Created / Error)
 
 4. **Wywołanie service layer**
    - `workspaceService.createWorkspace(supabase, user.id, validatedData)`
-   
 5. **Operacje bazodanowe (w service)**
    - **Krok 1**: Utworzenie workspace w tabeli `workspaces`
      ```typescript
      const { data: workspace, error: workspaceError } = await supabase
-       .from('workspaces')
+       .from("workspaces")
        .insert({
          owner_id: userId,
-         name: data.name
+         name: data.name,
        })
        .select()
        .single();
      ```
-   
    - **Krok 2**: Dodanie użytkownika do `workspace_members` jako owner
      ```typescript
-     const { error: memberError } = await supabase
-       .from('workspace_members')
-       .insert({
-         workspace_id: workspace.id,
-         user_id: userId,
-         role: 'owner'
-       });
+     const { error: memberError } = await supabase.from("workspace_members").insert({
+       workspace_id: workspace.id,
+       user_id: userId,
+       role: "owner",
+     });
      ```
-   
    - **Obsługa błędów transakcyjności**: Jeśli krok 2 się nie powiedzie, należy rozważyć rollback (lub polegać na database constraints)
 
 6. **Zwrócenie odpowiedzi**
@@ -224,10 +237,12 @@ Response (201 Created / Error)
 ### Interakcje z bazą danych
 
 **Tabele zaangażowane:**
+
 - `public.workspaces` - utworzenie nowego rekordu
 - `public.workspace_members` - dodanie rekordu membership z rolą 'owner'
 
 **RLS Policies:**
+
 - Polityki RLS zapewniają, że użytkownik może widzieć tylko workspace'y, do których należy
 - Owner automatycznie otrzymuje pełne uprawnienia do workspace'a
 
@@ -236,31 +251,37 @@ Response (201 Created / Error)
 ## 6. Względy bezpieczeństwa
 
 ### Uwierzytelnienie
+
 - **Wymagane**: Endpoint musi weryfikować, czy użytkownik jest zalogowany
 - **Implementacja**: Użycie `context.locals.supabase` w Astro
 - **Weryfikacja**: Sprawdzenie `user` z `supabase.auth.getUser()`
 
 ### Autoryzacja
+
 - **Brak dodatkowych wymagań**: Każdy zalogowany użytkownik może tworzyć workspace'y
 - **Automatyczne uprawnienia**: Tworzący użytkownik staje się owner z pełnymi prawami
 
 ### Walidacja danych
+
 - **Sanityzacja**: Trim whitespace z nazwy workspace'a
 - **Ograniczenia długości**: Min 1, max 255 znaków
 - **Zapobieganie XSS**: Walidacja przez Zod eliminuje problemy z nieoczekiwanymi znakami
 
 ### Row Level Security (RLS)
+
 - **Tabela workspaces**: RLS włączony
-- **Polityki**: 
+- **Polityki**:
   - Użytkownik może widzieć workspace'y, do których należy (przez workspace_members)
   - Owner może edytować i usuwać workspace
 
 ### Zabezpieczenia przed atakami
+
 - **SQL Injection**: Zapobiegane przez Supabase Client (parametryzowane zapytania)
 - **CSRF**: Token CSRF (jeśli implementowany na poziomie middleware)
 - **Rate Limiting**: Należy rozważyć w przyszłości (ograniczenie liczby workspace'ów na użytkownika)
 
 ### Integralność danych
+
 - **Atomowość operacji**: Utworzenie workspace + dodanie do workspace_members powinno być atomowe
 - **Foreign key constraints**: `workspace_members.workspace_id` REFERENCES `workspaces(id)`
 - **Rollback**: W przypadku błędu przy dodawaniu do workspace_members, workspace może pozostać sierocą (rozważyć transakcje)
@@ -274,12 +295,14 @@ Response (201 Created / Error)
 #### 1. Brak uwierzytelnienia
 
 **Warunek:**
+
 - Użytkownik nie jest zalogowany
 - Token jest nieprawidłowy lub wygasł
 
 **Kod statusu:** `401 Unauthorized`
 
 **Odpowiedź:**
+
 ```json
 {
   "error": "Nie jesteś uwierzytelniony"
@@ -287,14 +310,18 @@ Response (201 Created / Error)
 ```
 
 **Implementacja:**
+
 ```typescript
-const { data: { user }, error: authError } = await supabase.auth.getUser();
+const {
+  data: { user },
+  error: authError,
+} = await supabase.auth.getUser();
 
 if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: "Nie jesteś uwierzytelniony" }),
-    { status: 401, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Nie jesteś uwierzytelniony" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
@@ -303,6 +330,7 @@ if (authError || !user) {
 #### 2. Nieprawidłowe dane wejściowe
 
 **Warunek:**
+
 - Brak pola `name`
 - `name` jest pusty po trim
 - `name` przekracza 255 znaków
@@ -311,6 +339,7 @@ if (authError || !user) {
 **Kod statusu:** `400 Bad Request`
 
 **Odpowiedź:**
+
 ```json
 {
   "error": "Nieprawidłowe dane wejściowe",
@@ -321,6 +350,7 @@ if (authError || !user) {
 ```
 
 **Implementacja:**
+
 ```typescript
 const parseResult = CreateWorkspaceSchema.safeParse(body);
 
@@ -328,7 +358,7 @@ if (!parseResult.success) {
   return new Response(
     JSON.stringify({
       error: "Nieprawidłowe dane wejściowe",
-      details: parseResult.error.flatten().fieldErrors
+      details: parseResult.error.flatten().fieldErrors,
     }),
     { status: 400, headers: { "Content-Type": "application/json" } }
   );
@@ -340,11 +370,13 @@ if (!parseResult.success) {
 #### 3. Błąd parsowania JSON
 
 **Warunek:**
+
 - Request body nie jest prawidłowym JSON
 
 **Kod statusu:** `400 Bad Request`
 
 **Odpowiedź:**
+
 ```json
 {
   "error": "Nieprawidłowy format żądania"
@@ -352,15 +384,16 @@ if (!parseResult.success) {
 ```
 
 **Implementacja:**
+
 ```typescript
 let body;
 try {
   body = await request.json();
 } catch (e) {
-  return new Response(
-    JSON.stringify({ error: "Nieprawidłowy format żądania" }),
-    { status: 400, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Nieprawidłowy format żądania" }), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
@@ -369,6 +402,7 @@ try {
 #### 4. Błąd bazy danych
 
 **Warunek:**
+
 - Błąd przy tworzeniu workspace w bazie danych
 - Błąd przy dodawaniu do workspace_members
 - Naruszenie constraintów
@@ -376,6 +410,7 @@ try {
 **Kod statusu:** `500 Internal Server Error`
 
 **Odpowiedź:**
+
 ```json
 {
   "error": "Wystąpił błąd podczas tworzenia workspace'a"
@@ -383,18 +418,15 @@ try {
 ```
 
 **Implementacja:**
+
 ```typescript
-const { data: workspace, error: dbError } = await workspaceService.createWorkspace(
-  supabase,
-  user.id,
-  validatedData
-);
+const { data: workspace, error: dbError } = await workspaceService.createWorkspace(supabase, user.id, validatedData);
 
 if (dbError || !workspace) {
   console.error("Database error:", dbError);
   return new Response(
-    JSON.stringify({ 
-      error: "Wystąpił błąd podczas tworzenia workspace'a" 
+    JSON.stringify({
+      error: "Wystąpił błąd podczas tworzenia workspace'a",
     }),
     { status: 500, headers: { "Content-Type": "application/json" } }
   );
@@ -406,12 +438,14 @@ if (dbError || !workspace) {
 #### 5. Błąd dodawania do workspace_members (częściowa transakcja)
 
 **Warunek:**
+
 - Workspace został utworzony pomyślnie
 - Błąd przy dodawaniu użytkownika do workspace_members
 
 **Kod statusu:** `500 Internal Server Error`
 
 **Odpowiedź:**
+
 ```json
 {
   "error": "Workspace utworzony, ale wystąpił błąd przy przypisywaniu użytkownika"
@@ -419,6 +453,7 @@ if (dbError || !workspace) {
 ```
 
 **Uwaga:** To jest edge case - należy rozważyć:
+
 - Database trigger na `workspaces` który automatycznie dodaje owner do `workspace_members`
 - Transakcję bazodanową (Supabase nie wspiera natywnie, ale można użyć RPC function)
 - Cleanup orphaned workspaces w tle
@@ -428,15 +463,18 @@ if (dbError || !workspace) {
 ### Logowanie błędów
 
 **Co logować:**
+
 - Wszystkie błędy 500 (z pełnym stack trace)
 - Błędy bazy danych (z detalami błędu Supabase)
 - Nieoczekiwane wyjątki
 
 **Gdzie logować:**
+
 - `console.error()` - dla development
 - External logging service (np. Sentry) - dla production
 
 **Przykład:**
+
 ```typescript
 catch (error) {
   console.error("Unexpected error in POST /workspaces:", error);
@@ -469,6 +507,7 @@ catch (error) {
 ### Strategie optymalizacji
 
 #### 1. Database Trigger (Zalecane)
+
 Utworzenie triggera który automatycznie dodaje owner do workspace_members:
 
 ```sql
@@ -488,11 +527,13 @@ EXECUTE FUNCTION add_owner_to_workspace_members();
 ```
 
 **Zalety:**
+
 - Atomowość operacji
 - Pojedyncze wywołanie API
 - Gwarancja integralności danych
 
 #### 2. RPC Function (Alternatywa)
+
 Utworzenie PostgreSQL funkcji która tworzy workspace i dodaje członka:
 
 ```sql
@@ -514,33 +555,36 @@ BEGIN
   INSERT INTO public.workspaces (owner_id, name)
   VALUES (p_owner_id, p_name)
   RETURNING * INTO id, owner_id, name, created_at, updated_at;
-  
+
   v_workspace_id := id;
-  
+
   -- Insert workspace member
   INSERT INTO public.workspace_members (workspace_id, user_id, role)
   VALUES (v_workspace_id, p_owner_id, 'owner');
-  
+
   RETURN NEXT;
 END;
 $$ LANGUAGE plpgsql;
 ```
 
 **Użycie:**
+
 ```typescript
-const { data, error } = await supabase
-  .rpc('create_workspace_with_owner', {
-    p_owner_id: userId,
-    p_name: validatedData.name
-  });
+const { data, error } = await supabase.rpc("create_workspace_with_owner", {
+  p_owner_id: userId,
+  p_name: validatedData.name,
+});
 ```
 
 #### 3. Caching
+
 - **Nie dotyczy**: POST endpoints nie są cachowane
 - **Lista workspace'ów**: Można cachować na poziomie klienta
 
 #### 4. Indexy bazodanowe
+
 Sprawdzić czy istnieją indexy:
+
 - `workspaces.owner_id` - dla szybkiego wyszukiwania workspace'ów użytkownika
 - `workspace_members.user_id` - dla szybkiego sprawdzania membership
 - `workspace_members.workspace_id` - dla szybkiego listowania członków
@@ -548,6 +592,7 @@ Sprawdzić czy istnieją indexy:
 ### Monitoring wydajności
 
 **Metryki do śledzenia:**
+
 - Czas odpowiedzi endpoint (target: < 500ms)
 - Liczba utworzonych workspace'ów (rate)
 - Wskaźnik błędów (error rate)
@@ -562,9 +607,11 @@ Sprawdzić czy istnieją indexy:
 **Cel:** Zapewnić atomowość operacji tworzenia workspace + dodawania owner do workspace_members
 
 **Pliki:**
+
 - Nowa migracja: `supabase/migrations/[timestamp]_workspace_creation_trigger.sql`
 
 **Zadania:**
+
 1. Utworzyć nową migrację SQL
 2. Dodać funkcję `add_owner_to_workspace_members()`
 3. Dodać trigger `after_workspace_insert`
@@ -572,6 +619,7 @@ Sprawdzić czy istnieją indexy:
 5. Zastosować migrację: `supabase migration up`
 
 **Kod do dodania:**
+
 ```sql
 -- Add trigger to automatically add owner to workspace_members after workspace creation
 CREATE OR REPLACE FUNCTION add_owner_to_workspace_members()
@@ -596,9 +644,11 @@ EXECUTE FUNCTION add_owner_to_workspace_members();
 **Cel:** Wyodrębnić logikę biznesową do reużywalnego service
 
 **Pliki:**
+
 - Nowy plik: `src/lib/services/workspace.service.ts`
 
 **Zadania:**
+
 1. Utworzyć katalog `src/lib/services/` (jeśli nie istnieje)
 2. Utworzyć plik `workspace.service.ts`
 3. Zaimplementować funkcję `createWorkspace()`
@@ -608,12 +658,12 @@ EXECUTE FUNCTION add_owner_to_workspace_members();
 **Kod do dodania:**
 
 ```typescript
-import type { SupabaseClient } from '@/db/supabase.client';
-import type { CreateWorkspaceRequest, WorkspaceDto } from '@/types';
+import type { SupabaseClient } from "@/db/supabase.client";
+import type { CreateWorkspaceRequest, WorkspaceDto } from "@/types";
 
 /**
  * Creates a new workspace and adds the creating user as owner.
- * 
+ *
  * @param supabase - Supabase client instance
  * @param userId - ID of the user creating the workspace
  * @param data - Workspace creation data
@@ -627,7 +677,7 @@ export async function createWorkspace(
   try {
     // Insert workspace
     const { data: workspace, error: workspaceError } = await supabase
-      .from('workspaces')
+      .from("workspaces")
       .insert({
         owner_id: userId,
         name: data.name,
@@ -636,17 +686,17 @@ export async function createWorkspace(
       .single();
 
     if (workspaceError) {
-      console.error('Error creating workspace:', workspaceError);
-      return { 
-        data: null, 
-        error: new Error('Failed to create workspace') 
+      console.error("Error creating workspace:", workspaceError);
+      return {
+        data: null,
+        error: new Error("Failed to create workspace"),
       };
     }
 
     if (!workspace) {
-      return { 
-        data: null, 
-        error: new Error('Workspace creation returned no data') 
+      return {
+        data: null,
+        error: new Error("Workspace creation returned no data"),
       };
     }
 
@@ -675,10 +725,10 @@ export async function createWorkspace(
 
     return { data: workspace, error: null };
   } catch (error) {
-    console.error('Unexpected error in createWorkspace:', error);
-    return { 
-      data: null, 
-      error: error instanceof Error ? error : new Error('Unknown error') 
+    console.error("Unexpected error in createWorkspace:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error("Unknown error"),
     };
   }
 }
@@ -693,9 +743,11 @@ export async function createWorkspace(
 **Cel:** Zaimplementować endpoint REST API w Astro
 
 **Pliki:**
+
 - Nowy plik: `src/pages/api/workspaces.ts`
 
 **Zadania:**
+
 1. Utworzyć plik endpoint w `src/pages/api/`
 2. Dodać `export const prerender = false`
 3. Zaimplementować handler `POST`
@@ -707,16 +759,17 @@ export async function createWorkspace(
 **Kod do dodania:**
 
 ```typescript
-import type { APIRoute } from 'astro';
-import { z } from 'zod';
-import { createWorkspace } from '@/lib/services/workspace.service';
-import type { CreateWorkspaceRequest, WorkspaceDto, ErrorResponse } from '@/types';
+import type { APIRoute } from "astro";
+import { z } from "zod";
+import { createWorkspace } from "@/lib/services/workspace.service";
+import type { CreateWorkspaceRequest, WorkspaceDto, ErrorResponse } from "@/types";
 
 export const prerender = false;
 
 // Validation schema
 const CreateWorkspaceSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .trim()
     .min(1, "Nazwa workspace'a nie może być pusta")
     .max(255, "Nazwa workspace'a nie może przekraczać 255 znaków"),
@@ -732,16 +785,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const supabase = locals.supabase;
 
     // 2. Verify authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ 
-          error: "Nie jesteś uwierzytelniony" 
+        JSON.stringify({
+          error: "Nie jesteś uwierzytelniony",
         } as ErrorResponse),
-        { 
-          status: 401, 
-          headers: { "Content-Type": "application/json" } 
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -752,12 +808,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       body = await request.json();
     } catch (e) {
       return new Response(
-        JSON.stringify({ 
-          error: "Nieprawidłowy format żądania" 
+        JSON.stringify({
+          error: "Nieprawidłowy format żądania",
         } as ErrorResponse),
-        { 
-          status: 400, 
-          headers: { "Content-Type": "application/json" } 
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -771,9 +827,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
           error: "Nieprawidłowe dane wejściowe",
           details: parseResult.error.flatten().fieldErrors,
         } as ErrorResponse),
-        { 
-          status: 400, 
-          headers: { "Content-Type": "application/json" } 
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -781,44 +837,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const validatedData: CreateWorkspaceRequest = parseResult.data;
 
     // 5. Call service layer
-    const { data: workspace, error: serviceError } = await createWorkspace(
-      supabase,
-      user.id,
-      validatedData
-    );
+    const { data: workspace, error: serviceError } = await createWorkspace(supabase, user.id, validatedData);
 
     if (serviceError || !workspace) {
       console.error("Service error:", serviceError);
       return new Response(
-        JSON.stringify({ 
-          error: "Wystąpił błąd podczas tworzenia workspace'a" 
+        JSON.stringify({
+          error: "Wystąpił błąd podczas tworzenia workspace'a",
         } as ErrorResponse),
-        { 
-          status: 500, 
-          headers: { "Content-Type": "application/json" } 
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
 
     // 6. Return success response
-    return new Response(
-      JSON.stringify(workspace as WorkspaceDto),
-      { 
-        status: 201, 
-        headers: { "Content-Type": "application/json" } 
-      }
-    );
-
+    return new Response(JSON.stringify(workspace as WorkspaceDto), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Unexpected error in POST /api/workspaces:", error);
     return new Response(
-      JSON.stringify({ 
-        error: "Wystąpił nieoczekiwany błąd" 
+      JSON.stringify({
+        error: "Wystąpił nieoczekiwany błąd",
       } as ErrorResponse),
-      { 
-        status: 500, 
-        headers: { "Content-Type": "application/json" } 
-        }
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
     );
   }
 };
@@ -831,12 +879,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 **Cel:** Zweryfikować poprawność działania endpoint
 
 **Narzędzia:**
+
 - cURL, Postman, lub Thunder Client (VS Code extension)
 - Supabase Dashboard (do sprawdzania danych w bazie)
 
 **Scenariusze testowe:**
 
 #### Test 1: Pomyślne utworzenie workspace (zalogowany użytkownik)
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -845,11 +895,13 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 201 Created
 - Body: Obiekt WorkspaceDto z id, owner_id, name, created_at, updated_at
 - W bazie: Nowy rekord w `workspaces` i `workspace_members`
 
 #### Test 2: Brak uwierzytelnienia
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -857,10 +909,12 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 401 Unauthorized
 - Body: `{"error": "Nie jesteś uwierzytelniony"}`
 
 #### Test 3: Pusta nazwa
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -869,10 +923,12 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 400 Bad Request
 - Body: Błąd walidacji dla pola `name`
 
 #### Test 4: Brak pola name
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -881,10 +937,12 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 400 Bad Request
 - Body: Błąd walidacji dla pola `name`
 
 #### Test 5: Nazwa zbyt długa (> 255 znaków)
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -893,10 +951,12 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 400 Bad Request
 - Body: Błąd walidacji dla pola `name`
 
 #### Test 6: Nieprawidłowy JSON
+
 ```bash
 curl -X POST http://localhost:4321/api/workspaces \
   -H "Content-Type: application/json" \
@@ -905,6 +965,7 @@ curl -X POST http://localhost:4321/api/workspaces \
 ```
 
 **Oczekiwany rezultat:**
+
 - Status: 400 Bad Request
 - Body: `{"error": "Nieprawidłowy format żądania"}`
 
@@ -944,14 +1005,14 @@ curl -X POST http://localhost:4321/api/workspaces \
 1. **Orphaned workspaces (jeśli trigger nie istnieje):**
    - Zidentyfikować workspace'y bez wpisów w `workspace_members`
    - Utworzyć skrypt cleanup lub migrację do naprawienia danych
-   
+
    ```sql
    -- Find orphaned workspaces
-   SELECT w.* 
+   SELECT w.*
    FROM workspaces w
    LEFT JOIN workspace_members wm ON w.id = wm.workspace_id
    WHERE wm.workspace_id IS NULL;
-   
+
    -- Fix orphaned workspaces
    INSERT INTO workspace_members (workspace_id, user_id, role)
    SELECT w.id, w.owner_id, 'owner'
@@ -1029,18 +1090,21 @@ curl -X POST http://localhost:4321/api/workspaces \
 ## 10. Checklist implementacji
 
 ### Database
+
 - [ ] Utworzenie migracji dla triggera `add_owner_to_workspace_members()` (opcjonalne, ale zalecane)
 - [ ] Przetestowanie migracji lokalnie
 - [ ] Zastosowanie migracji: `supabase migration up`
 - [ ] Weryfikacja że trigger działa poprawnie
 
 ### Backend
+
 - [ ] Utworzenie `src/lib/services/workspace.service.ts`
 - [ ] Implementacja funkcji `createWorkspace()`
 - [ ] Dodanie obsługi błędów w service
 - [ ] Dodanie JSDoc documentation
 
 ### API Endpoint
+
 - [ ] Utworzenie `src/pages/api/workspaces.ts`
 - [ ] Dodanie `export const prerender = false`
 - [ ] Implementacja handlera `POST`
@@ -1049,6 +1113,7 @@ curl -X POST http://localhost:4321/api/workspaces \
 - [ ] Obsługa wszystkich scenariuszy błędów (401, 400, 500)
 
 ### Testing
+
 - [ ] Test: Pomyślne utworzenie workspace (201)
 - [ ] Test: Brak uwierzytelnienia (401)
 - [ ] Test: Brak pola name (400)
@@ -1059,16 +1124,19 @@ curl -X POST http://localhost:4321/api/workspaces \
 - [ ] Test: Automatyczne dodawanie do workspace_members
 
 ### Security & RLS
+
 - [ ] Weryfikacja że RLS działa poprawnie
 - [ ] Sprawdzenie że tylko zalogowani użytkownicy mogą tworzyć workspace'y
 - [ ] Weryfikacja że owner_id jest poprawnie przypisany
 
 ### Documentation
+
 - [ ] Dodanie JSDoc do wszystkich funkcji
 - [ ] Aktualizacja `api-plan.md` (jeśli potrzebne)
 - [ ] Dodanie przykładów użycia w dokumentacji
 
 ### Deployment
+
 - [ ] Code review
 - [ ] Deployment na staging
 - [ ] Testowanie na staging
@@ -1080,26 +1148,32 @@ curl -X POST http://localhost:4321/api/workspaces \
 ## 11. Potencjalne rozszerzenia (Future enhancements)
 
 ### 1. Workspace templates
+
 - Możliwość tworzenia workspace'ów z predefiniowanych szablonów
 - Automatyczne dodawanie przykładowych lokacji i boxów
 
 ### 2. Limity dla użytkowników
+
 - Ograniczenie liczby workspace'ów na użytkownika (np. 5 dla free tier)
 - Walidacja limitu w endpoincie
 
 ### 3. Webhook notifications
+
 - Powiadomienie na webhook po utworzeniu workspace'a
 - Integracja z systemami zewnętrznymi
 
 ### 4. Workspace slug/URL-friendly ID
+
 - Generowanie przyjaznego URL slug dla workspace'a
 - Np. "my-home-storage" zamiast UUID
 
 ### 5. Soft delete dla workspace'ów
+
 - Dodanie pola `is_deleted` do tabeli workspaces
 - Możliwość przywrócenia usuniętych workspace'ów
 
 ### 6. Audit log
+
 - Logowanie wszystkich operacji na workspace'ach
 - Kto i kiedy utworzył workspace
 
@@ -1108,29 +1182,35 @@ curl -X POST http://localhost:4321/api/workspaces \
 ## 12. Znane ograniczenia i trade-offs
 
 ### 1. Brak transakcyjności natywnej w Supabase Client
+
 **Ograniczenie:** Supabase JS Client nie wspiera natywnie transakcji bazodanowych.
 
 **Wpływ:** Jeśli utworzenie workspace się powiedzie, ale dodanie do workspace_members nie, workspace pozostanie w bazie bez owner.
 
-**Rozwiązanie:** 
+**Rozwiązanie:**
+
 - **Zalecane:** Użycie database triggera (automatycznie dodaje owner)
 - **Alternatywa:** RPC function z natywną transakcją PostgreSQL
 
 ### 2. Brak rate limiting na poziomie aplikacji
+
 **Ograniczenie:** Użytkownik może utworzyć nieograniczoną liczbę workspace'ów.
 
 **Wpływ:** Potencjalne nadużycia (spam workspace'ów).
 
 **Rozwiązanie:**
+
 - Implementacja rate limiting w middleware
 - Dodanie limitu workspace'ów na użytkownika w business logic
 
 ### 3. Brak soft delete
+
 **Ograniczenie:** Usunięcie workspace'a jest permanentne.
 
 **Wpływ:** Brak możliwości przywrócenia przypadkowo usuniętych danych.
 
 **Rozwiązanie:**
+
 - Dodanie pola `is_deleted` w przyszłości
 - Implementacja archiwizacji zamiast usuwania
 
@@ -1149,7 +1229,8 @@ Endpoint `POST /workspaces` jest kluczowym elementem aplikacji, umożliwiającym
 
 **Priorytet:** Wysoki (core functionality)
 
-**Zależności:** 
+**Zależności:**
+
 - Tabele `workspaces` i `workspace_members` muszą istnieć
 - Middleware uwierzytelniania musi być skonfigurowane
 - Supabase client musi być dostępny w `context.locals`

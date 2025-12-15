@@ -53,10 +53,12 @@ Follow these guidelines when working on this Storage & Box Organizer project.
 ## Frontend Guidelines
 
 ### General
+
 - Use Astro components (.astro) for static content and layout
 - Implement framework components in React only when interactivity is needed
 
 ### Tailwind CSS
+
 - Use the @layer directive to organize styles into components, utilities, and base layers
 - Use arbitrary values with square brackets (e.g., w-[123px]) for precise one-off designs
 - Implement the Tailwind configuration file for customizing theme, plugins, and variants
@@ -66,6 +68,7 @@ Follow these guidelines when working on this Storage & Box Organizer project.
 - Leverage state variants (hover:, focus-visible:, active:, etc.) for interactive elements
 
 ### Accessibility (ARIA)
+
 - Use ARIA landmarks to identify regions of the page (main, navigation, search, etc.)
 - Apply appropriate ARIA roles to custom interface elements that lack semantic HTML equivalents
 - Set aria-expanded and aria-controls for expandable content like accordions and dropdowns

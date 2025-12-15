@@ -5,6 +5,7 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 ## 1. Conventions and Extensions
 
 ### PostgreSQL Extensions
+
 - `uuid-ossp`: For generating UUIDs.
 - `ltree`: For handling hierarchical location structures.
 - `moddatetime`: For automatic updates of `updated_at` columns.
@@ -12,6 +13,7 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 - `unaccent`: For text normalization in search.
 
 ### ENUM Types
+
 ```sql
 CREATE TYPE user_role AS ENUM ('owner', 'admin', 'member', 'read_only');
 CREATE TYPE qr_status AS ENUM ('generated', 'printed', 'assigned');
@@ -44,7 +46,7 @@ Stores public user data, linked 1:1 with the `auth.users` table.
 - created_at: TIMESTAMPTZ NOT NULL DEFAULT now()
 - updated_at: TIMESTAMPTZ NOT NULL DEFAULT now()
 
-*Trigger: Automatically update the `updated_at` column on record updates.*
+_Trigger: Automatically update the `updated_at` column on record updates._
 
 ### 2.3. public.workspaces
 
@@ -56,7 +58,7 @@ Data isolation unit (Tenant). Every user belongs to at least one Workspace.
 - created_at: TIMESTAMPTZ DEFAULT now()
 - updated_at: TIMESTAMPTZ DEFAULT now()
 
-*Trigger: Automatically update the `updated_at` column on record updates.*
+_Trigger: Automatically update the `updated_at` column on record updates._
 
 ### 2.4. public.workspace_members
 
@@ -67,7 +69,7 @@ Junction table linking users to workspaces (many-to-many relationship).
 - role: USER_ROLE NOT NULL DEFAULT 'member'
 - joined_at: TIMESTAMPTZ DEFAULT now()
 
-*Primary Key: (workspace_id, user_id)*
+_Primary Key: (workspace_id, user_id)_
 
 ### 2.5. public.locations
 
@@ -82,14 +84,16 @@ Hierarchical storage structure. Supports Soft Delete.
 - created_at: TIMESTAMPTZ DEFAULT now()
 - updated_at: TIMESTAMPTZ DEFAULT now()
 
-*Indexes:*
+_Indexes:_
+
 - GIST index on `path`
 - Unique constraint on `path` within `workspace_id`
 
-*Constraints:*
+_Constraints:_
+
 - `nlevel(path) <= 5` (Max depth 5)
 
-*Trigger: Automatically update the `updated_at` column on record updates.*
+_Trigger: Automatically update the `updated_at` column on record updates._
 
 ### 2.6. public.boxes
 
@@ -107,14 +111,15 @@ Main inventory entity. Boxes can be unassigned (not linked to a location).
 - created_at: TIMESTAMPTZ DEFAULT now()
 - updated_at: TIMESTAMPTZ DEFAULT now()
 
-*Indexes:*
+_Indexes:_
+
 - GIN index on `search_vector`
 - Index on `tags`
 - Index on `location_id`
 
-*Trigger: Automatically update the `updated_at` column on record updates.*
-*Trigger: Generate unique `short_id` before insert.*
-*Trigger: Reset associated `qr_codes` record before delete (sets box_id to NULL, status to 'generated').*
+_Trigger: Automatically update the `updated_at` column on record updates._
+_Trigger: Generate unique `short_id` before insert._
+_Trigger: Reset associated `qr_codes` record before delete (sets box_id to NULL, status to 'generated')._
 
 ### 2.7. public.qr_codes
 
@@ -127,13 +132,14 @@ Registry of generated QR codes. 1:1 relationship with boxes.
 - status: QR_STATUS NOT NULL DEFAULT 'generated'
 - created_at: TIMESTAMPTZ DEFAULT now()
 
-*Indexes:*
+_Indexes:_
+
 - Index on `workspace_id`
 - Unique index on `short_id`
 - Index on `box_id`
 
-*Trigger: Generate unique `short_id` before insert (format: QR-XXXXXX).*
-*Trigger: When a box is deleted, reset associated QR code: set `box_id` to NULL and `status` to 'generated'.*
+_Trigger: Generate unique `short_id` before insert (format: QR-XXXXXX)._
+_Trigger: When a box is deleted, reset associated QR code: set `box_id` to NULL and `status` to 'generated'._
 
 ## 3. Relationships
 
@@ -151,6 +157,7 @@ All tables must have RLS enabled.
 **Helper Function:** `is_workspace_member(_workspace_id uuid)` checks if the current user belongs to the workspace.
 
 **Policies:**
+
 - **Workspaces:** Members can view. Owners/Admins can update/delete.
 - **Locations, Boxes, QR Codes:** Access allowed if `is_workspace_member(workspace_id)` is true.
 

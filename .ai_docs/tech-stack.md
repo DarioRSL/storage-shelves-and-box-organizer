@@ -12,6 +12,7 @@ Backend
 - Supabase
 
 CI/CD i Hosting
+
 - Github Actions
 - DigitalOcean
 
