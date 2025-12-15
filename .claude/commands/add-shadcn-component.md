@@ -11,9 +11,9 @@ Components are available in `src/components/ui` (per `components.json` alias con
 Import components using the configured `@/` alias:
 
 ```tsx
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 ```
 
 Example usage:
@@ -70,6 +70,7 @@ npx shadcn@latest add accordion
 ## Styling Configuration
 
 This project uses:
+
 - Style variant: "new-york"
 - Base color: "neutral"
 - CSS variables for theming (per `components.json`)
