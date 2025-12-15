@@ -536,7 +536,8 @@ begin
   end;
 
   -- Insert workspace with error handling
-  -- If this fails, the exception will propagate and rollback the auth.users insert
+  -- NOTE: The after_workspace_insert trigger (from 20251214120000_workspace_creation_trigger.sql)
+  -- will automatically add the user to workspace_members with role 'owner'
   begin
     insert into public.workspaces (owner_id, name)
     values (new.id, 'My Workspace')
@@ -546,15 +547,9 @@ begin
       raise exception 'Failed to create workspace for user %: %', new.id, sqlerrm;
   end;
 
-  -- Insert workspace member with error handling
-  -- If this fails, the exception will propagate and rollback the auth.users insert
-  begin
-    insert into public.workspace_members (workspace_id, user_id, role)
-    values (new_workspace_id, new.id, 'owner');
-  exception
-    when others then
-      raise exception 'Failed to add user % to workspace %: %', new.id, new_workspace_id, sqlerrm;
-  end;
+  -- REMOVED: workspace_members insert
+  -- The after_workspace_insert trigger handles this automatically now
+  -- This ensures consistency and avoids duplicate key violations
 
   return new;
 end;
