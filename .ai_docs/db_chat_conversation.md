@@ -1,4 +1,5 @@
 # Planowanie schematu bazy danych PostgreSQL
+
 _Exported on 10/12/2025 at 22:19:08 CET from Cursor (2.1.50)_
 
 ---
@@ -7,21 +8,17 @@ _Exported on 10/12/2025 at 22:19:08 CET from Cursor (2.1.50)_
 
 Jesteś asystentem AI, którego zadaniem jest pomoc w zaplanowaniu schematu bazy danych w PostgreSQL dla MVP (Minimum Viable Product) na podstawie dostarczonych informacji. Twoim celem jest wygenerowanie listy pytań i zaleceń, które zostaną wykorzystane w kolejnym promptowaniu do utworzenia schematu bazy danych, relacji i zasad bezpieczeństwa na poziomie wierszy (RLS).
 
-
-
 Prosimy o uważne zapoznanie się z poniższymi informacjami:
 
 <product_requirements>
 
-@.ai_docs/prd.md 
-
-
+@.ai_docs/prd.md
 
 </product_requirements>
 
 <tech_stack>
 
-@.ai_docs/tech-stack.md 
+@.ai_docs/tech-stack.md
 
 </tech_stack>
 
@@ -91,7 +88,7 @@ Oto lista pytań i rekomendacji dotyczących schematu bazy danych PostgreSQL dla
 
 2.  **Hierarchia Lokalizacji i Głębokość**
     Jak efektywnie przechowywać strukturę drzewiastą lokalizacji, aby wspierać szybkie pobieranie "breadcrumbs" i limit 5 poziomów?
-    **Rekomendacja:** Zalecam model *Adjacency List* (kolumna `parent_id` w tabeli `locations`) ze względu na prostotę operacji przenoszenia gałęzi. Aby zapewnić wydajne pobieranie ścieżek (breadcrumbs), sugeruję wykorzystanie rekurencyjnych zapytań CTE (Common Table Expressions) lub rozszerzenia `ltree` dostępnego w PostgreSQL. Limit 5 poziomów najlepiej egzekwować na poziomie logiki aplikacji (API) lub triggera `BEFORE INSERT/UPDATE`.
+    **Rekomendacja:** Zalecam model _Adjacency List_ (kolumna `parent_id` w tabeli `locations`) ze względu na prostotę operacji przenoszenia gałęzi. Aby zapewnić wydajne pobieranie ścieżek (breadcrumbs), sugeruję wykorzystanie rekurencyjnych zapytań CTE (Common Table Expressions) lub rozszerzenia `ltree` dostępnego w PostgreSQL. Limit 5 poziomów najlepiej egzekwować na poziomie logiki aplikacji (API) lub triggera `BEFORE INSERT/UPDATE`.
 
 3.  **Implementacja Soft Delete dla Lokalizacji**
     W jaki sposób technicznie obsłużyć wymóg "Soft Delete" dla lokalizacji przy jednoczesnym przenoszeniu pudełek do statusu "Nieprzypisane"?
@@ -190,10 +187,10 @@ Oto kolejna runda pytań i rekomendacji, koncentrująca się na szczegółach im
     **Rekomendacja:** Tak. Mimo walidacji na frontendzie, baza powinna być ostateczną strażą. Rekomenduję `CHECK constraint` na długość nazwy (np. `min 1, max 100 znaków`) oraz `NOT NULL`. Dla opisu limit 10 000 znaków (zgodnie z PRD) również powinien być wymuszony typem `VARCHAR(10000)` lub constraintem.
 
 8.  **Usuwanie Pudełek (Soft Delete vs Hard Delete)**
-    Wymagania wspominają o Soft Delete dla *Lokalizacji*. Czy *Pudełka* też powinny być usuwalne "miękko" (do kosza), czy trwale?
+    Wymagania wspominają o Soft Delete dla _Lokalizacji_. Czy _Pudełka_ też powinny być usuwalne "miękko" (do kosza), czy trwale?
     **Rekomendacja:** Dla MVP i prostoty, a także zgodnie z zasadami RODO ("prawo do zapomnienia"), zalecam **Hard Delete** (trwałe usuwanie) dla Pudełek. Jeśli użytkownik klika "Usuń pudełko", znika ono bezpowrotnie. Upraszcza to widoki i zarządzanie kodami QR (kod QR wraca do puli lub zostaje usunięty/zdezaktywowany - tu trzeba decyzji).
-    *Podpytanie:* Co dzieje się z kodem QR po usunięciu pudełka? Czy kod staje się "wolny" do ponownego użycia na nowym pudełku (recykling etykiety), czy jest niszczony?
-    *Moja rekomendacja:* Kod QR powinien wracać do statusu `'printed'` (lub `'generated'`) i tracić powiązanie z usuniętym pudełkiem, co pozwoli na naklejenie nowej etykiety na nowe pudełko (jeśli fizycznie etykieta przetrwała) lub po prostu ponowne przypisanie.
+    _Podpytanie:_ Co dzieje się z kodem QR po usunięciu pudełka? Czy kod staje się "wolny" do ponownego użycia na nowym pudełku (recykling etykiety), czy jest niszczony?
+    _Moja rekomendacja:_ Kod QR powinien wracać do statusu `'printed'` (lub `'generated'`) i tracić powiązanie z usuniętym pudełkiem, co pozwoli na naklejenie nowej etykiety na nowe pudełko (jeśli fizycznie etykieta przetrwała) lub po prostu ponowne przypisanie.
 
 9.  **Widok zmaterializowany dla statystyk (opcjonalnie)**
     Czy potrzebujemy szybkiego dostępu do liczby pudełek w lokalizacjach (np. "Garaż (15 pudełek)")?
@@ -227,7 +224,7 @@ Oto kolejna runda pytań i rekomendacji, koncentrująca się na szczegółach im
 
 9. zgadzam się z rekomendacją.
 
-10. zgadzam się z rekomendacją. 
+10. zgadzam się z rekomendacją.
 
 ---
 
@@ -314,6 +311,7 @@ Poniżej przygotowałem **Podsumowanie Specyfikacji Technicznej**, które jest b
 <podsumowanie_specyfikacji>
 
 ### Założenia Architektoniczne
+
 1.  **Silnik**: PostgreSQL (Supabase).
 2.  **Klucze**: UUID v4 dla wszystkich tabel.
 3.  **Multi-tenancy**: Separacja danych na poziomie logicznym poprzez `workspace_id` w każdej głównej tabeli.
@@ -322,52 +320,54 @@ Poniżej przygotowałem **Podsumowanie Specyfikacji Technicznej**, które jest b
 ### Struktura Danych (Encje)
 
 1.  **`public.profiles`**
-    *   Relacja 1:1 z `auth.users`.
-    *   Przechowuje `default_workspace_id`.
-    *   Tworzone automatycznie przez Trigger po rejestracji.
+    - Relacja 1:1 z `auth.users`.
+    - Przechowuje `default_workspace_id`.
+    - Tworzone automatycznie przez Trigger po rejestracji.
 
 2.  **`public.workspaces`**
-    *   Jednostka izolacji danych.
-    *   Pola: `name`, `owner_id`.
+    - Jednostka izolacji danych.
+    - Pola: `name`, `owner_id`.
 
 3.  **`public.workspace_members`**
-    *   Tabela łącząca użytkowników z przestrzeniami roboczymi.
-    *   Rola: `ENUM` ('owner', 'read_only').
+    - Tabela łącząca użytkowników z przestrzeniami roboczymi.
+    - Rola: `ENUM` ('owner', 'read_only').
 
 4.  **`public.locations`**
-    *   Hierarchia: Drzewo oparte o `ltree` (rozszerzenie PostgreSQL) dla szybkiego wyszukiwania ścieżek i poddrzew.
-    *   Limit zagłębienia: do 5 poziomów (walidacja w aplikacji/API).
-    *   Usuwanie: **Soft Delete** (`deleted_at`).
-    *   Pola: `name`, `parent_id`, `path` (ltree).
+    - Hierarchia: Drzewo oparte o `ltree` (rozszerzenie PostgreSQL) dla szybkiego wyszukiwania ścieżek i poddrzew.
+    - Limit zagłębienia: do 5 poziomów (walidacja w aplikacji/API).
+    - Usuwanie: **Soft Delete** (`deleted_at`).
+    - Pola: `name`, `parent_id`, `path` (ltree).
 
 5.  **`public.qr_codes`**
-    *   Niezależna tabela kodów.
-    *   Pola: `short_id` (unikalne 10-12 znaków, generowane funkcją DB), `status` (ENUM: 'generated', 'printed', 'assigned').
-    *   Relacja: Może istnieć bez pudełka.
+    - Niezależna tabela kodów.
+    - Pola: `short_id` (unikalne 10-12 znaków, generowane funkcją DB), `status` (ENUM: 'generated', 'printed', 'assigned').
+    - Relacja: Może istnieć bez pudełka.
 
 6.  **`public.boxes`**
-    *   Główna encja inwentarza.
-    *   Relacja do `locations`: Opcjonalna (NULL = Nieprzypisane).
-    *   Relacja do `qr_codes`: 1:1 (Unique FK).
-    *   Tagi: Tablica tekstowa `TEXT[]`.
-    *   Wyszukiwanie: Kolumna `tsvector` generowana automatycznie z nazwy, opisu i tagów + indeks GIN.
-    *   Usuwanie: **Hard Delete** (Trigger czyści powiązany kod QR lub zmienia jego status).
+    - Główna encja inwentarza.
+    - Relacja do `locations`: Opcjonalna (NULL = Nieprzypisane).
+    - Relacja do `qr_codes`: 1:1 (Unique FK).
+    - Tagi: Tablica tekstowa `TEXT[]`.
+    - Wyszukiwanie: Kolumna `tsvector` generowana automatycznie z nazwy, opisu i tagów + indeks GIN.
+    - Usuwanie: **Hard Delete** (Trigger czyści powiązany kod QR lub zmienia jego status).
 
 ### Logika Biznesowa w Bazie (Funkcje i Triggery)
+
 1.  **Extensions**: `uuid-ossp`, `moddatetime`, `ltree`.
 2.  **Triggers**:
-    *   `handle_new_user`: Tworzy profil i workspace.
-    *   `handle_updated_at`: Automatyczna aktualizacja timestampów.
-    *   `generate_path`: Automatyczne budowanie ścieżki `ltree` na podstawie `parent_id`.
-    *   `on_box_delete`: Usuwa powiązany rekord z `qr_codes` (zgodnie z decyzją o niszczeniu etykiet).
+    - `handle_new_user`: Tworzy profil i workspace.
+    - `handle_updated_at`: Automatyczna aktualizacja timestampów.
+    - `generate_path`: Automatyczne budowanie ścieżki `ltree` na podstawie `parent_id`.
+    - `on_box_delete`: Usuwa powiązany rekord z `qr_codes` (zgodnie z decyzją o niszczeniu etykiet).
 3.  **Funkcje**:
-    *   `generate_unique_short_id()`: Pętla generująca unikalny ciąg.
-    *   `is_workspace_member(workspace_id)`: Funkcja pomocnicza do polityk RLS.
+    - `generate_unique_short_id()`: Pętla generująca unikalny ciąg.
+    - `is_workspace_member(workspace_id)`: Funkcja pomocnicza do polityk RLS.
 
 ### Bezpieczeństwo
-*   Wszystkie tabele z włączonym RLS.
-*   Polityki sprawdzają funkcję `is_workspace_member()`.
-*   Brak publicznego dostępu do tabel (tylko dla uwierzytelnionych użytkowników).
+
+- Wszystkie tabele z włączonym RLS.
+- Polityki sprawdzają funkcję `is_workspace_member()`.
+- Brak publicznego dostępu do tabel (tylko dla uwierzytelnionych użytkowników).
 
 </podsumowanie_specyfikacji>
 
@@ -379,8 +379,6 @@ Czy chcesz, abym na podstawie tego podsumowania wygenerował teraz kompletny pli
 **User**
 
 ---
-
-
 
 Jesteś asystentem AI, którego zadaniem jest podsumowanie rozmowy na temat planowania bazy danych dla MVP i przygotowanie zwięzłego podsumowania dla następnego etapu rozwoju. W historii konwersacji znajdziesz następujące informacje:
 
@@ -451,20 +449,20 @@ Końcowy wynik powinien zawierać tylko treść w formacie markdown. Upewnij si�
 1.  **Model Multi-tenancy**: Przyjęto model oparty na `Workspaces`, gdzie dane są izolowane logicznie przez `workspace_id`.
 2.  **Struktura Drzewiasta**: Wybrano rozszerzenie `ltree` do obsługi hierarchii lokalizacji (zamiast prostego Adjacency List z CTE dla ścieżek).
 3.  **Cykl Życia Danych**:
-    *   **Lokalizacje**: Soft Delete (oznaczanie jako usunięte, zachowanie historii).
-    *   **Pudełka**: Hard Delete (trwałe usuwanie).
-    *   **Kody QR po usunięciu pudełka**: Są trwale usuwane/niszczone (kaskadowe czyszczenie).
+    - **Lokalizacje**: Soft Delete (oznaczanie jako usunięte, zachowanie historii).
+    - **Pudełka**: Hard Delete (trwałe usuwanie).
+    - **Kody QR po usunięciu pudełka**: Są trwale usuwane/niszczone (kaskadowe czyszczenie).
 4.  **Typy Danych**:
-    *   Klucze główne: UUID v4.
-    *   Tagi: Tablica tekstowa `TEXT[]`.
-    *   Statusy QR: Typ `ENUM` ('generated', 'printed', 'assigned').
-    *   Daty: `TIMESTAMPTZ`.
+    - Klucze główne: UUID v4.
+    - Tagi: Tablica tekstowa `TEXT[]`.
+    - Statusy QR: Typ `ENUM` ('generated', 'printed', 'assigned').
+    - Daty: `TIMESTAMPTZ`.
 5.  **Identyfikatory**: Krótkie ID (Short ID) o długości 10-12 znaków, generowane i walidowane (unikalność) przez funkcję w bazie danych.
 6.  **Wyszukiwanie**: Zastosowanie kolumny `tsvector` (indeksowanej GIN) łączącej nazwę, opis i tagi dla Live Search.
 7.  **Logika Biznesowa w DB**:
-    *   Automatyczna aktualizacja `updated_at` (rozszerzenie `moddatetime`).
-    *   Automatyczne tworzenie profilu użytkownika i workspace po rejestracji (Triggery).
-    *   Trigger `AFTER DELETE` na pudełkach do usuwania powiązanych kodów QR.
+    - Automatyczna aktualizacja `updated_at` (rozszerzenie `moddatetime`).
+    - Automatyczne tworzenie profilu użytkownika i workspace po rejestracji (Triggery).
+    - Trigger `AFTER DELETE` na pudełkach do usuwania powiązanych kodów QR.
 
 </decisions>
 
@@ -485,15 +483,17 @@ Końcowy wynik powinien zawierać tylko treść w formacie markdown. Upewnij si�
 Schemat bazy danych dla MVP Storage & Box Organizer został zaprojektowany w oparciu o PostgreSQL na platformie Supabase, z naciskiem na bezpieczeństwo (RLS) i wydajność operacji na strukturach hierarchicznych.
 
 **Główne Encje i Relacje:**
-*   **Użytkownicy i Workspace**: System oparty na `public.profiles` oraz `public.workspaces`. Tabela łącząca `workspace_members` definiuje uprawnienia (role).
-*   **Lokalizacje (`locations`)**: Struktura drzewiasta obsługiwana przez `ltree`, z limitem głębokości (5 poziomów) walidowanym w aplikacji. Obsługa "Soft Delete" zachowuje spójność drzewa.
-*   **Pudełka (`boxes`)**: Centralna encja przechowująca inwentarz. Może istnieć bez lokalizacji (status "Nieprzypisane"). Posiada zdenormalizowany wektor wyszukiwania (`tsvector`) dla wydajności.
-*   **Kody QR (`qr_codes`)**: Niezależna tabela inwentaryzująca wygenerowane kody. Relacja 1:1 z pudełkiem. Usunięcie pudełka powoduje fizyczne usunięcie powiązanego rekordu kodu QR.
+
+- **Użytkownicy i Workspace**: System oparty na `public.profiles` oraz `public.workspaces`. Tabela łącząca `workspace_members` definiuje uprawnienia (role).
+- **Lokalizacje (`locations`)**: Struktura drzewiasta obsługiwana przez `ltree`, z limitem głębokości (5 poziomów) walidowanym w aplikacji. Obsługa "Soft Delete" zachowuje spójność drzewa.
+- **Pudełka (`boxes`)**: Centralna encja przechowująca inwentarz. Może istnieć bez lokalizacji (status "Nieprzypisane"). Posiada zdenormalizowany wektor wyszukiwania (`tsvector`) dla wydajności.
+- **Kody QR (`qr_codes`)**: Niezależna tabela inwentaryzująca wygenerowane kody. Relacja 1:1 z pudełkiem. Usunięcie pudełka powoduje fizyczne usunięcie powiązanego rekordu kodu QR.
 
 **Bezpieczeństwo i Skalowalność:**
-*   Wdrożenie **Row Level Security (RLS)** na wszystkich tabelach, wykorzystujące funkcję pomocniczą sprawdzającą przynależność do Workspace.
-*   Użycie **UUID** zapobiega enumeracji zasobów.
-*   Wydajność zapewniona przez minimalny, celowany zestaw indeksów oraz natywne mechanizmy PostgreSQL (`GIN`, `ltree`).
+
+- Wdrożenie **Row Level Security (RLS)** na wszystkich tabelach, wykorzystujące funkcję pomocniczą sprawdzającą przynależność do Workspace.
+- Użycie **UUID** zapobiega enumeracji zasobów.
+- Wydajność zapewniona przez minimalny, celowany zestaw indeksów oraz natywne mechanizmy PostgreSQL (`GIN`, `ltree`).
 
 </database_planning_summary>
 
@@ -504,4 +504,3 @@ Brak krytycznych nierozwiązanych kwestii. Wszystkie kluczowe decyzje architekto
 </unresolved_issues>
 
 </conversation_summary>
-
