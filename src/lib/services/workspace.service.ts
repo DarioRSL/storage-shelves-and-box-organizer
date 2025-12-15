@@ -54,3 +54,52 @@ export async function createWorkspace(
     };
   }
 }
+
+/**
+ * Retrieves all workspaces that the authenticated user is a member of.
+ *
+ * Uses a join with workspace_members to filter workspaces where the user
+ * has membership. Row Level Security (RLS) policies automatically ensure
+ * users only see workspaces they belong to.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param userId - ID of the authenticated user
+ * @returns Array of workspaces the user belongs to
+ * @throws Error if the database query fails
+ */
+export async function getUserWorkspaces(supabase: SupabaseClient, userId: string): Promise<WorkspaceDto[]> {
+  try {
+    // Query workspaces joined with workspace_members
+    // Using the more explicit approach with select
+    const { data, error } = await supabase
+      .from("workspace_members")
+      .select(
+        `
+        workspace:workspaces(*)
+      `
+      )
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching user workspaces:", error);
+      throw new Error("Failed to retrieve workspaces");
+    }
+
+    // Transform the nested structure to flat WorkspaceDto array
+    // Filter out any null workspace references and sort by created_at DESC
+    const workspaces = (data || [])
+      .map((item) => item.workspace)
+      .filter((workspace): workspace is WorkspaceDto => workspace !== null)
+      .sort((a, b) => {
+        // Sort by created_at descending (newest first)
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
+
+    return workspaces;
+  } catch (error) {
+    console.error("Unexpected error in getUserWorkspaces:", error);
+    throw error instanceof Error ? error : new Error("Failed to retrieve workspaces");
+  }
+}
