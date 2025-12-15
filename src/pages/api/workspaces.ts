@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { createWorkspace } from "@/lib/services/workspace.service";
+import { createWorkspace, getUserWorkspaces } from "@/lib/services/workspace.service";
 import type { CreateWorkspaceRequest, WorkspaceDto, ErrorResponse } from "@/types";
 
 export const prerender = false;
@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return new Response(
         JSON.stringify({
           error: "Nieprawidłowy format żądania",
@@ -101,6 +101,57 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: "Wystąpił nieoczekiwany błąd",
+      } as ErrorResponse),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
+
+/**
+ * GET /api/workspaces
+ * Retrieves all workspaces that the authenticated user belongs to.
+ */
+export const GET: APIRoute = async ({ locals }) => {
+  try {
+    // 1. Get Supabase client from context
+    const supabase = locals.supabase;
+
+    // 2. Verify authentication
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({
+          error: "Nie jesteś uwierzytelniony",
+          details: "Użytkownik nie jest zalogowany",
+        } as ErrorResponse),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // 3. Call service layer to get user workspaces
+    const workspaces = await getUserWorkspaces(supabase, user.id);
+
+    // 4. Return success response with workspaces array
+    return new Response(JSON.stringify(workspaces), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Unexpected error in GET /api/workspaces:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Wystąpił błąd wewnętrzny serwera",
+        details: "Nie udało się pobrać workspace'ów",
       } as ErrorResponse),
       {
         status: 500,
