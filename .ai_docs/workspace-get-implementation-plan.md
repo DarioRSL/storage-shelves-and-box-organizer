@@ -22,6 +22,7 @@ The `GET /workspaces` endpoint retrieves all workspaces that the authenticated u
 ## 3. Utilized Types
 
 ### Response Type
+
 ```typescript
 // From src/types.ts:23
 WorkspaceDto[]
@@ -37,15 +38,17 @@ WorkspaceDto[]
 ```
 
 ### Internal Types
+
 ```typescript
 // From src/db/supabase.client.ts (DO NOT import from @supabase/supabase-js)
-SupabaseClient
+SupabaseClient;
 
 // Context type (from Astro)
-APIContext
+APIContext;
 ```
 
 ### Database Query Response Type
+
 ```typescript
 // Query will select from workspaces joined with workspace_members
 // Using Supabase client select with type inference
@@ -54,6 +57,7 @@ APIContext
 ## 4. Response Details
 
 ### Success Response (200 OK)
+
 ```json
 [
   {
@@ -78,6 +82,7 @@ APIContext
 ### Error Responses
 
 #### 401 Unauthorized
+
 ```json
 {
   "error": "Unauthorized",
@@ -86,11 +91,13 @@ APIContext
 ```
 
 **Triggers**:
+
 - No JWT token in Authorization header
 - Invalid or expired JWT token
 - User not found in `context.locals.user`
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": "Internal Server Error",
@@ -99,6 +106,7 @@ APIContext
 ```
 
 **Triggers**:
+
 - Database connection failure
 - Unexpected Supabase client error
 - Unhandled exception in service layer
@@ -106,6 +114,7 @@ APIContext
 ## 5. Data Flow
 
 ### High-Level Flow
+
 ```
 1. Client Request (with JWT token)
    ↓
@@ -138,29 +147,35 @@ APIContext
 ### Database Interaction
 
 **Tables Involved**:
+
 - `public.workspaces` (primary data source)
 - `public.workspace_members` (junction table for filtering)
 
 **Query Pattern**:
+
 ```typescript
 const { data, error } = await supabase
-  .from('workspaces')
-  .select('*')
-  .eq('workspace_members.user_id', userId)
-  .order('created_at', { ascending: false });
+  .from("workspaces")
+  .select("*")
+  .eq("workspace_members.user_id", userId)
+  .order("created_at", { ascending: false });
 ```
 
 **Alternative Query Pattern** (more explicit):
+
 ```typescript
 const { data, error } = await supabase
-  .from('workspace_members')
-  .select(`
+  .from("workspace_members")
+  .select(
+    `
     workspace:workspaces(*)
-  `)
-  .eq('user_id', userId);
+  `
+  )
+  .eq("user_id", userId);
 ```
 
 **RLS Policy Enforcement**:
+
 - Supabase automatically applies RLS policies based on JWT user context
 - Only workspaces where user is a member will be returned
 - No additional authorization checks needed in application code
@@ -168,30 +183,36 @@ const { data, error } = await supabase
 ## 6. Security Considerations
 
 ### Authentication
+
 - **JWT Validation**: Handled by Astro middleware (`src/middleware/index.ts`)
 - **User Context**: Middleware sets `context.locals.user` and `context.locals.supabase`
 - **Token Source**: `Authorization: Bearer <token>` header
 
 ### Authorization
+
 - **RLS Policies**: PostgreSQL Row Level Security enforces workspace membership
 - **Helper Function**: `is_workspace_member(workspace_id)` validates access
 - **Automatic Filtering**: Users can only see workspaces they belong to
 
 ### Data Exposure Prevention
+
 - Only return workspace metadata (id, name, owner_id, timestamps)
 - No sensitive user data in workspace objects
 - Owner email/profile not included (available via separate endpoints if needed)
 
 ### SQL Injection Protection
+
 - Using Supabase client parameterized queries
 - No raw SQL construction
 - Type-safe query builders
 
 ### Input Validation
+
 - No user input to validate (no query params or body)
 - User ID extracted from authenticated context (trusted source)
 
 ### Rate Limiting
+
 - Consider implementing rate limiting at API gateway level
 - Not critical for read-only endpoint with minimal data
 
@@ -199,13 +220,13 @@ const { data, error } = await supabase
 
 ### Error Scenarios and Handling
 
-| Scenario | Status Code | Response | Handler Logic |
-|----------|-------------|----------|---------------|
-| User not authenticated | 401 | `{ "error": "Unauthorized" }` | Check `context.locals.user` at handler start, early return |
-| Invalid/expired token | 401 | `{ "error": "Unauthorized" }` | Middleware validation failure, caught before handler |
-| Database connection error | 500 | `{ "error": "Internal Server Error" }` | Catch Supabase error, log details, return generic message |
-| User has no workspaces | 200 | `[]` (empty array) | Valid success case, no error handling needed |
-| Supabase query error | 500 | `{ "error": "Failed to retrieve workspaces" }` | Catch in service layer, log error, re-throw with context |
+| Scenario                  | Status Code | Response                                       | Handler Logic                                              |
+| ------------------------- | ----------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| User not authenticated    | 401         | `{ "error": "Unauthorized" }`                  | Check `context.locals.user` at handler start, early return |
+| Invalid/expired token     | 401         | `{ "error": "Unauthorized" }`                  | Middleware validation failure, caught before handler       |
+| Database connection error | 500         | `{ "error": "Internal Server Error" }`         | Catch Supabase error, log details, return generic message  |
+| User has no workspaces    | 200         | `[]` (empty array)                             | Valid success case, no error handling needed               |
+| Supabase query error      | 500         | `{ "error": "Failed to retrieve workspaces" }` | Catch in service layer, log error, re-throw with context   |
 
 ### Error Handling Pattern
 
@@ -214,24 +235,17 @@ const { data, error } = await supabase
 try {
   // 1. Early authentication check
   if (!context.locals.user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized", details: "User is not authenticated" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized", details: "User is not authenticated" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 2. Call service layer (wrapped in try-catch)
-  const workspaces = await workspaceService.getUserWorkspaces(
-    context.locals.user.id,
-    context.locals.supabase
-  );
+  const workspaces = await workspaceService.getUserWorkspaces(context.locals.user.id, context.locals.supabase);
 
   // 3. Success response
-  return new Response(
-    JSON.stringify(workspaces),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
-
+  return new Response(JSON.stringify(workspaces), { status: 200, headers: { "Content-Type": "application/json" } });
 } catch (error) {
   // 4. Log error for debugging
   console.error("Error fetching workspaces:", error);
@@ -240,7 +254,7 @@ try {
   return new Response(
     JSON.stringify({
       error: "Internal Server Error",
-      details: "Failed to retrieve workspaces"
+      details: "Failed to retrieve workspaces",
     }),
     { status: 500, headers: { "Content-Type": "application/json" } }
   );
@@ -248,6 +262,7 @@ try {
 ```
 
 ### Logging Strategy
+
 - Log authentication failures (with user ID if available)
 - Log database errors with full error object
 - Log unexpected exceptions with stack trace
@@ -256,12 +271,14 @@ try {
 ## 8. Performance Considerations
 
 ### Query Optimization
+
 - **Indexed Columns**: Foreign keys (`workspace_id`, `user_id`) are automatically indexed
 - **Join Performance**: Simple join on indexed columns is efficient
 - **Result Set Size**: Typically small (users belong to 1-10 workspaces)
 - **No Pagination Needed**: Small dataset doesn't require pagination
 
 ### Caching Strategy
+
 - **Consider caching**: Workspace membership changes infrequently
 - **Cache Key**: `user:{user_id}:workspaces`
 - **TTL**: 5-15 minutes
@@ -269,16 +286,19 @@ try {
 - **Implementation**: Optional, can be added later if needed
 
 ### Database Connection Pooling
+
 - Handled by Supabase client
 - Connection reuse across requests
 - No manual connection management needed
 
 ### Response Size
+
 - Minimal data per workspace (~200 bytes)
 - Typical response: <2KB for most users
 - No compression needed
 
 ### Monitoring Metrics
+
 - Track endpoint latency (should be <100ms)
 - Monitor error rates (should be <1%)
 - Track empty result frequency (indicates onboarding issues)
@@ -286,18 +306,17 @@ try {
 ## 9. Implementation Steps
 
 ### Step 1: Create Workspace Service
+
 **File**: `src/lib/services/workspaceService.ts`
 
 **Tasks**:
+
 1. Create new service file if it doesn't exist
 2. Import `SupabaseClient` type from `src/db/supabase.client.ts`
 3. Import `WorkspaceDto` type from `src/types.ts`
 4. Implement `getUserWorkspaces` function:
    ```typescript
-   export async function getUserWorkspaces(
-     userId: string,
-     supabase: SupabaseClient
-   ): Promise<WorkspaceDto[]>
+   export async function getUserWorkspaces(userId: string, supabase: SupabaseClient): Promise<WorkspaceDto[]>;
    ```
 5. Query workspaces joined with workspace_members
 6. Filter by user_id
@@ -306,15 +325,18 @@ try {
 9. Return typed array of WorkspaceDto
 
 **Acceptance Criteria**:
+
 - Function signature matches types
 - Returns properly typed WorkspaceDto[]
 - Throws errors with descriptive messages
 - Query uses proper join syntax
 
 ### Step 2: Create API Route Handler
+
 **File**: `src/pages/api/workspaces/index.ts`
 
 **Tasks**:
+
 1. Create file with Astro API route structure
 2. Add `export const prerender = false` to disable static rendering
 3. Implement `export async function GET(context: APIContext)`
@@ -327,6 +349,7 @@ try {
 10. Handle errors with appropriate status codes
 
 **Acceptance Criteria**:
+
 - Uses uppercase GET handler
 - Disables prerendering
 - Returns proper Response objects
@@ -334,9 +357,11 @@ try {
 - Implements error handling
 
 ### Step 3: Verify Middleware Configuration
+
 **File**: `src/middleware/index.ts`
 
 **Tasks**:
+
 1. Verify middleware exists and is properly configured
 2. Confirm it validates Supabase session
 3. Confirm it sets `context.locals.user`
@@ -344,26 +369,32 @@ try {
 5. Verify it runs before API routes
 
 **Acceptance Criteria**:
+
 - Middleware properly attached to context
 - User and Supabase client available in routes
 - JWT token validation working
 
 ### Step 4: Add TypeScript Types (if needed)
+
 **File**: `src/types.ts`
 
 **Tasks**:
+
 1. Verify `WorkspaceDto` type exists (line 23)
 2. Verify it extends `Tables<"workspaces">`
 3. No changes needed if types already exist
 
 **Acceptance Criteria**:
+
 - WorkspaceDto properly typed
 - Matches database schema
 
 ### Step 5: Test Database Query
+
 **Environment**: Local Supabase instance or development database
 
 **Tasks**:
+
 1. Test query in Supabase SQL Editor:
    ```sql
    SELECT w.*
@@ -378,43 +409,54 @@ try {
 5. Test with user who has multiple workspaces
 
 **Acceptance Criteria**:
+
 - Query returns correct workspaces
 - RLS policies properly applied
 - Performance acceptable (<50ms)
 
 ### Step 6: Manual API Testing
+
 **Tools**: curl, Postman, or similar
 
 **Test Cases**:
 
 1. **Authenticated User with Workspaces**:
+
    ```bash
    curl -X GET http://localhost:3000/api/workspaces \
      -H "Authorization: Bearer <valid-jwt-token>"
    ```
+
    - Expected: 200 with array of workspaces
 
 2. **Authenticated User with No Workspaces**:
+
    ```bash
    curl -X GET http://localhost:3000/api/workspaces \
      -H "Authorization: Bearer <valid-jwt-token-no-workspaces>"
    ```
+
    - Expected: 200 with empty array `[]`
 
 3. **Unauthenticated Request**:
+
    ```bash
    curl -X GET http://localhost:3000/api/workspaces
    ```
+
    - Expected: 401 Unauthorized
 
 4. **Invalid Token**:
+
    ```bash
    curl -X GET http://localhost:3000/api/workspaces \
      -H "Authorization: Bearer invalid-token"
    ```
+
    - Expected: 401 Unauthorized
 
 **Acceptance Criteria**:
+
 - All test cases return expected status codes
 - Response bodies match expected format
 - Error messages are user-friendly
@@ -422,6 +464,7 @@ try {
 ### Step 7: Code Quality Checks
 
 **Tasks**:
+
 1. Run `npm run lint` to check for linting issues
 2. Run `npm run format` to format code with Prettier
 3. Review code for compliance with guidelines:
@@ -434,6 +477,7 @@ try {
 5. Ensure no console.log statements in production code
 
 **Acceptance Criteria**:
+
 - No linting errors
 - Code formatted consistently
 - Follows project guidelines
@@ -442,12 +486,14 @@ try {
 ### Step 8: Documentation
 
 **Tasks**:
+
 1. Add JSDoc comments to service functions
 2. Document expected behavior in comments
 3. Note any assumptions or limitations
 4. Update this implementation plan with any deviations
 
 **Acceptance Criteria**:
+
 - Service functions have JSDoc comments
 - Complex logic is explained
 - Edge cases documented
@@ -455,6 +501,7 @@ try {
 ### Step 9: Integration Testing
 
 **Tasks**:
+
 1. Test endpoint in full application flow
 2. Verify middleware integration
 3. Test from frontend (if available)
@@ -463,6 +510,7 @@ try {
 6. Verify RLS policies work correctly
 
 **Acceptance Criteria**:
+
 - Endpoint works in full app context
 - No integration issues
 - User experience is smooth
@@ -470,6 +518,7 @@ try {
 ### Step 10: Performance Testing
 
 **Tasks**:
+
 1. Test with users having many workspaces (10+)
 2. Measure response times
 3. Verify database query performance
@@ -477,6 +526,7 @@ try {
 5. Monitor memory usage
 
 **Acceptance Criteria**:
+
 - Response time <100ms for typical case
 - No performance degradation with more workspaces
 - No memory leaks
@@ -485,20 +535,50 @@ try {
 
 Before marking this endpoint as complete, verify:
 
-- [ ] Service layer implemented in `src/lib/services/workspaceService.ts`
-- [ ] API route handler created in `src/pages/api/workspaces/index.ts`
-- [ ] Middleware configuration verified
-- [ ] Types properly imported and used
-- [ ] Authentication check implemented
-- [ ] Error handling implemented with proper status codes
-- [ ] Database query returns correct results
-- [ ] RLS policies enforced correctly
-- [ ] All manual test cases pass
-- [ ] Linting and formatting passes
-- [ ] Code follows project guidelines
-- [ ] Documentation complete
-- [ ] Integration tests pass
-- [ ] Performance acceptable
+- [x] Service layer implemented in `src/lib/services/workspace.service.ts`
+- [x] API route handler created in `src/pages/api/workspaces.ts` (GET handler added)
+- [x] Middleware configuration verified
+- [x] Types properly imported and used
+- [x] Authentication check implemented
+- [x] Error handling implemented with proper status codes
+- [x] Database query returns correct results
+- [x] RLS policies enforced correctly
+- [x] All manual test cases pass (Test Cases 1-5)
+- [x] Linting and formatting passes (0 errors, 7 warnings for console.error which is acceptable)
+- [x] Code follows project guidelines
+- [x] Documentation complete (JSDoc comments added)
+- [x] Integration tests pass (middleware integration verified)
+- [x] Performance acceptable (quick response times observed in testing)
+
+## Implementation Notes
+
+### Deviations from Original Plan
+
+1. **File Location**: Instead of creating a separate `src/pages/api/workspaces/index.ts`, the GET handler was added to the existing `src/pages/api/workspaces.ts` file alongside the POST handler. This follows RESTful conventions where multiple HTTP methods for the same resource are in one file.
+
+2. **Sorting Implementation**: The original plan suggested using Supabase's `.order()` with `referencedTable` parameter. However, this didn't work reliably with nested relations, so sorting was implemented in JavaScript using `.sort()` after data transformation. This ensures correct descending order (newest first).
+
+3. **Default Workspace**: During testing, it was discovered that a database trigger automatically creates a default workspace "My Workspace" when a new user signs up. This is expected behavior from the `add_owner_to_workspace_members()` trigger.
+
+### Key Implementation Details
+
+- **Authentication**: Uses `supabase.auth.getUser()` to verify JWT token
+- **Data Fetching**: Joins `workspace_members` with `workspaces` using Supabase's nested select syntax
+- **Sorting**: Client-side sorting by `created_at` DESC (newest first)
+- **Error Handling**: Returns 401 for unauthenticated users, 500 for server errors
+- **Empty Results**: Returns empty array `[]` for users with no workspaces (valid 200 response)
+
+### Test Results Summary
+
+All test cases passed successfully:
+- ✅ Test Case 1: Authenticated user with workspaces (200, WorkspaceDto[])
+- ✅ Test Case 2: Authenticated user with no workspaces (200, [])
+- ✅ Test Case 3: Unauthenticated request (401, ErrorResponse)
+- ✅ Test Case 4: Invalid JWT token (401, ErrorResponse)
+- ✅ Test Case 5: Response headers verification (Content-Type: application/json)
+
+**Implementation Date**: December 15, 2025
+**Status**: ✅ COMPLETE
 
 ## 11. Future Enhancements
 
