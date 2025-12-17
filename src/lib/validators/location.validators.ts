@@ -19,3 +19,17 @@ export const CreateLocationSchema = z.object({
  * Type inference from Zod schema for type safety
  */
 export type CreateLocationInput = z.infer<typeof CreateLocationSchema>;
+
+/**
+ * Validation schema for GET /api/locations query parameters.
+ * Validates workspace_id (required) and parent_id (optional) for retrieving locations.
+ */
+export const GetLocationsQuerySchema = z.object({
+  workspace_id: z.string().uuid("Nieprawidłowy format ID przestrzeni roboczej"),
+  parent_id: z.string().uuid("Nieprawidłowy format ID lokalizacji nadrzędnej").nullable().optional(),
+});
+
+/**
+ * Type inference from Zod schema for type safety
+ */
+export type GetLocationsQueryInput = z.infer<typeof GetLocationsQuerySchema>;
