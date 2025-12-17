@@ -1,0 +1,141 @@
+import type { APIRoute } from "astro";
+import { ZodError } from "zod";
+import {
+  createLocation,
+  WorkspaceMembershipError,
+  ParentNotFoundError,
+  MaxDepthExceededError,
+  SiblingConflictError,
+} from "@/lib/services/location.service";
+import { CreateLocationSchema } from "@/lib/validators/location.validators";
+import type { ErrorResponse } from "@/types";
+
+export const prerender = false;
+
+/**
+ * POST /api/locations
+ * Creates a new location in the hierarchical storage structure.
+ *
+ * @returns 201 Created with location data on success, or appropriate error response
+ */
+export const POST: APIRoute = async ({ request, locals }) => {
+  try {
+    // 1. Get Supabase client from context
+    const supabase = locals.supabase;
+
+    // 2. Verify authentication
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({
+          error: "Nieautoryzowany dostęp",
+        } as ErrorResponse),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // 3. Parse request body
+    const body = await request.json();
+
+    // 4. Validate request body with Zod schema
+    const validatedData = CreateLocationSchema.parse(body);
+
+    // 5. Call service layer to create location
+    const location = await createLocation(supabase, user.id, validatedData);
+
+    // 6. Return 201 Created with location data
+    return new Response(JSON.stringify(location), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // Handle Zod validation errors
+    if (error instanceof ZodError) {
+      const formattedErrors: Record<string, string> = {};
+      error.errors.forEach((err) => {
+        const path = err.path.join(".");
+        formattedErrors[path] = err.message;
+      });
+
+      return new Response(
+        JSON.stringify({
+          error: "Walidacja nie powiodła się",
+          details: formattedErrors,
+        } as ErrorResponse),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Handle custom service errors
+    if (error instanceof WorkspaceMembershipError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        } as ErrorResponse),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (error instanceof ParentNotFoundError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        } as ErrorResponse),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (error instanceof MaxDepthExceededError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        } as ErrorResponse),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (error instanceof SiblingConflictError) {
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        } as ErrorResponse),
+        {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Handle generic errors
+    console.error("Unexpected error in POST /api/locations:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: "Wewnętrzny błąd serwera",
+      } as ErrorResponse),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
