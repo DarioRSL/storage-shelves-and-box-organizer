@@ -288,21 +288,45 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 #### DELETE /locations/:id
 
-- **Description**: Soft deletes a location. **Logic**: Unassigns all boxes in this location (sets `location_id` to NULL) before marking the location as deleted.
+- **Description**: Soft deletes a location. **Logic**: Unassigns all boxes in this location (sets `location_id` to NULL) before marking the location as deleted (`is_deleted = true`). This is a soft delete operation - the location is preserved in the database for audit trails.
+- **URL Parameters**:
+  - `id` (UUID, required): The ID of the location to delete.
 - **Query Parameters**: None
+- **Request Headers**:
+  - `Authorization: Bearer <token>` (required)
 - **Request JSON**: None
-- **Response JSON**:
+- **Response JSON** (200 OK):
 
 ```json
 {
-  "message": "Location deleted successfully and associated boxes unassigned."
+  "message": "Location deleted successfully and associated boxes unassigned"
 }
 ```
 
 - **Errors**:
-  - `404 Not Found`: Location not found.
-  - `401 Unauthorized`: Permission denied.
-  - `500 Internal Server Error`: Failed to execute soft delete RPC.
+  - `400 Bad Request`: Invalid UUID format.
+    ```json
+    { "error": "Invalid location ID format" }
+    ```
+  - `401 Unauthorized`: User not authenticated.
+    ```json
+    { "error": "Unauthorized" }
+    ```
+  - `404 Not Found`: Location does not exist or user lacks access (RLS).
+    ```json
+    { "error": "Location not found" }
+    ```
+  - `500 Internal Server Error`: Database operation failed.
+    ```json
+    { "error": "Failed to delete location" }
+    ```
+
+- **Implementation Details**:
+  - **File**: `src/pages/api/locations/[id].ts` (DELETE handler)
+  - **Service**: `src/lib/services/location.service.ts` (`deleteLocation` function)
+  - **Security**: Row Level Security (RLS) enforces workspace membership
+  - **Transaction**: Two UPDATE operations (boxes unassignment + location soft delete)
+  - **Audit Logging**: Success and error cases are logged with user ID and location ID
 
 ### 2.3 Boxes
 
