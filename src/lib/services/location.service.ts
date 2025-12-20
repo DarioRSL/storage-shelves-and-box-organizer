@@ -572,3 +572,83 @@ export async function updateLocation(
     updated_at: updated.updated_at,
   };
 }
+
+/**
+ * Soft deletes a location and unassigns all boxes from it.
+ * This is a soft delete operation - the location is marked as deleted (is_deleted = true)
+ * rather than being physically removed from the database. All boxes assigned to this
+ * location are automatically unassigned (location_id set to NULL).
+ *
+ * @param supabase - Supabase client instance
+ * @param locationId - UUID of the location to delete
+ * @param userId - ID of the authenticated user (for audit logging)
+ * @returns Promise resolving to void on success
+ *
+ * @throws {NotFoundError} Location doesn't exist, is already deleted, or user lacks access (RLS)
+ * @throws {Error} Database operation fails
+ *
+ * @example
+ * await deleteLocation(supabase, locationId, userId);
+ */
+export async function deleteLocation(supabase: SupabaseClient, locationId: string, userId: string): Promise<void> {
+  // Step 1: Verify location exists and user has access (RLS enforced)
+  const { data: location, error: fetchError } = await supabase
+    .from("locations")
+    .select("id, workspace_id, is_deleted")
+    .eq("id", locationId)
+    .single();
+
+  // Handle fetch errors or missing location
+  if (fetchError || !location) {
+    console.error("Location service - Lokalizacja nie znaleziona:", {
+      locationId,
+      userId,
+      error: fetchError?.message,
+    });
+    throw new NotFoundError("Lokalizacja nie została znaleziona");
+  }
+
+  // Check if already soft-deleted
+  if (location.is_deleted) {
+    console.error("Location service - Lokalizacja już usunięta:", {
+      locationId,
+      userId,
+    });
+    throw new NotFoundError("Lokalizacja nie została znaleziona");
+  }
+
+  // Step 2: Execute soft delete transaction
+  // First, unassign all boxes from this location
+  const { error: unassignError } = await supabase
+    .from("boxes")
+    .update({ location_id: null })
+    .eq("location_id", locationId);
+
+  if (unassignError) {
+    console.error("Location service - Nie udało się odłączyć pudełek:", {
+      locationId,
+      userId,
+      error: unassignError.message,
+    });
+    throw new Error("Nie udało się usunąć lokalizacji");
+  }
+
+  // Second, mark location as deleted
+  const { error: deleteError } = await supabase.from("locations").update({ is_deleted: true }).eq("id", locationId);
+
+  if (deleteError) {
+    console.error("Location service - Nie udało się oznaczyć lokalizacji jako usuniętej:", {
+      locationId,
+      userId,
+      error: deleteError.message,
+    });
+    throw new Error("Nie udało się usunąć lokalizacji");
+  }
+
+  // Success - log for audit trail
+  console.log("Location service - Lokalizacja usunięta:", {
+    locationId,
+    userId,
+    workspaceId: location.workspace_id,
+  });
+}
