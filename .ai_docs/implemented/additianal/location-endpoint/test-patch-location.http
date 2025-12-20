@@ -1,0 +1,120 @@
+### PATCH /api/locations/:id - Test Scenarios
+### This file contains HTTP requests to test the PATCH endpoint
+### Use REST Client extension in VS Code or any HTTP client
+
+### SETUP: You need to set these variables:
+# @baseUrl = http://localhost:3000
+# @token = your_jwt_token_here
+# @locationId = existing_location_uuid_here
+# @workspaceId = your_workspace_id_here
+
+### TEST DATA EXAMPLE (from automated tests):
+# @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjU0MzIxL2F1dGgvdjEiLCJzdWIiOiJiZTMxN2FmNy0xY2ViLTRkOTMtYWY4NC1mZjQ1ODgwMDRiNDMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY2MjU2NTM3LCJpYXQiOjE3NjYyNTI5MzcsImVtYWlsIjoidGVzdHBhdGNoQGV4YW1wbGUuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6InRlc3RwYXRjaEBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6ImJlMzE3YWY3LTFjZWItNGQ5My1hZjg0LWZmNDU4ODAwNGI0MyJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzY2MjUyOTM3fV0sInNlc3Npb25faWQiOiIwNjM1YTMzNC03YmNjLTQ0NjEtOGJjNC1jN2QyNjYzODgzZGYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.g4EPPXUVRdHMv2dtBT1iL35naQ_CmQWVST5GlWNHVj8
+# @workspaceId = 67b47c38-73a5-4265-a9c1-466f113cb8b9
+# @locationId = d5903dfc-ae32-4d48-8e6a-b8e13ca0a310 (Shelf A)
+# @shelfBId = 76c480fd-f456-4e60-9d20-e0a84840396e (Shelf B)
+
+### 1. HAPPY PATH - Update location name only
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Location Name"
+}
+
+### 2. HAPPY PATH - Update description only
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "description": "This is an updated description for the location"
+}
+
+### 3. HAPPY PATH - Update both name and description
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Completely New Name",
+  "description": "And a new description too"
+}
+
+### 4. HAPPY PATH - Set description to null
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "description": null
+}
+
+### 5. VALIDATION ERROR - Empty request body (400)
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+}
+
+### 6. VALIDATION ERROR - Empty name string (400)
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": ""
+}
+
+### 7. VALIDATION ERROR - Invalid UUID format (400)
+PATCH http://localhost:3000/api/locations/invalid-uuid
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Test Name"
+}
+
+### 8. AUTHENTICATION ERROR - Missing token (401)
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+
+{
+  "name": "Test Without Auth"
+}
+
+### 9. NOT FOUND ERROR - Non-existent location (404)
+PATCH http://localhost:3000/api/locations/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Test Name"
+}
+
+### 10. CONFLICT ERROR - Duplicate sibling name (409)
+### Try to rename Shelf A to "Shelf B" (which already exists as a sibling)
+PATCH http://localhost:3000/api/locations/{{locationId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Shelf B"
+}
+
+### Helper: First, create a test location using POST
+POST http://localhost:3000/api/locations
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "workspace_id": "{{workspaceId}}",
+  "name": "Test Location for PATCH",
+  "description": "This location will be used for testing PATCH endpoint"
+}
+
+### Helper: Get all locations to find IDs
+GET http://localhost:3000/api/locations?workspace_id={{workspaceId}}
+Authorization: Bearer {{token}}

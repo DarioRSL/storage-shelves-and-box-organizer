@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateLocationRequest, LocationDto } from "@/types";
+import type { CreateLocationRequest, LocationDto, UpdateLocationRequest, UpdateLocationResponse } from "@/types";
 
 /**
  * Custom error classes for location service operations
@@ -34,6 +34,27 @@ export class SiblingConflictError extends Error {
   }
 }
 
+export class NotFoundError extends Error {
+  constructor(message = "Location not found") {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
+
+export class ConflictError extends Error {
+  constructor(message = "A location with this name already exists at this level") {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+export class ForbiddenError extends Error {
+  constructor(message = "Forbidden: You do not have access to this location") {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
 /**
  * Normalizes location name for ltree path generation.
  * Converts to lowercase, replaces special characters with underscores.
@@ -54,6 +75,57 @@ export function normalizeLocationName(name: string): string {
     .replace(/[^a-z0-9_]/g, "_") // Replace non-alphanumeric (except _) with _
     .replace(/_+/g, "_") // Collapse multiple underscores
     .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
+}
+
+/**
+ * Alias for normalizeLocationName, used in PATCH endpoint implementation.
+ * Converts location name to URL-safe slug for ltree path.
+ *
+ * @param name - The location name to slugify
+ * @returns Slugified name suitable for ltree paths
+ */
+export function slugify(name: string): string {
+  return normalizeLocationName(name);
+}
+
+/**
+ * Extracts parent path from an ltree path string.
+ *
+ * @param path - Full ltree path (e.g., "root.garage.shelf_a")
+ * @returns Parent path (e.g., "root.garage") or empty string if at root level
+ *
+ * @example
+ * getParentPath("root.garage.shelf_a") // returns "root.garage"
+ * getParentPath("root.garage") // returns "root"
+ * getParentPath("root") // returns ""
+ */
+export function getParentPath(path: string): string {
+  const segments = path.split(".");
+  if (segments.length <= 1) {
+    return "";
+  }
+  return segments.slice(0, -1).join(".");
+}
+
+/**
+ * Regenerates ltree path with new name while preserving parent hierarchy.
+ *
+ * @param oldPath - Current ltree path
+ * @param newName - New location name
+ * @returns New ltree path with updated last segment
+ *
+ * @example
+ * regeneratePath("root.garage.shelf_a", "Top Shelf") // returns "root.garage.top_shelf"
+ */
+export function regeneratePath(oldPath: string, newName: string): string {
+  const parentPath = getParentPath(oldPath);
+  const newSlug = slugify(newName);
+
+  if (!parentPath) {
+    return newSlug;
+  }
+
+  return `${parentPath}.${newSlug}`;
 }
 
 /**
@@ -86,6 +158,38 @@ export function buildLocationPath(parentPath: string | null, normalizedName: str
  */
 export function getPathDepth(path: string): number {
   return path.split(".").length;
+}
+
+/**
+ * Checks if a sibling location with the same name already exists.
+ *
+ * @param supabase - Supabase client instance
+ * @param workspaceId - Workspace ID to check within
+ * @param currentPath - Current location's ltree path
+ * @param newName - Proposed new name
+ * @param excludeId - Location ID to exclude from conflict check (the location being updated)
+ * @returns Promise resolving to true if conflict exists, false otherwise
+ */
+async function checkSiblingNameConflict(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  currentPath: string,
+  newName: string,
+  excludeId: string
+): Promise<boolean> {
+  const parentPath = getParentPath(currentPath);
+  const newSlug = slugify(newName);
+  const newPath = parentPath ? `${parentPath}.${newSlug}` : newSlug;
+
+  const { data: siblings } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("workspace_id", workspaceId)
+    .eq("is_deleted", false)
+    .eq("path", newPath)
+    .neq("id", excludeId);
+
+  return siblings !== null && siblings.length > 0;
 }
 
 /**
@@ -373,4 +477,98 @@ export async function getLocations(
 
     return locationDto;
   });
+}
+
+/**
+ * Updates an existing location's name and/or description.
+ * When the name is updated, the ltree path is regenerated to maintain hierarchy integrity.
+ *
+ * @param supabase - Supabase client instance
+ * @param locationId - UUID of the location to update
+ * @param userId - Authenticated user's ID
+ * @param data - Update data containing optional name and/or description
+ * @returns Promise resolving to updated location response
+ *
+ * @throws {NotFoundError} Location doesn't exist, is deleted, or user lacks access
+ * @throws {ConflictError} New name conflicts with existing sibling location
+ *
+ * @example
+ * const updated = await updateLocation(supabase, locationId, userId, { name: "New Name" });
+ */
+export async function updateLocation(
+  supabase: SupabaseClient,
+  locationId: string,
+  userId: string,
+  data: UpdateLocationRequest
+): Promise<UpdateLocationResponse> {
+  // Step 1: Fetch current location
+  const { data: location, error: fetchError } = await supabase
+    .from("locations")
+    .select("id, workspace_id, name, description, path, is_deleted")
+    .eq("id", locationId)
+    .single();
+
+  // Handle fetch errors
+  if (fetchError || !location) {
+    throw new NotFoundError("Location not found");
+  }
+
+  // Check soft delete
+  if (location.is_deleted) {
+    throw new NotFoundError("Location not found");
+  }
+
+  // Step 2: Check for name conflicts (if name is changing)
+  if (data.name && data.name !== location.name) {
+    const conflictExists = await checkSiblingNameConflict(
+      supabase,
+      location.workspace_id,
+      location.path as string,
+      data.name,
+      locationId
+    );
+
+    if (conflictExists) {
+      throw new ConflictError("A location with this name already exists at this level");
+    }
+  }
+
+  // Step 3: Prepare update data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: any = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.description !== undefined) updateData.description = data.description;
+
+  // Step 4: Handle path regeneration if name changes
+  if (data.name && data.name !== location.name) {
+    const newPath = regeneratePath(location.path as string, data.name);
+    updateData.path = newPath;
+  }
+
+  // Step 5: Execute update
+  const { data: updated, error: updateError } = await supabase
+    .from("locations")
+    .update(updateData)
+    .eq("id", locationId)
+    .select("id, name, description, updated_at")
+    .single();
+
+  // Handle update errors
+  if (updateError) {
+    // RLS might block access - return 404 to avoid info disclosure
+    if (updateError.code === "PGRST116") {
+      throw new NotFoundError("Location not found");
+    }
+
+    console.error("Database error updating location:", updateError);
+    throw new Error("Failed to update location");
+  }
+
+  // Step 6: Return formatted response
+  return {
+    id: updated.id,
+    name: updated.name,
+    description: updated.description,
+    updated_at: updated.updated_at,
+  };
 }
