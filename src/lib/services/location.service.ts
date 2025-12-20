@@ -217,3 +217,160 @@ export async function createLocation(
 
   return locationDto;
 }
+
+/**
+ * Retrieves all locations for a specific workspace with optional parent filtering.
+ * Supports hierarchical lazy loading by filtering direct children of a parent location.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - Authenticated user's ID
+ * @param workspaceId - The UUID of the workspace to query
+ * @param parentId - Optional parent location ID to filter children (null/undefined for root locations)
+ * @returns Promise resolving to array of LocationDto objects
+ *
+ * @throws {Error} Database query fails
+ *
+ * @example
+ * // Get root-level locations
+ * const rootLocations = await getLocations(supabase, userId, workspaceId);
+ *
+ * @example
+ * // Get children of specific parent
+ * const children = await getLocations(supabase, userId, workspaceId, parentId);
+ */
+export async function getLocations(
+  supabase: SupabaseClient,
+  userId: string,
+  workspaceId: string,
+  parentId?: string | null
+): Promise<LocationDto[]> {
+  // Step 1: Validate workspace membership
+  const { data: membership, error: membershipError } = await supabase
+    .from("workspace_members")
+    .select("user_id")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (membershipError) {
+    console.error("Error checking workspace membership:", membershipError);
+    throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
+  }
+
+  if (!membership) {
+    throw new WorkspaceMembershipError("Nie masz uprawnień do przeglądania lokalizacji w tej przestrzeni roboczej");
+  }
+
+  // Step 2: Build base query
+  let query = supabase
+    .from("locations")
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .eq("is_deleted", false)
+    .order("name", { ascending: true });
+
+  // Step 3: Apply hierarchical filtering
+  if (parentId === undefined || parentId === null) {
+    // Get root-level locations (depth = 2: "root.location_name")
+    // Filter for paths that match "root.%" but not "root.%.%"
+    // This ensures we get only direct children of root
+    query = query.like("path", "root.%").not("path", "like", "root.%.%");
+  } else {
+    // Get direct children of specific parent
+    // First fetch parent to get its path
+    const { data: parent, error: parentError } = await supabase
+      .from("locations")
+      .select("path")
+      .eq("id", parentId)
+      .eq("is_deleted", false)
+      .maybeSingle();
+
+    if (parentError) {
+      console.error("Error fetching parent location:", parentError);
+      throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
+    }
+
+    if (!parent) {
+      throw new ParentNotFoundError();
+    }
+
+    const parentPath = parent.path as string;
+
+    // Filter for direct children: parent_path.% but not parent_path.%.%
+    query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}.%.%`);
+  }
+
+  // Step 4: Execute query
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Database error fetching locations:", error);
+    throw new Error("Nie udało się pobrać lokalizacji");
+  }
+
+  // Step 5: Derive parent_id for all locations
+  // Build a map of parent paths to fetch parent IDs in a single query
+  const parentPathsToFetch = new Set<string>();
+  const locationDataMap = new Map();
+
+  data.forEach((location) => {
+    const path = location.path as string;
+    const pathSegments = path.split(".");
+
+    locationDataMap.set(location.id, { location, path, pathSegments });
+
+    // For non-root locations (depth > 2), we need to find parent_id
+    if (pathSegments.length > 2) {
+      // Parent path is all segments except the last one
+      const parentPath = pathSegments.slice(0, -1).join(".");
+      parentPathsToFetch.add(parentPath);
+    }
+  });
+
+  // Step 6: Fetch all parent IDs in a single query (if needed)
+  const parentPathToIdMap = new Map<string, string>();
+
+  if (parentPathsToFetch.size > 0) {
+    const { data: parentLocations, error: parentQueryError } = await supabase
+      .from("locations")
+      .select("id, path")
+      .eq("workspace_id", workspaceId)
+      .in("path", Array.from(parentPathsToFetch));
+
+    if (parentQueryError) {
+      console.error("Error fetching parent locations:", parentQueryError);
+      throw new Error("Nie udało się pobrać informacji o lokalizacjach nadrzędnych");
+    }
+
+    // Build map of parent path -> parent ID
+    parentLocations?.forEach((parent) => {
+      parentPathToIdMap.set(parent.path as string, parent.id);
+    });
+  }
+
+  // Step 7: Transform data to LocationDto format with parent_id
+  return data.map((location) => {
+    const { path, pathSegments } = locationDataMap.get(location.id);
+    let derivedParentId: string | null = null;
+
+    // For non-root locations, look up parent_id from the map
+    if (pathSegments.length > 2) {
+      const parentPath = pathSegments.slice(0, -1).join(".");
+      derivedParentId = parentPathToIdMap.get(parentPath) || null;
+    }
+
+    const locationDto: LocationDto = {
+      id: location.id,
+      workspace_id: location.workspace_id,
+      name: location.name,
+      description: location.description,
+      path: path,
+      parent_id: derivedParentId,
+      is_deleted: location.is_deleted,
+      created_at: location.created_at,
+      updated_at: location.updated_at,
+    };
+
+    return locationDto;
+  });
+}
