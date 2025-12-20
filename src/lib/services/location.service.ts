@@ -308,17 +308,55 @@ export async function getLocations(
     throw new Error("Nie udało się pobrać lokalizacji");
   }
 
-  // Step 5: Transform data to LocationDto format
-  // Convert path to string and derive parent_id from path structure
-  return data.map((location) => {
+  // Step 5: Derive parent_id for all locations
+  // Build a map of parent paths to fetch parent IDs in a single query
+  const parentPathsToFetch = new Set<string>();
+  const locationDataMap = new Map();
+
+  data.forEach((location) => {
     const path = location.path as string;
     const pathSegments = path.split(".");
+
+    locationDataMap.set(location.id, { location, path, pathSegments });
+
+    // For non-root locations (depth > 2), we need to find parent_id
+    if (pathSegments.length > 2) {
+      // Parent path is all segments except the last one
+      const parentPath = pathSegments.slice(0, -1).join(".");
+      parentPathsToFetch.add(parentPath);
+    }
+  });
+
+  // Step 6: Fetch all parent IDs in a single query (if needed)
+  const parentPathToIdMap = new Map<string, string>();
+
+  if (parentPathsToFetch.size > 0) {
+    const { data: parentLocations, error: parentQueryError } = await supabase
+      .from("locations")
+      .select("id, path")
+      .eq("workspace_id", workspaceId)
+      .in("path", Array.from(parentPathsToFetch));
+
+    if (parentQueryError) {
+      console.error("Error fetching parent locations:", parentQueryError);
+      throw new Error("Nie udało się pobrać informacji o lokalizacjach nadrzędnych");
+    }
+
+    // Build map of parent path -> parent ID
+    parentLocations?.forEach((parent) => {
+      parentPathToIdMap.set(parent.path as string, parent.id);
+    });
+  }
+
+  // Step 7: Transform data to LocationDto format with parent_id
+  return data.map((location) => {
+    const { path, pathSegments } = locationDataMap.get(location.id);
     let derivedParentId: string | null = null;
 
-    // For non-root locations, parent_id is provided in the query
-    // For root locations, parent_id is null
-    if (pathSegments.length > 2 && parentId) {
-      derivedParentId = parentId;
+    // For non-root locations, look up parent_id from the map
+    if (pathSegments.length > 2) {
+      const parentPath = pathSegments.slice(0, -1).join(".");
+      derivedParentId = parentPathToIdMap.get(parentPath) || null;
     }
 
     const locationDto: LocationDto = {
