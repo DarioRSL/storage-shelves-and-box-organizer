@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateWorkspaceRequest, WorkspaceDto } from "@/types";
+import type { CreateWorkspaceRequest, WorkspaceDto, WorkspaceMemberWithProfileDto } from "@/types";
+import { NotFoundError } from "./location.service";
 
 /**
  * Creates a new workspace and adds the creating user as owner.
@@ -101,5 +102,83 @@ export async function getUserWorkspaces(supabase: SupabaseClient, userId: string
   } catch (error) {
     console.error("Unexpected error in getUserWorkspaces:", error);
     throw error instanceof Error ? error : new Error("Failed to retrieve workspaces");
+  }
+}
+
+/**
+ * Retrieves all members of a workspace with their profile information.
+ *
+ * RLS policies automatically enforce that only workspace members can
+ * view the member list. If user is not a member, query returns empty.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace
+ * @returns Array of workspace members with profiles, sorted by joined_at ascending
+ * @throws NotFoundError if workspace doesn't exist or user lacks access
+ * @throws Error for database errors
+ */
+export async function getWorkspaceMembers(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceMemberWithProfileDto[]> {
+  try {
+    // Query workspace_members with JOIN to profiles
+    // RLS policies ensure only workspace members can access this data
+    const { data, error } = await supabase
+      .from("workspace_members")
+      .select(
+        `
+        user_id,
+        workspace_id,
+        role,
+        joined_at,
+        profile:profiles!user_id (
+          email,
+          full_name,
+          avatar_url
+        )
+      `
+      )
+      .eq("workspace_id", workspaceId)
+      .order("joined_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching workspace members:", error);
+      throw new Error("Nie udało się pobrać członków workspace");
+    }
+
+    // If empty result, either workspace doesn't exist or user is not a member
+    // RLS blocks access to workspaces user doesn't belong to
+    if (!data || data.length === 0) {
+      throw new NotFoundError("Workspace nie został znaleziony");
+    }
+
+    // Transform to WorkspaceMemberWithProfileDto[]
+    // Filter out any null profiles (should not happen with proper foreign keys)
+    const members = data
+      .filter(
+        (member): member is typeof member & { profile: NonNullable<typeof member.profile> } => member.profile !== null
+      )
+      .map((member) => ({
+        user_id: member.user_id,
+        workspace_id: member.workspace_id,
+        role: member.role,
+        joined_at: member.joined_at,
+        profile: {
+          email: member.profile.email,
+          full_name: member.profile.full_name,
+          avatar_url: member.profile.avatar_url,
+        },
+      }));
+
+    return members;
+  } catch (error) {
+    // Re-throw NotFoundError as-is
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
+
+    console.error("Unexpected error in getWorkspaceMembers:", error);
+    throw error instanceof Error ? error : new Error("Nie udało się pobrać członków workspace");
   }
 }
