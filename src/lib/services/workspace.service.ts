@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateWorkspaceRequest, UserRole, WorkspaceDto, WorkspaceMemberWithProfileDto } from "@/types";
+import type {
+  CreateWorkspaceRequest,
+  UserRole,
+  WorkspaceDto,
+  WorkspaceMemberDto,
+  WorkspaceMemberWithProfileDto,
+} from "@/types";
 import { NotFoundError } from "./location.service";
 
 /**
@@ -19,6 +25,16 @@ export class DuplicateMemberError extends Error {
   constructor(message = "Użytkownik jest już członkiem tego workspace'u") {
     super(message);
     this.name = "DuplicateMemberError";
+  }
+}
+
+/**
+ * Custom error for invalid operations (e.g., removing last owner).
+ */
+export class InvalidOperationError extends Error {
+  constructor(message = "Nieprawidłowa operacja") {
+    super(message);
+    this.name = "InvalidOperationError";
   }
 }
 
@@ -363,5 +379,137 @@ export async function inviteWorkspaceMember(
       timestamp: new Date().toISOString(),
     });
     throw error instanceof Error ? error : new Error("Nie udało się dodać członka do workspace");
+  }
+}
+
+/**
+ * Updates a workspace member's role.
+ *
+ * Validates permissions, checks business rules (e.g., last owner protection),
+ * and updates the member's role in the database.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace
+ * @param targetUserId - UUID of the member whose role will be updated
+ * @param currentUserId - UUID of the user making the change
+ * @param newRole - New role to assign
+ * @returns Updated workspace member record
+ * @throws InsufficientPermissionsError if current user is not owner/admin
+ * @throws NotFoundError if target member not found in workspace
+ * @throws InvalidOperationError if attempting to change last owner's role
+ * @throws Error for database errors
+ */
+export async function updateWorkspaceMemberRole(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  targetUserId: string,
+  currentUserId: string,
+  newRole: UserRole
+): Promise<WorkspaceMemberDto> {
+  try {
+    // 1. Check current user's permissions (must be owner or admin)
+    const { data: currentMember, error: roleError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", currentUserId)
+      .limit(1)
+      .single();
+
+    if (roleError || !currentMember) {
+      console.error("Error checking user permissions:", roleError);
+      throw new InsufficientPermissionsError("Brak uprawnień do zmiany roli członka");
+    }
+
+    if (currentMember.role !== "owner" && currentMember.role !== "admin") {
+      throw new InsufficientPermissionsError("Brak uprawnień do zmiany roli członka");
+    }
+
+    // 2. Verify target member exists and get current role
+    const { data: targetMember, error: targetError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", targetUserId)
+      .limit(1)
+      .single();
+
+    if (targetError || !targetMember) {
+      console.error("Target member not found:", targetError);
+      throw new NotFoundError("Członek nie został znaleziony w tym workspace");
+    }
+
+    const oldRole = targetMember.role;
+
+    // 3. Check if changing last owner's role (if current role is owner)
+    if (oldRole === "owner" && newRole !== "owner") {
+      // Count total owners in workspace
+      const { count: ownerCount, error: countError } = await supabase
+        .from("workspace_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("role", "owner");
+
+      if (countError) {
+        console.error("Error counting owners:", countError);
+        throw new Error("Nie udało się zaktualizować roli członka");
+      }
+
+      // If only 1 owner exists, prevent role change
+      if (ownerCount !== null && ownerCount === 1) {
+        throw new InvalidOperationError("Nie można zmienić roli ostatniego właściciela workspace");
+      }
+    }
+
+    // 4. Update member role
+    const { data: updatedMember, error: updateError } = await supabase
+      .from("workspace_members")
+      .update({ role: newRole })
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", targetUserId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating member role:", updateError);
+      throw new Error("Nie udało się zaktualizować roli członka");
+    }
+
+    if (!updatedMember) {
+      throw new Error("Nie udało się zaktualizować roli członka");
+    }
+
+    // 5. Log success
+    console.info("PATCH /api/workspaces/:workspace_id/members/:user_id - Sukces:", {
+      workspaceId: workspaceId,
+      targetUserId: targetUserId,
+      oldRole: oldRole,
+      newRole: newRole,
+      changedByUserId: currentUserId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 6. Return updated member
+    return updatedMember;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (
+      error instanceof InsufficientPermissionsError ||
+      error instanceof NotFoundError ||
+      error instanceof InvalidOperationError
+    ) {
+      throw error;
+    }
+
+    // Log and throw unexpected errors
+    console.error("Unexpected error in updateWorkspaceMemberRole:", {
+      workspaceId: workspaceId,
+      targetUserId: targetUserId,
+      currentUserId: currentUserId,
+      newRole: newRole,
+      error: error instanceof Error ? error.message : "Nieznany błąd",
+      timestamp: new Date().toISOString(),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się zaktualizować roli członka");
   }
 }
