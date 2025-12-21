@@ -151,6 +151,9 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 #### PATCH /workspaces/:workspace_id/members/:user_id
 
 - **Description**: Updates a member's role in the workspace. Requires admin or owner role.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/workspaces/[workspace_id]/members/[user_id].ts`
+- **Service Layer**: `src/lib/services/workspace.service.ts::updateWorkspaceMemberRole()`
 - **Query Parameters**: None
 - **Request JSON**:
 
@@ -159,6 +162,8 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   "role": "admin"
 }
 ```
+
+- **Valid Roles**: `owner`, `admin`, `member`, `read_only`
 
 - **Response JSON**:
 
@@ -171,11 +176,20 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 }
 ```
 
+- **Business Rules**:
+  - Only workspace owners and admins can update member roles
+  - Cannot change the role of the last owner in a workspace (prevents orphaning)
+  - Role changes are audited with full context logging
+
 - **Errors**:
-  - `400 Bad Request`: Invalid `role` value.
-  - `403 Forbidden`: Current user doesn't have permission (must be owner or admin).
-  - `404 Not Found`: Member not found in this workspace.
-  - `401 Unauthorized`: User is not authenticated.
+  - `400 Bad Request`: Invalid `role` value, invalid UUID format for workspace_id or user_id
+  - `401 Unauthorized`: User is not authenticated
+  - `403 Forbidden`: Current user doesn't have permission (must be owner or admin)
+  - `404 Not Found`: Member not found in this workspace
+  - `409 Conflict`: Attempting to change the role of the last owner in the workspace
+  - `500 Internal Server Error`: Unexpected database or server error
+
+- **Testing**: Run `bash .ai_docs/test-patch-members-userid.sh` (requires dev server and Supabase running)
 
 #### DELETE /workspaces/:workspace_id/members/:user_id
 
