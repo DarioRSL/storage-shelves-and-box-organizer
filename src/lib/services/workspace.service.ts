@@ -1,6 +1,26 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateWorkspaceRequest, WorkspaceDto, WorkspaceMemberWithProfileDto } from "@/types";
+import type { CreateWorkspaceRequest, UserRole, WorkspaceDto, WorkspaceMemberWithProfileDto } from "@/types";
 import { NotFoundError } from "./location.service";
+
+/**
+ * Custom error for insufficient permissions when inviting members.
+ */
+export class InsufficientPermissionsError extends Error {
+  constructor(message = "Brak uprawnień do zaproszenia członka") {
+    super(message);
+    this.name = "InsufficientPermissionsError";
+  }
+}
+
+/**
+ * Custom error for duplicate workspace membership.
+ */
+export class DuplicateMemberError extends Error {
+  constructor(message = "Użytkownik jest już członkiem tego workspace'u") {
+    super(message);
+    this.name = "DuplicateMemberError";
+  }
+}
 
 /**
  * Creates a new workspace and adds the creating user as owner.
@@ -180,5 +200,168 @@ export async function getWorkspaceMembers(
 
     console.error("Unexpected error in getWorkspaceMembers:", error);
     throw error instanceof Error ? error : new Error("Nie udało się pobrać członków workspace");
+  }
+}
+
+/**
+ * Invites a new member to a workspace by email.
+ *
+ * Validates that the current user has owner or admin role, checks that the user
+ * with the provided email exists, and creates a workspace membership record.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace
+ * @param currentUserId - UUID of the user making the invitation
+ * @param email - Email address of the user to invite
+ * @param role - Role to assign to the new member
+ * @returns Created workspace member with profile information
+ * @throws InsufficientPermissionsError if current user is not owner/admin
+ * @throws NotFoundError if user with email doesn't exist
+ * @throws DuplicateMemberError if user is already a member
+ * @throws Error for database errors
+ */
+export async function inviteWorkspaceMember(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  currentUserId: string,
+  email: string,
+  role: UserRole
+): Promise<WorkspaceMemberWithProfileDto> {
+  try {
+    // 1. Check current user's role in workspace (must be owner or admin)
+    const { data: currentMember, error: roleError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", currentUserId)
+      .limit(1)
+      .single();
+
+    if (roleError || !currentMember) {
+      console.error("Error checking user permissions:", roleError);
+      throw new InsufficientPermissionsError();
+    }
+
+    if (currentMember.role !== "owner" && currentMember.role !== "admin") {
+      throw new InsufficientPermissionsError();
+    }
+
+    // 2. Find user by email
+    const { data: userProfile, error: userError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .limit(1)
+      .single();
+
+    if (userError || !userProfile) {
+      console.error("User not found by email:", email, userError);
+      throw new NotFoundError("Użytkownik nie został znaleziony");
+    }
+
+    const invitedUserId = userProfile.id;
+
+    // 3. Check if user is already a member (duplicate check)
+    const { data: existingMember } = await supabase
+      .from("workspace_members")
+      .select("user_id")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", invitedUserId)
+      .limit(1)
+      .single();
+
+    if (existingMember) {
+      throw new DuplicateMemberError();
+    }
+
+    // 4. Insert new workspace member
+    const { data: newMember, error: insertError } = await supabase
+      .from("workspace_members")
+      .insert({
+        workspace_id: workspaceId,
+        user_id: invitedUserId,
+        role: role,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      // Check if it's a unique constraint violation
+      if (insertError.code === "23505") {
+        throw new DuplicateMemberError();
+      }
+      console.error("Error inserting workspace member:", insertError);
+      throw new Error("Nie udało się dodać członka do workspace");
+    }
+
+    if (!newMember) {
+      throw new Error("Nie udało się dodać członka do workspace");
+    }
+
+    // 5. Fetch created member with profile data
+    const { data: memberWithProfile, error: fetchError } = await supabase
+      .from("workspace_members")
+      .select(
+        `
+        user_id,
+        workspace_id,
+        role,
+        joined_at,
+        profile:profiles!user_id (
+          email,
+          full_name,
+          avatar_url
+        )
+      `
+      )
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", invitedUserId)
+      .single();
+
+    if (fetchError || !memberWithProfile || !memberWithProfile.profile) {
+      console.error("Error fetching created member with profile:", fetchError);
+      throw new Error("Nie udało się pobrać danych nowo dodanego członka");
+    }
+
+    // 6. Log success
+    console.info("POST /api/workspaces/:workspace_id/members - Sukces:", {
+      workspaceId: workspaceId,
+      invitedUserId: invitedUserId,
+      role: role,
+      invitedByUserId: currentUserId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 7. Return WorkspaceMemberWithProfileDto
+    return {
+      user_id: memberWithProfile.user_id,
+      workspace_id: memberWithProfile.workspace_id,
+      role: memberWithProfile.role,
+      joined_at: memberWithProfile.joined_at,
+      profile: {
+        email: memberWithProfile.profile.email,
+        full_name: memberWithProfile.profile.full_name,
+        avatar_url: memberWithProfile.profile.avatar_url,
+      },
+    };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (
+      error instanceof InsufficientPermissionsError ||
+      error instanceof NotFoundError ||
+      error instanceof DuplicateMemberError
+    ) {
+      throw error;
+    }
+
+    // Log and throw unexpected errors
+    console.error("Unexpected error in inviteWorkspaceMember:", {
+      workspaceId: workspaceId,
+      inviteeEmail: email,
+      currentUserId: currentUserId,
+      error: error instanceof Error ? error.message : "Nieznany błąd",
+      timestamp: new Date().toISOString(),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się dodać członka do workspace");
   }
 }
