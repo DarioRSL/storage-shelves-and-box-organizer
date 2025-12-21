@@ -87,6 +87,48 @@ Follow these guidelines when working on this Storage & Box Organizer project.
 - Use supabase from context.locals in Astro routes instead of importing supabaseClient directly
 - Use SupabaseClient type from `src/db/supabase.client.ts`, not from `@supabase/supabase-js`
 
+## Testing & Bash Commands
+
+### Working curl patterns for API testing
+
+Always use heredoc pattern for complex curl commands to avoid escaping issues:
+
+```bash
+# Pattern 1: Simple GET request
+curl -s http://localhost:3000/api/endpoint | python3 -m json.tool
+
+# Pattern 2: POST/PATCH with auth and JSON body (USE THIS PATTERN)
+cat <<'EOF' | bash
+TOKEN="your-jwt-token-here"
+curl -s -X PATCH \
+  http://localhost:3000/api/workspaces/WORKSPACE_ID/members/USER_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role": "admin"}' \
+| python3 -m json.tool
+EOF
+
+# Pattern 3: Multi-step test with variable substitution
+cat <<'SCRIPT' | bash
+WORKSPACE_ID="uuid-here"
+USER_ID="uuid-here"
+TOKEN="jwt-token-here"
+
+curl -s -X PATCH \
+  "http://localhost:3000/api/workspaces/$WORKSPACE_ID/members/$USER_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role": "admin"}' \
+| python3 -m json.tool
+SCRIPT
+```
+
+**Why use heredoc:**
+- Avoids shell escaping issues with quotes and special characters
+- Allows proper variable substitution with $VAR syntax
+- Clean multiline formatting
+- No issues with whitespace or URL parameters
+
 ## Action
 
 Apply these guidelines to all code changes in this project. When writing code, follow the relevant section based on the file type you're working with.
