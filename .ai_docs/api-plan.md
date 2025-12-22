@@ -346,14 +346,15 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 #### GET /boxes
 
-- **Description**: Searches and lists boxes based on criteria.
+
+- **Description**: Searches and lists boxes based on criteria with full-text search, filtering, and pagination.
 - **Query Parameters**:
-  - `workspace_id` (UUID, required)
-  - `q` (string, optional): Search query for text search.
-  - `location_id` (UUID, optional): Filter by specific location.
-  - `is_assigned` (boolean, optional): Filter for unassigned boxes.
-  - `limit` (integer, optional): For pagination.
-  - `offset` (integer, optional): For pagination.
+  - `workspace_id` (UUID, required): The workspace to query boxes from
+  - `q` (string, optional): Search query for full-text search (searches name, description, tags)
+  - `location_id` (UUID, optional): Filter by specific location
+  - `is_assigned` (boolean, optional): Filter for assigned/unassigned boxes
+  - `limit` (integer, optional): Max results to return (default: 50, max: 100)
+  - `offset` (integer, optional): Number of results to skip for pagination (default: 0)
 - **Request JSON**: None
 - **Response JSON**:
 
@@ -362,19 +363,31 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   {
     "id": "uuid",
     "short_id": "X7K-9P2",
+    "workspace_id": "uuid",
+    "location_id": "uuid",
     "name": "Winter Clothes",
     "description": "Jackets and scarves",
     "tags": ["winter", "clothes"],
-    "location_id": "uuid",
-    "location": { "name": "Shelf A" },
-    "created_at": "timestamp"
+    "image_url": null,
+    "created_at": "2023-10-27T10:00:00Z",
+    "updated_at": "2023-10-27T10:00:00Z",
+    "location": {
+      "id": "uuid",
+      "name": "Shelf A",
+      "path": "root.basement.shelfa"
+    },
+    "qr_code": {
+      "id": "uuid",
+      "short_id": "QR-A1B2C3"
+    }
   }
 ]
 ```
 
 - **Errors**:
-  - `400 Bad Request`: Missing `workspace_id`.
-  - `401 Unauthorized`: Permission denied.
+  - `400 Bad Request`: Missing or invalid `workspace_id`, invalid UUID format
+  - `401 Unauthorized`: User not authenticated or token invalid
+  - `500 Internal Server Error`: Database or server error
 
 #### GET /boxes/:id
 
