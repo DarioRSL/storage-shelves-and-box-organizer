@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateBoxRequest, CreateBoxResponse } from "@/types";
+import type { CreateBoxRequest, CreateBoxResponse, GetBoxesQuery, BoxDto } from "@/types";
 
 /**
  * Custom error for QR code already assigned to another box.
@@ -189,5 +189,103 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     }
 
     throw new Error("Nie udało się utworzyć pudełka");
+  }
+}
+
+/**
+ * Retrieves a filtered, searchable, paginated list of boxes.
+ *
+ * Business logic:
+ * 1. Build base query with joins for location and qr_code
+ * 2. Apply workspace filter (required)
+ * 3. Apply optional filters (search, location, assignment status)
+ * 4. Apply pagination and ordering
+ * 5. Execute query and return results
+ *
+ * @param supabase - Supabase client instance
+ * @param query - Validated query parameters
+ * @returns Array of BoxDto objects
+ */
+export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): Promise<BoxDto[]> {
+  try {
+    // Build base query with joins
+    let dbQuery = supabase
+      .from("boxes")
+      .select(`
+        id,
+        short_id,
+        workspace_id,
+        location_id,
+        name,
+        description,
+        tags,
+        image_url,
+        created_at,
+        updated_at,
+        location:locations (
+          id,
+          name,
+          path
+        ),
+        qr_code:qr_codes!qr_codes_box_id_fkey (
+          id,
+          short_id
+        )
+      `)
+      .eq("workspace_id", query.workspace_id)
+      .order("created_at", { ascending: false });
+
+    // Apply full-text search filter
+    if (query.q) {
+      dbQuery = dbQuery.textSearch("search_vector", query.q);
+    }
+
+    // Apply location filter
+    if (query.location_id) {
+      dbQuery = dbQuery.eq("location_id", query.location_id);
+    }
+
+    // Apply assignment status filter
+    if (query.is_assigned !== undefined) {
+      if (query.is_assigned) {
+        dbQuery = dbQuery.not("location_id", "is", null);
+      } else {
+        dbQuery = dbQuery.is("location_id", null);
+      }
+    }
+
+    // Apply pagination
+    const limit = query.limit ?? 50;
+    const offset = query.offset ?? 0;
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
+
+    // Execute query
+    const { data, error } = await dbQuery;
+
+    if (error) {
+      console.error("Error fetching boxes:", error);
+      throw new Error("Nie udało się pobrać pudełek");
+    }
+
+    // Log successful query
+    console.log("Boxes fetched successfully:", {
+      workspace_id: query.workspace_id,
+      count: data?.length ?? 0,
+      filters_applied: {
+        search: !!query.q,
+        location: !!query.location_id,
+        is_assigned: query.is_assigned,
+      },
+    });
+
+    return data as BoxDto[];
+  } catch (error) {
+    console.error("Unexpected error in getBoxes:", error);
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Nie udało się pobrać pudełek");
   }
 }
