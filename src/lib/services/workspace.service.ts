@@ -39,6 +39,16 @@ export class InvalidOperationError extends Error {
 }
 
 /**
+ * Custom error for attempting to remove workspace owner.
+ */
+export class OwnerRemovalError extends Error {
+  constructor(message = "Nie można usunąć właściciela workspace'u") {
+    super(message);
+    this.name = "OwnerRemovalError";
+  }
+}
+
+/**
  * Creates a new workspace and adds the creating user as owner.
  *
  * Note: The database trigger `add_owner_to_workspace_members()` automatically
@@ -511,5 +521,113 @@ export async function updateWorkspaceMemberRole(
       timestamp: new Date().toISOString(),
     });
     throw error instanceof Error ? error : new Error("Nie udało się zaktualizować roli członka");
+  }
+}
+
+/**
+ * Removes a member from a workspace.
+ *
+ * Authorization rules:
+ * - Any member can remove themselves (leave workspace)
+ * - Owners and admins can remove other members (except the owner)
+ * - Cannot remove the workspace owner
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace
+ * @param targetUserId - UUID of the user to remove
+ * @param currentUserId - UUID of the authenticated user making the request
+ * @returns void on success
+ * @throws NotFoundError if member not found in workspace
+ * @throws InsufficientPermissionsError if user lacks permission to remove member
+ * @throws OwnerRemovalError if attempting to remove workspace owner
+ * @throws Error for database errors
+ */
+export async function removeWorkspaceMember(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  targetUserId: string,
+  currentUserId: string
+): Promise<void> {
+  try {
+    // 1. Check current user's membership and role
+    const { data: currentMember, error: currentMemberError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", currentUserId)
+      .limit(1)
+      .single();
+
+    if (currentMemberError || !currentMember) {
+      console.error("Current user not found in workspace:", currentMemberError);
+      throw new NotFoundError("Workspace nie został znaleziony");
+    }
+
+    // 2. Check target user's membership and role
+    const { data: targetMember, error: targetMemberError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", targetUserId)
+      .limit(1)
+      .single();
+
+    if (targetMemberError || !targetMember) {
+      console.error("Target user not found in workspace:", targetMemberError);
+      throw new NotFoundError("Członek nie został znaleziony");
+    }
+
+    // 3. Check if attempting to remove workspace owner
+    if (targetMember.role === "owner") {
+      throw new OwnerRemovalError();
+    }
+
+    // 4. Authorization check
+    const isSelfRemoval = targetUserId === currentUserId;
+    const hasAdminPermission = currentMember.role === "owner" || currentMember.role === "admin";
+
+    if (!isSelfRemoval && !hasAdminPermission) {
+      throw new InsufficientPermissionsError("Brak uprawnień do usunięcia tego członka");
+    }
+
+    // 5. Delete workspace member
+    const { error: deleteError } = await supabase
+      .from("workspace_members")
+      .delete()
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", targetUserId);
+
+    if (deleteError) {
+      console.error("Error deleting workspace member:", deleteError);
+      throw new Error("Nie udało się usunąć członka");
+    }
+
+    // 6. Log success
+    console.info("DELETE /api/workspaces/:workspace_id/members/:user_id - Sukces:", {
+      workspaceId: workspaceId,
+      removedUserId: targetUserId,
+      currentUserId: currentUserId,
+      isSelfRemoval: isSelfRemoval,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (
+      error instanceof NotFoundError ||
+      error instanceof InsufficientPermissionsError ||
+      error instanceof OwnerRemovalError
+    ) {
+      throw error;
+    }
+
+    // Log and throw unexpected errors
+    console.error("Unexpected error in removeWorkspaceMember:", {
+      workspaceId: workspaceId,
+      targetUserId: targetUserId,
+      currentUserId: currentUserId,
+      error: error instanceof Error ? error.message : "Nieznany błąd",
+      timestamp: new Date().toISOString(),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się usunąć członka");
   }
 }
