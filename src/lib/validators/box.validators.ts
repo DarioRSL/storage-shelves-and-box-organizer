@@ -81,3 +81,16 @@ export const GetBoxesQuerySchema = z.object({
  * Type inference for GET boxes query parameters
  */
 export type GetBoxesQueryInput = z.infer<typeof GetBoxesQuerySchema>;
+
+/**
+ * Validation schema for GET /api/boxes/:id URL parameter.
+ * Validates the box ID from URL params.
+ */
+export const GetBoxByIdSchema = z.object({
+  id: z.string().uuid("Nieprawidłowy format ID pudełka"),
+});
+
+/**
+ * Type inference for box ID validation
+ */
+export type GetBoxByIdInput = z.infer<typeof GetBoxByIdSchema>;
