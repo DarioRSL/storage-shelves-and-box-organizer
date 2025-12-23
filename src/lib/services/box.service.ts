@@ -50,6 +50,17 @@ export class WorkspaceMismatchError extends Error {
 }
 
 /**
+ * Custom error for box not found in database.
+ * HTTP Status: 404 Not Found
+ */
+export class BoxNotFoundError extends Error {
+  constructor(message = "Pudełko nie zostało znalezione") {
+    super(message);
+    this.name = "BoxNotFoundError";
+  }
+}
+
+/**
  * Creates a new box in the inventory system.
  *
  * Business logic:
@@ -211,7 +222,8 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
     // Build base query with joins
     let dbQuery = supabase
       .from("boxes")
-      .select(`
+      .select(
+        `
         id,
         short_id,
         workspace_id,
@@ -231,7 +243,8 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
           id,
           short_id
         )
-      `)
+      `
+      )
       .eq("workspace_id", query.workspace_id)
       .order("created_at", { ascending: false });
 
@@ -287,5 +300,105 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
     }
 
     throw new Error("Nie udało się pobrać pudełek");
+  }
+}
+
+/**
+ * Retrieves a single box by its ID with related location and QR code data.
+ *
+ * Business logic:
+ * 1. Query box by ID with left joins for location and qr_code
+ * 2. RLS automatically enforces workspace membership
+ * 3. Return BoxDto or throw BoxNotFoundError
+ *
+ * @param supabase - Supabase client instance
+ * @param boxId - UUID of the box to retrieve
+ * @param userId - ID of the authenticated user (for logging)
+ * @returns BoxDto with nested location and qr_code data
+ * @throws BoxNotFoundError if box doesn't exist or user lacks access
+ */
+export async function getBoxById(supabase: SupabaseClient, boxId: string, userId: string): Promise<BoxDto> {
+  try {
+    // Query box with joins for location and qr_code
+    const { data, error } = await supabase
+      .from("boxes")
+      .select(
+        `
+        id,
+        short_id,
+        workspace_id,
+        location_id,
+        name,
+        description,
+        tags,
+        image_url,
+        created_at,
+        updated_at,
+        location:locations (
+          id,
+          name,
+          path
+        ),
+        qr_code:qr_codes!qr_codes_box_id_fkey (
+          id,
+          short_id
+        )
+      `
+      )
+      .eq("id", boxId)
+      .single();
+
+    // Handle Supabase errors
+    if (error) {
+      console.error("Error fetching box:", {
+        boxId,
+        userId,
+        error: error.message,
+        code: error.code,
+      });
+
+      // PGRST116 = no rows returned (either doesn't exist or RLS denied)
+      if (error.code === "PGRST116") {
+        throw new BoxNotFoundError();
+      }
+
+      throw new Error("Nie udało się pobrać pudełka");
+    }
+
+    // Additional null check (should not happen with .single())
+    if (!data) {
+      console.log("Box not found:", { boxId, userId });
+      throw new BoxNotFoundError();
+    }
+
+    // Log successful retrieval
+    console.log("Box fetched successfully:", {
+      boxId: data.id,
+      userId,
+      workspace_id: data.workspace_id,
+      has_location: !!data.location,
+      has_qr_code: !!data.qr_code,
+    });
+
+    return data as BoxDto;
+  } catch (error) {
+    // Re-throw BoxNotFoundError as-is
+    if (error instanceof BoxNotFoundError) {
+      throw error;
+    }
+
+    // Log unexpected errors
+    console.error("Unexpected error in getBoxById:", {
+      boxId,
+      userId,
+      error,
+    });
+
+    // Re-throw or wrap errors
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Nie udało się pobrać pudełka");
   }
 }
