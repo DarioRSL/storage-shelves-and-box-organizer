@@ -391,37 +391,42 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 #### GET /boxes/:id
 
-- **Description**: Retrieves detailed information for a specific box.
+- **Description**: Retrieves detailed information for a specific box by its unique identifier. Returns comprehensive box data including nested location details (if assigned) and associated QR code information (if linked). The endpoint enforces workspace-based access control through PostgreSQL Row Level Security (RLS) policies.
+- **URL Parameters**:
+  - `id` (required): UUID of the box to retrieve
 - **Query Parameters**: None
 - **Request JSON**: None
-- **Response JSON**:
+- **Response JSON** (200 OK):
 
 ```json
 {
-  "id": "uuid",
-  "short_id": "X7K-9P2",
+  "id": "b1b48d97-501c-4709-bd7b-d96519721367",
+  "short_id": "ywGCkvMi3t",
+  "workspace_id": "4d5a1187-e805-4a53-845d-f118945b0dd0",
+  "location_id": "73316c0a-8a91-4488-bac2-4d8defdd7206",
   "name": "Winter Clothes",
-  "description": "Jackets and scarves...",
-  "tags": ["winter", "clothes"],
-  "location_id": "uuid",
-  "image_url": "url",
+  "description": "Jackets, scarves, and winter accessories for the whole family",
+  "tags": ["winter", "clothes", "seasonal"],
+  "image_url": "https://example.com/images/box-photo.jpg",
+  "created_at": "2023-10-27T10:00:00Z",
+  "updated_at": "2023-11-15T14:30:00Z",
   "location": {
-    "id": "uuid",
+    "id": "73316c0a-8a91-4488-bac2-4d8defdd7206",
     "name": "Shelf A",
     "path": "root.basement.shelfa"
   },
   "qr_code": {
-    "id": "uuid",
+    "id": "456e7890-e89b-12d3-a456-426614174000",
     "short_id": "QR-A1B2C3"
-  },
-  "created_at": "timestamp",
-  "updated_at": "timestamp"
+  }
 }
 ```
 
 - **Errors**:
-  - `404 Not Found`: Box does not exist.
-  - `401 Unauthorized`: Permission denied.
+  - `400 Bad Request`: Invalid UUID format in URL parameter
+  - `401 Unauthorized`: Not authenticated (missing or invalid JWT token)
+  - `404 Not Found`: Box does not exist or user lacks access (RLS enforcement)
+  - `500 Internal Server Error`: Database or server error
 
 #### POST /boxes
 
