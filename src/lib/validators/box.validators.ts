@@ -94,3 +94,16 @@ export const GetBoxByIdSchema = z.object({
  * Type inference for box ID validation
  */
 export type GetBoxByIdInput = z.infer<typeof GetBoxByIdSchema>;
+
+/**
+ * Validation schema for DELETE /api/boxes/:id URL parameter.
+ * Validates the box ID from URL params for deletion.
+ */
+export const DeleteBoxSchema = z.object({
+  id: z.string().uuid("Nieprawidłowy format identyfikatora pudełka"),
+});
+
+/**
+ * Type inference for delete box ID validation
+ */
+export type DeleteBoxInput = z.infer<typeof DeleteBoxSchema>;
