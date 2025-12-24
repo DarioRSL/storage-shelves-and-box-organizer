@@ -402,3 +402,76 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
     throw new Error("Nie udało się pobrać pudełka");
   }
 }
+
+/**
+ * Deletes a box from the system.
+ *
+ * Business logic:
+ * 1. Execute DELETE query on boxes table
+ * 2. RLS automatically verifies workspace membership
+ * 3. Database trigger automatically resets linked QR code (box_id = NULL, status = 'generated')
+ * 4. Return success or throw BoxNotFoundError
+ *
+ * @param supabase - Supabase client instance
+ * @param boxId - UUID of the box to delete
+ * @param userId - ID of the authenticated user (for logging)
+ * @throws BoxNotFoundError if box doesn't exist or user lacks access
+ */
+export async function deleteBox(supabase: SupabaseClient, boxId: string, userId: string): Promise<void> {
+  try {
+    console.log("[box.service] Deleting box", {
+      user_id: userId,
+      box_id: boxId,
+    });
+
+    // Execute DELETE query
+    // RLS automatically verifies workspace membership
+    // Database trigger automatically resets QR code
+    const { error, count } = await supabase.from("boxes").delete({ count: "exact" }).eq("id", boxId);
+
+    // Check for database errors
+    if (error) {
+      console.error("[box.service] Database error deleting box", {
+        user_id: userId,
+        box_id: boxId,
+        error: error.message,
+        code: error.code,
+      });
+      throw new Error("Database error occurred while deleting box");
+    }
+
+    // Check if box was actually deleted (RLS might have blocked it)
+    if (count === 0) {
+      console.warn("[box.service] Box not found or access denied", {
+        user_id: userId,
+        box_id: boxId,
+      });
+      throw new BoxNotFoundError();
+    }
+
+    // Log successful deletion
+    console.log("[box.service] Box deleted successfully", {
+      user_id: userId,
+      box_id: boxId,
+    });
+  } catch (error) {
+    // Re-throw BoxNotFoundError as-is
+    if (error instanceof BoxNotFoundError) {
+      throw error;
+    }
+
+    // Log unexpected errors
+    console.error("[box.service] Unexpected error in deleteBox", {
+      box_id: boxId,
+      user_id: userId,
+      error,
+    });
+
+    // Re-throw or wrap errors
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Nie udało się usunąć pudełka");
+  }
+}
