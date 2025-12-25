@@ -1,5 +1,12 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { CreateBoxRequest, CreateBoxResponse, GetBoxesQuery, BoxDto } from "@/types";
+import type {
+  CreateBoxRequest,
+  CreateBoxResponse,
+  GetBoxesQuery,
+  BoxDto,
+  UpdateBoxRequest,
+  UpdateBoxResponse,
+} from "@/types";
 
 /**
  * Custom error for QR code already assigned to another box.
@@ -473,5 +480,165 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
     }
 
     throw new Error("Nie udało się usunąć pudełka");
+  }
+}
+
+/**
+ * Updates an existing box's details (partial update).
+ *
+ * Business logic:
+ * 1. If location_id is provided and not null, validate location exists and belongs to same workspace
+ * 2. Execute UPDATE query on boxes table with provided fields
+ * 3. RLS automatically enforces workspace membership
+ * 4. Database triggers automatically update updated_at and search_vector
+ * 5. Return UpdateBoxResponse or throw appropriate errors
+ *
+ * @param supabase - Supabase client instance
+ * @param boxId - UUID of the box to update
+ * @param userId - ID of the authenticated user (for logging)
+ * @param updates - Partial box update data
+ * @returns UpdateBoxResponse with id, name, updated_at
+ * @throws BoxNotFoundError if box doesn't exist or user lacks access
+ * @throws LocationNotFoundError if location_id doesn't exist
+ * @throws WorkspaceMismatchError if location belongs to different workspace
+ */
+export async function updateBox(
+  supabase: SupabaseClient,
+  boxId: string,
+  userId: string,
+  updates: UpdateBoxRequest
+): Promise<UpdateBoxResponse> {
+  try {
+    console.log("[box.service] Updating box", {
+      user_id: userId,
+      box_id: boxId,
+      fields_to_update: Object.keys(updates),
+    });
+
+    // Step 1: If location_id provided and not null, validate location
+    if (updates.location_id !== undefined && updates.location_id !== null) {
+      const { data: location, error: locationError } = await supabase
+        .from("locations")
+        .select("id, workspace_id, is_deleted")
+        .eq("id", updates.location_id)
+        .single();
+
+      if (locationError || !location) {
+        console.error("[box.service] Location not found", {
+          user_id: userId,
+          location_id: updates.location_id,
+          error: locationError?.message,
+        });
+        throw new LocationNotFoundError();
+      }
+
+      // Verify location is not soft-deleted
+      if (location.is_deleted) {
+        console.error("[box.service] Location is deleted", {
+          user_id: userId,
+          location_id: updates.location_id,
+        });
+        throw new LocationNotFoundError();
+      }
+
+      // Get box to verify workspace match
+      const { data: box, error: boxError } = await supabase
+        .from("boxes")
+        .select("id, workspace_id")
+        .eq("id", boxId)
+        .single();
+
+      if (boxError || !box) {
+        console.error("[box.service] Box not found during location validation", {
+          user_id: userId,
+          box_id: boxId,
+          error: boxError?.message,
+        });
+        throw new BoxNotFoundError();
+      }
+
+      // Verify location belongs to same workspace as box
+      if (location.workspace_id !== box.workspace_id) {
+        console.error("[box.service] Workspace mismatch", {
+          user_id: userId,
+          box_workspace: box.workspace_id,
+          location_workspace: location.workspace_id,
+        });
+        throw new WorkspaceMismatchError("location");
+      }
+    }
+
+    // Step 2: Execute UPDATE query
+    // RLS automatically verifies workspace membership
+    // Database triggers automatically update updated_at and search_vector
+    const { data, error: updateError } = await supabase
+      .from("boxes")
+      .update(updates)
+      .eq("id", boxId)
+      .select("id, name, updated_at")
+      .single();
+
+    // Check for database errors
+    if (updateError) {
+      console.error("[box.service] Database error updating box", {
+        user_id: userId,
+        box_id: boxId,
+        error: updateError.message,
+        code: updateError.code,
+      });
+
+      // PGRST116 = no rows returned (either doesn't exist or RLS denied)
+      if (updateError.code === "PGRST116") {
+        throw new BoxNotFoundError();
+      }
+
+      throw new Error("Nie udało się zaktualizować pudełka");
+    }
+
+    // Additional null check (should not happen with .single())
+    if (!data) {
+      console.warn("[box.service] Box not found or access denied", {
+        user_id: userId,
+        box_id: boxId,
+      });
+      throw new BoxNotFoundError();
+    }
+
+    // Log successful update
+    console.log("[box.service] Box updated successfully", {
+      user_id: userId,
+      box_id: boxId,
+      fields_updated: Object.keys(updates),
+      location_changed: updates.location_id !== undefined,
+    });
+
+    return {
+      id: data.id,
+      name: data.name,
+      updated_at: data.updated_at,
+    };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (
+      error instanceof BoxNotFoundError ||
+      error instanceof LocationNotFoundError ||
+      error instanceof WorkspaceMismatchError
+    ) {
+      throw error;
+    }
+
+    // Log unexpected errors
+    console.error("[box.service] Unexpected error in updateBox", {
+      box_id: boxId,
+      user_id: userId,
+      error,
+    });
+
+    // Re-throw or wrap errors
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("Nie udało się zaktualizować pudełka");
   }
 }
