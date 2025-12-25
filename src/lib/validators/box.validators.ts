@@ -107,3 +107,49 @@ export const DeleteBoxSchema = z.object({
  * Type inference for delete box ID validation
  */
 export type DeleteBoxInput = z.infer<typeof DeleteBoxSchema>;
+
+/**
+ * Validation schema for PATCH /api/boxes/:id URL parameter.
+ * Validates the box ID from URL params for update.
+ */
+export const UpdateBoxParamsSchema = z.object({
+  id: z.string().uuid("Nieprawidłowy format ID pudełka"),
+});
+
+/**
+ * Type inference for update box params validation
+ */
+export type UpdateBoxParamsInput = z.infer<typeof UpdateBoxParamsSchema>;
+
+/**
+ * Validation schema for PATCH /api/boxes/:id request body.
+ * Validates partial box updates (name, description, tags, location_id).
+ * At least one field must be provided.
+ */
+export const UpdateBoxSchema = z
+  .object({
+    name: z.string().trim().min(1, "Nazwa pudełka nie może być pusta").optional(),
+    description: z
+      .string()
+      .max(
+        ValidationRules.boxes.MAX_DESCRIPTION_LENGTH,
+        `Opis nie może przekraczać ${ValidationRules.boxes.MAX_DESCRIPTION_LENGTH} znaków`
+      )
+      .nullable()
+      .optional(),
+    tags: z
+      .array(z.string(), {
+        invalid_type_error: "Tagi muszą być tablicą ciągów znaków",
+      })
+      .nullable()
+      .optional(),
+    location_id: z.string().uuid("Nieprawidłowy format ID lokalizacji").nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Przynajmniej jedno pole musi zostać zaktualizowane",
+  });
+
+/**
+ * Type inference for update box request body validation
+ */
+export type UpdateBoxInput = z.infer<typeof UpdateBoxSchema>;
