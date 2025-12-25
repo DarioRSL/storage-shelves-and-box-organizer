@@ -571,6 +571,7 @@ Before marking this endpoint as complete, verify:
 ### Test Results Summary
 
 All test cases passed successfully:
+
 - ✅ Test Case 1: Authenticated user with workspaces (200, WorkspaceDto[])
 - ✅ Test Case 2: Authenticated user with no workspaces (200, [])
 - ✅ Test Case 3: Unauthenticated request (401, ErrorResponse)

@@ -13,12 +13,14 @@ This document provides manual testing scenarios for the GET /api/locations endpo
 ### Test 1: Missing workspace_id (400 Bad Request)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Walidacja nie powiodła się",
@@ -35,12 +37,14 @@ curl -X GET "http://localhost:3000/api/locations" \
 ### Test 2: Invalid workspace_id UUID format (400 Bad Request)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=invalid-uuid" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Walidacja nie powiodła się",
@@ -57,12 +61,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=invalid-uuid" \
 ### Test 3: Invalid parent_id UUID format (400 Bad Request)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=550e8400-e29b-41d4-a716-446655440000&parent_id=not-a-uuid" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Walidacja nie powiodła się",
@@ -79,11 +85,13 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=550e8400-e29b-41d4
 ### Test 4: Unauthenticated request (401 Unauthorized)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=550e8400-e29b-41d4-a716-446655440000"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -97,12 +105,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=550e8400-e29b-41d4
 ### Test 5: User not a member of workspace (403 Forbidden)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=WORKSPACE_ID_YOU_DONT_BELONG_TO" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Nie masz uprawnień do przeglądania lokalizacji w tej przestrzeni roboczej"
@@ -116,12 +126,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=WORKSPACE_ID_YOU_D
 ### Test 6: Valid request - Get root locations (200 OK)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 [
   {
@@ -152,6 +164,7 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID"
 **Status Code:** 200
 
 **Validation Checks:**
+
 - ✅ Returns array (even if empty)
 - ✅ All locations have `parent_id: null` (root level)
 - ✅ All paths start with "root." and have depth 2
@@ -166,12 +179,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID"
 **Prerequisites:** Create a location with children first
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID&parent_id=PARENT_LOCATION_ID" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 [
   {
@@ -202,6 +217,7 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID&
 **Status Code:** 200
 
 **Validation Checks:**
+
 - ✅ Returns only direct children of specified parent
 - ✅ All locations have `parent_id` matching the requested parent_id
 - ✅ All paths start with parent's path + one more segment
@@ -213,12 +229,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID&
 ### Test 8: Parent location doesn't exist (404 Not Found)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID&parent_id=00000000-0000-0000-0000-000000000000" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "error": "Nie znaleziono lokalizacji nadrzędnej"
@@ -239,6 +257,7 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=EMPTY_WORKSPACE_ID
 ```
 
 **Expected Response:**
+
 ```json
 []
 ```
@@ -252,12 +271,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=EMPTY_WORKSPACE_ID
 **Prerequisites:** Soft delete a location first
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Behavior:**
+
 - Soft-deleted locations should NOT appear in the response
 - Only locations with `is_deleted: false` are returned
 
@@ -270,12 +291,14 @@ curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID"
 **Prerequisites:** Create 100+ locations in a workspace
 
 **Request:**
+
 ```bash
 time curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPACE_ID" \
   -H "Authorization: Bearer YOUR_AUTH_TOKEN"
 ```
 
 **Expected Behavior:**
+
 - Response time should be < 1 second
 - All locations returned correctly
 - Cache-Control header present
@@ -287,12 +310,14 @@ time curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPAC
 **Prerequisites:** Create locations with 5 levels of depth
 
 **Test Sequence:**
+
 1. Get root locations (depth 1)
 2. Get children of root location (depth 2)
 3. Get children of depth 2 location (depth 3)
 4. Continue until depth 5
 
 **Expected Behavior:**
+
 - Each level returns only direct children
 - parent_id is correctly populated at each level
 - No performance degradation at deeper levels
@@ -339,14 +364,17 @@ time curl -X GET "http://localhost:3000/api/locations?workspace_id=YOUR_WORKSPAC
 ### Common Issues:
 
 **Issue:** "Nie udało się sprawdzić członkostwa w przestrzeni roboczej"
+
 - **Cause:** Database connection error or workspace_members table issue
 - **Solution:** Check database connection and RLS policies
 
 **Issue:** "Nie udało się pobrać lokalizacji"
+
 - **Cause:** Database query error
 - **Solution:** Check database logs and ltree extension
 
 **Issue:** parent_id is always null
+
 - **Cause:** Parent lookup query failing
 - **Solution:** Verify locations table has proper path data
 
@@ -362,6 +390,7 @@ For automated testing, consider implementing:
 4. **API contract tests** with tools like Pact or Dredd
 
 Example test framework setup:
+
 - Vitest for unit tests
 - Supabase local development for integration tests
 - Mock authentication tokens for API tests

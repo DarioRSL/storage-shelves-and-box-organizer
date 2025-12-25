@@ -5,6 +5,7 @@
 The PATCH /api/boxes/:id endpoint updates an existing box's details, including its name, description, tags, and location assignment. This is a partial update endpoint that allows clients to modify only the fields they need to change. The endpoint supports moving boxes between locations or unassigning them from locations entirely by setting `location_id` to null.
 
 **Key Features:**
+
 - Partial updates (only specified fields are modified)
 - Location reassignment with workspace validation
 - Automatic search vector update (via database trigger)
@@ -13,23 +14,28 @@ The PATCH /api/boxes/:id endpoint updates an existing box's details, including i
 ## 2. Request Details
 
 ### HTTP Method
+
 PATCH
 
 ### URL Structure
+
 ```
 PATCH /api/boxes/:id
 ```
 
 ### URL Parameters
+
 - **id** (required): UUID of the box to update
   - Format: Valid UUID v4
   - Example: `b1b48d97-501c-4709-bd7b-d96519721367`
 
 ### Request Headers
+
 - `Authorization: Bearer <JWT_TOKEN>` (required)
 - `Content-Type: application/json` (required)
 
 ### Request Body
+
 All fields are optional, but at least one field must be provided.
 
 ```json
@@ -42,6 +48,7 @@ All fields are optional, but at least one field must be provided.
 ```
 
 **Field Specifications:**
+
 - `name` (string, optional): Updated box name
   - Constraints: Non-empty string after trimming, min length 1
   - Example: `"Winter Clothes 2024"`
@@ -62,6 +69,7 @@ All fields are optional, but at least one field must be provided.
   - Example: `"73316c0a-8a91-4488-bac2-4d8defdd7206"` or `null`
 
 ### Request Body Validation Rules
+
 1. At least one field must be present in the request body
 2. If `name` is provided, it must be a non-empty string after trimming
 3. If `description` is provided, it must not exceed 10,000 characters
@@ -73,11 +81,13 @@ All fields are optional, but at least one field must be provided.
 ### DTOs and Request/Response Types
 
 **Request Type** (already defined in `src/types.ts`):
+
 ```typescript
 export type UpdateBoxRequest = Partial<Pick<Tables<"boxes">, "name" | "description" | "tags" | "location_id">>;
 ```
 
 **Response Type** (already defined in `src/types.ts`):
+
 ```typescript
 export interface UpdateBoxResponse {
   id: string;
@@ -87,6 +97,7 @@ export interface UpdateBoxResponse {
 ```
 
 **Error Response Type** (already defined in `src/types.ts`):
+
 ```typescript
 export interface ErrorResponse {
   error: string;
@@ -99,6 +110,7 @@ export interface ErrorResponse {
 **File**: `src/lib/validators/box.validators.ts`
 
 **UpdateBoxParamsSchema** - Validates URL parameter:
+
 ```typescript
 export const UpdateBoxParamsSchema = z.object({
   id: z.string().uuid("Nieprawidłowy format ID pudełka"),
@@ -106,27 +118,30 @@ export const UpdateBoxParamsSchema = z.object({
 ```
 
 **UpdateBoxSchema** - Validates request body:
+
 ```typescript
-export const UpdateBoxSchema = z.object({
-  name: z.string().min(1, "Nazwa pudełka nie może być pusta").trim().optional(),
-  description: z
-    .string()
-    .max(
-      ValidationRules.boxes.MAX_DESCRIPTION_LENGTH,
-      `Opis nie może przekraczać ${ValidationRules.boxes.MAX_DESCRIPTION_LENGTH} znaków`
-    )
-    .nullable()
-    .optional(),
-  tags: z
-    .array(z.string(), {
-      invalid_type_error: "Tagi muszą być tablicą ciągów znaków",
-    })
-    .nullable()
-    .optional(),
-  location_id: z.string().uuid("Nieprawidłowy format ID lokalizacji").nullable().optional(),
-}).refine((data) => Object.keys(data).length > 0, {
-  message: "Przynajmniej jedno pole musi zostać zaktualizowane",
-});
+export const UpdateBoxSchema = z
+  .object({
+    name: z.string().min(1, "Nazwa pudełka nie może być pusta").trim().optional(),
+    description: z
+      .string()
+      .max(
+        ValidationRules.boxes.MAX_DESCRIPTION_LENGTH,
+        `Opis nie może przekraczać ${ValidationRules.boxes.MAX_DESCRIPTION_LENGTH} znaków`
+      )
+      .nullable()
+      .optional(),
+    tags: z
+      .array(z.string(), {
+        invalid_type_error: "Tagi muszą być tablicą ciągów znaków",
+      })
+      .nullable()
+      .optional(),
+    location_id: z.string().uuid("Nieprawidłowy format ID lokalizacji").nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Przynajmniej jedno pole musi zostać zaktualizowane",
+  });
 ```
 
 ### Custom Error Classes (already exist in `src/lib/services/box.service.ts`)
@@ -148,11 +163,13 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Response Headers:**
+
 - `Content-Type: application/json`
 
 ### Error Responses
 
 #### 400 Bad Request - Invalid Input
+
 ```json
 {
   "error": "Nieprawidłowy format ID pudełka"
@@ -160,11 +177,13 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Scenarios:**
+
 - Invalid UUID format in URL parameter
 - Empty request body (no fields to update)
 - Invalid field values (empty name, description too long, invalid tags format, invalid location_id)
 
 #### 401 Unauthorized - Not Authenticated
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -172,11 +191,13 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Scenarios:**
+
 - Missing Authorization header
 - Invalid or expired JWT token
 - Token doesn't correspond to a valid user
 
 #### 403 Forbidden - Workspace Mismatch
+
 ```json
 {
   "error": "Lokalizacja należy do innego obszaru roboczego"
@@ -184,9 +205,11 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Scenarios:**
+
 - Provided location_id belongs to a different workspace than the box
 
 #### 404 Not Found - Resource Not Found
+
 ```json
 {
   "error": "Pudełko nie zostało znalezione"
@@ -194,11 +217,13 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Scenarios:**
+
 - Box with specified ID doesn't exist
 - User doesn't have access to the box (RLS enforcement)
 - Location with specified location_id doesn't exist
 
 #### 500 Internal Server Error - Server Error
+
 ```json
 {
   "error": "Nie udało się zaktualizować pudełka"
@@ -206,6 +231,7 @@ export const UpdateBoxSchema = z.object({
 ```
 
 **Scenarios:**
+
 - Database connection failure
 - Unexpected database error
 - Unhandled exception in service layer
@@ -259,6 +285,7 @@ API Route Handler
 ### Database Interactions
 
 **Query 1: Location Validation** (conditional - only if location_id provided and not null)
+
 ```sql
 SELECT id, workspace_id, is_deleted
 FROM locations
@@ -267,6 +294,7 @@ LIMIT 1
 ```
 
 **Query 2: Box Update**
+
 ```sql
 UPDATE boxes
 SET
@@ -279,27 +307,32 @@ RETURNING id, name, updated_at
 ```
 
 **RLS Policy Applied:**
+
 - The UPDATE query is automatically filtered by RLS to ensure user is a workspace member
 - RLS policy: `auth.uid() IN (SELECT user_id FROM workspace_members WHERE workspace_id = boxes.workspace_id)`
 
 **Database Triggers Executed:**
+
 - `moddatetime` trigger: Automatically updates `updated_at` to current timestamp
 - `update_box_search_vector` trigger: Regenerates `search_vector` from name, description, and tags
 
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Method**: Supabase Auth (JWT Bearer token)
 - **Verification**: `supabase.auth.getUser()` validates token and retrieves user
 - **Failure Handling**: Return 401 if token is missing, invalid, or expired
 
 ### Authorization
+
 - **Workspace Access**: Row Level Security (RLS) policies enforce workspace membership
 - **Policy Check**: User must be a member of the workspace that owns the box
 - **Automatic Enforcement**: PostgreSQL RLS automatically filters queries based on `auth.uid()`
 - **No Manual Checks**: Authorization is handled entirely by database layer
 
 ### Input Validation
+
 - **URL Parameter**: Validate `id` is a valid UUID using Zod schema
 - **Request Body**: Validate all fields against Zod schema
 - **String Trimming**: `name` field is automatically trimmed
@@ -307,6 +340,7 @@ RETURNING id, name, updated_at
 - **Type Safety**: TypeScript + Zod ensure type correctness
 
 ### Data Integrity
+
 - **Location Validation**: If location_id provided, verify:
   1. Location exists in database
   2. Location belongs to same workspace as box
@@ -316,16 +350,16 @@ RETURNING id, name, updated_at
 
 ### Potential Security Threats and Mitigations
 
-| Threat | Mitigation |
-|--------|------------|
-| **SQL Injection** | Supabase client uses parameterized queries; input validated with Zod |
-| **IDOR (Insecure Direct Object Reference)** | RLS policies prevent cross-workspace access; user can only update boxes in their workspaces |
-| **XSS (Cross-Site Scripting)** | Not applicable (API endpoint, no HTML rendering) |
-| **Mass Assignment** | TypeScript type system restricts updateable fields to name, description, tags, location_id only |
-| **DoS via Large Payloads** | Description limited to 10,000 characters; tags validated as array |
-| **Privilege Escalation** | RLS enforces workspace membership; cannot update boxes outside user's workspaces |
-| **Data Leakage** | Response only includes id, name, updated_at (minimal data exposure) |
-| **Location Hijacking** | Location workspace validation prevents assigning box to location in different workspace |
+| Threat                                      | Mitigation                                                                                      |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **SQL Injection**                           | Supabase client uses parameterized queries; input validated with Zod                            |
+| **IDOR (Insecure Direct Object Reference)** | RLS policies prevent cross-workspace access; user can only update boxes in their workspaces     |
+| **XSS (Cross-Site Scripting)**              | Not applicable (API endpoint, no HTML rendering)                                                |
+| **Mass Assignment**                         | TypeScript type system restricts updateable fields to name, description, tags, location_id only |
+| **DoS via Large Payloads**                  | Description limited to 10,000 characters; tags validated as array                               |
+| **Privilege Escalation**                    | RLS enforces workspace membership; cannot update boxes outside user's workspaces                |
+| **Data Leakage**                            | Response only includes id, name, updated_at (minimal data exposure)                             |
+| **Location Hijacking**                      | Location workspace validation prevents assigning box to location in different workspace         |
 
 ## 7. Error Handling
 
@@ -336,62 +370,71 @@ RETURNING id, name, updated_at
 ### Error Categories and Responses
 
 #### 1. Authentication Errors (401 Unauthorized)
+
 **Trigger**: `supabase.auth.getUser()` fails or returns no user
 
 **Handling**:
+
 ```typescript
 if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: "Nieautoryzowany dostęp" } as ErrorResponse),
-    { status: 401, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Nieautoryzowany dostęp" } as ErrorResponse), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 #### 2. URL Parameter Validation Errors (400 Bad Request)
+
 **Trigger**: Invalid UUID format in `id` parameter
 
 **Handling**:
+
 ```typescript
 const parseResult = UpdateBoxParamsSchema.safeParse({ id: params.id });
 if (!parseResult.success) {
   const firstError = parseResult.error.errors[0];
-  return new Response(
-    JSON.stringify({ error: firstError.message } as ErrorResponse),
-    { status: 400, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: firstError.message } as ErrorResponse), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 #### 3. Request Body Validation Errors (400 Bad Request)
+
 **Trigger**: Invalid request body (empty object, invalid field values)
 
 **Handling**:
+
 ```typescript
 const bodyParseResult = UpdateBoxSchema.safeParse(requestBody);
 if (!bodyParseResult.success) {
   const firstError = bodyParseResult.error.errors[0];
-  return new Response(
-    JSON.stringify({ error: firstError.message } as ErrorResponse),
-    { status: 400, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: firstError.message } as ErrorResponse), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 #### 4. Box Not Found Errors (404 Not Found)
+
 **Trigger**: Box doesn't exist or user lacks access (RLS)
 
 **Handling** (in route):
+
 ```typescript
 if (error instanceof BoxNotFoundError) {
-  return new Response(
-    JSON.stringify({ error: "Pudełko nie zostało znalezione" } as ErrorResponse),
-    { status: 404, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Pudełko nie zostało znalezione" } as ErrorResponse), {
+    status: 404,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 **Handling** (in service):
+
 ```typescript
 // After UPDATE query with count check
 if (count === 0) {
@@ -404,9 +447,11 @@ if (count === 0) {
 ```
 
 #### 5. Location Not Found Errors (404 Not Found)
+
 **Trigger**: location_id provided doesn't exist in database
 
 **Handling** (in service):
+
 ```typescript
 if (locationError || !location) {
   console.error("[box.service] Location not found", {
@@ -418,9 +463,11 @@ if (locationError || !location) {
 ```
 
 #### 6. Workspace Mismatch Errors (403 Forbidden)
+
 **Trigger**: Location belongs to different workspace than box
 
 **Handling** (in service):
+
 ```typescript
 // After querying box and location
 if (box.workspace_id !== location.workspace_id) {
@@ -434,19 +481,22 @@ if (box.workspace_id !== location.workspace_id) {
 ```
 
 **Handling** (in route):
+
 ```typescript
 if (error instanceof WorkspaceMismatchError) {
-  return new Response(
-    JSON.stringify({ error: error.message } as ErrorResponse),
-    { status: 403, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: error.message } as ErrorResponse), {
+    status: 403,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 #### 7. Database Errors (500 Internal Server Error)
+
 **Trigger**: Database connection failure, query error
 
 **Handling**:
+
 ```typescript
 if (updateError) {
   console.error("[box.service] Database error updating box", {
@@ -460,9 +510,11 @@ if (updateError) {
 ```
 
 #### 8. Unexpected Errors (500 Internal Server Error)
+
 **Trigger**: Unhandled exceptions, unknown errors
 
 **Handling** (outer catch block):
+
 ```typescript
 catch (error) {
   console.error("Unexpected error in PATCH /api/boxes/:id:", error);
@@ -476,6 +528,7 @@ catch (error) {
 ### Logging Strategy
 
 **Success Logging**:
+
 ```typescript
 console.log("[box.service] Box updated successfully", {
   user_id: userId,
@@ -486,6 +539,7 @@ console.log("[box.service] Box updated successfully", {
 ```
 
 **Error Logging**:
+
 ```typescript
 console.error("[box.service] Error context", {
   user_id: userId,
@@ -499,12 +553,14 @@ console.error("[box.service] Error context", {
 ## 8. Performance Considerations
 
 ### Query Efficiency
+
 - **Single UPDATE Query**: Box update performed in one database round-trip
 - **Conditional Location Query**: Location validation only executed if location_id provided and not null
 - **No N+1 Queries**: No iterative queries or nested loops
 - **RLS Overhead**: Minimal - RLS policy check is a simple EXISTS subquery on workspace_members
 
 ### Database Optimizations
+
 - **Indexed Columns**:
   - `boxes.id` is primary key (indexed)
   - `boxes.workspace_id` has foreign key index
@@ -515,6 +571,7 @@ console.error("[box.service] Error context", {
 - **Minimal Data Transfer**: Response only returns id, name, updated_at (3 fields)
 
 ### Potential Bottlenecks
+
 1. **Location Validation Query**: Additional SELECT if location_id provided
    - **Mitigation**: Only executed conditionally; indexed lookup on primary key
 
@@ -525,12 +582,14 @@ console.error("[box.service] Error context", {
    - **Mitigation**: workspace_members has composite primary key index; cached in session
 
 ### Optimization Strategies
+
 - **Partial Updates Only**: Only modified fields are included in UPDATE SET clause
 - **Early Validation**: Input validation happens before database queries
 - **Error Handling**: Early returns prevent unnecessary processing
 - **Logging**: Structured logging with context for debugging performance issues
 
 ### Expected Performance
+
 - **Average Response Time**: 50-150ms (includes auth, validation, 1-2 DB queries)
 - **P95 Response Time**: 200-300ms
 - **Database Load**: 1-2 queries per request, all indexed lookups
@@ -538,14 +597,17 @@ console.error("[box.service] Error context", {
 ## 9. Implementation Steps
 
 ### Step 1: Create Validation Schemas
+
 **File**: `src/lib/validators/box.validators.ts`
 
 **Actions**:
+
 1. Add `UpdateBoxParamsSchema` for URL parameter validation
 2. Add `UpdateBoxSchema` for request body validation with refinement to ensure at least one field present
 3. Export TypeScript type inference: `UpdateBoxParamsInput`, `UpdateBoxInput`
 
 **Acceptance Criteria**:
+
 - URL parameter validation rejects invalid UUIDs
 - Request body validation rejects empty objects
 - Name validation rejects empty strings after trimming
@@ -554,9 +616,11 @@ console.error("[box.service] Error context", {
 - Location_id validation accepts UUID or null
 
 ### Step 2: Implement Service Layer Function
+
 **File**: `src/lib/services/box.service.ts`
 
 **Actions**:
+
 1. Create `updateBox()` function with signature:
    ```typescript
    async function updateBox(
@@ -564,7 +628,7 @@ console.error("[box.service] Error context", {
      boxId: string,
      userId: string,
      updates: UpdateBoxRequest
-   ): Promise<UpdateBoxResponse>
+   ): Promise<UpdateBoxResponse>;
    ```
 2. Implement location validation logic (if location_id provided):
    - Query location by ID
@@ -581,6 +645,7 @@ console.error("[box.service] Error context", {
 8. Add success logging with updated fields summary
 
 **Acceptance Criteria**:
+
 - Function throws `BoxNotFoundError` if box doesn't exist or user lacks access
 - Function throws `LocationNotFoundError` if location_id doesn't exist
 - Function throws `WorkspaceMismatchError` if location belongs to different workspace
@@ -589,9 +654,11 @@ console.error("[box.service] Error context", {
 - Function returns correct UpdateBoxResponse structure
 
 ### Step 3: Implement API Route Handler
+
 **File**: `src/pages/api/boxes/[id].ts`
 
 **Actions**:
+
 1. Add PATCH export with APIRoute type
 2. Set `export const prerender = false`
 3. Implement authentication check using `supabase.auth.getUser()`
@@ -608,6 +675,7 @@ console.error("[box.service] Error context", {
 10. Add JSDoc comments documenting the endpoint
 
 **Acceptance Criteria**:
+
 - Route returns 401 for unauthenticated requests
 - Route returns 400 for invalid URL parameters
 - Route returns 400 for invalid request bodies
@@ -618,9 +686,11 @@ console.error("[box.service] Error context", {
 - All responses have correct Content-Type header
 
 ### Step 4: Manual Testing
+
 **Create Test Script**: `.ai_docs/test-patch-boxes-id.sh`
 
 **Test Scenarios**:
+
 1. **Happy Path - Update Name**
    - PATCH valid box with new name
    - Verify 200 response with updated name
@@ -676,12 +746,15 @@ console.error("[box.service] Error context", {
     - Verify 400 response
 
 **Acceptance Criteria**:
+
 - All test scenarios pass with expected status codes and response structures
 - Test script uses heredoc pattern for curl commands (following guidelines)
 - Test script outputs formatted JSON using `python3 -m json.tool`
 
 ### Step 5: Integration Testing
+
 **Actions**:
+
 1. Test with local Supabase instance
 2. Verify RLS policies work correctly
 3. Test database triggers (updated_at, search_vector)
@@ -690,13 +763,16 @@ console.error("[box.service] Error context", {
 6. Verify search_vector updates when name/description/tags change
 
 **Acceptance Criteria**:
+
 - RLS prevents cross-workspace updates
 - Database triggers execute correctly
 - Logs contain all expected context
 - Search functionality works with updated data
 
 ### Step 6: Documentation
+
 **Actions**:
+
 1. Update API specification in `.ai_docs/api-plan.md`:
    - Change implementation status to "✅ Implemented"
    - Add implementation file reference
@@ -706,12 +782,15 @@ console.error("[box.service] Error context", {
 3. Document any deviations from the plan
 
 **Acceptance Criteria**:
+
 - API plan reflects implementation status
 - Code is well-commented and self-documenting
 - Implementation aligns with specification
 
 ### Step 7: Code Review Checklist
+
 **Before Completion**:
+
 - [ ] All TypeScript types are correctly defined
 - [ ] Zod schemas validate all inputs correctly
 - [ ] Service function handles all error cases
@@ -731,6 +810,7 @@ console.error("[box.service] Error context", {
 This implementation plan provides a comprehensive guide for implementing the PATCH /api/boxes/:id endpoint. The implementation follows existing patterns from the DELETE and GET handlers, leverages Row Level Security for authorization, and includes thorough validation and error handling. The service layer encapsulates business logic, making the code maintainable and testable.
 
 **Key Design Decisions**:
+
 1. **Partial Updates**: Only fields provided in request body are updated
 2. **Location Validation**: Explicit workspace check prevents cross-workspace assignments
 3. **RLS Enforcement**: Authorization handled by PostgreSQL policies

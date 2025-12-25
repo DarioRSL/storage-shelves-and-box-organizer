@@ -7,6 +7,7 @@ The GET /api/locations endpoint retrieves all storage locations within a specifi
 **Purpose**: Enable users to browse their hierarchical storage structure (up to 5 levels deep) efficiently, supporting both full tree retrieval and incremental loading for better performance with large location hierarchies.
 
 **Key Features**:
+
 - Multi-tenant workspace isolation
 - Hierarchical filtering via parent_id
 - Automatic RLS-based authorization
@@ -15,20 +16,24 @@ The GET /api/locations endpoint retrieves all storage locations within a specifi
 ## 2. Request Details
 
 ### HTTP Method
+
 `GET`
 
 ### URL Structure
+
 `/api/locations`
 
 ### Query Parameters
 
 #### Required Parameters
+
 - **workspace_id** (UUID, required)
   - Description: The ID of the workspace to query locations from
   - Validation: Must be a valid UUID format
   - Example: `?workspace_id=550e8400-e29b-41d4-a716-446655440000`
 
 #### Optional Parameters
+
 - **parent_id** (UUID, optional)
   - Description: Filter locations to only return direct children of this parent
   - Validation: Must be a valid UUID format or null
@@ -37,16 +42,19 @@ The GET /api/locations endpoint retrieves all storage locations within a specifi
   - Example: `?workspace_id=550e8400-e29b-41d4-a716-446655440000&parent_id=7c9e6679-7425-40de-944b-e07fc1f90ae7`
 
 ### Request Headers
+
 - **Authorization**: `Bearer <jwt_token>` (required)
   - Supabase JWT token for authentication
   - Set automatically by Astro middleware via `context.locals.supabase`
 
 ### Request Body
+
 None (GET request)
 
 ## 3. Utilized Types
 
 ### Response DTO
+
 ```typescript
 // From src/types.ts
 export interface LocationDto extends Omit<Tables<"locations">, "path"> {
@@ -56,6 +64,7 @@ export interface LocationDto extends Omit<Tables<"locations">, "path"> {
 ```
 
 **LocationDto Fields**:
+
 - `id`: UUID - Unique location identifier
 - `workspace_id`: UUID - Workspace this location belongs to
 - `parent_id`: UUID | null - Parent location ID (derived, not stored directly)
@@ -67,6 +76,7 @@ export interface LocationDto extends Omit<Tables<"locations">, "path"> {
 - `updated_at`: timestamp - Last update timestamp
 
 ### Query Parameters Type
+
 ```typescript
 // From src/types.ts
 export interface GetLocationsQuery {
@@ -76,12 +86,13 @@ export interface GetLocationsQuery {
 ```
 
 ### Validation Schema (Zod)
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const GetLocationsQuerySchema = z.object({
-  workspace_id: z.string().uuid({ message: 'workspace_id must be a valid UUID' }),
-  parent_id: z.string().uuid({ message: 'parent_id must be a valid UUID' }).optional().nullable(),
+  workspace_id: z.string().uuid({ message: "workspace_id must be a valid UUID" }),
+  parent_id: z.string().uuid({ message: "parent_id must be a valid UUID" }).optional().nullable(),
 });
 ```
 
@@ -123,6 +134,7 @@ const GetLocationsQuerySchema = z.object({
 ### Error Responses
 
 #### 400 Bad Request
+
 **Scenario**: Missing required workspace_id or invalid UUID format
 
 ```json
@@ -138,6 +150,7 @@ const GetLocationsQuerySchema = z.object({
 ```
 
 #### 401 Unauthorized
+
 **Scenario**: User is not authenticated or session is invalid
 
 ```json
@@ -147,6 +160,7 @@ const GetLocationsQuerySchema = z.object({
 ```
 
 #### 403 Forbidden
+
 **Scenario**: User is not a member of the requested workspace (if not handled by RLS)
 
 ```json
@@ -156,6 +170,7 @@ const GetLocationsQuerySchema = z.object({
 ```
 
 #### 500 Internal Server Error
+
 **Scenario**: Database query failure or unexpected server error
 
 ```json
@@ -168,6 +183,7 @@ const GetLocationsQuerySchema = z.object({
 ## 5. Data Flow
 
 ### Request Flow
+
 1. **Client Request** → Astro API route handler (`src/pages/api/locations.ts`)
 2. **Middleware Processing** → Astro middleware validates session, attaches `supabase` client to `context.locals`
 3. **Authentication Check** → Verify user is authenticated via `context.locals.supabase.auth.getUser()`
@@ -214,6 +230,7 @@ async getLocations(workspaceId: string, parentId?: string | null, userId: string
 ```
 
 ### Hierarchy Path Derivation
+
 - **ltree format**: `root.basement.shelf_a.section_1`
 - **parent_id derivation**: Extract the second-to-last segment from path
   - Example: `root.basement.shelf_a` → parent_id is ID of location with path `root.basement`
@@ -221,12 +238,14 @@ async getLocations(workspaceId: string, parentId?: string | null, userId: string
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Mechanism**: Supabase Auth with JWT tokens
 - **Implementation**: Astro middleware extracts and validates JWT from `Authorization: Bearer <token>` header
 - **Session Validation**: Use `context.locals.supabase.auth.getUser()` to verify active session
 - **Error Handling**: Return 401 if session is invalid or missing
 
 ### Authorization
+
 - **Multi-Tenant Isolation**: Workspace-based data segregation
 - **RLS Policies**: PostgreSQL Row Level Security enforces access control
 - **Helper Function**: `is_workspace_member(workspace_id)` validates user membership
@@ -245,89 +264,106 @@ async getLocations(workspaceId: string, parentId?: string | null, userId: string
   ```
 
 ### Input Validation
+
 - **UUID Validation**: Use Zod to ensure workspace_id and parent_id are valid UUIDs
 - **SQL Injection Prevention**: Parameterized queries via Supabase client
 - **Type Safety**: TypeScript types enforce correct data structures
 
 ### Data Sanitization
+
 - **Output Sanitization**: Ensure ltree paths are properly converted to strings
 - **XSS Prevention**: Encode special characters in location names and descriptions (handled by JSON serialization)
 
 ## 7. Error Handling
 
 ### Validation Errors (400)
+
 **Triggers**:
+
 - Missing `workspace_id` query parameter
 - Invalid UUID format for `workspace_id` or `parent_id`
 - Malformed query parameters
 
 **Handling**:
+
 ```typescript
 const validationResult = GetLocationsQuerySchema.safeParse({
-  workspace_id: url.searchParams.get('workspace_id'),
-  parent_id: url.searchParams.get('parent_id') || null,
+  workspace_id: url.searchParams.get("workspace_id"),
+  parent_id: url.searchParams.get("parent_id") || null,
 });
 
 if (!validationResult.success) {
-  return new Response(
-    JSON.stringify({ error: validationResult.error.errors[0].message }),
-    { status: 400, headers: { 'Content-Type': 'application/json' } }
-  );
+  return new Response(JSON.stringify({ error: validationResult.error.errors[0].message }), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 ### Authentication Errors (401)
+
 **Triggers**:
+
 - Missing Authorization header
 - Invalid or expired JWT token
 - User session not found
 
 **Handling**:
+
 ```typescript
-const { data: { user }, error: authError } = await context.locals.supabase.auth.getUser();
+const {
+  data: { user },
+  error: authError,
+} = await context.locals.supabase.auth.getUser();
 
 if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized: Authentication required' }),
-    { status: 401, headers: { 'Content-Type': 'application/json' } }
-  );
+  return new Response(JSON.stringify({ error: "Unauthorized: Authentication required" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 ### Authorization Errors (403)
+
 **Triggers**:
+
 - User is not a member of the requested workspace
 - RLS policy blocks access (returns empty array, not explicit 403)
 
 **Note**: With proper RLS implementation, Supabase will automatically filter results, so explicit 403 may not be needed. The endpoint will return an empty array if the user has no access.
 
 ### Database Errors (500)
+
 **Triggers**:
+
 - Supabase query failure
 - Network issues with database
 - Unexpected database constraints
 
 **Handling**:
+
 ```typescript
 try {
   const locations = await LocationService.getLocations(workspace_id, parent_id, user.id);
   return new Response(JSON.stringify(locations), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { "Content-Type": "application/json" },
   });
 } catch (error) {
-  console.error('Error fetching locations:', error);
+  console.error("Error fetching locations:", error);
   return new Response(
     JSON.stringify({
-      error: 'Internal server error',
-      details: 'Failed to retrieve locations'
+      error: "Internal server error",
+      details: "Failed to retrieve locations",
     }),
-    { status: 500, headers: { 'Content-Type': 'application/json' } }
+    { status: 500, headers: { "Content-Type": "application/json" } }
   );
 }
 ```
 
 ### Edge Cases
+
 1. **Empty Results**: Return `[]` when no locations match criteria (valid success case)
 2. **Deleted Locations**: Filter out soft-deleted locations (`is_deleted = true`)
 3. **Invalid parent_id**: If parent_id doesn't exist, return empty array (valid query, no matches)
@@ -336,11 +372,13 @@ try {
 ## 8. Performance Considerations
 
 ### Query Optimization
+
 - **Indexing**: Ensure GIST index exists on `path` column for efficient ltree queries
 - **Filtering**: Apply `is_deleted = false` filter to reduce result set
 - **Ordering**: Use database-level ordering (`ORDER BY name ASC`) for consistency
 
 ### Database Indexes
+
 ```sql
 -- From db-plan.md, ensure these exist:
 CREATE INDEX idx_locations_path ON locations USING GIST (path);
@@ -349,6 +387,7 @@ CREATE UNIQUE INDEX idx_locations_workspace_path ON locations (workspace_id, pat
 ```
 
 ### Caching Strategy
+
 - **Client-Side**: Implement cache headers for browser caching
   ```typescript
   headers: {
@@ -359,16 +398,19 @@ CREATE UNIQUE INDEX idx_locations_workspace_path ON locations (workspace_id, pat
 - **Server-Side**: Consider implementing a simple in-memory cache for frequently accessed workspaces (future optimization)
 
 ### Lazy Loading Support
+
 - **Parent-based filtering**: Allows clients to load tree incrementally
 - **Reduces initial payload**: Only fetch root nodes first, then expand as needed
 - **UI Performance**: Prevents rendering large tree structures upfront
 
 ### Potential Bottlenecks
+
 1. **Large Workspace**: Workspaces with 1000+ locations may need pagination
 2. **Deep Hierarchy**: 5-level deep trees with many nodes per level
 3. **Concurrent Requests**: Multiple users querying same workspace simultaneously
 
 ### Optimization Strategies
+
 - **Pagination**: Add `limit` and `offset` parameters for large result sets (future enhancement)
 - **Field Selection**: Only select necessary fields to reduce payload size
 - **Connection Pooling**: Ensure Supabase connection pool is properly configured
@@ -376,18 +418,21 @@ CREATE UNIQUE INDEX idx_locations_workspace_path ON locations (workspace_id, pat
 ## 9. Implementation Steps
 
 ### Step 1: Create API Route File
+
 **File**: `src/pages/api/locations.ts`
 
 **Actions**:
+
 1. Create new file in `src/pages/api/` directory
 2. Disable prerendering: `export const prerender = false`
 3. Set up TypeScript imports for types, Zod, and utilities
 
 **Code Structure**:
+
 ```typescript
-import type { APIContext } from 'astro';
-import { z } from 'zod';
-import type { LocationDto, GetLocationsQuery } from '../../types';
+import type { APIContext } from "astro";
+import { z } from "zod";
+import type { LocationDto, GetLocationsQuery } from "../../types";
 
 export const prerender = false;
 
@@ -397,79 +442,88 @@ export async function GET(context: APIContext) {
 ```
 
 ### Step 2: Implement Input Validation
+
 **Actions**:
+
 1. Define Zod schema for query parameters
 2. Extract and validate `workspace_id` and `parent_id` from URL search params
 3. Return 400 error for validation failures
 
 **Implementation**:
+
 ```typescript
 const GetLocationsQuerySchema = z.object({
-  workspace_id: z.string().uuid({ message: 'workspace_id must be a valid UUID' }),
-  parent_id: z.string().uuid({ message: 'parent_id must be a valid UUID' }).optional().nullable(),
+  workspace_id: z.string().uuid({ message: "workspace_id must be a valid UUID" }),
+  parent_id: z.string().uuid({ message: "parent_id must be a valid UUID" }).optional().nullable(),
 });
 
 const url = new URL(context.request.url);
 const validationResult = GetLocationsQuerySchema.safeParse({
-  workspace_id: url.searchParams.get('workspace_id'),
-  parent_id: url.searchParams.get('parent_id') || null,
+  workspace_id: url.searchParams.get("workspace_id"),
+  parent_id: url.searchParams.get("parent_id") || null,
 });
 
 if (!validationResult.success) {
-  return new Response(
-    JSON.stringify({ error: validationResult.error.errors[0].message }),
-    { status: 400, headers: { 'Content-Type': 'application/json' } }
-  );
+  return new Response(JSON.stringify({ error: validationResult.error.errors[0].message }), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 const { workspace_id, parent_id } = validationResult.data;
 ```
 
 ### Step 3: Implement Authentication Check
+
 **Actions**:
+
 1. Extract authenticated user from `context.locals.supabase`
 2. Verify user session is valid
 3. Return 401 error if authentication fails
 
 **Implementation**:
+
 ```typescript
-const { data: { user }, error: authError } = await context.locals.supabase.auth.getUser();
+const {
+  data: { user },
+  error: authError,
+} = await context.locals.supabase.auth.getUser();
 
 if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized: Authentication required' }),
-    { status: 401, headers: { 'Content-Type': 'application/json' } }
-  );
+  return new Response(JSON.stringify({ error: "Unauthorized: Authentication required" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 ### Step 4: Create Location Service
+
 **File**: `src/lib/services/locationService.ts`
 
 **Actions**:
+
 1. Create new service file if it doesn't exist
 2. Implement `getLocations` method with Supabase query logic
 3. Handle ltree path conversion and parent_id derivation
 4. Implement proper error handling and logging
 
 **Service Interface**:
+
 ```typescript
-import type { SupabaseClient } from '../../db/supabase.client';
-import type { LocationDto } from '../../types';
+import type { SupabaseClient } from "../../db/supabase.client";
+import type { LocationDto } from "../../types";
 
 export class LocationService {
   constructor(private supabase: SupabaseClient) {}
 
-  async getLocations(
-    workspaceId: string,
-    parentId?: string | null
-  ): Promise<LocationDto[]> {
+  async getLocations(workspaceId: string, parentId?: string | null): Promise<LocationDto[]> {
     // Query implementation (see Step 5)
   }
 
   private deriveParentId(path: string): string | null {
     // Extract parent from ltree path
-    const segments = path.split('.');
+    const segments = path.split(".");
     if (segments.length <= 2) return null; // Root level
     // Return ID of parent location based on parent path
     // This requires a secondary query or pre-fetching parent IDs
@@ -478,7 +532,9 @@ export class LocationService {
 ```
 
 ### Step 5: Implement Database Query Logic
+
 **Actions**:
+
 1. Build Supabase query with workspace_id filter
 2. Add parent_id filtering logic (root vs. children)
 3. Filter out soft-deleted locations
@@ -486,6 +542,7 @@ export class LocationService {
 5. Transform ltree paths to strings
 
 **Query Implementation**:
+
 ```typescript
 async getLocations(
   workspaceId: string,
@@ -557,11 +614,13 @@ private transformLocation(location: any): LocationDto {
 
 **Note on parent_id Derivation**:
 The current database schema stores only the ltree `path`, not an explicit `parent_id`. To efficiently return `parent_id` in the response, consider:
+
 1. **Option A**: Add a computed column or modify query to join with parent locations
 2. **Option B**: Store `parent_id` as a regular column (requires migration)
 3. **Option C**: Client-side derivation from path (simplest for MVP)
 
 **Recommended Approach**: Use a Supabase RPC function or modify the select to include a lateral join:
+
 ```sql
 SELECT
   l.*,
@@ -571,15 +630,18 @@ WHERE workspace_id = $1 AND is_deleted = false;
 ```
 
 ### Step 6: Integrate Service in API Route
+
 **Actions**:
+
 1. Instantiate LocationService with Supabase client
 2. Call `getLocations` method with validated parameters
 3. Return successful response with location data
 4. Implement error handling with appropriate status codes
 
 **Integration Code**:
+
 ```typescript
-import { LocationService } from '../../lib/services/locationService';
+import { LocationService } from "../../lib/services/locationService";
 
 export async function GET(context: APIContext) {
   // ... validation and auth steps from above ...
@@ -591,38 +653,43 @@ export async function GET(context: APIContext) {
     return new Response(JSON.stringify(locations), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'private, max-age=60',
+        "Content-Type": "application/json",
+        "Cache-Control": "private, max-age=60",
       },
     });
   } catch (error) {
-    console.error('Error fetching locations:', error);
+    console.error("Error fetching locations:", error);
     return new Response(
       JSON.stringify({
-        error: 'Internal server error',
-        details: 'Failed to retrieve locations'
+        error: "Internal server error",
+        details: "Failed to retrieve locations",
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
 ```
 
 ### Step 7: Add TypeScript Type Safety
+
 **Actions**:
+
 1. Ensure all types are imported from `src/types.ts`
 2. Add proper return type annotations to service methods
 3. Use SupabaseClient type from `src/db/supabase.client.ts`
 4. Validate response structure matches LocationDto
 
 **Type Imports**:
+
 ```typescript
-import type { SupabaseClient } from '../../db/supabase.client';
-import type { LocationDto, GetLocationsQuery } from '../../types';
+import type { SupabaseClient } from "../../db/supabase.client";
+import type { LocationDto, GetLocationsQuery } from "../../types";
 ```
 
 ### Step 8: Test Error Scenarios
+
 **Actions**:
+
 1. Test with missing workspace_id → Expect 400
 2. Test with invalid UUID format → Expect 400
 3. Test without authentication → Expect 401
@@ -631,6 +698,7 @@ import type { LocationDto, GetLocationsQuery } from '../../types';
 6. Test with valid parameters → Expect 200 with location array
 
 **Manual Testing Checklist**:
+
 - [ ] Missing workspace_id returns 400
 - [ ] Invalid workspace_id UUID returns 400
 - [ ] Invalid parent_id UUID returns 400
@@ -642,15 +710,18 @@ import type { LocationDto, GetLocationsQuery } from '../../types';
 - [ ] Locations are ordered by name
 
 ### Step 9: Implement Logging and Monitoring
+
 **Actions**:
+
 1. Add structured logging for errors
 2. Log query parameters for debugging (sanitize sensitive data)
 3. Log performance metrics (query duration)
 4. Consider adding request ID for tracing
 
 **Logging Example**:
+
 ```typescript
-console.error('Error fetching locations:', {
+console.error("Error fetching locations:", {
   error: error.message,
   workspace_id,
   parent_id,
@@ -660,7 +731,9 @@ console.error('Error fetching locations:', {
 ```
 
 ### Step 10: Documentation and Code Review
+
 **Actions**:
+
 1. Add JSDoc comments to service methods
 2. Document query parameter behavior
 3. Add inline comments for complex ltree logic
@@ -668,6 +741,7 @@ console.error('Error fetching locations:', {
 5. Request code review from team
 
 **JSDoc Example**:
+
 ```typescript
 /**
  * Retrieves locations for a specific workspace with optional parent filtering.
@@ -684,7 +758,9 @@ async getLocations(
 ```
 
 ### Step 11: Final Integration Testing
+
 **Actions**:
+
 1. Test full request flow from client to database
 2. Verify RLS policies work correctly
 3. Test with multiple workspaces and users
@@ -692,7 +768,9 @@ async getLocations(
 5. Test lazy loading behavior (parent_id filtering)
 
 ### Step 12: Deploy and Monitor
+
 **Actions**:
+
 1. Merge implementation to main branch
 2. Deploy to staging environment
 3. Run smoke tests on staging
@@ -720,6 +798,7 @@ async getLocations(
 ## Additional Notes
 
 ### ltree and parent_id Handling
+
 The current database schema uses ltree for hierarchical storage but doesn't store an explicit `parent_id` column. For the initial implementation, we have three options:
 
 1. **Client-side derivation**: Return path only, let client derive parent relationships
@@ -729,6 +808,7 @@ The current database schema uses ltree for hierarchical storage but doesn't stor
 **Recommended**: Implement Option 2 for MVP, plan Option 3 for v2 to improve performance.
 
 ### Future Enhancements
+
 - Add pagination support (`limit`, `offset` parameters)
 - Implement search/filter by location name
 - Add `include_deleted` parameter for admin users

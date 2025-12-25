@@ -60,7 +60,7 @@ flowchart LR
 interface QRCodeData {
   id: string;
   shortId: string; // format: QR-XXXXXX
-  url: string;     // https://app.domain.com/qr/QR-XXXXXX
+  url: string; // https://app.domain.com/qr/QR-XXXXXX
 }
 
 // Funkcje:
@@ -110,12 +110,12 @@ Kolejność komponentów:
 
 ## Dlaczego QR przed UI?
 
-| Aspekt | QR przed UI | QR w trakcie UI |
-|--------|-------------|-----------------|
-| Izolowane testowanie | Tak | Nie |
-| Walidacja wydruku | Wcześnie | Późno |
-| Ryzyko opóźnień | Niskie | Wysokie |
-| Jakość kodów | Zweryfikowana | Niepewna |
+| Aspekt               | QR przed UI   | QR w trakcie UI |
+| -------------------- | ------------- | --------------- |
+| Izolowane testowanie | Tak           | Nie             |
+| Walidacja wydruku    | Wcześnie      | Późno           |
+| Ryzyko opóźnień      | Niskie        | Wysokie         |
+| Jakość kodów         | Zweryfikowana | Niepewna        |
 
 **Kluczowy argument:** Jeśli kody QR będą nieczytelne lub PDF źle sformatowany - dowiesz się o tym wcześnie, nie podczas integracji z UI.
 
@@ -123,13 +123,13 @@ Kolejność komponentów:
 
 ## Szacowany czas
 
-| Zadanie | Czas |
-|---------|------|
-| QR endpoints | 2-3h |
-| QR Service + Label Component | 2-3h |
-| PDF Generator | 3-4h |
-| Testowanie jakości (druk, skan) | 1-2h |
-| **Łącznie przed UI** | **8-12h** |
+| Zadanie                         | Czas      |
+| ------------------------------- | --------- |
+| QR endpoints                    | 2-3h      |
+| QR Service + Label Component    | 2-3h      |
+| PDF Generator                   | 3-4h      |
+| Testowanie jakości (druk, skan) | 1-2h      |
+| **Łącznie przed UI**            | **8-12h** |
 
 ---
 
@@ -166,4 +166,3 @@ src/
 - [ ] Utility pdf-generator.ts - generowanie arkuszy A4 z siatką etykiet (jspdf)
 - [ ] Testowanie jakości: wydruk, skanowanie telefonem, czytelność kodów
 - [ ] Strona /qr/:short_id - routing po skanowaniu (empty state vs box details)
-

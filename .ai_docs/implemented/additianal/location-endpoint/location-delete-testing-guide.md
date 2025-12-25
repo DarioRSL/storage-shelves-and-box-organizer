@@ -26,10 +26,12 @@ This guide provides step-by-step instructions for manually testing the DELETE en
 ### Test 1: Successful Location Deletion (200 OK)
 
 **Setup**:
+
 - Create a location with ID `{location_id}`
 - Optionally assign some boxes to this location
 
 **Request**:
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{location_id} \
@@ -38,6 +40,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (200 OK):
+
 ```json
 {
   "message": "Lokalizacja została usunięta, a powiązane pudełka odłączone"
@@ -45,6 +48,7 @@ curl -X DELETE \
 ```
 
 **Database Verification**:
+
 ```sql
 -- Check location is marked as deleted
 SELECT id, name, is_deleted FROM locations WHERE id = '{location_id}';
@@ -60,6 +64,7 @@ SELECT id, name, location_id FROM boxes WHERE location_id IS NULL;
 ### Test 2: Invalid UUID Format (400 Bad Request)
 
 **Request**:
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/invalid-uuid \
@@ -68,6 +73,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (400 Bad Request):
+
 ```json
 {
   "error": "Nieprawidłowy format ID lokalizacji"
@@ -79,6 +85,7 @@ curl -X DELETE \
 ### Test 3: Missing Authentication (401 Unauthorized)
 
 **Request**:
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{location_id} \
@@ -86,6 +93,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (401 Unauthorized):
+
 ```json
 {
   "error": "Brak autoryzacji"
@@ -97,6 +105,7 @@ curl -X DELETE \
 ### Test 4: Invalid/Expired Token (401 Unauthorized)
 
 **Request**:
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{location_id} \
@@ -105,6 +114,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (401 Unauthorized):
+
 ```json
 {
   "error": "Brak autoryzacji"
@@ -116,6 +126,7 @@ curl -X DELETE \
 ### Test 5: Location Not Found (404 Not Found)
 
 **Request** (use non-existent UUID):
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/00000000-0000-0000-0000-000000000000 \
@@ -124,6 +135,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (404 Not Found):
+
 ```json
 {
   "error": "Lokalizacja nie została znaleziona"
@@ -135,10 +147,12 @@ curl -X DELETE \
 ### Test 6: Location Already Deleted (404 Not Found)
 
 **Setup**:
+
 - First, delete a location successfully
 - Then try to delete it again
 
 **Request** (same location ID as before):
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{already_deleted_location_id} \
@@ -147,6 +161,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (404 Not Found):
+
 ```json
 {
   "error": "Lokalizacja nie została znaleziona"
@@ -160,11 +175,13 @@ curl -X DELETE \
 ### Test 7: Cross-Workspace Access Denied (404 Not Found)
 
 **Setup**:
+
 - Create two workspaces (Workspace A and Workspace B)
 - Create a location in Workspace A
 - Authenticate as a user who is only a member of Workspace B
 
 **Request** (trying to delete location from Workspace A):
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{workspace_a_location_id} \
@@ -173,6 +190,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (404 Not Found):
+
 ```json
 {
   "error": "Lokalizacja nie została znaleziona"
@@ -186,10 +204,12 @@ curl -X DELETE \
 ### Test 8: Location with Multiple Boxes
 
 **Setup**:
+
 - Create a location
 - Create 3-5 boxes assigned to this location
 
 **Request**:
+
 ```bash
 curl -X DELETE \
   http://localhost:3000/api/locations/{location_id} \
@@ -198,6 +218,7 @@ curl -X DELETE \
 ```
 
 **Expected Response** (200 OK):
+
 ```json
 {
   "message": "Lokalizacja została usunięta, a powiązane pudełka odłączone"
@@ -205,6 +226,7 @@ curl -X DELETE \
 ```
 
 **Database Verification**:
+
 ```sql
 -- All boxes should be unassigned
 SELECT COUNT(*) FROM boxes
@@ -220,6 +242,7 @@ AND location_id IS NULL;
 After implementing the endpoint, verify the following:
 
 ### Functional Requirements
+
 - [ ] Location is successfully soft-deleted (is_deleted = true)
 - [ ] All boxes in the location are unassigned (location_id = NULL)
 - [ ] Deleted location cannot be retrieved via GET /api/locations
@@ -228,6 +251,7 @@ After implementing the endpoint, verify the following:
 - [ ] Both database operations (boxes + location) complete atomically
 
 ### Security Requirements
+
 - [ ] Unauthenticated requests are rejected (401)
 - [ ] Invalid tokens are rejected (401)
 - [ ] Users cannot delete locations from other workspaces (404 via RLS)
@@ -235,6 +259,7 @@ After implementing the endpoint, verify the following:
 - [ ] Audit logs contain user ID and location ID
 
 ### Error Handling
+
 - [ ] Invalid UUID format returns 400
 - [ ] Missing authentication returns 401
 - [ ] Non-existent location returns 404
@@ -242,6 +267,7 @@ After implementing the endpoint, verify the following:
 - [ ] Database errors return 500 with generic message
 
 ### Data Integrity
+
 - [ ] Soft delete preserves location record in database
 - [ ] Foreign key relationships remain intact
 - [ ] No cascade deletions occur
@@ -249,6 +275,7 @@ After implementing the endpoint, verify the following:
 - [ ] `updated_at` timestamp is updated
 
 ### Performance
+
 - [ ] Single query to verify location exists
 - [ ] Two UPDATE queries within transaction
 - [ ] Response time < 200ms for typical use case
@@ -354,6 +381,7 @@ You can import this JSON into Postman for easier testing:
 ### Issue: Getting 500 errors unexpectedly
 
 **Solution**:
+
 1. Check server logs for detailed error messages
 2. Verify Supabase connection is working
 3. Ensure RLS policies are correctly configured
@@ -362,6 +390,7 @@ You can import this JSON into Postman for easier testing:
 ### Issue: Boxes not being unassigned
 
 **Solution**:
+
 1. Verify foreign key relationship exists between `boxes.location_id` and `locations.id`
 2. Check RLS policies on `boxes` table allow UPDATE for workspace members
 3. Review transaction logic in `deleteLocation` service function
@@ -369,6 +398,7 @@ You can import this JSON into Postman for easier testing:
 ### Issue: RLS blocking legitimate deletions
 
 **Solution**:
+
 1. Verify user is a member of the workspace via `workspace_members` table
 2. Check `is_workspace_member()` helper function is working correctly
 3. Review RLS policies on `locations` table
@@ -378,6 +408,7 @@ You can import this JSON into Postman for easier testing:
 ## Expected Console Logs
 
 ### Success Case
+
 ```
 Location service - Lokalizacja usunięta: {
   locationId: 'uuid',
@@ -387,6 +418,7 @@ Location service - Lokalizacja usunięta: {
 ```
 
 ### Not Found Case
+
 ```
 Location service - Lokalizacja nie znaleziona: {
   locationId: 'uuid',
@@ -396,6 +428,7 @@ Location service - Lokalizacja nie znaleziona: {
 ```
 
 ### Database Error Case
+
 ```
 Location service - Nie udało się odłączyć pudełek: {
   locationId: 'uuid',
@@ -409,6 +442,7 @@ Location service - Nie udało się odłączyć pudełek: {
 ## Summary
 
 This testing guide covers all major scenarios for the DELETE /api/locations/:id endpoint:
+
 - ✅ Happy path (successful deletion)
 - ✅ Validation errors (invalid UUID)
 - ✅ Authentication errors (missing/invalid token)

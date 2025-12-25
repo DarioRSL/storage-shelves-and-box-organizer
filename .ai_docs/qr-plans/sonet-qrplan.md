@@ -73,6 +73,7 @@ Implementuj backend dla QR **zanim zaczniesz generowanie PDF** (PDF to najtrudni
 **Plik:** `src/pages/api/qr-codes/batch.ts`
 
 **Input:**
+
 ```json
 {
   "workspace_id": "uuid",
@@ -81,15 +82,18 @@ Implementuj backend dla QR **zanim zaczniesz generowanie PDF** (PDF to najtrudni
 ```
 
 **Validation:**
+
 - `workspace_id`: Valid UUID, required
 - `quantity`: Integer między 1-100
 
 **Logika:**
+
 - INSERT N rekordów do tabeli `qr_codes`
 - Trigger `set_qr_short_id` auto-generuje `short_id` w formacie `QR-XXXXXX`
 - Status domyślnie: `'generated'`
 
 **Output:**
+
 ```json
 {
   "data": [
@@ -105,22 +109,26 @@ Implementuj backend dla QR **zanim zaczniesz generowanie PDF** (PDF to najtrudni
 ```
 
 **Przykładowa implementacja:**
+
 ```typescript
 // src/pages/api/qr-codes/batch.ts
-import type { APIRoute } from 'astro';
-import { z } from 'zod';
-import type { ErrorResponse } from '@/types';
+import type { APIRoute } from "astro";
+import { z } from "zod";
+import type { ErrorResponse } from "@/types";
 
 const BatchGenerateSchema = z.object({
   workspace_id: z.string().uuid(),
-  quantity: z.number().int().min(1).max(100)
+  quantity: z.number().int().min(1).max(100),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const supabase = locals.supabase;
-  
+
   // Auth check
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
@@ -128,12 +136,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Parse and validate
   const body = await request.json();
   const parseResult = BatchGenerateSchema.safeParse(body);
-  
+
   if (!parseResult.success) {
-    return new Response(
-      JSON.stringify({ error: parseResult.error.errors[0].message }), 
-      { status: 400 }
-    );
+    return new Response(JSON.stringify({ error: parseResult.error.errors[0].message }), { status: 400 });
   }
 
   const { workspace_id, quantity } = parseResult.data;
@@ -141,19 +146,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Generate batch insert
   const records = Array.from({ length: quantity }, () => ({
     workspace_id,
-    status: 'generated' as const
+    status: "generated" as const,
   }));
 
   const { data, error } = await supabase
-    .from('qr_codes')
+    .from("qr_codes")
     .insert(records)
-    .select('id, short_id, status, workspace_id, created_at');
+    .select("id, short_id, status, workspace_id, created_at");
 
   if (error) {
-    return new Response(
-      JSON.stringify({ error: "Failed to generate QR codes" }), 
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Failed to generate QR codes" }), { status: 500 });
   }
 
   return new Response(JSON.stringify({ data }), { status: 201 });
@@ -167,10 +169,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 **Input:** `short_id` (np. `QR-A1B2C3`) w URL path
 
 **Logika:**
+
 - Lookup w DB: `SELECT * FROM qr_codes WHERE short_id = :short_id`
 - Sprawdź status i `box_id`
 
 **Output:**
+
 ```json
 {
   "id": "uuid",
@@ -182,13 +186,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Routing logic:**
+
 - Jeśli `box_id === null` → status "available" → Frontend: redirect do New Box Form
 - Jeśli `box_id !== null` → status "assigned" → Frontend: redirect do Box Details (`:id`)
 
 **Przykładowa implementacja:**
+
 ```typescript
 // src/pages/api/qr-codes/[short_id].ts
-import type { APIRoute } from 'astro';
+import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ params, locals }) => {
   const supabase = locals.supabase;
@@ -199,16 +205,19 @@ export const GET: APIRoute = async ({ params, locals }) => {
   }
 
   // Auth check
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
   // Query QR code
   const { data, error } = await supabase
-    .from('qr_codes')
-    .select('id, short_id, box_id, status, workspace_id')
-    .eq('short_id', short_id)
+    .from("qr_codes")
+    .select("id, short_id, box_id, status, workspace_id")
+    .eq("short_id", short_id)
     .single();
 
   if (error || !data) {
@@ -224,8 +233,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
 **Plik:** `src/lib/services/qr-code.service.ts`
 
 ```typescript
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/db/database.types';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/db/database.types";
 
 export class QrCodeService {
   constructor(private supabase: SupabaseClient<Database>) {}
@@ -233,13 +242,13 @@ export class QrCodeService {
   async generateBatchQrCodes(workspaceId: string, quantity: number) {
     const records = Array.from({ length: quantity }, () => ({
       workspace_id: workspaceId,
-      status: 'generated' as const
+      status: "generated" as const,
     }));
 
     const { data, error } = await this.supabase
-      .from('qr_codes')
+      .from("qr_codes")
       .insert(records)
-      .select('id, short_id, status, workspace_id, created_at');
+      .select("id, short_id, status, workspace_id, created_at");
 
     if (error) throw error;
     return data;
@@ -247,9 +256,9 @@ export class QrCodeService {
 
   async resolveQrCode(shortId: string) {
     const { data, error } = await this.supabase
-      .from('qr_codes')
-      .select('id, short_id, box_id, status, workspace_id')
-      .eq('short_id', shortId)
+      .from("qr_codes")
+      .select("id, short_id, box_id, status, workspace_id")
+      .eq("short_id", shortId)
       .single();
 
     if (error) throw error;
@@ -258,11 +267,11 @@ export class QrCodeService {
 
   async getAvailableQrCodes(workspaceId: string) {
     const { data, error } = await this.supabase
-      .from('qr_codes')
-      .select('id, short_id, status, created_at')
-      .eq('workspace_id', workspaceId)
-      .is('box_id', null)
-      .order('created_at', { ascending: false });
+      .from("qr_codes")
+      .select("id, short_id, status, created_at")
+      .eq("workspace_id", workspaceId)
+      .is("box_id", null)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data;
@@ -287,6 +296,7 @@ curl -X GET http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 ```
 
 **Sprawdź w Supabase Dashboard:**
+
 - Table Editor → `qr_codes`
 - Weryfikuj czy rekordy się tworza z poprawnymi `short_id`
 
@@ -309,6 +319,7 @@ Teraz dodaj warstwy wizualne i najbardziej złożony feature (PDF):
 **Strona:** `src/pages/qr/generate.astro`
 
 **Funkcjonalność:**
+
 - Formularz z input `quantity` (1-100)
 - Button "Generate QR Codes"
 - Po submit: Wywołaj POST /qr-codes/batch
@@ -325,7 +336,7 @@ npm install @types/qrcode.react --save-dev
 
 ```tsx
 // src/components/QrCodeDisplay.tsx
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG } from "qrcode.react";
 
 interface QrCodeDisplayProps {
   shortId: string;
@@ -334,15 +345,10 @@ interface QrCodeDisplayProps {
 
 export const QrCodeDisplay = ({ shortId, baseUrl }: QrCodeDisplayProps) => {
   const qrUrl = `${baseUrl}/qr/${shortId}`;
-  
+
   return (
     <div className="qr-label">
-      <QRCodeSVG 
-        value={qrUrl}
-        size={128}
-        level="M"
-        includeMargin={true}
-      />
+      <QRCodeSVG value={qrUrl} size={128} level="M" includeMargin={true} />
       <p className="text-center text-sm font-mono mt-2">{shortId}</p>
     </div>
   );
@@ -354,14 +360,14 @@ export const QrCodeDisplay = ({ shortId, baseUrl }: QrCodeDisplayProps) => {
 ```astro
 ---
 // src/pages/qr/generate.astro
-import Layout from '@/layouts/Layout.astro';
-import { QrCodeGrid } from '@/components/QrCodeGrid';
+import Layout from "@/layouts/Layout.astro";
+import { QrCodeGrid } from "@/components/QrCodeGrid";
 ---
 
 <Layout title="Generate QR Codes">
   <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Generate QR Codes</h1>
-    
+
     <QrCodeGrid client:load />
   </div>
 
@@ -370,7 +376,7 @@ import { QrCodeGrid } from '@/components/QrCodeGrid';
       .no-print {
         display: none;
       }
-      
+
       .qr-label {
         page-break-inside: avoid;
       }
@@ -407,27 +413,27 @@ Edge Function renderuje HTML template z kodami → Puppeteer eksportuje do PDF s
 
 ```typescript
 // src/lib/pdf-generator.ts
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export async function generateQrPdf(containerElementId: string) {
   const element = document.getElementById(containerElementId);
-  if (!element) throw new Error('Container not found');
+  if (!element) throw new Error("Container not found");
 
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
-    logging: false
+    logging: false,
   });
 
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+
   const imgWidth = 210; // A4 width in mm
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
-  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-  pdf.save('qr-codes.pdf');
+
+  pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  pdf.save("qr-codes.pdf");
 }
 ```
 
@@ -445,6 +451,7 @@ export async function generateQrPdf(containerElementId: string) {
 **Strona:** `src/pages/qr/[short_id].astro`
 
 **Dynamic route:** Gdy user zeskanuje QR kod aparatem telefonu, otwiera:
+
 ```
 https://yourdomain.com/qr/QR-A1B2C3
 ```
@@ -457,17 +464,14 @@ https://yourdomain.com/qr/QR-A1B2C3
 const { short_id } = Astro.params;
 
 // Wywołaj API endpoint
-const response = await fetch(
-  `${Astro.url.origin}/api/qr-codes/${short_id}`,
-  {
-    headers: {
-      Authorization: Astro.request.headers.get('Authorization') || ''
-    }
-  }
-);
+const response = await fetch(`${Astro.url.origin}/api/qr-codes/${short_id}`, {
+  headers: {
+    Authorization: Astro.request.headers.get("Authorization") || "",
+  },
+});
 
 if (!response.ok) {
-  return Astro.redirect('/404');
+  return Astro.redirect("/404");
 }
 
 const qrData = await response.json();
@@ -488,7 +492,7 @@ if (!qrData.box_id) {
 ```astro
 ---
 // src/pages/boxes/new.astro
-const qrCodeId = Astro.url.searchParams.get('qr_code_id');
+const qrCodeId = Astro.url.searchParams.get("qr_code_id");
 ---
 
 <Layout title="New Box">
@@ -509,14 +513,14 @@ const qrCodeId = Astro.url.searchParams.get('qr_code_id');
 
 ## 🗓️ Harmonogram Sugerowany (6 Tygodni)
 
-| Tydzień | Faza | Kluczowe Deliverables |
-|---------|------|----------------------|
-| 1-2 | Faza 1 | CRUD boxes + locations, podstawowy UI |
-| 3 | Faza 1 | Wyszukiwanie, RWD mobile |
-| 3-4 | Faza 2 | QR API endpoints + service layer |
-| 4-5 | Faza 3A | Prosty widok QR + druk Ctrl+P |
-| 5 | Faza 3B | PDF generation (jeśli starczy czasu) |
-| 6 | Faza 3C | Integracja skanowania + testy end-to-end |
+| Tydzień | Faza    | Kluczowe Deliverables                    |
+| ------- | ------- | ---------------------------------------- |
+| 1-2     | Faza 1  | CRUD boxes + locations, podstawowy UI    |
+| 3       | Faza 1  | Wyszukiwanie, RWD mobile                 |
+| 3-4     | Faza 2  | QR API endpoints + service layer         |
+| 4-5     | Faza 3A | Prosty widok QR + druk Ctrl+P            |
+| 5       | Faza 3B | PDF generation (jeśli starczy czasu)     |
+| 6       | Faza 3C | Integracja skanowania + testy end-to-end |
 
 ---
 
@@ -532,24 +536,28 @@ const qrCodeId = Astro.url.searchParams.get('qr_code_id');
 
 ### Pytanie 2: Czy testować z prawdziwym drukowaniem?
 
-**Tak.** QR kody muszą być skanowalne. Nie zakładaj, że ekranowy QR będzie działał po wydrukowaniu. 
+**Tak.** QR kody muszą być skanowalne. Nie zakładaj, że ekranowy QR będzie działał po wydrukowaniu.
 
 **Przetestuj wcześnie** (Faza 3A) wydrukując pojedynczy kod na papierze i skanując go aparatem telefonu.
 
 **Potencjalne problemy:**
+
 - Zbyt mały rozmiar QR → nieskanowalny
 - Zła jakość druku → rozmyte krawędzie
 - Błędny URL w QR → redirect nie działa
 
 ### Pytanie 3: Jakie URL wpisać w QR?
 
-**Development:** 
+**Development:**
+
 ```
 http://192.168.1.X:3000/qr/QR-ABC123
 ```
+
 (twój lokalny IP w sieci WiFi - potrzebne do testowania na telefonie)
 
 **Production:**
+
 ```
 https://yourdomain.com/qr/QR-ABC123
 ```
@@ -559,15 +567,16 @@ https://yourdomain.com/qr/QR-ABC123
 ```typescript
 // src/config/app.ts
 export const APP_CONFIG = {
-  baseUrl: import.meta.env.PUBLIC_APP_URL || 'http://localhost:3000'
+  baseUrl: import.meta.env.PUBLIC_APP_URL || "http://localhost:3000",
 };
 
 // W komponencie
-import { APP_CONFIG } from '@/config/app';
+import { APP_CONFIG } from "@/config/app";
 const qrUrl = `${APP_CONFIG.baseUrl}/qr/${shortId}`;
 ```
 
 **.env:**
+
 ```bash
 PUBLIC_APP_URL=http://192.168.1.100:3000  # development
 # PUBLIC_APP_URL=https://yourdomain.com  # production
@@ -643,9 +652,10 @@ To zaoszczędzi Ci godziny walki z marginesami.
 
 ### 2. Nie Implementuj "status: printed"
 
-W bazie masz enum `qr_status: generated | printed | assigned`. 
+W bazie masz enum `qr_status: generated | printed | assigned`.
 
 Status "printed" jest trudny do śledzenia (skąd wiesz czy user wydrukował?). W MVP zostaw tylko:
+
 - `generated` - nowy kod
 - `assigned` - przypisany do boxa
 
@@ -658,7 +668,7 @@ W Fazie 1 użyj Supabase SQL Editor żeby wstawić 10-20 przykładowych boxes i 
 ```sql
 -- Example test data
 INSERT INTO public.boxes (workspace_id, name, description, tags, location_id)
-VALUES 
+VALUES
   ('YOUR_WORKSPACE_UUID', 'Winter Clothes', 'Jackets and scarves', ARRAY['winter', 'clothes'], NULL),
   ('YOUR_WORKSPACE_UUID', 'Christmas Decorations', 'Lights and ornaments', ARRAY['christmas', 'decor'], NULL);
 ```
@@ -667,7 +677,7 @@ To przyspieszy development UI.
 
 ### 4. Mobile-First dla Skanowania
 
-Strona `/qr/[short_id]` musi być responsywna - to główny use case (user w piwnicy z telefonem). 
+Strona `/qr/[short_id]` musi być responsywna - to główny use case (user w piwnicy z telefonem).
 
 **Testuj na prawdziwym urządzeniu mobilnym**, nie tylko w Chrome DevTools:
 
@@ -677,12 +687,12 @@ Strona `/qr/[short_id]` musi być responsywna - to główny use case (user w piw
   .box-form {
     font-size: 16px; /* Zapobiega zoom na iOS */
   }
-  
+
   .box-form input,
   .box-form textarea {
     font-size: 16px;
   }
-  
+
   .submit-button {
     min-height: 44px; /* Thumb-friendly */
   }
@@ -694,23 +704,28 @@ Strona `/qr/[short_id]` musi być responsywna - to główny use case (user w piw
 Gdy testujesz skanowanie na telefonie, możesz mieć problem z HTTPS. Rozwiązania:
 
 **Opcja A: ngrok (proste)**
+
 ```bash
 npm run dev  # na localhost:3000
 ngrok http 3000  # w drugim terminalu
 ```
+
 Użyj URL od ngrok (https://xxx.ngrok.io) w QR kodach.
 
 **Opcja B: mkcert (lokalne SSL)**
+
 ```bash
 brew install mkcert
 mkcert -install
 mkcert localhost 192.168.1.X
 ```
+
 Skonfiguruj Astro do użycia certyfikatu.
 
 ### 6. Error Handling dla Skanowania
 
 W produkcji będziesz mieć przypadki gdy:
+
 - QR kod nie istnieje (usunięty z DB)
 - QR kod z innego workspace
 - QR kod zniszczony (błędny scan)
@@ -720,7 +735,7 @@ Przygotuj stronę `/qr/error`:
 ```astro
 ---
 // src/pages/qr/error.astro
-const message = Astro.url.searchParams.get('message') || 'Invalid QR code';
+const message = Astro.url.searchParams.get("message") || "Invalid QR code";
 ---
 
 <Layout title="QR Error">
@@ -797,7 +812,7 @@ const message = Astro.url.searchParams.get('message') || 'Invalid QR code';
      → User fills form
      → POST /api/boxes (with qr_code_id)
      → DB trigger updates qr_codes.status = 'assigned'
-   
+
    IF box_id EXISTS:
      → Redirect to /boxes/{box_id}
      → Display box details
@@ -815,11 +830,13 @@ const message = Astro.url.searchParams.get('message') || 'Invalid QR code';
 ```
 
 **Stany:**
+
 1. **generated**: Nowy kod, nieprzypisany
 2. **assigned**: Przypisany do konkretnego boxa
 3. ~~**printed**~~: Opcjonalnie (pomiń w MVP)
 
 **Transitions:**
+
 - `generated` → `assigned`: Gdy user tworzy box z tym QR
 - `assigned` → `generated`: Gdy box jest usunięty (trigger `on_box_deleted`)
 
@@ -855,12 +872,14 @@ Wróć z pytaniami gdy:
 ### Co Jeśli Zabraknie Czasu?
 
 **Minimum Viable QR (dla zaliczenia):**
+
 - Backend API (Faza 2): 100% konieczne
 - UI display + Ctrl+P (Faza 3A): 100% konieczne
 - PDF batch (Faza 3B): **Opcjonalne** - można pominąć
 - Skanowanie (Faza 3C): 100% konieczne
 
 **Escape hatch:** Jeśli naprawdę zabraknie czasu, możesz w MVP:
+
 - Generować kody pojedynczo (nie batch)
 - Drukować tylko przez Ctrl+P (nie PDF)
 - To nadal spełnia core functionality!
@@ -868,5 +887,3 @@ Wróć z pytaniami gdy:
 ---
 
 **Powodzenia w implementacji! 🚀**
-
-

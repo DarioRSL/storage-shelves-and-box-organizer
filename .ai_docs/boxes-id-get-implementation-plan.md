@@ -35,6 +35,7 @@ curl -X GET \
    - Includes nested `qr_code?: BoxQrCodeSummary | null`
 
 2. **BoxLocationSummary** (lines 131-135):
+
    ```typescript
    {
      id?: string;
@@ -44,10 +45,11 @@ curl -X GET \
    ```
 
 3. **BoxQrCodeSummary** (lines 141-144):
+
    ```typescript
    {
-     id: string;        // QR code's UUID
-     short_id: string;  // Format: QR-XXXXXX
+     id: string; // QR code's UUID
+     short_id: string; // Format: QR-XXXXXX
    }
    ```
 
@@ -62,6 +64,7 @@ curl -X GET \
 ### Validation Schema
 
 **GetBoxByIdSchema** (new, to be created in `src/lib/validators/box.validators.ts`):
+
 ```typescript
 export const GetBoxByIdSchema = z.object({
   id: z.string().uuid("Nieprawidłowy format ID pudełka"),
@@ -110,6 +113,7 @@ export class BoxNotFoundError extends Error {
 ### Error Responses
 
 **400 Bad Request** (Invalid UUID format):
+
 ```json
 {
   "error": "Nieprawidłowy format ID pudełka"
@@ -117,6 +121,7 @@ export class BoxNotFoundError extends Error {
 ```
 
 **401 Unauthorized** (Not authenticated):
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -124,6 +129,7 @@ export class BoxNotFoundError extends Error {
 ```
 
 **404 Not Found** (Box doesn't exist or no access):
+
 ```json
 {
   "error": "Pudełko nie zostało znalezione"
@@ -131,6 +137,7 @@ export class BoxNotFoundError extends Error {
 ```
 
 **500 Internal Server Error** (Database/server error):
+
 ```json
 {
   "error": "Wewnętrzny błąd serwera"
@@ -197,7 +204,8 @@ export class BoxNotFoundError extends Error {
 ```typescript
 const { data, error } = await supabase
   .from("boxes")
-  .select(`
+  .select(
+    `
     id,
     short_id,
     workspace_id,
@@ -217,7 +225,8 @@ const { data, error } = await supabase
       id,
       short_id
     )
-  `)
+  `
+  )
   .eq("id", boxId)
   .single();
 ```
@@ -225,27 +234,32 @@ const { data, error } = await supabase
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Mechanism**: JWT token validated by Astro middleware
 - **Validation**: `await supabase.auth.getUser()` verifies token validity
 - **Enforcement**: Return 401 if token is missing, invalid, or expired
 
 ### Authorization
+
 - **Mechanism**: PostgreSQL Row Level Security (RLS)
 - **Policy**: User must be a member of the workspace that owns the box
 - **Helper Function**: `is_workspace_member(workspace_id)` checks membership
 - **Enforcement**: Database automatically filters results based on JWT user
 
 ### Input Validation
+
 - **UUID Validation**: Zod schema validates `id` parameter format
 - **SQL Injection Prevention**: Supabase client uses parameterized queries
 - **XSS Prevention**: No user input rendered in response (only database content)
 
 ### Data Exposure
+
 - **Principle**: Only return data user has legitimate access to
 - **RLS Enforcement**: If box exists but user lacks access, return 404 (not 403)
 - **Reasoning**: Prevents information disclosure about box existence
 
 ### Error Message Security
+
 - **Generic Messages**: Don't expose internal implementation details
 - **Database Errors**: Log detailed errors server-side, return generic message to client
 - **Example**: Database connection errors return "Wewnętrzny błąd serwera"
@@ -254,31 +268,23 @@ const { data, error } = await supabase
 
 ### Error Scenarios and HTTP Status Codes
 
-| Scenario | Status Code | Response | Logging |
-|----------|-------------|----------|---------|
-| Invalid UUID format | 400 Bad Request | `{"error": "Nieprawidłowy format ID pudełka"}` | Not logged (validation error) |
-| Missing auth token | 401 Unauthorized | `{"error": "Nieautoryzowany dostęp"}` | Not logged (expected error) |
-| Invalid/expired token | 401 Unauthorized | `{"error": "Nieautoryzowany dostęp"}` | Not logged (expected error) |
-| Box not found | 404 Not Found | `{"error": "Pudełko nie zostało znalezione"}` | Log with boxId and userId |
-| Box exists but no access (RLS) | 404 Not Found | `{"error": "Pudełko nie zostało znalezione"}` | Log with boxId and userId |
-| Database connection error | 500 Internal Server Error | `{"error": "Wewnętrzny błąd serwera"}` | Log full error with stack trace |
-| Unexpected service error | 500 Internal Server Error | `{"error": "Wewnętrzny błąd serwera"}` | Log full error with stack trace |
+| Scenario                       | Status Code               | Response                                       | Logging                         |
+| ------------------------------ | ------------------------- | ---------------------------------------------- | ------------------------------- |
+| Invalid UUID format            | 400 Bad Request           | `{"error": "Nieprawidłowy format ID pudełka"}` | Not logged (validation error)   |
+| Missing auth token             | 401 Unauthorized          | `{"error": "Nieautoryzowany dostęp"}`          | Not logged (expected error)     |
+| Invalid/expired token          | 401 Unauthorized          | `{"error": "Nieautoryzowany dostęp"}`          | Not logged (expected error)     |
+| Box not found                  | 404 Not Found             | `{"error": "Pudełko nie zostało znalezione"}`  | Log with boxId and userId       |
+| Box exists but no access (RLS) | 404 Not Found             | `{"error": "Pudełko nie zostało znalezione"}`  | Log with boxId and userId       |
+| Database connection error      | 500 Internal Server Error | `{"error": "Wewnętrzny błąd serwera"}`         | Log full error with stack trace |
+| Unexpected service error       | 500 Internal Server Error | `{"error": "Wewnętrzny błąd serwera"}`         | Log full error with stack trace |
 
 ### Error Handling Strategy
 
 ```typescript
 // In service layer (box.service.ts)
-export async function getBoxById(
-  supabase: SupabaseClient,
-  boxId: string,
-  userId: string
-): Promise<BoxDto> {
+export async function getBoxById(supabase: SupabaseClient, boxId: string, userId: string): Promise<BoxDto> {
   try {
-    const { data, error } = await supabase
-      .from("boxes")
-      .select(/* query */)
-      .eq("id", boxId)
-      .single();
+    const { data, error } = await supabase.from("boxes").select(/* query */).eq("id", boxId).single();
 
     if (error) {
       // Handle Supabase errors
@@ -370,9 +376,11 @@ export async function getBoxById(
 ## 9. Implementation Steps
 
 ### Step 1: Create Validation Schema
+
 **File**: `src/lib/validators/box.validators.ts`
 
 Add to existing file:
+
 ```typescript
 /**
  * Validation schema for GET /api/boxes/:id URL parameter.
@@ -389,9 +397,11 @@ export type GetBoxByIdInput = z.infer<typeof GetBoxByIdSchema>;
 ```
 
 ### Step 2: Add Custom Error to Service Layer
+
 **File**: `src/lib/services/box.service.ts`
 
 Add to existing custom errors (after `WorkspaceMismatchError`):
+
 ```typescript
 /**
  * Custom error for box not found in database.
@@ -406,9 +416,11 @@ export class BoxNotFoundError extends Error {
 ```
 
 ### Step 3: Implement Service Layer Function
+
 **File**: `src/lib/services/box.service.ts`
 
 Add to exports:
+
 ```typescript
 /**
  * Retrieves a single box by its ID with related location and QR code data.
@@ -424,16 +436,13 @@ Add to exports:
  * @returns BoxDto with nested location and qr_code data
  * @throws BoxNotFoundError if box doesn't exist or user lacks access
  */
-export async function getBoxById(
-  supabase: SupabaseClient,
-  boxId: string,
-  userId: string
-): Promise<BoxDto> {
+export async function getBoxById(supabase: SupabaseClient, boxId: string, userId: string): Promise<BoxDto> {
   try {
     // Query box with joins for location and qr_code
     const { data, error } = await supabase
       .from("boxes")
-      .select(`
+      .select(
+        `
         id,
         short_id,
         workspace_id,
@@ -453,7 +462,8 @@ export async function getBoxById(
           id,
           short_id
         )
-      `)
+      `
+      )
       .eq("id", boxId)
       .single();
 
@@ -514,6 +524,7 @@ export async function getBoxById(
 ```
 
 ### Step 4: Create API Route Handler
+
 **File**: `src/pages/api/boxes/[id].ts` (new file)
 
 ```typescript
@@ -626,9 +637,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
 ```
 
 ### Step 5: Update Type Exports
+
 **File**: `src/lib/services/box.service.ts`
 
 Update exports at the top to include new error:
+
 ```typescript
 export { BoxNotFoundError };
 ```
@@ -636,6 +649,7 @@ export { BoxNotFoundError };
 **File**: `src/lib/validators/box.validators.ts`
 
 Update exports to include new schema:
+
 ```typescript
 export { GetBoxByIdSchema };
 export type { GetBoxByIdInput };
@@ -699,6 +713,7 @@ echo "=== Tests completed ==="
 ```
 
 **Manual Testing Checklist**:
+
 1. ✅ Valid box ID returns 200 with complete BoxDto
 2. ✅ Invalid UUID format returns 400 with validation error
 3. ✅ Missing auth token returns 401
@@ -711,6 +726,7 @@ echo "=== Tests completed ==="
 10. ✅ Box without QR code shows qr_code as null
 
 ### Step 7: Update API Documentation
+
 **File**: `.ai_docs/api-plan.md`
 
 Update the GET /api/boxes/:id section (lines 392-425) to mark as implemented:
@@ -734,6 +750,7 @@ Update the GET /api/boxes/:id section (lines 392-425) to mark as implemented:
 ### Step 8: Code Quality Checks
 
 Run linting and formatting:
+
 ```bash
 npm run lint
 npm run format
@@ -750,6 +767,7 @@ npm run format
 ### Step 10: Documentation Update
 
 Update project status to reflect implemented endpoint:
+
 - Mark GET /api/boxes/:id as ✅ Implemented in `.ai_docs/api-plan.md`
 - Document any deviations or additional features
 - Update testing documentation if test script created

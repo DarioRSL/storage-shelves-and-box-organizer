@@ -9,17 +9,20 @@ This guide explains how to test the workspace member role update endpoint.
 **Purpose**: Updates a workspace member's role (owner, admin, member, read_only)
 
 **Implementation**:
+
 - API Route: `src/pages/api/workspaces/[workspace_id]/members/[user_id].ts`
 - Service Layer: `src/lib/services/workspace.service.ts::updateWorkspaceMemberRole()`
 
 ## Prerequisites
 
 1. **Development server running**:
+
    ```bash
    npm run dev
    ```
 
 2. **Supabase local instance running**:
+
    ```bash
    # Check if Supabase containers are running
    podman ps | grep supabase
@@ -40,6 +43,7 @@ podman exec -i supabase_db_supabase psql -U postgres -d postgres < .ai_docs/setu
 ```
 
 This creates:
+
 - **Workspace 1** (`aaaaaaaa-bbbb-cccc-dddd-000000000001`): Multi-member workspace with owner, admin, and member
 - **Workspace 2** (`aaaaaaaa-bbbb-cccc-dddd-000000000002`): Single-owner workspace (for testing last owner protection)
 
@@ -111,6 +115,7 @@ SCRIPT
 ```
 
 Expected response (200 OK):
+
 ```json
 {
   "user_id": "uuid",
@@ -123,6 +128,7 @@ Expected response (200 OK):
 ### 3. Test Error Cases
 
 **Invalid role value (400)**:
+
 ```bash
 curl -s -X PATCH \
   "http://localhost:3000/api/workspaces/$WORKSPACE_ID/members/$USER_ID" \
@@ -133,6 +139,7 @@ curl -s -X PATCH \
 ```
 
 **Last owner protection (409)**:
+
 ```bash
 # Try to change the only owner's role in single-owner workspace
 WORKSPACE_ID="aaaaaaaa-bbbb-cccc-dddd-000000000002"
@@ -160,11 +167,13 @@ podman exec supabase_db_supabase psql -U postgres -d postgres -c \
 **Current Status**: RLS is currently **disabled** on workspace_members table.
 
 **When RLS is enabled**, additional test scenarios:
+
 - Non-members should not be able to view workspace members (404 or empty result)
 - Non-members should not be able to update roles (403)
 - RLS policies will automatically filter results based on workspace membership
 
 To test with RLS enabled:
+
 1. Enable RLS: `ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;`
 2. Run test suite again
 3. Verify that non-members cannot access or modify data
@@ -177,6 +186,7 @@ To test with RLS enabled:
 **Cause**: JWT token expired or invalid
 
 **Solution**:
+
 1. Generate a new token (tokens typically expire after 1 hour)
 2. Ensure you're using the correct Supabase anon key
 3. Check that auth.users has the test user
@@ -186,6 +196,7 @@ To test with RLS enabled:
 **Cause**: Target user is not a member of the workspace
 
 **Solution**:
+
 1. Verify the user_id exists in workspace_members
 2. Check workspace_id is correct
 3. Run setup-test-data-members.sql to recreate test data
@@ -195,6 +206,7 @@ To test with RLS enabled:
 **Cause**: No test data in database
 
 **Solution**:
+
 ```bash
 podman exec -i supabase_db_supabase psql -U postgres -d postgres < .ai_docs/setup-test-data-members.sql
 ```
@@ -225,12 +237,12 @@ The `updateWorkspaceMemberRole()` function performs:
 
 ### Error Codes Reference
 
-| Code | Condition | Message (Polish) |
-|------|-----------|------------------|
-| 200 | Success | Updated member object |
-| 400 | Invalid input | "Błąd walidacji" |
-| 401 | Not authenticated | "Brak autoryzacji" |
-| 403 | Insufficient permissions | "Brak uprawnień do zmiany roli członka" |
-| 404 | Member not found | "Członek nie został znaleziony w tym workspace" |
-| 409 | Last owner | "Nie można zmienić roli ostatniego właściciela workspace" |
-| 500 | Server error | "Nie udało się zaktualizować roli członka" |
+| Code | Condition                | Message (Polish)                                          |
+| ---- | ------------------------ | --------------------------------------------------------- |
+| 200  | Success                  | Updated member object                                     |
+| 400  | Invalid input            | "Błąd walidacji"                                          |
+| 401  | Not authenticated        | "Brak autoryzacji"                                        |
+| 403  | Insufficient permissions | "Brak uprawnień do zmiany roli członka"                   |
+| 404  | Member not found         | "Członek nie został znaleziony w tym workspace"           |
+| 409  | Last owner               | "Nie można zmienić roli ostatniego właściciela workspace" |
+| 500  | Server error             | "Nie udało się zaktualizować roli członka"                |

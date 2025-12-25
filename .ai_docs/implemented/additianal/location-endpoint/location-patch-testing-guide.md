@@ -5,6 +5,7 @@ This guide provides detailed test scenarios for the PATCH endpoint that updates 
 ## Prerequisites
 
 Before testing, you need:
+
 1. **Running dev server**: `npm run dev` (should be running on http://localhost:3000)
 2. **Valid JWT token**: Obtain from Supabase Auth (login through the app)
 3. **Workspace ID**: ID of an existing workspace you have access to
@@ -15,7 +16,9 @@ Before testing, you need:
 ### Happy Path Tests
 
 #### Test 1: Update Location Name Only
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -27,6 +30,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 200 OK**
+
 ```json
 {
   "id": "uuid",
@@ -37,6 +41,7 @@ Content-Type: application/json
 ```
 
 **Verification:**
+
 - Name should be updated
 - Description should remain unchanged
 - `updated_at` should be current timestamp
@@ -45,7 +50,9 @@ Content-Type: application/json
 ---
 
 #### Test 2: Update Description Only
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -57,6 +64,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 200 OK**
+
 ```json
 {
   "id": "uuid",
@@ -67,6 +75,7 @@ Content-Type: application/json
 ```
 
 **Verification:**
+
 - Name should remain unchanged
 - Description should be updated
 - Path should remain unchanged (only name changes trigger path regeneration)
@@ -74,7 +83,9 @@ Content-Type: application/json
 ---
 
 #### Test 3: Update Both Name and Description
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -87,6 +98,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 200 OK**
+
 ```json
 {
   "id": "uuid",
@@ -97,13 +109,16 @@ Content-Type: application/json
 ```
 
 **Verification:**
+
 - Both fields updated
 - Path regenerated with new name
 
 ---
 
 #### Test 4: Clear Description (Set to Null)
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -115,6 +130,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 200 OK**
+
 ```json
 {
   "id": "uuid",
@@ -125,6 +141,7 @@ Content-Type: application/json
 ```
 
 **Verification:**
+
 - Description is cleared (set to null)
 - Name unchanged
 
@@ -133,7 +150,9 @@ Content-Type: application/json
 ### Validation Error Tests (400 Bad Request)
 
 #### Test 5: Empty Request Body
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -143,6 +162,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 400 Bad Request**
+
 ```json
 {
   "error": "Validation error",
@@ -155,7 +175,9 @@ Content-Type: application/json
 ---
 
 #### Test 6: Empty Name String
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -167,6 +189,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 400 Bad Request**
+
 ```json
 {
   "error": "Validation error",
@@ -181,7 +204,9 @@ Content-Type: application/json
 ---
 
 #### Test 7: Invalid UUID Format
+
 **Request:**
+
 ```http
 PATCH /api/locations/not-a-valid-uuid
 Authorization: Bearer {valid-token}
@@ -193,6 +218,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 400 Bad Request**
+
 ```json
 {
   "error": "Invalid location ID format",
@@ -209,7 +235,9 @@ Content-Type: application/json
 ### Authentication Error Tests (401 Unauthorized)
 
 #### Test 8: Missing Authorization Header
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Content-Type: application/json
@@ -220,6 +248,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 401 Unauthorized**
+
 ```json
 {
   "error": "Unauthorized"
@@ -229,7 +258,9 @@ Content-Type: application/json
 ---
 
 #### Test 9: Invalid/Expired Token
+
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer invalid.token.here
@@ -241,6 +272,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 401 Unauthorized**
+
 ```json
 {
   "error": "Unauthorized"
@@ -252,7 +284,9 @@ Content-Type: application/json
 ### Not Found Error Tests (404 Not Found)
 
 #### Test 10: Non-Existent Location ID
+
 **Request:**
+
 ```http
 PATCH /api/locations/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {valid-token}
@@ -264,6 +298,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 404 Not Found**
+
 ```json
 {
   "error": "Location not found"
@@ -273,9 +308,11 @@ Content-Type: application/json
 ---
 
 #### Test 11: Location from Different Workspace
+
 **Setup:** Create location in workspace A, try to update from workspace B user
 
 **Expected Response: 404 Not Found** (RLS blocks access, appears as not found)
+
 ```json
 {
   "error": "Location not found"
@@ -285,9 +322,11 @@ Content-Type: application/json
 ---
 
 #### Test 12: Soft-Deleted Location
+
 **Setup:** Soft-delete a location (set `is_deleted = true`), then try to update it
 
 **Expected Response: 404 Not Found**
+
 ```json
 {
   "error": "Location not found"
@@ -299,11 +338,14 @@ Content-Type: application/json
 ### Conflict Error Tests (409 Conflict)
 
 #### Test 13: Duplicate Sibling Name
+
 **Setup:**
+
 1. Create two sibling locations: "Garage" and "Basement"
 2. Try to rename "Basement" to "Garage"
 
 **Request:**
+
 ```http
 PATCH /api/locations/{basement-id}
 Authorization: Bearer {valid-token}
@@ -315,6 +357,7 @@ Content-Type: application/json
 ```
 
 **Expected Response: 409 Conflict**
+
 ```json
 {
   "error": "A location with this name already exists at this level"
@@ -322,6 +365,7 @@ Content-Type: application/json
 ```
 
 **Important Notes:**
+
 - Only siblings (same parent) cause conflicts
 - Children with same name as parent are allowed
 - Case-insensitive comparison (path is slugified)
@@ -336,16 +380,19 @@ When updating a location's name, the ltree path should be regenerated:
 ### Test 14: Verify Path Regeneration
 
 **Setup:**
+
 1. Create location hierarchy: Root → Garage → Top Shelf
 2. Path would be: `root.garage.top_shelf`
 
 **Action:** Rename "Top Shelf" to "Bottom Drawer"
 
 **Expected Database State:**
+
 - `name` = "Bottom Drawer"
 - `path` = `root.garage.bottom_drawer` (regenerated)
 
 **Verification Query:**
+
 ```sql
 SELECT id, name, path, updated_at
 FROM locations
@@ -357,6 +404,7 @@ WHERE id = '{location-id}';
 ### Test 15: Verify Special Characters in Name
 
 **Request:**
+
 ```http
 PATCH /api/locations/{valid-location-id}
 Authorization: Bearer {valid-token}
@@ -368,6 +416,7 @@ Content-Type: application/json
 ```
 
 **Expected:**
+
 - `name` = "Półka #2 (Górna-Lewa)" (stored as-is)
 - `path` = `root.garaz.polka_2_gorna_lewa` (slugified, special chars replaced)
 
@@ -396,6 +445,7 @@ Content-Type: application/json
 A companion `test-patch-location.http` file is available in the project root with pre-configured requests.
 
 **To use with VS Code REST Client extension:**
+
 1. Install "REST Client" extension
 2. Open `test-patch-location.http`
 3. Update variables at the top (token, locationId, workspaceId)

@@ -5,6 +5,7 @@
 This endpoint updates a workspace member's role. It enables workspace owners and administrators to manage permissions by changing member roles (owner, admin, member, read_only). The operation requires elevated permissions and includes safeguards to prevent orphaning workspaces without owners.
 
 **Key Business Rules**:
+
 - Only workspace owners and admins can update member roles
 - Cannot remove the last owner from a workspace
 - Role changes are audited with full context logging
@@ -20,10 +21,12 @@ This endpoint updates a workspace member's role. It enables workspace owners and
 ### Parameters
 
 **Path Parameters** (Required):
+
 - `workspace_id` (UUID): The workspace containing the member
 - `user_id` (UUID): The target member whose role will be updated
 
 **Request Body** (Required):
+
 ```json
 {
   "role": "admin"
@@ -31,9 +34,11 @@ This endpoint updates a workspace member's role. It enables workspace owners and
 ```
 
 **Body Schema**:
+
 - `role` (required, enum): One of `'owner' | 'admin' | 'member' | 'read_only'`
 
 **Example Request**:
+
 ```bash
 PATCH /api/workspaces/550e8400-e29b-41d4-a716-446655440000/members/7c4a4e9f-2b1c-4d8e-9e3f-1a2b3c4d5e6f
 Authorization: Bearer <jwt_token>
@@ -49,7 +54,9 @@ Content-Type: application/json
 All required types already exist in `src/types.ts`:
 
 ### DTOs and Enums
+
 - `UpdateWorkspaceMemberRequest`: Request body type
+
   ```typescript
   interface UpdateWorkspaceMemberRequest {
     role: UserRole;
@@ -57,18 +64,20 @@ All required types already exist in `src/types.ts`:
   ```
 
 - `WorkspaceMemberDto`: Response type
+
   ```typescript
   type WorkspaceMemberDto = {
     user_id: string;
     workspace_id: string;
     role: UserRole;
     joined_at: string | null;
-  }
+  };
   ```
 
 - `UserRole`: Enum for valid roles
+
   ```typescript
-  type UserRole = 'owner' | 'admin' | 'member' | 'read_only'
+  type UserRole = "owner" | "admin" | "member" | "read_only";
   ```
 
 - `ErrorResponse`: Error response structure
@@ -80,6 +89,7 @@ All required types already exist in `src/types.ts`:
   ```
 
 ### Custom Error Classes
+
 Will use existing error classes from `workspace.service.ts` and create one new error:
 
 - `InsufficientPermissionsError`: Current user lacks permission
@@ -102,6 +112,7 @@ Returns the updated workspace member record:
 ```
 
 **Response Headers**:
+
 ```
 Content-Type: application/json
 ```
@@ -109,6 +120,7 @@ Content-Type: application/json
 ### Error Responses
 
 **400 Bad Request** - Invalid input data:
+
 ```json
 {
   "error": "Błąd walidacji",
@@ -120,6 +132,7 @@ Content-Type: application/json
 ```
 
 **401 Unauthorized** - User not authenticated:
+
 ```json
 {
   "error": "Brak autoryzacji"
@@ -127,6 +140,7 @@ Content-Type: application/json
 ```
 
 **403 Forbidden** - Insufficient permissions:
+
 ```json
 {
   "error": "Brak uprawnień do zmiany roli członka"
@@ -134,6 +148,7 @@ Content-Type: application/json
 ```
 
 **404 Not Found** - Member or workspace not found:
+
 ```json
 {
   "error": "Członek nie został znaleziony w tym workspace"
@@ -141,6 +156,7 @@ Content-Type: application/json
 ```
 
 **409 Conflict** - Invalid operation (e.g., removing last owner):
+
 ```json
 {
   "error": "Nie można zmienić roli ostatniego właściciela workspace"
@@ -148,6 +164,7 @@ Content-Type: application/json
 ```
 
 **500 Internal Server Error** - Server-side error:
+
 ```json
 {
   "error": "Nie udało się zaktualizować roli członka"
@@ -279,6 +296,7 @@ Content-Type: application/json
 ### Audit Logging
 
 1. **Success Logging**:
+
    ```typescript
    console.info("PATCH members/:user_id - Success", {
      workspaceId,
@@ -286,7 +304,7 @@ Content-Type: application/json
      oldRole,
      newRole,
      changedByUserId,
-     timestamp
+     timestamp,
    });
    ```
 
@@ -297,7 +315,7 @@ Content-Type: application/json
      targetUserId,
      currentUserId,
      error,
-     timestamp
+     timestamp,
    });
    ```
 
@@ -310,14 +328,14 @@ Content-Type: application/json
 
 ### Error Categories and Responses
 
-| Error Type | HTTP Status | Trigger Condition | Response Message (Polish) |
-|------------|-------------|-------------------|---------------------------|
-| **Validation Error** | 400 | Invalid UUID format, invalid role enum | "Błąd walidacji" + details object |
-| **Authentication Error** | 401 | Missing/invalid JWT token | "Brak autoryzacji" |
-| **Permission Error** | 403 | Current user not owner/admin | "Brak uprawnień do zmiany roli członka" |
-| **Not Found Error** | 404 | Member or workspace doesn't exist | "Członek nie został znaleziony w tym workspace" |
-| **Invalid Operation Error** | 409 | Changing last owner's role | "Nie można zmienić roli ostatniego właściciela workspace" |
-| **Database Error** | 500 | Unexpected Supabase error | "Nie udało się zaktualizować roli członka" |
+| Error Type                  | HTTP Status | Trigger Condition                      | Response Message (Polish)                                 |
+| --------------------------- | ----------- | -------------------------------------- | --------------------------------------------------------- |
+| **Validation Error**        | 400         | Invalid UUID format, invalid role enum | "Błąd walidacji" + details object                         |
+| **Authentication Error**    | 401         | Missing/invalid JWT token              | "Brak autoryzacji"                                        |
+| **Permission Error**        | 403         | Current user not owner/admin           | "Brak uprawnień do zmiany roli członka"                   |
+| **Not Found Error**         | 404         | Member or workspace doesn't exist      | "Członek nie został znaleziony w tym workspace"           |
+| **Invalid Operation Error** | 409         | Changing last owner's role             | "Nie można zmienić roli ostatniego właściciela workspace" |
+| **Database Error**          | 500         | Unexpected Supabase error              | "Nie udało się zaktualizować roli członka"                |
 
 ### Error Handling Strategy
 
@@ -368,6 +386,7 @@ try {
 ### Specific Error Scenarios
 
 **Scenario 1: Invalid Workspace ID Format**
+
 ```
 Input: workspace_id = "not-a-uuid"
 Error: ZodError
@@ -379,6 +398,7 @@ Response: 400 Bad Request
 ```
 
 **Scenario 2: User Not Authenticated**
+
 ```
 Input: Missing or invalid JWT token
 Error: AuthError
@@ -387,6 +407,7 @@ Response: 401 Unauthorized
 ```
 
 **Scenario 3: Insufficient Permissions**
+
 ```
 Input: Current user has "member" role (not owner/admin)
 Error: InsufficientPermissionsError
@@ -395,6 +416,7 @@ Response: 403 Forbidden
 ```
 
 **Scenario 4: Target Member Not Found**
+
 ```
 Input: user_id not in workspace_members table
 Error: NotFoundError
@@ -403,6 +425,7 @@ Response: 404 Not Found
 ```
 
 **Scenario 5: Changing Last Owner Role**
+
 ```
 Input: Attempting to change role of last owner to non-owner
 Error: InvalidOperationError
@@ -411,6 +434,7 @@ Response: 409 Conflict
 ```
 
 **Scenario 6: Database Connection Failure**
+
 ```
 Input: Supabase unavailable
 Error: Unexpected error
@@ -497,6 +521,7 @@ Response: 500 Internal Server Error
 **File**: `src/lib/services/workspace.service.ts`
 
 1.1. Create new custom error class:
+
 ```typescript
 export class InvalidOperationError extends Error {
   constructor(message = "Nieprawidłowa operacja") {
@@ -584,9 +609,7 @@ export async function updateWorkspaceMemberRole(
 
       // If only 1 owner exists, prevent role change
       if (ownerCount && ownerCount === 1) {
-        throw new InvalidOperationError(
-          "Nie można zmienić roli ostatniego właściciela workspace"
-        );
+        throw new InvalidOperationError("Nie można zmienić roli ostatniego właściciela workspace");
       }
     }
 
@@ -719,13 +742,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { role } = validatedBody;
 
     // 5. Call service layer to update member role
-    const updatedMember = await updateWorkspaceMemberRole(
-      supabase,
-      workspace_id,
-      user_id,
-      user.id,
-      role
-    );
+    const updatedMember = await updateWorkspaceMemberRole(supabase, workspace_id, user_id, user.id, role);
 
     // 6. Return 200 OK with updated member data
     return new Response(JSON.stringify(updatedMember), {
@@ -819,6 +836,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 **File**: `src/lib/services/workspace.service.ts`
 
 3.1. Add export for new error class at top of file:
+
 ```typescript
 export class InvalidOperationError extends Error {
   constructor(message = "Nieprawidłowa operacja") {
@@ -833,6 +851,7 @@ export class InvalidOperationError extends Error {
 ### Step 4: Testing Preparation
 
 4.1. **Manual Testing Checklist**:
+
 - [ ] Test with valid owner updating member role (200)
 - [ ] Test with valid admin updating member role (200)
 - [ ] Test with member role attempting update (403)
@@ -844,7 +863,8 @@ export class InvalidOperationError extends Error {
 - [ ] Test changing last owner role (409)
 - [ ] Test all role transitions (owner→admin, admin→member, etc.)
 
-4.2. **Test Data Requirements**:
+  4.2. **Test Data Requirements**:
+
 - Valid workspace with multiple members
 - Workspace with single owner (for last owner test)
 - Test users with different roles (owner, admin, member, read_only)
@@ -853,16 +873,19 @@ export class InvalidOperationError extends Error {
 ### Step 5: Code Quality Checks
 
 5.1. Run linter:
+
 ```bash
 npm run lint
 ```
 
 5.2. Run linter with auto-fix:
+
 ```bash
 npm run lint:fix
 ```
 
 5.3. Format code:
+
 ```bash
 npm run format
 ```
@@ -870,11 +893,13 @@ npm run format
 ### Step 6: Integration Testing
 
 6.1. Start development server:
+
 ```bash
 npm run dev
 ```
 
 6.2. Test endpoint with curl or API client:
+
 ```bash
 # Success case
 curl -X PATCH http://localhost:3000/api/workspaces/{workspace_id}/members/{user_id} \
@@ -892,13 +917,14 @@ curl -X PATCH http://localhost:3000/api/workspaces/{workspace_id}/members/{user_
 ### Step 7: Documentation Updates
 
 7.1. Verify API specification alignment:
+
 - Confirm response structure matches `.ai_docs/api-plan.md`
 - Verify error codes match specification
 - Ensure all business rules documented
 
-7.2. Add inline code comments where complex logic exists
+  7.2. Add inline code comments where complex logic exists
 
-7.3. Update this implementation plan with any deviations or learnings
+  7.3. Update this implementation plan with any deviations or learnings
 
 ### Step 8: Deployment Preparation
 

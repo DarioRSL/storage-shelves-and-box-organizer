@@ -5,6 +5,7 @@
 This endpoint retrieves all members of a specific workspace along with their profile information (email, full name, avatar). It enforces workspace membership validation through Row Level Security (RLS) and explicit service layer checks to ensure that only workspace members can view the member list.
 
 **Business Purpose:**
+
 - Display workspace member list in the UI
 - Show user roles for team management
 - Enable workspace admins to manage team membership
@@ -27,6 +28,7 @@ This endpoint retrieves all members of a specific workspace along with their pro
 **Response Type:** `WorkspaceMemberWithProfileDto[]`
 
 **Structure:**
+
 ```json
 [
   {
@@ -56,18 +58,19 @@ This endpoint retrieves all members of a specific workspace along with their pro
 
 ### Error Responses
 
-| Status Code | Error Message (Polish) | Description |
-|-------------|------------------------|-------------|
-| 400 Bad Request | `{ "error": "Nieprawidłowy format ID workspace" }` | The workspace_id parameter is not a valid UUID |
-| 401 Unauthorized | `{ "error": "Brak autoryzacji" }` | User is not authenticated or token is invalid/expired |
-| 404 Not Found | `{ "error": "Workspace nie został znaleziony" }` | Workspace doesn't exist OR user is not a member (security: don't reveal which) |
-| 500 Internal Server Error | `{ "error": "Nie udało się pobrać członków workspace" }` | Database query failed or unexpected error occurred |
+| Status Code               | Error Message (Polish)                                   | Description                                                                    |
+| ------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 400 Bad Request           | `{ "error": "Nieprawidłowy format ID workspace" }`       | The workspace_id parameter is not a valid UUID                                 |
+| 401 Unauthorized          | `{ "error": "Brak autoryzacji" }`                        | User is not authenticated or token is invalid/expired                          |
+| 404 Not Found             | `{ "error": "Workspace nie został znaleziony" }`         | Workspace doesn't exist OR user is not a member (security: don't reveal which) |
+| 500 Internal Server Error | `{ "error": "Nie udało się pobrać członków workspace" }` | Database query failed or unexpected error occurred                             |
 
 ## 4. Types Used
 
 ### Required DTOs (from src/types.ts)
 
 **Already Defined:**
+
 ```typescript
 // Line 36-37: Basic workspace member data
 export type WorkspaceMemberDto = Tables<"workspace_members">;
@@ -92,6 +95,7 @@ export interface ErrorResponse {
 ```
 
 **Type Mapping:**
+
 - API Response: `WorkspaceMemberWithProfileDto[]`
 - Error Response: `ErrorResponse`
 
@@ -126,7 +130,8 @@ The service will execute a Supabase query similar to:
 ```typescript
 const { data, error } = await supabase
   .from("workspace_members")
-  .select(`
+  .select(
+    `
     user_id,
     workspace_id,
     role,
@@ -136,11 +141,13 @@ const { data, error } = await supabase
       full_name,
       avatar_url
     )
-  `)
+  `
+  )
   .eq("workspace_id", workspaceId);
 ```
 
 **RLS Enforcement:**
+
 - Automatic through `is_workspace_member(workspace_id)` policy on `workspace_members` table
 - If user not a member, query returns empty result (handled as 404)
 
@@ -149,12 +156,14 @@ const { data, error } = await supabase
 ### Authentication & Authorization
 
 **Authentication Flow:**
+
 1. Middleware injects Supabase client into `locals.supabase`
 2. API route calls `supabase.auth.getUser()` to verify JWT token
 3. If invalid/expired token → 401 "Brak autoryzacji"
 4. User ID extracted from validated token
 
 **Authorization Checks:**
+
 1. **URL Parameter Validation:** UUID format check prevents injection attacks
 2. **Workspace Membership:** RLS policies enforce `is_workspace_member(workspace_id)` at database level
 3. **Explicit Service Check:** Service layer verifies workspace exists and user has access
@@ -162,13 +171,13 @@ const { data, error } = await supabase
 
 ### Security Threats & Mitigations
 
-| Threat | Attack Vector | Mitigation |
-|--------|---------------|------------|
-| **IDOR (Insecure Direct Object Reference)** | User manipulates workspace_id to view other workspaces | RLS policy + service layer membership check |
-| **Information Disclosure** | Exposing email addresses of users in other workspaces | Only return data if requester is workspace member |
-| **SQL Injection** | Malicious workspace_id parameter | Zod UUID validation + Supabase parameterized queries |
-| **JWT Token Replay/Tampering** | Stolen or modified authentication tokens | Supabase Auth validates JWT signature and expiration |
-| **Enumeration Attack** | Attacker guesses workspace UUIDs to map organizations | Return 404 for both "doesn't exist" and "no access" (don't reveal which) |
+| Threat                                      | Attack Vector                                          | Mitigation                                                               |
+| ------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **IDOR (Insecure Direct Object Reference)** | User manipulates workspace_id to view other workspaces | RLS policy + service layer membership check                              |
+| **Information Disclosure**                  | Exposing email addresses of users in other workspaces  | Only return data if requester is workspace member                        |
+| **SQL Injection**                           | Malicious workspace_id parameter                       | Zod UUID validation + Supabase parameterized queries                     |
+| **JWT Token Replay/Tampering**              | Stolen or modified authentication tokens               | Supabase Auth validates JWT signature and expiration                     |
+| **Enumeration Attack**                      | Attacker guesses workspace UUIDs to map organizations  | Return 404 for both "doesn't exist" and "no access" (don't reveal which) |
 
 ### RLS Policy Logic
 
@@ -193,6 +202,7 @@ This ensures users can ONLY query workspace_members rows for workspaces they bel
 ### Error Scenarios & Handling
 
 **1. Invalid UUID Format (400 Bad Request)**
+
 ```typescript
 // Zod validation fails
 workspace_id: z.string().uuid("Nieprawidłowy format ID workspace")
@@ -200,6 +210,7 @@ workspace_id: z.string().uuid("Nieprawidłowy format ID workspace")
 ```
 
 **2. Unauthenticated User (401 Unauthorized)**
+
 ```typescript
 const { data: { user }, error: authError } = await supabase.auth.getUser();
 if (authError || !user) {
@@ -208,6 +219,7 @@ if (authError || !user) {
 ```
 
 **3. Workspace Not Found / No Access (404 Not Found)**
+
 ```typescript
 // Service layer receives empty result from database
 // Could be because:
@@ -217,6 +229,7 @@ if (authError || !user) {
 ```
 
 **4. Database Query Error (500 Internal Server Error)**
+
 ```typescript
 // Supabase query returns error object
 if (error) {
@@ -228,11 +241,13 @@ if (error) {
 ### Error Logging Strategy
 
 **Log to Console:**
+
 - All 500 errors with full error details
 - Workspace ID and user ID for audit trail
 - Database error messages for debugging
 
 **Example Log Format:**
+
 ```typescript
 console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
   workspaceId: workspace_id,
@@ -243,6 +258,7 @@ console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
 ```
 
 **Do NOT Log:**
+
 - Returned member email addresses (sensitive data)
 - Full JWT tokens
 - User passwords or credentials
@@ -252,16 +268,19 @@ console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
 ### Database Query Optimization
 
 **1. Indexed Columns:**
+
 - `workspace_members.workspace_id` - Primary key component, indexed
 - `workspace_members.user_id` - Primary key component, indexed
 - `profiles.id` - Primary key, indexed
 
 **2. Query Efficiency:**
+
 - Single JOIN operation between workspace_members and profiles
 - RLS policies use indexed columns (workspace_id, user_id)
 - No full table scans required
 
 **3. Expected Load:**
+
 - Typical workspace: 1-50 members
 - Large workspace: up to 200 members
 - Query execution: < 50ms for typical workspace
@@ -271,11 +290,13 @@ console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
 **Issue:** Large workspaces (100+ members) may cause slow response times
 
 **Mitigation (Future Enhancement):**
+
 - Implement pagination with limit/offset query parameters
 - Add caching layer for frequently accessed workspaces
 - Consider materialized view for workspaces with 500+ members
 
 **Current Implementation:**
+
 - No pagination (retrieve all members)
 - Acceptable for MVP with expected workspace sizes
 
@@ -286,6 +307,7 @@ console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
 **File:** `src/lib/services/workspace.service.ts`
 
 **Add Function:**
+
 ```typescript
 /**
  * Retrieves all members of a workspace with their profile information.
@@ -302,10 +324,11 @@ console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
 export async function getWorkspaceMembers(
   supabase: SupabaseClient,
   workspaceId: string
-): Promise<WorkspaceMemberWithProfileDto[]>
+): Promise<WorkspaceMemberWithProfileDto[]>;
 ```
 
 **Implementation Requirements:**
+
 1. Query `workspace_members` table with JOIN to `profiles`
 2. Filter by `workspace_id`
 3. Select: `user_id`, `workspace_id`, `role`, `joined_at`, and nested `profile` data
@@ -314,6 +337,7 @@ export async function getWorkspaceMembers(
 6. Sort by `joined_at` ascending (owner first, then chronological)
 
 **Error Cases:**
+
 - Supabase query error → throw Error with Polish message: "Nie udało się pobrać członków workspace"
 - Empty result (workspace not found or no access) → throw NotFoundError with Polish message: "Workspace nie został znaleziony"
 - Invalid data format → throw Error
@@ -323,6 +347,7 @@ export async function getWorkspaceMembers(
 **File:** `src/pages/api/workspaces/[workspace_id]/members.ts` (new file)
 
 **Zod Schema:**
+
 ```typescript
 import { z } from "zod";
 
@@ -339,6 +364,7 @@ const paramsSchema = z.object({
 **File:** `src/pages/api/workspaces/[workspace_id]/members.ts`
 
 **Structure:**
+
 ```typescript
 import type { APIRoute } from "astro";
 import { z, ZodError } from "zod";
@@ -370,6 +396,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 ```
 
 **Implementation Flow:**
+
 1. Extract `params.workspace_id`
 2. Validate with Zod schema (return 400 with Polish message if invalid)
 3. Get `locals.supabase` client
@@ -381,6 +408,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 ### Step 4: Implement Error Handling
 
 **Error Mapping (with Polish error messages):**
+
 ```typescript
 catch (error) {
   if (error instanceof NotFoundError) {
@@ -417,6 +445,7 @@ catch (error) {
 **File:** `src/lib/services/workspace.service.ts`
 
 **Check if NotFoundError exists:**
+
 - If already defined in `location.service.ts`, import and reuse
 - If not, define in workspace.service.ts:
 
@@ -452,6 +481,7 @@ export class NotFoundError extends Error {
    - Expected: 200 OK with single-element array
 
 **Testing Tools:**
+
 - Postman or curl for API testing
 - Supabase dashboard for database inspection
 - Browser DevTools for network inspection
@@ -459,10 +489,12 @@ export class NotFoundError extends Error {
 ### Step 7: Documentation
 
 **Update API Documentation:**
+
 - Confirm implementation matches `.ai_docs/api-plan.md` specification
 - Add any implementation notes or edge cases discovered
 
 **Code Comments:**
+
 - Document service function with JSDoc
 - Add inline comments for complex RLS logic
 - Explain security considerations in comments
@@ -470,6 +502,7 @@ export class NotFoundError extends Error {
 ## 10. Acceptance Criteria
 
 ✅ **Functional Requirements:**
+
 - [ ] Endpoint returns all workspace members for authenticated user
 - [ ] Response includes profile data (email, full_name, avatar_url)
 - [ ] Members sorted by joined_at ascending (owner first)
@@ -477,12 +510,14 @@ export class NotFoundError extends Error {
 - [ ] Invalid UUID format returns 400 error with Polish message
 
 ✅ **Security Requirements:**
+
 - [ ] Unauthenticated requests return 401 error with Polish message
 - [ ] Users cannot view members of workspaces they don't belong to
 - [ ] Workspace existence is not revealed to non-members (404 for both cases)
 - [ ] SQL injection protected via Zod validation and parameterized queries
 
 ✅ **Code Quality:**
+
 - [ ] Service function has error handling for all failure cases with Polish messages
 - [ ] API route follows project patterns (uppercase GET, prerender: false)
 - [ ] Error responses use ErrorResponse type from src/types.ts
@@ -490,6 +525,7 @@ export class NotFoundError extends Error {
 - [ ] No sensitive data (passwords, full tokens) logged
 
 ✅ **Performance:**
+
 - [ ] Single database query with JOIN (no N+1 queries)
 - [ ] Response time < 100ms for typical workspaces (< 50 members)
 - [ ] Indexed columns used for filtering and joining
@@ -519,15 +555,16 @@ export class NotFoundError extends Error {
 
 **Complete list of error messages to use:**
 
-| Scenario | HTTP Status | Polish Error Message |
-|----------|-------------|---------------------|
-| Invalid workspace_id format | 400 | `"Nieprawidłowy format ID workspace"` |
-| Validation error (generic) | 400 | `"Błąd walidacji"` |
-| Unauthenticated user | 401 | `"Brak autoryzacji"` |
-| Workspace not found / No access | 404 | `"Workspace nie został znaleziony"` |
-| Database error | 500 | `"Nie udało się pobrać członków workspace"` |
+| Scenario                        | HTTP Status | Polish Error Message                        |
+| ------------------------------- | ----------- | ------------------------------------------- |
+| Invalid workspace_id format     | 400         | `"Nieprawidłowy format ID workspace"`       |
+| Validation error (generic)      | 400         | `"Błąd walidacji"`                          |
+| Unauthenticated user            | 401         | `"Brak autoryzacji"`                        |
+| Workspace not found / No access | 404         | `"Workspace nie został znaleziony"`         |
+| Database error                  | 500         | `"Nie udało się pobrać członków workspace"` |
 
 **Console log messages (can be mixed Polish/English):**
+
 - `"GET /api/workspaces/:workspace_id/members - Błąd:"`
 - Error details: `"Nieznany błąd"` for unknown errors
 

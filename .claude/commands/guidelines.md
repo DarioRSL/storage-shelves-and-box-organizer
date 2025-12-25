@@ -124,6 +124,7 @@ SCRIPT
 ```
 
 **Why use heredoc:**
+
 - Avoids shell escaping issues with quotes and special characters
 - Allows proper variable substitution with $VAR syntax
 - Clean multiline formatting

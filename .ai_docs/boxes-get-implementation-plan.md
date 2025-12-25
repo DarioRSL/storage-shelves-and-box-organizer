@@ -5,12 +5,14 @@
 The GET /api/boxes endpoint retrieves a filterable, searchable, and paginated list of boxes within a specific workspace. It supports multiple query parameters for filtering by location, assignment status, full-text search, and pagination. The endpoint returns box data with nested location and QR code information.
 
 **Purpose:**
+
 - List all boxes in a workspace
 - Search boxes by name, description, and tags using full-text search
 - Filter boxes by location or assignment status
 - Support pagination for large datasets
 
 **Business Context:**
+
 - Core functionality for inventory management
 - Enables users to browse and search their stored items
 - Supports mobile and desktop interfaces with pagination
@@ -18,30 +20,34 @@ The GET /api/boxes endpoint retrieves a filterable, searchable, and paginated li
 ## 2. Request Details
 
 ### HTTP Method
+
 GET
 
 ### URL Structure
+
 ```
 /api/boxes
 ```
 
 ### Query Parameters
 
-| Parameter | Type | Required | Description | Validation |
-|-----------|------|----------|-------------|------------|
-| `workspace_id` | UUID | **Yes** | The ID of the workspace | Valid UUID format |
-| `q` | string | No | Full-text search query | Min 1 char if provided |
-| `location_id` | UUID | No | Filter by specific location | Valid UUID format |
-| `is_assigned` | boolean | No | Filter for assigned/unassigned boxes | Boolean value |
-| `limit` | integer | No | Maximum results to return | Positive integer, max 100, default 50 |
-| `offset` | integer | No | Number of results to skip | Non-negative integer, default 0 |
+| Parameter      | Type    | Required | Description                          | Validation                            |
+| -------------- | ------- | -------- | ------------------------------------ | ------------------------------------- |
+| `workspace_id` | UUID    | **Yes**  | The ID of the workspace              | Valid UUID format                     |
+| `q`            | string  | No       | Full-text search query               | Min 1 char if provided                |
+| `location_id`  | UUID    | No       | Filter by specific location          | Valid UUID format                     |
+| `is_assigned`  | boolean | No       | Filter for assigned/unassigned boxes | Boolean value                         |
+| `limit`        | integer | No       | Maximum results to return            | Positive integer, max 100, default 50 |
+| `offset`       | integer | No       | Number of results to skip            | Non-negative integer, default 0       |
 
 ### Request Headers
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ### Example Request URLs
+
 ```
 GET /api/boxes?workspace_id=123e4567-e89b-12d3-a456-426614174000
 GET /api/boxes?workspace_id=123e4567-e89b-12d3-a456-426614174000&q=winter
@@ -53,6 +59,7 @@ GET /api/boxes?workspace_id=123e4567-e89b-12d3-a456-426614174000&limit=20&offset
 ## 3. Types Used
 
 ### DTOs and Types
+
 From `src/types.ts`:
 
 ```typescript
@@ -92,6 +99,7 @@ export interface ErrorResponse {
 ```
 
 ### Validation Schema
+
 New schema to create in `src/lib/validators/box.validators.ts`:
 
 ```typescript
@@ -126,6 +134,7 @@ export const GetBoxesQuerySchema = z.object({
 **Content-Type:** `application/json`
 
 **Response Body:**
+
 ```json
 [
   {
@@ -154,6 +163,7 @@ export const GetBoxesQuerySchema = z.object({
 ```
 
 **Notes:**
+
 - Returns an array of BoxDto objects
 - `location` field is null if box is unassigned
 - `qr_code` field is null if no QR code is linked to the box
@@ -162,12 +172,15 @@ export const GetBoxesQuerySchema = z.object({
 ### Error Responses
 
 #### 400 Bad Request
+
 Missing required parameter or invalid format:
+
 ```json
 {
   "error": "workspace_id jest wymagane"
 }
 ```
+
 ```json
 {
   "error": "Nieprawidłowy format ID obszaru roboczego"
@@ -175,7 +188,9 @@ Missing required parameter or invalid format:
 ```
 
 #### 401 Unauthorized
+
 User not authenticated:
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -183,7 +198,9 @@ User not authenticated:
 ```
 
 #### 500 Internal Server Error
+
 Database or server error:
+
 ```json
 {
   "error": "Nie udało się pobrać pudełek"
@@ -193,6 +210,7 @@ Database or server error:
 ## 5. Data Flow
 
 ### Flow Diagram
+
 ```
 1. Client Request
    ↓
@@ -223,19 +241,23 @@ Database or server error:
 ### Detailed Processing Steps
 
 **Step 1-2: Request Handling**
+
 - Extract URL and query parameters from request
 - Initialize Supabase client from `context.locals.supabase`
 
 **Step 3: Authentication**
+
 - Call `supabase.auth.getUser()` to verify JWT token
 - If user is null or error occurs, return 401 Unauthorized
 
 **Step 4: Input Validation**
+
 - Parse query parameters from URL
 - Validate with `GetBoxesQuerySchema` using Zod
 - Return 400 Bad Request with specific error message if validation fails
 
 **Step 5: Service Layer Call**
+
 - Call `getBoxes(supabase, validatedQuery)` function
 - Service function encapsulates all business logic
 
@@ -246,7 +268,8 @@ The service builds a Supabase query with:
 // Pseudo-code for query construction
 let query = supabase
   .from("boxes")
-  .select(`
+  .select(
+    `
     id,
     short_id,
     workspace_id,
@@ -266,7 +289,8 @@ let query = supabase
       id,
       short_id
     )
-  `)
+  `
+  )
   .eq("workspace_id", workspace_id)
   .order("created_at", { ascending: false });
 
@@ -280,9 +304,7 @@ if (location_id) {
 }
 
 if (is_assigned !== undefined) {
-  query = is_assigned
-    ? query.not("location_id", "is", null)
-    : query.is("location_id", null);
+  query = is_assigned ? query.not("location_id", "is", null) : query.is("location_id", null);
 }
 
 // Apply pagination
@@ -290,34 +312,40 @@ query = query.range(offset, offset + limit - 1);
 ```
 
 **Step 7: Execute Query**
+
 - Supabase executes query with RLS policies automatically applied
 - RLS ensures user only sees boxes from workspaces they're a member of
 - Handle database errors gracefully
 
 **Step 8: Data Transformation**
+
 - Format the response data to match BoxDto type
 - Ensure nested objects (location, qr_code) are properly structured
 - Handle null values appropriately
 
 **Step 9: Response**
+
 - Return 200 OK with array of BoxDto objects
 - Set `Content-Type: application/json` header
 
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Requirement:** User must be authenticated with valid JWT token
 - **Implementation:** Verify token using `supabase.auth.getUser()`
 - **Error Handling:** Return 401 Unauthorized if token is missing or invalid
 - **Token Location:** `Authorization: Bearer <token>` header
 
 ### Authorization
+
 - **Requirement:** User can only access boxes from workspaces they're a member of
 - **Implementation:** Rely on PostgreSQL Row Level Security (RLS) policies
 - **Policy Logic:** `is_workspace_member(workspace_id)` helper function validates membership
 - **Enforcement:** Automatic via Supabase - no additional code needed in API layer
 
 ### Input Validation
+
 - **Threat:** SQL Injection, invalid data formats
 - **Mitigation:**
   - Use Zod schema to validate all query parameters
@@ -326,6 +354,7 @@ query = query.range(offset, offset + limit - 1);
   - Sanitize search query input
 
 ### Data Leakage Prevention
+
 - **Threat:** Users accessing boxes from other workspaces
 - **Mitigation:**
   - RLS policies prevent cross-workspace data access
@@ -333,10 +362,12 @@ query = query.range(offset, offset + limit - 1);
   - Don't expose sensitive fields in response (e.g., search_vector)
 
 ### Rate Limiting
+
 - **Consideration:** Implement rate limiting at infrastructure level (not in API code)
 - **Recommendation:** Consider adding rate limiting middleware for production
 
 ### Query Performance & DoS Prevention
+
 - **Threat:** Expensive queries causing performance degradation
 - **Mitigation:**
   - Enforce maximum limit (100) for pagination
@@ -347,57 +378,63 @@ query = query.range(offset, offset + limit - 1);
 
 ### Error Scenarios and Responses
 
-| Scenario | Status Code | Error Message | Cause |
-|----------|-------------|---------------|-------|
-| Missing workspace_id | 400 | "workspace_id jest wymagane" | Required query parameter not provided |
-| Invalid workspace_id format | 400 | "Nieprawidłowy format ID obszaru roboczego" | workspace_id is not a valid UUID |
-| Invalid location_id format | 400 | "Nieprawidłowy format ID lokalizacji" | location_id is not a valid UUID |
-| Invalid limit value | 400 | "limit must be a positive number" | limit is not a positive integer |
-| Invalid offset value | 400 | "offset must be a non-negative number" | offset is negative |
-| User not authenticated | 401 | "Nieautoryzowany dostęp" | JWT token missing or invalid |
-| Database query failure | 500 | "Nie udało się pobrać pudełek" | Supabase query error |
-| Unexpected error | 500 | "Wewnętrzny błąd serwera" | Unknown error during processing |
+| Scenario                    | Status Code | Error Message                               | Cause                                 |
+| --------------------------- | ----------- | ------------------------------------------- | ------------------------------------- |
+| Missing workspace_id        | 400         | "workspace_id jest wymagane"                | Required query parameter not provided |
+| Invalid workspace_id format | 400         | "Nieprawidłowy format ID obszaru roboczego" | workspace_id is not a valid UUID      |
+| Invalid location_id format  | 400         | "Nieprawidłowy format ID lokalizacji"       | location_id is not a valid UUID       |
+| Invalid limit value         | 400         | "limit must be a positive number"           | limit is not a positive integer       |
+| Invalid offset value        | 400         | "offset must be a non-negative number"      | offset is negative                    |
+| User not authenticated      | 401         | "Nieautoryzowany dostęp"                    | JWT token missing or invalid          |
+| Database query failure      | 500         | "Nie udało się pobrać pudełek"              | Supabase query error                  |
+| Unexpected error            | 500         | "Wewnętrzny błąd serwera"                   | Unknown error during processing       |
 
 ### Error Handling Strategy
 
 **Input Validation Errors:**
+
 ```typescript
 const parseResult = GetBoxesQuerySchema.safeParse(queryParams);
 
 if (!parseResult.success) {
   const firstError = parseResult.error.errors[0];
-  return new Response(
-    JSON.stringify({ error: firstError.message } as ErrorResponse),
-    { status: 400, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: firstError.message } as ErrorResponse), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 **Authentication Errors:**
+
 ```typescript
-const { data: { user }, error: authError } = await supabase.auth.getUser();
+const {
+  data: { user },
+  error: authError,
+} = await supabase.auth.getUser();
 
 if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: "Nieautoryzowany dostęp" } as ErrorResponse),
-    { status: 401, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Nieautoryzowany dostęp" } as ErrorResponse), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 **Service Layer Errors:**
+
 ```typescript
 try {
   const boxes = await getBoxes(supabase, validatedQuery);
   return new Response(JSON.stringify(boxes), {
     status: 200,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
 } catch (error) {
   console.error("Service error in GET /api/boxes:", error);
   return new Response(
     JSON.stringify({
-      error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek"
+      error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek",
     } as ErrorResponse),
     { status: 500, headers: { "Content-Type": "application/json" } }
   );
@@ -405,6 +442,7 @@ try {
 ```
 
 **Logging Strategy:**
+
 - Log all unexpected errors with context (user ID, query parameters)
 - Log successful queries in development mode only
 - Do not log sensitive data (tokens, passwords)
@@ -415,35 +453,41 @@ try {
 ### Database Optimization
 
 **Indexes Used:**
+
 - GIN index on `boxes.search_vector` (full-text search)
 - B-tree index on `boxes.location_id` (location filtering)
 - B-tree index on `boxes.workspace_id` (workspace filtering)
 - B-tree index on `boxes.created_at` (sorting)
 
 **Query Performance:**
-- Use `.select()` to specify exact fields needed (avoid SELECT *)
+
+- Use `.select()` to specify exact fields needed (avoid SELECT \*)
 - Left joins for location and qr_code data (one query instead of multiple)
 - Pagination with `.range()` limits result set size
 - Order by indexed column (`created_at`)
 
 ### Pagination Strategy
+
 - **Default limit:** 50 boxes per request
 - **Maximum limit:** 100 boxes per request
 - **Offset-based pagination:** Simple but may have performance issues with large offsets
 - **Future improvement:** Consider cursor-based pagination for better performance
 
 ### Caching Opportunities
+
 - **Client-side:** Cache results with stale-while-revalidate strategy
 - **Server-side:** Consider Redis caching for frequently accessed workspaces
 - **Cache invalidation:** Invalidate on box creation, update, or deletion
 
 ### Potential Bottlenecks
+
 1. **Full-text search on large datasets:** GIN index mitigates this
 2. **Large workspaces with thousands of boxes:** Pagination required
 3. **Multiple concurrent requests:** Database connection pooling handles this
 4. **Complex location hierarchy joins:** Left join with ltree is efficient
 
 ### Monitoring
+
 - Monitor query execution time
 - Track slow queries (> 1 second)
 - Monitor RLS policy overhead
@@ -452,6 +496,7 @@ try {
 ## 9. Implementation Steps
 
 ### Step 1: Create Validation Schema
+
 **File:** `src/lib/validators/box.validators.ts`
 
 **Action:** Add `GetBoxesQuerySchema` to existing file
@@ -463,7 +508,7 @@ export const GetBoxesQuerySchema = z.object({
   location_id: z.string().uuid("Nieprawidłowy format ID lokalizacji").optional(),
   is_assigned: z
     .string()
-    .transform((val) => val === "true" || val === "false" ? val === "true" : undefined)
+    .transform((val) => (val === "true" || val === "false" ? val === "true" : undefined))
     .pipe(z.boolean())
     .optional(),
   limit: z
@@ -486,6 +531,7 @@ export const GetBoxesQuerySchema = z.object({
 ---
 
 ### Step 2: Create Service Function
+
 **File:** `src/lib/services/box.service.ts`
 
 **Action:** Add `getBoxes()` function to existing file
@@ -505,15 +551,13 @@ export const GetBoxesQuerySchema = z.object({
  * @param query - Validated query parameters
  * @returns Array of BoxDto objects
  */
-export async function getBoxes(
-  supabase: SupabaseClient,
-  query: GetBoxesQuery
-): Promise<BoxDto[]> {
+export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): Promise<BoxDto[]> {
   try {
     // Build base query with joins
     let dbQuery = supabase
       .from("boxes")
-      .select(`
+      .select(
+        `
         id,
         short_id,
         workspace_id,
@@ -533,7 +577,8 @@ export async function getBoxes(
           id,
           short_id
         )
-      `)
+      `
+      )
       .eq("workspace_id", query.workspace_id)
       .order("created_at", { ascending: false });
 
@@ -594,6 +639,7 @@ export async function getBoxes(
 ```
 
 **Testing:**
+
 - Test with all filter combinations
 - Verify pagination works correctly
 - Test full-text search functionality
@@ -602,6 +648,7 @@ export async function getBoxes(
 ---
 
 ### Step 3: Implement GET Handler
+
 **File:** `src/pages/api/boxes.ts`
 
 **Action:** Add GET method handler to existing file
@@ -713,6 +760,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 ```
 
 **Testing:**
+
 - Test with valid workspace_id
 - Test with missing workspace_id (should return 400)
 - Test with invalid UUID format (should return 400)
@@ -723,6 +771,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 ---
 
 ### Step 4: Manual Testing
+
 **Prerequisite:** Dev server and Supabase running locally
 
 **Test Script:** Create `.ai_docs/test-get-boxes.sh`
@@ -798,7 +847,9 @@ echo "=== Tests completed ==="
 ---
 
 ### Step 5: Code Review
+
 **Action:** Review implementation for:
+
 - Code quality and adherence to project guidelines
 - Error handling completeness
 - Security considerations
@@ -809,7 +860,9 @@ echo "=== Tests completed ==="
 ---
 
 ### Step 6: Integration Testing
+
 **Action:** Test the endpoint with actual frontend components
+
 - Verify data displays correctly in UI
 - Test pagination controls
 - Test search functionality
@@ -819,7 +872,9 @@ echo "=== Tests completed ==="
 ---
 
 ### Step 7: Documentation Update
+
 **Action:** Update API documentation in `.ai_docs/api-plan.md`
+
 - Mark GET /api/boxes as implemented (✅)
 - Add implementation file path
 - Add service layer function reference

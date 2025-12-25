@@ -5,6 +5,7 @@
 The DELETE /api/boxes/:id endpoint permanently removes a box from the system. When a box is deleted, a database trigger automatically resets the associated QR code by setting its `box_id` to NULL and `status` to 'generated', making the QR code available for reuse with a new box. This is a hard delete operation (not soft delete) that permanently removes the box record from the database.
 
 **Key Characteristics:**
+
 - Hard delete (permanent removal from database)
 - Automatic QR code cleanup via database trigger
 - Row Level Security (RLS) enforces workspace access control
@@ -37,7 +38,7 @@ curl -X DELETE \
 A new Zod schema needs to be created for URL parameter validation:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Schema for validating box ID from URL parameters.
@@ -45,8 +46,8 @@ import { z } from 'zod';
  */
 export const DeleteBoxSchema = z.object({
   id: z.string().uuid({
-    message: "Nieprawidłowy format identyfikatora pudełka"
-  })
+    message: "Nieprawidłowy format identyfikatora pudełka",
+  }),
 });
 
 export type DeleteBoxParams = z.infer<typeof DeleteBoxSchema>;
@@ -57,6 +58,7 @@ export type DeleteBoxParams = z.infer<typeof DeleteBoxSchema>;
 From `src/types.ts`:
 
 - **Success Response** (200 OK):
+
   ```typescript
   SuccessResponse {
     message: string;
@@ -74,6 +76,7 @@ From `src/types.ts`:
 ### Service Layer Types
 
 The service function will use:
+
 - `SupabaseClient` type from `src/db/supabase.client.ts`
 - Box ID as `string` (validated UUID)
 - User ID as `string` (from authenticated session)
@@ -91,6 +94,7 @@ The service function will use:
 ### Error Responses
 
 #### 400 Bad Request
+
 Invalid UUID format in URL parameter.
 
 ```json
@@ -100,6 +104,7 @@ Invalid UUID format in URL parameter.
 ```
 
 #### 401 Unauthorized
+
 User not authenticated or invalid JWT token.
 
 ```json
@@ -109,6 +114,7 @@ User not authenticated or invalid JWT token.
 ```
 
 #### 404 Not Found
+
 Box does not exist OR user does not have access (RLS enforcement).
 
 ```json
@@ -118,6 +124,7 @@ Box does not exist OR user does not have access (RLS enforcement).
 ```
 
 #### 500 Internal Server Error
+
 Unexpected database or server error.
 
 ```json
@@ -234,17 +241,17 @@ Database error → 500 Internal Server Error
 
 ### Error Scenarios & Handling Strategy
 
-| Scenario | Detection | HTTP Status | Error Message | Logging |
-|----------|-----------|-------------|---------------|---------|
-| Invalid UUID format | Zod validation fails | 400 | "Nieprawidłowy format identyfikatora pudełka" | Warn with request details |
-| Missing auth token | Middleware check | 401 | "Unauthorized" | Info with IP address |
-| Invalid JWT token | Middleware check | 401 | "Unauthorized" | Warn with token details |
-| Box not found | DELETE returns 0 rows | 404 | "Pudełko nie znalezione" | Info with user_id, box_id |
-| No workspace access | RLS blocks DELETE (0 rows) | 404 | "Pudełko nie znalezione" | Warn with user_id, box_id, workspace attempt |
-| Database connection error | Supabase client throws | 500 | "Nie udało się usunąć pudełka" | Error with stack trace |
-| Database constraint violation | PostgreSQL error | 500 | "Nie udało się usunąć pudełka" | Error with constraint details |
-| Trigger execution failure | PostgreSQL error | 500 | "Nie udało się usunąć pudełka" | Error with trigger details |
-| Unexpected error | Catch-all | 500 | "Nie udało się usunąć pudełka" | Error with full context |
+| Scenario                      | Detection                  | HTTP Status | Error Message                                 | Logging                                      |
+| ----------------------------- | -------------------------- | ----------- | --------------------------------------------- | -------------------------------------------- |
+| Invalid UUID format           | Zod validation fails       | 400         | "Nieprawidłowy format identyfikatora pudełka" | Warn with request details                    |
+| Missing auth token            | Middleware check           | 401         | "Unauthorized"                                | Info with IP address                         |
+| Invalid JWT token             | Middleware check           | 401         | "Unauthorized"                                | Warn with token details                      |
+| Box not found                 | DELETE returns 0 rows      | 404         | "Pudełko nie znalezione"                      | Info with user_id, box_id                    |
+| No workspace access           | RLS blocks DELETE (0 rows) | 404         | "Pudełko nie znalezione"                      | Warn with user_id, box_id, workspace attempt |
+| Database connection error     | Supabase client throws     | 500         | "Nie udało się usunąć pudełka"                | Error with stack trace                       |
+| Database constraint violation | PostgreSQL error           | 500         | "Nie udało się usunąć pudełka"                | Error with constraint details                |
+| Trigger execution failure     | PostgreSQL error           | 500         | "Nie udało się usunąć pudełka"                | Error with trigger details                   |
+| Unexpected error              | Catch-all                  | 500         | "Nie udało się usunąć pudełka"                | Error with full context                      |
 
 ### Custom Error Classes
 
@@ -258,7 +265,7 @@ Create a custom error class for box-specific errors:
 export class BoxNotFoundError extends Error {
   constructor(boxId: string) {
     super(`Box with ID ${boxId} not found or access denied`);
-    this.name = 'BoxNotFoundError';
+    this.name = "BoxNotFoundError";
   }
 }
 ```
@@ -267,19 +274,19 @@ export class BoxNotFoundError extends Error {
 
 ```typescript
 // Success logging
-console.log('[DELETE /api/boxes/:id] Box deleted successfully', {
+console.log("[DELETE /api/boxes/:id] Box deleted successfully", {
   user_id: userId,
   box_id: boxId,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 
 // Error logging
-console.error('[DELETE /api/boxes/:id] Failed to delete box', {
+console.error("[DELETE /api/boxes/:id] Failed to delete box", {
   user_id: userId,
   box_id: boxId,
   error: error.message,
   stack: error.stack,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 ```
 
@@ -373,19 +380,22 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 **File**: `src/lib/validations/box.validation.ts` (create if doesn't exist)
 
 **Actions**:
+
 1. Create or locate validation schemas file for boxes
 2. Define `DeleteBoxSchema` using Zod:
+
    ```typescript
-   import { z } from 'zod';
+   import { z } from "zod";
 
    export const DeleteBoxSchema = z.object({
      id: z.string().uuid({
-       message: "Nieprawidłowy format identyfikatora pudełka"
-     })
+       message: "Nieprawidłowy format identyfikatora pudełka",
+     }),
    });
 
    export type DeleteBoxParams = z.infer<typeof DeleteBoxSchema>;
    ```
+
 3. Export schema for use in API route
 
 ### Step 2: Create Custom Error Class
@@ -393,6 +403,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 **File**: `src/lib/services/box.service.ts`
 
 **Actions**:
+
 1. Locate or create box service file
 2. Add custom error class at the top of the file:
    ```typescript
@@ -402,7 +413,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
    export class BoxNotFoundError extends Error {
      constructor(boxId: string) {
        super(`Box with ID ${boxId} not found or access denied`);
-       this.name = 'BoxNotFoundError';
+       this.name = "BoxNotFoundError";
      }
    }
    ```
@@ -412,57 +423,49 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 **File**: `src/lib/services/box.service.ts`
 
 **Actions**:
+
 1. Create `deleteBox` function with signature:
+
    ```typescript
-   async function deleteBox(
-     supabase: SupabaseClient<Database>,
-     boxId: string,
-     userId: string
-   ): Promise<void>
+   async function deleteBox(supabase: SupabaseClient<Database>, boxId: string, userId: string): Promise<void>;
    ```
 
 2. Implementation logic:
+
    ```typescript
-   export async function deleteBox(
-     supabase: SupabaseClient<Database>,
-     boxId: string,
-     userId: string
-   ): Promise<void> {
-     console.log('[box.service] Deleting box', {
+   export async function deleteBox(supabase: SupabaseClient<Database>, boxId: string, userId: string): Promise<void> {
+     console.log("[box.service] Deleting box", {
        user_id: userId,
-       box_id: boxId
+       box_id: boxId,
      });
 
      // Execute DELETE query
      // RLS automatically verifies workspace membership
-     const { error, count } = await supabase
-       .from('boxes')
-       .delete({ count: 'exact' })
-       .eq('id', boxId);
+     const { error, count } = await supabase.from("boxes").delete({ count: "exact" }).eq("id", boxId);
 
      // Check for errors
      if (error) {
-       console.error('[box.service] Database error deleting box', {
+       console.error("[box.service] Database error deleting box", {
          user_id: userId,
          box_id: boxId,
          error: error.message,
-         code: error.code
+         code: error.code,
        });
-       throw new Error('Database error occurred while deleting box');
+       throw new Error("Database error occurred while deleting box");
      }
 
      // Check if box was actually deleted (RLS might have blocked it)
      if (count === 0) {
-       console.warn('[box.service] Box not found or access denied', {
+       console.warn("[box.service] Box not found or access denied", {
          user_id: userId,
-         box_id: boxId
+         box_id: boxId,
        });
        throw new BoxNotFoundError(boxId);
      }
 
-     console.log('[box.service] Box deleted successfully', {
+     console.log("[box.service] Box deleted successfully", {
        user_id: userId,
-       box_id: boxId
+       box_id: boxId,
      });
    }
    ```
@@ -474,11 +477,13 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 **File**: `src/pages/api/boxes/[id].ts`
 
 **Actions**:
+
 1. Create new file with DELETE handler:
+
    ```typescript
-   import type { APIRoute } from 'astro';
-   import { deleteBox, BoxNotFoundError } from '../../../lib/services/box.service';
-   import { DeleteBoxSchema } from '../../../lib/validations/box.validation';
+   import type { APIRoute } from "astro";
+   import { deleteBox, BoxNotFoundError } from "../../../lib/services/box.service";
+   import { DeleteBoxSchema } from "../../../lib/validations/box.validation";
 
    export const prerender = false;
 
@@ -491,11 +496,11 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
      if (!validationResult.success) {
        return new Response(
          JSON.stringify({
-           error: "Nieprawidłowy format identyfikatora pudełka"
+           error: "Nieprawidłowy format identyfikatora pudełka",
          }),
          {
            status: 400,
-           headers: { 'Content-Type': 'application/json' }
+           headers: { "Content-Type": "application/json" },
          }
        );
      }
@@ -505,13 +510,10 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
      const user = context.locals.user;
 
      if (!user) {
-       return new Response(
-         JSON.stringify({ error: "Unauthorized" }),
-         {
-           status: 401,
-           headers: { 'Content-Type': 'application/json' }
-         }
-       );
+       return new Response(JSON.stringify({ error: "Unauthorized" }), {
+         status: 401,
+         headers: { "Content-Type": "application/json" },
+       });
      }
 
      // Attempt to delete box
@@ -520,40 +522,34 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 
        return new Response(
          JSON.stringify({
-           message: "Box deleted successfully."
+           message: "Box deleted successfully.",
          }),
          {
            status: 200,
-           headers: { 'Content-Type': 'application/json' }
+           headers: { "Content-Type": "application/json" },
          }
        );
      } catch (error) {
        // Handle specific error types
        if (error instanceof BoxNotFoundError) {
-         return new Response(
-           JSON.stringify({ error: "Pudełko nie znalezione" }),
-           {
-             status: 404,
-             headers: { 'Content-Type': 'application/json' }
-           }
-         );
+         return new Response(JSON.stringify({ error: "Pudełko nie znalezione" }), {
+           status: 404,
+           headers: { "Content-Type": "application/json" },
+         });
        }
 
        // Generic server error
-       console.error('[DELETE /api/boxes/:id] Unexpected error', {
+       console.error("[DELETE /api/boxes/:id] Unexpected error", {
          user_id: user.id,
          box_id: id,
-         error: error instanceof Error ? error.message : 'Unknown error',
-         stack: error instanceof Error ? error.stack : undefined
+         error: error instanceof Error ? error.message : "Unknown error",
+         stack: error instanceof Error ? error.stack : undefined,
        });
 
-       return new Response(
-         JSON.stringify({ error: "Nie udało się usunąć pudełka" }),
-         {
-           status: 500,
-           headers: { 'Content-Type': 'application/json' }
-         }
-       );
+       return new Response(JSON.stringify({ error: "Nie udało się usunąć pudełka" }), {
+         status: 500,
+         headers: { "Content-Type": "application/json" },
+       });
      }
    };
    ```
@@ -561,6 +557,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 ### Step 5: Verify Database Trigger
 
 **Actions**:
+
 1. Check that BEFORE DELETE trigger exists on `boxes` table
 2. Verify trigger resets QR code correctly:
    - Sets `box_id = NULL`
@@ -572,8 +569,10 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 **File**: `.ai_docs/api-plan.md`
 
 **Actions**:
+
 1. Locate DELETE /api/boxes/:id section (lines 494-509)
 2. Add implementation status marker:
+
    ```markdown
    #### DELETE /api/boxes/:id
 
@@ -581,15 +580,18 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
    - **Implementation File**: `src/pages/api/boxes/[id].ts`
    - **Service Layer**: `src/lib/services/box.service.ts::deleteBox()`
    ```
+
 3. Optionally add enhanced error documentation similar to other implemented endpoints
 
 ### Step 7: Manual Testing
 
 **Actions**:
+
 1. Start dev server: `npm run dev`
 2. Ensure Supabase is running locally
 3. Create test script: `.ai_docs/test-delete-boxes-id.sh`
 4. Test script should include:
+
    ```bash
    #!/bin/bash
    # Test DELETE /api/boxes/:id endpoint
@@ -636,6 +638,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 ### Step 8: Verify QR Code Cleanup
 
 **Actions**:
+
 1. Before deletion, query QR code linked to box:
    ```sql
    SELECT id, short_id, box_id, status
@@ -654,6 +657,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 ### Step 9: Integration Testing
 
 **Actions**:
+
 1. Test full user flow:
    - User creates box with QR code
    - User deletes box
@@ -670,6 +674,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 ### Step 10: Code Quality & Cleanup
 
 **Actions**:
+
 1. Run linter: `npm run lint`
 2. Fix any linting issues: `npm run lint:fix`
 3. Verify TypeScript compilation: `npx tsc --noEmit`
@@ -683,6 +688,7 @@ return new Response(JSON.stringify({ message: "..." }), { status: 200 });
 ### Step 11: Documentation Updates
 
 **Actions**:
+
 1. Update `.ai_docs/api-plan.md` with implementation status
 2. Add inline code comments explaining RLS behavior
 3. Document QR code cleanup mechanism in service layer

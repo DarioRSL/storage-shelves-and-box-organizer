@@ -5,6 +5,7 @@
 Creates a new box item in the inventory system. Boxes are the main inventory entities that can contain items and be linked to QR codes for easy scanning. Upon creation, the box receives an auto-generated unique `short_id` (10 character alphanumeric) and an optional QR code assignment. Boxes can be created as unassigned (no location) or linked to a specific storage location within the workspace.
 
 **Key Behaviors:**
+
 - Auto-generates unique `short_id` via database trigger
 - Auto-generates `search_vector` for full-text search from name, description, and tags
 - Optionally links to an existing QR code (changes QR status from 'generated' to 'assigned')
@@ -21,10 +22,12 @@ Creates a new box item in the inventory system. Boxes are the main inventory ent
 ### Parameters
 
 **Required:**
+
 - `workspace_id` (string, UUID): The workspace tenant identifier
 - `name` (string): Box name (non-empty)
 
 **Optional:**
+
 - `description` (string | null): Detailed description of box contents (max 10,000 characters)
 - `tags` (string[] | null): Array of tag strings for categorization and search
 - `location_id` (string | null, UUID): Storage location reference (null = unassigned)
@@ -78,12 +81,12 @@ export const ValidationRules = {
 ### Zod Validation Schema (to be created)
 
 ```typescript
-import { z } from 'zod';
-import { ValidationRules } from '@/types';
+import { z } from "zod";
+import { ValidationRules } from "@/types";
 
 export const createBoxSchema = z.object({
-  workspace_id: z.string().uuid({ message: 'Nieprawidłowy format ID obszaru roboczego' }),
-  name: z.string().min(1, { message: 'Nazwa pudełka jest wymagana' }).trim(),
+  workspace_id: z.string().uuid({ message: "Nieprawidłowy format ID obszaru roboczego" }),
+  name: z.string().min(1, { message: "Nazwa pudełka jest wymagana" }).trim(),
   description: z
     .string()
     .max(ValidationRules.boxes.MAX_DESCRIPTION_LENGTH, {
@@ -92,16 +95,8 @@ export const createBoxSchema = z.object({
     .nullable()
     .optional(),
   tags: z.array(z.string()).nullable().optional(),
-  location_id: z
-    .string()
-    .uuid({ message: 'Nieprawidłowy format ID lokalizacji' })
-    .nullable()
-    .optional(),
-  qr_code_id: z
-    .string()
-    .uuid({ message: 'Nieprawidłowy format ID kodu QR' })
-    .nullable()
-    .optional(),
+  location_id: z.string().uuid({ message: "Nieprawidłowy format ID lokalizacji" }).nullable().optional(),
+  qr_code_id: z.string().uuid({ message: "Nieprawidłowy format ID kodu QR" }).nullable().optional(),
 });
 ```
 
@@ -122,16 +117,19 @@ export const createBoxSchema = z.object({
 ### Error Responses
 
 **400 Bad Request** - Invalid input data
+
 ```json
 {
   "error": "Brak wymaganego pola: name"
 }
 ```
+
 ```json
 {
   "error": "Opis nie może przekraczać 10000 znaków"
 }
 ```
+
 ```json
 {
   "error": "Nieprawidłowy format ID obszaru roboczego"
@@ -139,6 +137,7 @@ export const createBoxSchema = z.object({
 ```
 
 **401 Unauthorized** - Authentication failure
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -146,11 +145,13 @@ export const createBoxSchema = z.object({
 ```
 
 **403 Forbidden** - RLS policy violation (not workspace member, or resources from different workspace)
+
 ```json
 {
   "error": "Brak dostępu: nie jesteś członkiem tego obszaru roboczego"
 }
 ```
+
 ```json
 {
   "error": "Kod QR należy do innego obszaru roboczego"
@@ -158,11 +159,13 @@ export const createBoxSchema = z.object({
 ```
 
 **404 Not Found** - Referenced resources don't exist
+
 ```json
 {
   "error": "Kod QR nie został znaleziony"
 }
 ```
+
 ```json
 {
   "error": "Lokalizacja nie została znaleziona"
@@ -170,6 +173,7 @@ export const createBoxSchema = z.object({
 ```
 
 **409 Conflict** - QR code already assigned
+
 ```json
 {
   "error": "Kod QR jest już przypisany do innego pudełka"
@@ -177,6 +181,7 @@ export const createBoxSchema = z.object({
 ```
 
 **500 Internal Server Error** - Unexpected database or server error
+
 ```json
 {
   "error": "Nie udało się utworzyć pudełka"
@@ -230,11 +235,13 @@ export const createBoxSchema = z.object({
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Requirement**: Valid JWT token in Authorization header
 - **Enforcement**: Astro middleware validates session and sets `context.locals.user`
 - **Failure**: Return 401 Unauthorized
 
 ### Authorization (Row Level Security)
+
 - **Workspace Membership**: RLS policy `is_workspace_member(workspace_id)` enforces that user can only create boxes in workspaces they belong to
 - **Cross-workspace Protection**:
   - QR codes: Verify `qr_code.workspace_id === box.workspace_id`
@@ -242,6 +249,7 @@ export const createBoxSchema = z.object({
 - **Failure**: Return 403 Forbidden
 
 ### Input Validation
+
 - **SQL Injection**: Protected by Supabase parameterized queries
 - **XSS Prevention**: While box data is not rendered as HTML, sanitize inputs as best practice
 - **Type Safety**: Zod schema validates all field types and formats
@@ -249,11 +257,13 @@ export const createBoxSchema = z.object({
 - **UUID Format**: Validate all ID fields are proper UUIDs
 
 ### Data Integrity
+
 - **QR Code Uniqueness**: Verify QR code box_id is null before assignment (prevent double assignment)
 - **Foreign Key Constraints**: Database enforces valid references for workspace_id, location_id
 - **Atomic Operations**: If QR code assignment fails, entire operation should roll back (use transaction)
 
 ### Audit Trail
+
 - **Success Logging**: Log box creation with user_id, workspace_id, box_id
 - **Error Logging**: Log failed attempts with reason, user_id, request details
 - **Context**: Include enough information for debugging without exposing sensitive data
@@ -262,53 +272,53 @@ export const createBoxSchema = z.object({
 
 ### Validation Errors (400)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
-| Missing workspace_id | Zod validation | "Pole workspace_id jest wymagane" |
-| Invalid workspace_id format | Zod UUID validation | "Nieprawidłowy format ID obszaru roboczego" |
-| Missing name | Zod validation | "Nazwa pudełka jest wymagana" |
-| Empty name | Zod min(1) | "Nazwa pudełka jest wymagana" |
-| Description too long | Zod max(10000) | "Opis nie może przekraczać 10000 znaków" |
-| Invalid location_id format | Zod UUID validation | "Nieprawidłowy format ID lokalizacji" |
-| Invalid qr_code_id format | Zod UUID validation | "Nieprawidłowy format ID kodu QR" |
-| Tags not array | Zod array validation | "Tagi muszą być tablicą ciągów znaków" |
+| Scenario                    | Check                | Error Message                               |
+| --------------------------- | -------------------- | ------------------------------------------- |
+| Missing workspace_id        | Zod validation       | "Pole workspace_id jest wymagane"           |
+| Invalid workspace_id format | Zod UUID validation  | "Nieprawidłowy format ID obszaru roboczego" |
+| Missing name                | Zod validation       | "Nazwa pudełka jest wymagana"               |
+| Empty name                  | Zod min(1)           | "Nazwa pudełka jest wymagana"               |
+| Description too long        | Zod max(10000)       | "Opis nie może przekraczać 10000 znaków"    |
+| Invalid location_id format  | Zod UUID validation  | "Nieprawidłowy format ID lokalizacji"       |
+| Invalid qr_code_id format   | Zod UUID validation  | "Nieprawidłowy format ID kodu QR"           |
+| Tags not array              | Zod array validation | "Tagi muszą być tablicą ciągów znaków"      |
 
 ### Authentication Errors (401)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
-| No token | Middleware check | "Nieautoryzowany dostęp" |
+| Scenario      | Check            | Error Message            |
+| ------------- | ---------------- | ------------------------ |
+| No token      | Middleware check | "Nieautoryzowany dostęp" |
 | Invalid token | Middleware check | "Nieautoryzowany dostęp" |
 | Expired token | Middleware check | "Nieautoryzowany dostęp" |
 
 ### Authorization Errors (403)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
-| Not workspace member | RLS policy | "Brak dostępu: nie jesteś członkiem tego obszaru roboczego" |
-| QR code from different workspace | Service layer | "Kod QR należy do innego obszaru roboczego" |
-| Location from different workspace | Service layer | "Lokalizacja należy do innego obszaru roboczego" |
+| Scenario                          | Check         | Error Message                                               |
+| --------------------------------- | ------------- | ----------------------------------------------------------- |
+| Not workspace member              | RLS policy    | "Brak dostępu: nie jesteś członkiem tego obszaru roboczego" |
+| QR code from different workspace  | Service layer | "Kod QR należy do innego obszaru roboczego"                 |
+| Location from different workspace | Service layer | "Lokalizacja należy do innego obszaru roboczego"            |
 
 ### Resource Not Found (404)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
-| QR code doesn't exist | Service layer query | "Kod QR nie został znaleziony" |
+| Scenario               | Check               | Error Message                        |
+| ---------------------- | ------------------- | ------------------------------------ |
+| QR code doesn't exist  | Service layer query | "Kod QR nie został znaleziony"       |
 | Location doesn't exist | Service layer query | "Lokalizacja nie została znaleziona" |
 
 ### Conflict Errors (409)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
+| Scenario                 | Check                      | Error Message                                  |
+| ------------------------ | -------------------------- | ---------------------------------------------- |
 | QR code already assigned | Service layer check box_id | "Kod QR jest już przypisany do innego pudełka" |
 
 ### Server Errors (500)
 
-| Scenario | Check | Error Message |
-|----------|-------|---------------|
+| Scenario                 | Check                | Error Message                    |
+| ------------------------ | -------------------- | -------------------------------- |
 | Database operation fails | Try-catch in service | "Nie udało się utworzyć pudełka" |
-| Transaction rollback | Try-catch in service | "Nie udało się utworzyć pudełka" |
-| Unexpected errors | Global error handler | "Wewnętrzny błąd serwera" |
+| Transaction rollback     | Try-catch in service | "Nie udało się utworzyć pudełka" |
+| Unexpected errors        | Global error handler | "Wewnętrzny błąd serwera"        |
 
 ### Error Handling Pattern
 
@@ -324,37 +334,38 @@ try {
   // Return success
   return new Response(JSON.stringify(box), {
     status: 201,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { "Content-Type": "application/json" },
   });
 } catch (error) {
   // Handle Zod validation errors
   if (error instanceof z.ZodError) {
-    return new Response(
-      JSON.stringify({ error: error.errors[0].message }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: error.errors[0].message }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // Handle custom errors from service layer
   if (error instanceof CustomError) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: error.statusCode, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: error.statusCode,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // Log and return generic error
-  console.error('Failed to create box:', error);
-  return new Response(
-    JSON.stringify({ error: 'Nie udało się utworzyć pudełka' }),
-    { status: 500, headers: { 'Content-Type': 'application/json' } }
-  );
+  console.error("Failed to create box:", error);
+  return new Response(JSON.stringify({ error: "Nie udało się utworzyć pudełka" }), {
+    status: 500,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 ## 8. Performance Considerations
 
 ### Database Optimization
+
 - **Indexes**:
   - `boxes.workspace_id` (for RLS filtering)
   - `boxes.short_id` (unique, for lookups)
@@ -364,16 +375,19 @@ try {
 - **Generated Columns**: search_vector is auto-maintained but adds overhead to INSERT
 
 ### Query Optimization
+
 - **Selective Queries**: Only query QR code and location if IDs are provided
 - **Single Transaction**: If QR assignment needed, wrap box INSERT + qr_code UPDATE in transaction
 - **Avoid N+1**: Don't query separately for workspace membership (RLS handles it)
 
 ### Potential Bottlenecks
+
 - **QR Code Collision**: Rare, but uniqueness check on short_id generation could retry multiple times
 - **Large Tags Arrays**: Storing many tags impacts search_vector generation time
 - **Concurrent Creation**: High-volume box creation might strain short_id generation (collision checks)
 
 ### Optimization Strategies
+
 - **Connection Pooling**: Supabase handles this automatically
 - **Lazy Loading**: Don't join location/QR code data in response (only return IDs)
 - **Caching**: Consider caching workspace membership checks (though RLS is fast)
@@ -382,6 +396,7 @@ try {
 ## 9. Implementation Steps
 
 ### Step 1: Create Service Layer Function
+
 **File**: `src/lib/services/box.service.ts`
 
 1. Create or update `box.service.ts`
@@ -408,6 +423,7 @@ try {
    - Return CreateBoxResponse data
 
 ### Step 2: Create Zod Validation Schema
+
 **File**: `src/lib/schemas/box.schema.ts` or inline in API route
 
 1. Import Zod and ValidationRules
@@ -415,13 +431,14 @@ try {
 3. Export schema for use in API route
 
 ### Step 3: Implement API Route Handler
+
 **File**: `src/pages/api/boxes.ts`
 
 1. Create `boxes.ts` in `src/pages/api/`
 2. Add `export const prerender = false`
 3. Implement POST handler:
    ```typescript
-   export async function POST(context: APIContext): Promise<Response>
+   export async function POST(context: APIContext): Promise<Response>;
    ```
 4. Extract user and supabase from context.locals
 5. Check authentication (return 401 if no user)
@@ -431,6 +448,7 @@ try {
 9. Return 201 Created with CreateBoxResponse on success
 
 ### Step 4: Add Error Logging
+
 **Location**: Service layer and API route
 
 1. Log successful box creation with context:
@@ -443,6 +461,7 @@ try {
 5. Include timestamp and request ID if available
 
 ### Step 5: Write Integration Tests
+
 **File**: `.ai_docs/test-post-boxes.sh`
 
 1. Create bash test script with curl commands
@@ -483,6 +502,7 @@ try {
 - [ ] Verify audit logs contain proper context
 
 ### Step 7: Documentation
+
 **Files**: Update API documentation and types
 
 1. Verify `src/types.ts` has correct CreateBoxRequest and CreateBoxResponse types

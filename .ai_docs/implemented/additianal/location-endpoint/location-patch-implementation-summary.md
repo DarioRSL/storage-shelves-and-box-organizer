@@ -15,9 +15,11 @@ Successfully implemented the PATCH endpoint for updating location names and desc
 ## Delivered Components
 
 ### 1. Service Layer
+
 **File:** [`src/lib/services/location.service.ts`](../src/lib/services/location.service.ts)
 
 **New Functions:**
+
 - `updateLocation()` - Main service function (lines 378-470)
 - `slugify()` - Name to ltree slug conversion (line 66)
 - `getParentPath()` - Extract parent from path (line 81)
@@ -25,21 +27,26 @@ Successfully implemented the PATCH endpoint for updating location names and desc
 - `checkSiblingNameConflict()` - Detect duplicate siblings (line 101)
 
 **New Error Classes:**
+
 - `NotFoundError` - Location not found or deleted
 - `ConflictError` - Duplicate sibling name
 - `ForbiddenError` - No access to location
 
 ### 2. API Route
+
 **File:** [`src/pages/api/locations/[id].ts`](../src/pages/api/locations/[id].ts)
 
 **Features:**
+
 - Dynamic route with UUID validation
 - Zod schemas for params and body validation
 - Comprehensive error handling (400, 401, 403, 404, 409, 500)
 - RLS integration with security-conscious error messages
 
 ### 3. Testing Infrastructure
+
 **Files:**
+
 - [`run-patch-tests.sh`](../run-patch-tests.sh) - Automated test suite
 - [`test-patch-location.http`](../test-patch-location.http) - Manual HTTP requests
 - [`TESTING-PATCH-ENDPOINT.md`](../TESTING-PATCH-ENDPOINT.md) - Testing guide
@@ -49,43 +56,48 @@ Successfully implemented the PATCH endpoint for updating location names and desc
 
 **Final Score: 9/9 tests passed (100%)**
 
-| # | Test Scenario | Expected | Result |
-|---|--------------|----------|--------|
-| 1 | Update name only | 200 OK | ✅ PASS |
-| 2 | Update description only | 200 OK | ✅ PASS |
-| 3 | Update both fields | 200 OK | ✅ PASS |
-| 4 | Clear description (null) | 200 OK | ✅ PASS |
-| 5 | Empty body | 400 Bad Request | ✅ PASS |
-| 6 | Empty name | 400 Bad Request | ✅ PASS |
-| 7 | Invalid UUID | 400 Bad Request | ✅ PASS |
-| 8 | Non-existent ID | 404 Not Found | ✅ PASS |
-| 9 | Duplicate sibling | 409 Conflict | ✅ PASS |
+| #   | Test Scenario            | Expected        | Result  |
+| --- | ------------------------ | --------------- | ------- |
+| 1   | Update name only         | 200 OK          | ✅ PASS |
+| 2   | Update description only  | 200 OK          | ✅ PASS |
+| 3   | Update both fields       | 200 OK          | ✅ PASS |
+| 4   | Clear description (null) | 200 OK          | ✅ PASS |
+| 5   | Empty body               | 400 Bad Request | ✅ PASS |
+| 6   | Empty name               | 400 Bad Request | ✅ PASS |
+| 7   | Invalid UUID             | 400 Bad Request | ✅ PASS |
+| 8   | Non-existent ID          | 404 Not Found   | ✅ PASS |
+| 9   | Duplicate sibling        | 409 Conflict    | ✅ PASS |
 
 ## Key Features Implemented
 
 ### ✅ Path Regeneration
+
 - Automatic ltree path update when name changes
 - Preserves parent hierarchy
 - Uses slugified names (lowercase, underscores)
 
 ### ✅ Sibling Conflict Detection
+
 - Prevents duplicate names at same level
 - Case-insensitive comparison (via path slugification)
 - Excludes current location from conflict check
 
 ### ✅ Validation
+
 - Zod schema for UUID parameters
 - Request body validation (name and/or description required)
 - Empty name prevention
 - Type-safe TypeScript integration
 
 ### ✅ Security
+
 - Row Level Security (RLS) enforcement
 - Returns 404 for unauthorized access (no info disclosure)
 - Soft-delete awareness
 - JWT authentication required
 
 ### ✅ Error Handling
+
 - Custom error classes for specific scenarios
 - Early returns for error conditions
 - User-friendly error messages
@@ -94,6 +106,7 @@ Successfully implemented the PATCH endpoint for updating location names and desc
 ## Implementation Details
 
 ### Request Format
+
 ```typescript
 PATCH /api/locations/:id
 Content-Type: application/json
@@ -106,6 +119,7 @@ Authorization: Bearer <jwt-token>
 ```
 
 ### Response Format (200 OK)
+
 ```typescript
 {
   "id": "uuid",
@@ -116,6 +130,7 @@ Authorization: Bearer <jwt-token>
 ```
 
 ### Error Responses
+
 - **400** - Validation error (empty body, empty name, invalid UUID)
 - **401** - Unauthorized (missing/invalid token)
 - **403** - Forbidden (different workspace) - returns as 404
@@ -128,6 +143,7 @@ Authorization: Bearer <jwt-token>
 **No migrations required** - Uses existing `locations` table.
 
 **Columns Updated:**
+
 - `name` - Updated if provided
 - `description` - Updated if provided (can be null)
 - `path` - Regenerated if name changes
@@ -145,12 +161,14 @@ Authorization: Bearer <jwt-token>
 ## Performance Considerations
 
 **Current Implementation:**
+
 - Single database query for location fetch
 - Single query for conflict check (if name changes)
 - Single update query
 - O(1) for single location update
 
 **Future Optimizations (Not Implemented):**
+
 - Descendant path updates (when parent name changes)
 - Transactional wrapping for atomic updates
 - Batch updates for multiple locations
@@ -166,10 +184,12 @@ Authorization: Bearer <jwt-token>
 ## Files Modified/Created
 
 **Modified:**
+
 - `src/lib/services/location.service.ts` - Added updateLocation function + helpers
 - `src/types.ts` - (already had required types)
 
 **Created:**
+
 - `src/pages/api/locations/[id].ts` - PATCH endpoint
 - `run-patch-tests.sh` - Test automation
 - `test-patch-location.http` - Manual test requests

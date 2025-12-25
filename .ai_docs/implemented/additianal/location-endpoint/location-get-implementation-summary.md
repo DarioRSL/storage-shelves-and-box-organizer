@@ -19,6 +19,7 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 #### 1. **Validator Schema** - `src/lib/validators/location.validators.ts`
 
 **Added:**
+
 - `GetLocationsQuerySchema` - Zod schema for query parameter validation
 - `GetLocationsQueryInput` - TypeScript type inference from schema
 
@@ -31,9 +32,11 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 #### 2. **Service Layer** - `src/lib/services/location.service.ts`
 
 **Added:**
+
 - `getLocations()` function - Core business logic for retrieving locations
 
 **Key Features:**
+
 - ✅ Workspace membership validation
 - ✅ Hierarchical filtering using PostgreSQL ltree
 - ✅ Root-level location queries (depth = 2)
@@ -43,6 +46,7 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 - ✅ Alphabetical sorting by name
 
 **Algorithm for parent_id Derivation:**
+
 1. Collect all unique parent paths from retrieved locations
 2. Fetch parent IDs in a single batch query
 3. Build a map of path → ID
@@ -55,9 +59,11 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 #### 3. **API Route Handler** - `src/pages/api/locations/index.ts`
 
 **Added:**
+
 - `GET` handler function
 
 **Implementation Pattern:**
+
 1. Extract Supabase client from `locals.supabase`
 2. Verify authentication via `auth.getUser()`
 3. Parse and validate query parameters with Zod
@@ -65,6 +71,7 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 5. Return 200 with JSON array or appropriate error
 
 **Error Handling:**
+
 - 400 Bad Request - Validation errors (missing/invalid UUIDs)
 - 401 Unauthorized - Authentication required
 - 403 Forbidden - Not a workspace member
@@ -72,6 +79,7 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 - 500 Internal Server Error - Database/unexpected errors
 
 **Response Headers:**
+
 - `Content-Type: application/json`
 - `Cache-Control: private, max-age=60` (60-second client cache)
 
@@ -82,6 +90,7 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 #### 4. **Testing Guide** - `.ai_docs/location-get-testing-guide.md`
 
 **Created comprehensive testing documentation with:**
+
 - 12 detailed test scenarios
 - Expected request/response examples
 - Testing checklist
@@ -97,16 +106,20 @@ Successfully implemented the GET /api/locations endpoint according to the implem
 ### 1. **Hierarchical Filtering with ltree**
 
 **Root-level locations:**
+
 ```typescript
 query = query.like("path", "root.%").not("path", "like", "root.%.%");
 ```
+
 - Matches: `root.garage`, `root.basement`
 - Excludes: `root.garage.shelf_a` (depth > 2)
 
 **Child locations:**
+
 ```typescript
 query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}.%.%`);
 ```
+
 - For parent `root.garage`, matches: `root.garage.shelf_a`
 - Excludes: `root.garage.shelf_a.box_1` (grandchildren)
 
@@ -115,6 +128,7 @@ query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}
 **Problem:** Database schema stores only `path` (ltree), not explicit `parent_id`.
 
 **Solution:** Batch query approach
+
 - Collect all parent paths from results
 - Single query to fetch parent IDs: `.in("path", Array.from(parentPathsToFetch))`
 - Map parent paths to IDs for O(1) lookup
@@ -125,6 +139,7 @@ query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}
 ### 3. **Consistent Error Handling**
 
 Reused existing error classes from POST endpoint:
+
 - `WorkspaceMembershipError` → 403
 - `ParentNotFoundError` → 404
 - Generic errors → 500
@@ -143,11 +158,13 @@ Reused existing error classes from POST endpoint:
 ## API Contract Verification
 
 ✅ **Request:**
+
 - Method: GET
 - URL: `/api/locations?workspace_id={uuid}&parent_id={uuid}`
 - Headers: `Authorization: Bearer {token}`
 
 ✅ **Response (200 OK):**
+
 ```json
 [
   {
@@ -165,6 +182,7 @@ Reused existing error classes from POST endpoint:
 ```
 
 ✅ **Error Responses:**
+
 - 400: Validation errors
 - 401: Unauthorized
 - 403: Not a workspace member
@@ -211,6 +229,7 @@ Reused existing error classes from POST endpoint:
 ## Testing Status
 
 ### Automated Tests
+
 - ⏳ **Pending:** Unit tests for `getLocations()` service function
 - ⏳ **Pending:** Integration tests with test database
 - ⏳ **Pending:** E2E tests
@@ -218,26 +237,31 @@ Reused existing error classes from POST endpoint:
 ### Manual Testing Checklist
 
 **Validation Tests:**
+
 - [x] Missing workspace_id returns 400
 - [x] Invalid workspace_id UUID returns 400
 - [x] Invalid parent_id UUID returns 400
 
 **Authentication/Authorization Tests:**
+
 - [x] Unauthenticated request returns 401
 - [ ] Non-member workspace access returns 403 (requires test setup)
 
 **Functional Tests:**
+
 - [ ] Valid request returns root locations (requires test data)
 - [ ] Valid request with parent_id returns children (requires test data)
 - [ ] Non-existent parent_id returns 404 (requires test data)
 - [ ] Empty workspace returns empty array (requires test data)
 
 **Data Integrity Tests:**
+
 - [ ] Soft-deleted locations excluded (requires test data)
 - [ ] Locations sorted alphabetically by name (requires test data)
 - [ ] parent_id correctly derived (requires test data)
 
 **Performance Tests:**
+
 - [ ] Response time < 1s for 100+ locations (requires test data)
 - [ ] Deep hierarchy navigation works (requires test data)
 
@@ -246,17 +270,20 @@ Reused existing error classes from POST endpoint:
 ## Dependencies and Integration
 
 ### Database Schema
+
 - **Table:** `locations`
 - **Extensions:** PostgreSQL ltree for hierarchical paths
 - **Indexes:** GIST index on `path` column (required for performance)
 - **RLS Policies:** Automatic workspace membership validation
 
 ### Related Endpoints
+
 - **POST /api/locations** - Creates new locations (existing)
 - **PATCH /api/locations/:id** - Updates locations (future)
 - **DELETE /api/locations/:id** - Soft deletes locations (future)
 
 ### Frontend Integration
+
 - **Type:** `LocationDto` from `src/types.ts`
 - **Usage:** Populate location tree UI components
 - **Lazy Loading:** Use `parent_id` parameter for on-demand child loading
@@ -266,6 +293,7 @@ Reused existing error classes from POST endpoint:
 ## Performance Considerations
 
 ### Current Optimizations
+
 1. **Single query for locations** - Base query with filters
 2. **Batch parent_id lookup** - One query for all parent IDs
 3. **Database indexes** - GIST index on ltree path
@@ -273,6 +301,7 @@ Reused existing error classes from POST endpoint:
 5. **RLS optimization** - Database-level filtering
 
 ### Potential Future Optimizations
+
 1. **Pagination** - Add `limit` and `offset` for large datasets
 2. **Field selection** - Allow clients to specify needed fields
 3. **Server-side caching** - Redis/in-memory cache for hot workspaces
@@ -292,12 +321,14 @@ Reused existing error classes from POST endpoint:
 ## Next Steps
 
 ### Immediate Actions
+
 1. ✅ Code review and approval
 2. ⏳ Run manual tests with real data
 3. ⏳ Merge to main branch
 4. ⏳ Deploy to staging environment
 
 ### Future Enhancements
+
 1. Add pagination support (`?limit=50&offset=0`)
 2. Implement search functionality (`?q=shelf`)
 3. Add `include_deleted` parameter for admin users
@@ -310,12 +341,14 @@ Reused existing error classes from POST endpoint:
 ## Code Quality Metrics
 
 ### Linting Results
+
 ```
 ✅ No errors
 ⚠️ 21 warnings (console.log statements - acceptable for logging)
 ```
 
 ### TypeScript Compilation
+
 ```
 ✅ No type errors
 ✅ All types properly inferred
@@ -323,6 +356,7 @@ Reused existing error classes from POST endpoint:
 ```
 
 ### Test Coverage
+
 ```
 ⏳ Pending automated tests
 ✅ Manual testing guide created
@@ -333,15 +367,18 @@ Reused existing error classes from POST endpoint:
 ## Documentation
 
 ### Created Documents
+
 1. ✅ **Implementation Summary** (this document)
 2. ✅ **Testing Guide** - `.ai_docs/location-get-testing-guide.md`
 
 ### Updated Documents
+
 1. ✅ **Validators** - Added GET query schema
 2. ✅ **Service Layer** - Added getLocations function
 3. ✅ **API Routes** - Added GET handler
 
 ### Existing Reference Documents
+
 1. **Implementation Plan** - `.ai_docs/location-get-implementation-plan.md`
 2. **Database Schema** - `.ai_docs/db-plan.md`
 3. **API Specification** - `.ai_docs/api-plan.md`
@@ -367,6 +404,7 @@ The GET /api/locations endpoint has been successfully implemented following all 
 ## Questions or Issues?
 
 If you encounter any issues or have questions:
+
 1. Check the [Testing Guide](.ai_docs/location-get-testing-guide.md)
 2. Review the [Implementation Plan](.ai_docs/location-get-implementation-plan.md)
 3. Verify database schema in [db-plan.md](.ai_docs/db-plan.md)

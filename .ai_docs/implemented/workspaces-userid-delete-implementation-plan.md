@@ -12,29 +12,36 @@ The endpoint enforces business rules to prevent orphaned workspaces by prohibiti
 ## 2. Request Details
 
 ### HTTP Method
+
 DELETE
 
 ### URL Structure
+
 ```
 DELETE /api/workspaces/:workspace_id/members/:user_id
 ```
 
 ### URL Parameters
+
 - `workspace_id` (UUID, required): The ID of the workspace containing the member
 - `user_id` (UUID, required): The ID of the user to remove from the workspace
 
 ### Query Parameters
+
 None
 
 ### Request Headers
+
 - `Authorization: Bearer <token>` (required): JWT token for authentication
 
 ### Request Body
+
 None
 
 ## 3. Response Details
 
 ### Success Response (200 OK)
+
 ```json
 {
   "message": "Członek został pomyślnie usunięty"
@@ -44,6 +51,7 @@ None
 ### Error Responses
 
 #### 400 Bad Request - Invalid UUID Format
+
 ```json
 {
   "error": "Nieprawidłowy format ID workspace lub ID użytkownika"
@@ -51,6 +59,7 @@ None
 ```
 
 #### 401 Unauthorized - Not Authenticated
+
 ```json
 {
   "error": "Brak autoryzacji"
@@ -58,6 +67,7 @@ None
 ```
 
 #### 403 Forbidden - Insufficient Permissions
+
 ```json
 {
   "error": "Brak uprawnień do usunięcia tego członka"
@@ -65,6 +75,7 @@ None
 ```
 
 #### 403 Forbidden - Cannot Remove Owner
+
 ```json
 {
   "error": "Nie można usunąć właściciela workspace'u"
@@ -72,6 +83,7 @@ None
 ```
 
 #### 404 Not Found - Member Not Found
+
 ```json
 {
   "error": "Członek nie został znaleziony"
@@ -79,6 +91,7 @@ None
 ```
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": "Nie udało się usunąć członka"
@@ -90,6 +103,7 @@ None
 ### From `src/types.ts`
 
 #### Response Types
+
 ```typescript
 // Success response
 interface SuccessResponse {
@@ -104,6 +118,7 @@ interface ErrorResponse {
 ```
 
 #### Database Types
+
 ```typescript
 // Workspace member from database
 type WorkspaceMemberDto = Tables<"workspace_members">;
@@ -113,6 +128,7 @@ type UserRole = Enums<"user_role">; // 'owner' | 'admin' | 'member' | 'read_only
 ```
 
 ### Custom Error Classes
+
 These should be added to `src/lib/services/workspace.service.ts`:
 
 ```typescript
@@ -156,12 +172,14 @@ Note: `InsufficientPermissionsError` and `NotFoundError` already exist in the se
 ### Database Operations Sequence
 
 1. **Permission Check Query**:
+
    ```sql
    SELECT role FROM workspace_members
    WHERE workspace_id = $1 AND user_id = $2
    ```
 
 2. **Target User Check Query**:
+
    ```sql
    SELECT role FROM workspace_members
    WHERE workspace_id = $1 AND user_id = $3
@@ -178,6 +196,7 @@ All queries are protected by RLS policies that verify workspace membership.
 ## 6. Security Considerations
 
 ### Authentication
+
 - JWT token validated by Astro middleware
 - User identity extracted from `context.locals.user.id`
 - Unauthenticated requests blocked at middleware level (401)
@@ -193,8 +212,8 @@ if (targetUserId === currentUserId) {
   allowOperation = true;
 } else {
   // Admin removal: Check permissions
-  if (currentUserRole === 'owner' || currentUserRole === 'admin') {
-    if (targetUserRole === 'owner') {
+  if (currentUserRole === "owner" || currentUserRole === "admin") {
+    if (targetUserRole === "owner") {
       // Cannot remove workspace owner
       throw OwnerRemovalError;
     } else {
@@ -208,16 +227,19 @@ if (targetUserId === currentUserId) {
 ```
 
 ### Input Validation
+
 - **UUID Format**: Validate both workspace_id and user_id match UUID pattern
 - **SQL Injection Prevention**: Use parameterized queries via Supabase client
 - **RLS Enforcement**: Database-level security ensures workspace access control
 
 ### Data Leakage Prevention
+
 - Return 404 for both "workspace doesn't exist" and "user not a member" cases
 - Prevents attackers from enumerating valid workspace IDs
 - Generic error messages for permission failures
 
 ### Owner Protection
+
 - Explicit check prevents removal of workspace owner
 - Ensures workspace always has an owner
 - Returns 403 Forbidden with clear error message
@@ -250,55 +272,56 @@ if (targetUserId === currentUserId) {
 try {
   // 1. Validate UUID format
   if (!isValidUUID(workspace_id) || !isValidUUID(user_id)) {
-    return new Response(
-      JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 2. Execute service layer function
   await removeWorkspaceMember(supabase, workspace_id, user_id, currentUserId);
 
   // 3. Return success
-  return new Response(
-    JSON.stringify({ message: "Członek został pomyślnie usunięty" }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ message: "Członek został pomyślnie usunięty" }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 } catch (error) {
   // 4. Handle specific error types
   if (error instanceof OwnerRemovalError) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (error instanceof InsufficientPermissionsError) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   if (error instanceof NotFoundError) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 5. Handle unexpected errors
   console.error("Unexpected error in DELETE member:", error);
-  return new Response(
-    JSON.stringify({ error: "Nie udało się usunąć członka" }),
-    { status: 500, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: "Nie udało się usunąć członka" }), {
+    status: 500,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 ```
 
 ### Logging Strategy
 
 **Success Logging:**
+
 ```typescript
 console.info("DELETE /api/workspaces/:workspace_id/members/:user_id - Sukces:", {
   workspaceId: workspace_id,
@@ -310,6 +333,7 @@ console.info("DELETE /api/workspaces/:workspace_id/members/:user_id - Sukces:", 
 ```
 
 **Error Logging:**
+
 ```typescript
 console.error("DELETE /api/workspaces/:workspace_id/members/:user_id - Błąd:", {
   workspaceId: workspace_id,
@@ -324,21 +348,26 @@ console.error("DELETE /api/workspaces/:workspace_id/members/:user_id - Błąd:",
 ## 8. Performance Considerations
 
 ### Query Optimization
+
 - Uses primary key lookup (workspace_id, user_id) for O(1) performance
 - RLS policies leverage indexed columns (workspace_id, user_id)
 - No JOIN operations required for DELETE
 - Permission checks use indexed columns
 
 ### Database Indexes
+
 Already in place from schema:
+
 - Primary key index on (workspace_id, user_id)
 - Foreign key indexes on workspace_id and user_id
 
 ### Caching Considerations
+
 - No caching needed for DELETE operations
 - Client should invalidate cached workspace member lists after successful deletion
 
 ### Transaction Handling
+
 - Single DELETE operation (no explicit transaction needed)
 - Database atomicity guarantees ensure consistency
 - No risk of partial updates
@@ -346,6 +375,7 @@ Already in place from schema:
 ## 9. Implementation Steps
 
 ### Step 1: Create Custom Error Class
+
 **File**: `src/lib/services/workspace.service.ts`
 
 Add the `OwnerRemovalError` class after existing error classes:
@@ -363,6 +393,7 @@ export class OwnerRemovalError extends Error {
 ```
 
 ### Step 2: Implement Service Layer Function
+
 **File**: `src/lib/services/workspace.service.ts`
 
 Add the `removeWorkspaceMember` function at the end of the file:
@@ -478,6 +509,7 @@ export async function removeWorkspaceMember(
 ```
 
 ### Step 3: Create API Route File
+
 **File**: `src/pages/api/workspaces/[workspace_id]/members/[user_id].ts`
 
 Create new file with DELETE handler:
@@ -518,38 +550,29 @@ export const DELETE: APIRoute = async (context) => {
 
   // 2. Validate URL parameters exist
   if (!workspace_id || !user_id) {
-    return new Response(
-      JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 3. Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(workspace_id) || !uuidRegex.test(user_id)) {
-    return new Response(
-      JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Nieprawidłowy format ID workspace lub ID użytkownika" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 4. Execute removal via service layer
   try {
     await removeWorkspaceMember(supabase, workspace_id, user_id, user.id);
 
-    return new Response(
-      JSON.stringify({ message: "Członek został pomyślnie usunięty" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ message: "Członek został pomyślnie usunięty" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     // Handle specific error types
     if (error instanceof OwnerRemovalError) {
@@ -575,13 +598,10 @@ export const DELETE: APIRoute = async (context) => {
 
     // Handle unexpected errors
     console.error("Unexpected error in DELETE member endpoint:", error);
-    return new Response(
-      JSON.stringify({ error: "Nie udało się usunąć członka" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "Nie udało się usunąć członka" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
@@ -594,10 +614,11 @@ Create a test file to verify functionality.
 
 Document test cases:
 
-```markdown
+````markdown
 # DELETE /api/workspaces/:workspace_id/members/:user_id - Test Cases
 
 ## Setup
+
 1. Create test workspace with owner
 2. Add admin member
 3. Add regular member
@@ -606,12 +627,17 @@ Document test cases:
 ## Test Cases
 
 ### 1. Self-Removal (Leave Workspace)
+
 **Test**: Regular member removes themselves
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{member_user_id}" \
   -H "Authorization: Bearer {member_token}"
 ```
+````
+
 **Expected**: 200 OK
+
 ```json
 {
   "message": "Członek został pomyślnie usunięty"
@@ -619,12 +645,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{mem
 ```
 
 ### 2. Admin Removes Regular Member
+
 **Test**: Admin removes a regular member
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{member_user_id}" \
   -H "Authorization: Bearer {admin_token}"
 ```
+
 **Expected**: 200 OK
+
 ```json
 {
   "message": "Członek został pomyślnie usunięty"
@@ -632,12 +662,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{mem
 ```
 
 ### 3. Owner Removes Admin
+
 **Test**: Owner removes an admin member
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{admin_user_id}" \
   -H "Authorization: Bearer {owner_token}"
 ```
+
 **Expected**: 200 OK
+
 ```json
 {
   "message": "Członek został pomyślnie usunięty"
@@ -645,12 +679,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{adm
 ```
 
 ### 4. Cannot Remove Owner
+
 **Test**: Admin tries to remove workspace owner
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{owner_user_id}" \
   -H "Authorization: Bearer {admin_token}"
 ```
+
 **Expected**: 403 Forbidden
+
 ```json
 {
   "error": "Nie można usunąć właściciela workspace'u"
@@ -658,12 +696,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{own
 ```
 
 ### 5. Regular Member Cannot Remove Others
+
 **Test**: Regular member tries to remove another member
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{other_member_id}" \
   -H "Authorization: Bearer {member_token}"
 ```
+
 **Expected**: 403 Forbidden
+
 ```json
 {
   "error": "Brak uprawnień do usunięcia tego członka"
@@ -671,12 +713,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{oth
 ```
 
 ### 6. Member Not Found
+
 **Test**: Try to remove non-existent member
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{random_uuid}" \
   -H "Authorization: Bearer {admin_token}"
 ```
+
 **Expected**: 404 Not Found
+
 ```json
 {
   "error": "Członek nie został znaleziony"
@@ -684,12 +730,16 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{ran
 ```
 
 ### 7. Invalid UUID Format
+
 **Test**: Use invalid UUID in URL
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/invalid-uuid/members/{user_id}" \
   -H "Authorization: Bearer {token}"
 ```
+
 **Expected**: 400 Bad Request
+
 ```json
 {
   "error": "Nieprawidłowy format ID workspace lub ID użytkownika"
@@ -697,11 +747,15 @@ curl -X DELETE "http://localhost:3000/api/workspaces/invalid-uuid/members/{user_
 ```
 
 ### 8. Unauthenticated Request
+
 **Test**: Request without authentication token
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{user_id}"
 ```
+
 **Expected**: 401 Unauthorized
+
 ```json
 {
   "error": "Brak autoryzacji"
@@ -709,18 +763,23 @@ curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{use
 ```
 
 ### 9. Non-Member Cannot Access
+
 **Test**: User from different workspace tries to remove member
+
 ```bash
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{member_id}" \
   -H "Authorization: Bearer {outsider_token}"
 ```
+
 **Expected**: 404 Not Found
+
 ```json
 {
   "error": "Workspace nie został znaleziony"
 }
 ```
-```
+
+````
 
 ### Step 5: Update Development Guidelines (Optional)
 
@@ -738,14 +797,15 @@ Use curl to test DELETE operations:
 curl -X DELETE "http://localhost:3000/api/workspaces/{workspace_id}/members/{user_id}" \
   -H "Authorization: Bearer {token}" \
   -H "Content-Type: application/json"
-```
-```
+````
+
+````
 
 ### Step 6: Run Linter and Fix Issues
 
 ```bash
 npm run lint:fix
-```
+````
 
 ### Step 7: Manual Testing
 

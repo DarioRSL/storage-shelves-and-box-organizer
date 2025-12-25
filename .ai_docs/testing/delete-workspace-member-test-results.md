@@ -13,18 +13,19 @@
 
 ## Test Results Summary
 
-| Test Case | Expected | Actual | Status |
-|-----------|----------|--------|--------|
-| Invalid UUID format | 400 Bad Request | 400 Bad Request | ✅ PASS |
-| No authorization header | 401 Unauthorized | 401 Unauthorized | ✅ PASS |
-| Invalid bearer token | 401 Unauthorized | 401 Unauthorized | ✅ PASS |
-| UUID validation (Zod) | Error details included | Error details included | ✅ PASS |
+| Test Case               | Expected               | Actual                 | Status  |
+| ----------------------- | ---------------------- | ---------------------- | ------- |
+| Invalid UUID format     | 400 Bad Request        | 400 Bad Request        | ✅ PASS |
+| No authorization header | 401 Unauthorized       | 401 Unauthorized       | ✅ PASS |
+| Invalid bearer token    | 401 Unauthorized       | 401 Unauthorized       | ✅ PASS |
+| UUID validation (Zod)   | Error details included | Error details included | ✅ PASS |
 
 ## Detailed Test Cases
 
 ### Test 1: Invalid UUID Format (400 Bad Request)
 
 **Request:**
+
 ```bash
 curl -X DELETE \
   "http://localhost:3000/api/workspaces/not-a-uuid/members/397271de-233c-4e11-a2cd-63eab9c639fe" \
@@ -32,12 +33,13 @@ curl -X DELETE \
 ```
 
 **Response:**
+
 ```json
 {
-    "error": "Błąd walidacji",
-    "details": {
-        "workspace_id": "Nieprawidłowy format ID workspace"
-    }
+  "error": "Błąd walidacji",
+  "details": {
+    "workspace_id": "Nieprawidłowy format ID workspace"
+  }
 }
 ```
 
@@ -48,15 +50,17 @@ curl -X DELETE \
 ### Test 2: No Authorization Header (401 Unauthorized)
 
 **Request:**
+
 ```bash
 curl -X DELETE \
   "http://localhost:3000/api/workspaces/aaaaaaaa-bbbb-cccc-dddd-000000000001/members/397271de-233c-4e11-a2cd-63eab9c639fe"
 ```
 
 **Response:**
+
 ```json
 {
-    "error": "Brak autoryzacji"
+  "error": "Brak autoryzacji"
 }
 ```
 
@@ -67,6 +71,7 @@ curl -X DELETE \
 ### Test 3: Invalid Bearer Token (401 Unauthorized)
 
 **Request:**
+
 ```bash
 curl -X DELETE \
   "http://localhost:3000/api/workspaces/aaaaaaaa-bbbb-cccc-dddd-000000000001/members/397271de-233c-4e11-a2cd-63eab9c639fe" \
@@ -74,9 +79,10 @@ curl -X DELETE \
 ```
 
 **Response:**
+
 ```json
 {
-    "error": "Brak autoryzacji"
+  "error": "Brak autoryzacji"
 }
 ```
 
@@ -89,11 +95,13 @@ curl -X DELETE \
 ### Service Layer (`workspace.service.ts`)
 
 ✅ **OwnerRemovalError class** - Custom error class created
+
 - Located at lines 44-48
 - Properly extends Error class
 - Default message: "Nie można usunąć właściciela workspace'u"
 
 ✅ **removeWorkspaceMember function** - Fully implemented
+
 - Located at lines 527-633
 - Implements dual authorization model:
   - Self-removal: Any member can remove themselves
@@ -107,6 +115,7 @@ curl -X DELETE \
 ### API Route (`[user_id].ts`)
 
 ✅ **DELETE handler** - Complete implementation
+
 - Located at lines 169-288
 - URL parameter validation using Zod schema
 - Authentication verification via Supabase
@@ -122,6 +131,7 @@ curl -X DELETE \
 ### Code Quality
 
 ✅ **Linting** - All checks passed
+
 - `npm run lint:fix` executed successfully
 - No errors found
 - Only acceptable console.log warnings (52 total across project)
@@ -149,6 +159,7 @@ The implementation correctly handles these scenarios:
 ## Database Integration
 
 The endpoint correctly:
+
 - ✅ Queries `workspace_members` table for membership verification
 - ✅ Checks role of both current user and target user
 - ✅ Executes DELETE operation with proper WHERE clauses
@@ -159,6 +170,7 @@ The endpoint correctly:
 ## Error Response Consistency
 
 All error responses follow the `ErrorResponse` type definition:
+
 ```typescript
 interface ErrorResponse {
   error: string;
@@ -173,12 +185,14 @@ interface ErrorResponse {
 ## Testing Limitations
 
 **Authentication Testing:**
+
 - Cannot generate valid JWT tokens without PyJWT library
 - Service layer logic verified through code review
 - Database operations would execute correctly with valid authentication
 - RLS policies not yet implemented (as noted by user)
 
 **Recommended Next Steps for Full E2E Testing:**
+
 1. Install PyJWT to generate test tokens
 2. Create test users with known credentials
 3. Implement RLS policies for workspace_members table
@@ -189,6 +203,7 @@ interface ErrorResponse {
 ✅ **Implementation Status:** COMPLETE
 
 The DELETE endpoint has been successfully implemented with:
+
 - ✅ Proper input validation (Zod)
 - ✅ Authentication requirement
 - ✅ Authorization logic (dual-path: self-removal + admin removal)
@@ -199,5 +214,6 @@ The DELETE endpoint has been successfully implemented with:
 - ✅ Linting passed
 
 **The endpoint is ready for deployment** pending:
+
 1. RLS policy implementation
 2. Full E2E testing with valid JWT tokens

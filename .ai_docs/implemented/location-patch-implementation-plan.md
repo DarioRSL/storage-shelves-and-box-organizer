@@ -5,6 +5,7 @@
 The `PATCH /api/locations/:id` endpoint updates the name and/or description of an existing location in the hierarchical storage structure. This endpoint supports partial updates, allowing clients to modify only the fields they need to change. When the location name is updated, the underlying `path` (ltree) must be regenerated to maintain the hierarchical integrity of the location tree.
 
 **Key Characteristics:**
+
 - Supports partial updates (name, description, or both)
 - Requires at least one field to be updated
 - Regenerates hierarchical path (ltree) when name changes
@@ -15,21 +16,26 @@ The `PATCH /api/locations/:id` endpoint updates the name and/or description of a
 ## 2. Request Details
 
 ### HTTP Method
+
 `PATCH`
 
 ### URL Structure
+
 ```
 PATCH /api/locations/:id
 ```
 
 ### Path Parameters
+
 - **id** (UUID, required): The unique identifier of the location to update
 
 ### Request Headers
+
 - `Authorization: Bearer <token>` (required): JWT token for authentication
 - `Content-Type: application/json` (required)
 
 ### Request Body
+
 JSON object with optional fields (at least one must be provided):
 
 ```json
@@ -40,6 +46,7 @@ JSON object with optional fields (at least one must be provided):
 ```
 
 **Field Specifications:**
+
 - **name** (string, optional): New name for the location
   - Must not be empty
   - Must be unique among sibling locations (same parent)
@@ -49,6 +56,7 @@ JSON object with optional fields (at least one must be provided):
   - No length restrictions in API spec (database supports TEXT type)
 
 ### Validation Rules
+
 1. At least one field (name or description) must be present in the request body
 2. If `name` is provided, it must not be an empty string
 3. If `name` is provided, it must not conflict with existing sibling locations
@@ -57,6 +65,7 @@ JSON object with optional fields (at least one must be provided):
 ## 3. Utilized Types
 
 ### Request Type
+
 **Source**: [types.ts:105](src/types.ts#L105)
 
 ```typescript
@@ -64,6 +73,7 @@ export type UpdateLocationRequest = Partial<Pick<Tables<"locations">, "name" | "
 ```
 
 ### Response Type
+
 **Source**: [types.ts:111-116](src/types.ts#L111-L116)
 
 ```typescript
@@ -76,6 +86,7 @@ export interface UpdateLocationResponse {
 ```
 
 ### Database Row Type
+
 **Source**: [types.ts:78-87](src/types.ts#L78-L87)
 
 ```typescript
@@ -86,23 +97,27 @@ export interface LocationDto extends Omit<Tables<"locations">, "path"> {
 ```
 
 ### Zod Validation Schema (to be created)
+
 ```typescript
 // In API route file
-const updateLocationSchema = z.object({
-  name: z.string().min(1, "Name cannot be empty").optional(),
-  description: z.string().nullable().optional(),
-}).refine(data => data.name !== undefined || data.description !== undefined, {
-  message: "At least one field (name or description) must be provided"
-});
+const updateLocationSchema = z
+  .object({
+    name: z.string().min(1, "Name cannot be empty").optional(),
+    description: z.string().nullable().optional(),
+  })
+  .refine((data) => data.name !== undefined || data.description !== undefined, {
+    message: "At least one field (name or description) must be provided",
+  });
 
 const paramsSchema = z.object({
-  id: z.string().uuid("Invalid location ID format")
+  id: z.string().uuid("Invalid location ID format"),
 });
 ```
 
 ## 4. Response Details
 
 ### Success Response (200 OK)
+
 ```json
 {
   "id": "uuid",
@@ -113,12 +128,15 @@ const paramsSchema = z.object({
 ```
 
 **Headers**:
+
 - `Content-Type: application/json`
 
 ### Error Responses
 
 #### 400 Bad Request
+
 **Scenario**: Invalid input data
+
 ```json
 {
   "error": "Validation error",
@@ -134,6 +152,7 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - Empty request body
 - Invalid UUID format for `id`
 - Empty string for `name`
@@ -141,7 +160,9 @@ const paramsSchema = z.object({
 - Name conflicts with sibling location
 
 #### 401 Unauthorized
+
 **Scenario**: Missing or invalid authentication
+
 ```json
 {
   "error": "Unauthorized"
@@ -149,12 +170,15 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - Missing Authorization header
 - Invalid or expired JWT token
 - User not authenticated
 
 #### 403 Forbidden
+
 **Scenario**: User lacks permission
+
 ```json
 {
   "error": "Forbidden: You do not have access to this location"
@@ -162,11 +186,14 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - User is not a member of the workspace that owns the location
 - RLS policy blocks access
 
 #### 404 Not Found
+
 **Scenario**: Location doesn't exist or is deleted
+
 ```json
 {
   "error": "Location not found"
@@ -174,12 +201,15 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - No location exists with the given ID
 - Location is soft-deleted (is_deleted = true)
 - Location belongs to different workspace
 
 #### 409 Conflict
+
 **Scenario**: Name conflicts with sibling location
+
 ```json
 {
   "error": "A location with this name already exists at this level"
@@ -187,10 +217,13 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - Attempting to rename a location to a name that already exists among its siblings
 
 #### 500 Internal Server Error
+
 **Scenario**: Unexpected server error
+
 ```json
 {
   "error": "Internal server error",
@@ -199,6 +232,7 @@ const paramsSchema = z.object({
 ```
 
 **Common Causes**:
+
 - Database connection failure
 - Path regeneration logic failure
 - Unexpected exceptions
@@ -206,6 +240,7 @@ const paramsSchema = z.object({
 ## 5. Data Flow
 
 ### High-Level Flow
+
 1. **Request Reception**: API route receives PATCH request with location ID and update data
 2. **Authentication**: Middleware validates JWT token and extracts user identity
 3. **Input Validation**: Validate path parameter (UUID) and request body (Zod schema)
@@ -225,19 +260,21 @@ async function updateLocation(
   locationId: string,
   userId: string,
   data: UpdateLocationRequest
-): Promise<UpdateLocationResponse>
+): Promise<UpdateLocationResponse>;
 ```
 
 **Steps**:
 
 1. **Fetch Current Location**:
+
    ```typescript
    const { data: location, error } = await supabase
-     .from('locations')
-     .select('id, workspace_id, name, description, path, is_deleted, parent_id')
-     .eq('id', locationId)
+     .from("locations")
+     .select("id, workspace_id, name, description, path, is_deleted, parent_id")
+     .eq("id", locationId)
      .single();
    ```
+
    - If error or no data: throw 404 error
    - If `is_deleted = true`: throw 404 error
 
@@ -246,6 +283,7 @@ async function updateLocation(
    - If user lacks access, Supabase returns empty result or error
 
 3. **Name Conflict Check** (if name is being updated):
+
    ```typescript
    if (data.name && data.name !== location.name) {
      // Get parent path for sibling check
@@ -253,20 +291,21 @@ async function updateLocation(
 
      // Check for siblings with same name
      const { data: siblings } = await supabase
-       .from('locations')
-       .select('id')
-       .eq('workspace_id', location.workspace_id)
-       .eq('is_deleted', false)
-       .ilike('path', `${parentPath}.${slugify(data.name)}`)
-       .neq('id', locationId);
+       .from("locations")
+       .select("id")
+       .eq("workspace_id", location.workspace_id)
+       .eq("is_deleted", false)
+       .ilike("path", `${parentPath}.${slugify(data.name)}`)
+       .neq("id", locationId);
 
      if (siblings && siblings.length > 0) {
-       throw new ConflictError('A location with this name already exists at this level');
+       throw new ConflictError("A location with this name already exists at this level");
      }
    }
    ```
 
 4. **Path Regeneration** (if name changes):
+
    ```typescript
    if (data.name && data.name !== location.name) {
      // Generate new path segment
@@ -283,16 +322,17 @@ async function updateLocation(
    ```
 
 5. **Execute Update**:
+
    ```typescript
    const { data: updated, error: updateError } = await supabase
-     .from('locations')
+     .from("locations")
      .update({
        name: data.name ?? location.name,
        description: data.description ?? location.description,
-       ...(newPath && { path: newPath })
+       ...(newPath && { path: newPath }),
      })
-     .eq('id', locationId)
-     .select('id, name, description, updated_at')
+     .eq("id", locationId)
+     .select("id, name, description, updated_at")
      .single();
    ```
 
@@ -302,7 +342,7 @@ async function updateLocation(
      id: updated.id,
      name: updated.name,
      description: updated.description,
-     updated_at: updated.updated_at
+     updated_at: updated.updated_at,
    };
    ```
 
@@ -311,6 +351,7 @@ async function updateLocation(
 **Primary Table**: `public.locations`
 
 **Update Query**:
+
 ```sql
 UPDATE locations
 SET
@@ -323,29 +364,34 @@ RETURNING id, name, description, updated_at;
 ```
 
 **RLS Policy Applied**:
+
 ```sql
 -- Policy: workspace members can update locations
 is_workspace_member(workspace_id)
 ```
 
 **Trigger Executed**:
+
 - `moddatetime` trigger automatically updates `updated_at` timestamp
 
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Mechanism**: JWT token validation via Supabase Auth
 - **Implementation**: Handled by Astro middleware in `src/middleware/index.ts`
 - **Token Location**: `Authorization: Bearer <token>` header
 - **User Context**: Available in `context.locals.user`
 
 ### Authorization
+
 - **Mechanism**: PostgreSQL Row Level Security (RLS)
 - **Policy**: Users can only update locations in workspaces they are members of
 - **Helper Function**: `is_workspace_member(workspace_id)`
 - **Implementation**: Automatic enforcement by Supabase client
 
 ### Input Validation
+
 1. **Path Parameter Validation**:
    - UUID format validation using Zod
    - Prevents SQL injection via invalid IDs
@@ -360,6 +406,7 @@ is_workspace_member(workspace_id)
    - Never concatenate user input into SQL strings
 
 ### Business Logic Security
+
 1. **Soft Delete Awareness**:
    - Prevent updates to deleted locations
    - Check `is_deleted = false` in queries
@@ -373,6 +420,7 @@ is_workspace_member(workspace_id)
    - Ensure proper path regeneration for descendants
 
 ### Error Message Security
+
 - **Avoid Information Disclosure**: Don't reveal internal system details
 - **Generic Error Messages**: Use "Location not found" instead of "Location exists but you don't have access"
 - **Logging**: Log detailed errors server-side for debugging
@@ -393,18 +441,24 @@ export async function PATCH(context: APIContext) {
     const paramValidation = paramsSchema.safeParse({ id });
 
     if (!paramValidation.success) {
-      return new Response(JSON.stringify({
-        error: "Invalid location ID format",
-        details: paramValidation.error.format()
-      }), { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid location ID format",
+          details: paramValidation.error.format(),
+        }),
+        { status: 400 }
+      );
     }
 
     // 2. Check authentication
     const user = context.locals.user;
     if (!user) {
-      return new Response(JSON.stringify({
-        error: "Unauthorized"
-      }), { status: 401 });
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+        }),
+        { status: 401 }
+      );
     }
 
     // 3. Parse and validate request body
@@ -412,10 +466,13 @@ export async function PATCH(context: APIContext) {
     const validation = updateLocationSchema.safeParse(body);
 
     if (!validation.success) {
-      return new Response(JSON.stringify({
-        error: "Validation error",
-        details: validation.error.format()
-      }), { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: "Validation error",
+          details: validation.error.format(),
+        }),
+        { status: 400 }
+      );
     }
 
     // 4. Call service layer
@@ -424,34 +481,45 @@ export async function PATCH(context: APIContext) {
 
     // 5. Return success response
     return new Response(JSON.stringify(result), { status: 200 });
-
   } catch (error) {
     // Handle specific error types
     if (error instanceof NotFoundError) {
-      return new Response(JSON.stringify({
-        error: error.message
-      }), { status: 404 });
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        }),
+        { status: 404 }
+      );
     }
 
     if (error instanceof ConflictError) {
-      return new Response(JSON.stringify({
-        error: error.message
-      }), { status: 409 });
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        }),
+        { status: 409 }
+      );
     }
 
     if (error instanceof ForbiddenError) {
-      return new Response(JSON.stringify({
-        error: error.message
-      }), { status: 403 });
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        }),
+        { status: 403 }
+      );
     }
 
     // Log unexpected errors
     console.error("Error updating location:", error);
 
     // Return generic error to client
-    return new Response(JSON.stringify({
-      error: "Internal server error"
-    }), { status: 500 });
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+      }),
+      { status: 500 }
+    );
   }
 }
 ```
@@ -467,9 +535,9 @@ export async function updateLocation(
 ): Promise<UpdateLocationResponse> {
   // 1. Fetch location
   const { data: location, error: fetchError } = await supabase
-    .from('locations')
-    .select('id, workspace_id, name, description, path, is_deleted')
-    .eq('id', locationId)
+    .from("locations")
+    .select("id, workspace_id, name, description, path, is_deleted")
+    .eq("id", locationId)
     .single();
 
   // Handle fetch errors
@@ -510,16 +578,16 @@ export async function updateLocation(
 
   // 5. Execute update
   const { data: updated, error: updateError } = await supabase
-    .from('locations')
+    .from("locations")
     .update(updateData)
-    .eq('id', locationId)
-    .select('id, name, description, updated_at')
+    .eq("id", locationId)
+    .select("id, name, description, updated_at")
     .single();
 
   // Handle update errors
   if (updateError) {
     // RLS might block access - return 404 to avoid info disclosure
-    if (updateError.code === 'PGRST116') {
+    if (updateError.code === "PGRST116") {
       throw new NotFoundError("Location not found");
     }
 
@@ -532,7 +600,7 @@ export async function updateLocation(
     id: updated.id,
     name: updated.name,
     description: updated.description,
-    updated_at: updated.updated_at
+    updated_at: updated.updated_at,
   };
 }
 ```
@@ -543,21 +611,21 @@ export async function updateLocation(
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
 export class ConflictError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ConflictError';
+    this.name = "ConflictError";
   }
 }
 
 export class ForbiddenError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ForbiddenError';
+    this.name = "ForbiddenError";
   }
 }
 ```
@@ -594,6 +662,7 @@ export class ForbiddenError extends Error {
    - Use database-level constraints instead of application-level checks where possible
 
 3. **Path Update Optimization**:
+
    ```sql
    -- Instead of updating descendants one-by-one, use ltree operators:
    UPDATE locations
@@ -614,12 +683,14 @@ export class ForbiddenError extends Error {
 ### Performance Monitoring
 
 **Key Metrics**:
+
 - Average response time for location updates
 - 95th percentile latency
 - Database query execution time
 - Number of descendant locations affected by path updates
 
 **Logging**:
+
 ```typescript
 console.log(`Location ${locationId} updated in ${Date.now() - startTime}ms`);
 if (descendantsUpdated > 0) {
@@ -630,9 +701,11 @@ if (descendantsUpdated > 0) {
 ## 9. Implementation Steps
 
 ### Step 1: Create Service Layer
+
 **File**: `src/lib/services/locations.service.ts`
 
 **Tasks**:
+
 1. Create file structure and imports
 2. Define custom error classes (NotFoundError, ConflictError, ForbiddenError)
 3. Implement `updateLocation()` function:
@@ -655,9 +728,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 2: Create API Route
+
 **File**: `src/pages/api/locations/[id].ts`
 
 **Tasks**:
+
 1. Create file and add required imports:
    - Zod for validation
    - Service functions from `src/lib/services/locations.service.ts`
@@ -684,9 +759,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 3: Add Tests (Optional but Recommended)
+
 **File**: `src/lib/services/__tests__/locations.service.test.ts`
 
 **Tasks**:
+
 1. Set up test environment with Supabase client mocks
 2. Write unit tests for service functions:
    - Test successful update (name only)
@@ -709,9 +786,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 4: Update Path Regeneration Logic
+
 **File**: `src/lib/services/locations.service.ts` (enhancement)
 
 **Tasks**:
+
 1. Create database function or service method for bulk path updates
 2. Implement transaction wrapper for atomic updates
 3. Add descendant path update logic:
@@ -721,7 +800,7 @@ if (descendantsUpdated > 0) {
      locationId: string,
      oldPath: string,
      newPath: string
-   ): Promise<number>
+   ): Promise<number>;
    ```
 4. Test path regeneration with nested locations
 5. Add logging for descendant updates
@@ -731,9 +810,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 5: Documentation and Code Review
+
 **Files**: Various
 
 **Tasks**:
+
 1. Add JSDoc comments to all exported functions
 2. Document service layer usage in `.ai_docs/` if needed
 3. Update API documentation with examples
@@ -750,9 +831,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 6: Manual Testing
+
 **Tools**: Postman, Thunder Client, or curl
 
 **Test Cases**:
+
 1. **Happy Path**:
    - Update location name successfully
    - Update location description successfully
@@ -777,9 +860,11 @@ if (descendantsUpdated > 0) {
 ---
 
 ### Step 7: Integration and Deployment Preparation
+
 **Files**: Various
 
 **Tasks**:
+
 1. Ensure database migrations are applied (locations table should exist)
 2. Verify RLS policies are in place
 3. Test with realistic workspace data
@@ -798,6 +883,7 @@ if (descendantsUpdated > 0) {
 ### Database Migration Requirements
 
 No new migrations required for this endpoint. The following should already exist:
+
 - `locations` table with `path` (ltree), `name`, `description`, `is_deleted` columns
 - GiST index on `path`
 - RLS policies for workspace member access
@@ -806,13 +892,14 @@ No new migrations required for this endpoint. The following should already exist
 ### Frontend Integration Considerations
 
 **Optimistic Updates**:
+
 ```typescript
 // Frontend can optimistically update UI before server response
 const optimisticUpdate = {
   id: locationId,
   name: newName,
   description: newDescription,
-  updated_at: new Date().toISOString()
+  updated_at: new Date().toISOString(),
 };
 
 // Revert if request fails
@@ -824,6 +911,7 @@ try {
 ```
 
 **Cache Invalidation**:
+
 - Invalidate location tree cache on successful update
 - Re-fetch location hierarchy if name changed (path affects tree structure)
 
@@ -853,6 +941,7 @@ try {
 ### Related Endpoints
 
 This endpoint is part of the locations API family:
+
 - `GET /api/locations` - List locations ([implementation exists](src/pages/api/locations/index.ts))
 - `POST /api/locations` - Create location (to be implemented)
 - `PATCH /api/locations/:id` - Update location (this endpoint)

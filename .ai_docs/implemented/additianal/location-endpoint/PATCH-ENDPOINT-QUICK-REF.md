@@ -17,14 +17,16 @@
 **Auth:** Required (JWT Bearer token)
 
 **Request:**
+
 ```json
 {
-  "name": "New Name",        // optional
-  "description": "New desc"  // optional (can be null)
+  "name": "New Name", // optional
+  "description": "New desc" // optional (can be null)
 }
 ```
 
 **Response (200):**
+
 ```json
 {
   "id": "uuid",
@@ -44,24 +46,24 @@
 
 ## 🎯 Status Codes
 
-| Code | Meaning | Example |
-|------|---------|---------|
-| 200 | Success | Location updated |
-| 400 | Bad Request | Empty name, invalid UUID |
-| 401 | Unauthorized | Missing/invalid token |
-| 404 | Not Found | Location doesn't exist |
-| 409 | Conflict | Duplicate sibling name |
-| 500 | Server Error | Database failure |
+| Code | Meaning      | Example                  |
+| ---- | ------------ | ------------------------ |
+| 200  | Success      | Location updated         |
+| 400  | Bad Request  | Empty name, invalid UUID |
+| 401  | Unauthorized | Missing/invalid token    |
+| 404  | Not Found    | Location doesn't exist   |
+| 409  | Conflict     | Duplicate sibling name   |
+| 500  | Server Error | Database failure         |
 
 ## 📁 Files
 
-| File | Purpose |
-|------|---------|
-| `src/pages/api/locations/[id].ts` | API endpoint |
-| `src/lib/services/location.service.ts` | Business logic |
-| `run-patch-tests.sh` | Automated tests |
-| `reset-test-data.sh` | Reset test data |
-| `test-patch-location.http` | Manual HTTP tests |
+| File                                   | Purpose           |
+| -------------------------------------- | ----------------- |
+| `src/pages/api/locations/[id].ts`      | API endpoint      |
+| `src/lib/services/location.service.ts` | Business logic    |
+| `run-patch-tests.sh`                   | Automated tests   |
+| `reset-test-data.sh`                   | Reset test data   |
+| `test-patch-location.http`             | Manual HTTP tests |
 
 ## 🧪 Testing
 
@@ -80,6 +82,7 @@
 ## 🔧 Implementation
 
 **Service Function:**
+
 ```typescript
 updateLocation(
   supabase: SupabaseClient,
@@ -90,22 +93,26 @@ updateLocation(
 ```
 
 **Zod Schemas:**
+
 ```typescript
 // Path param
 paramsSchema = z.object({
-  id: z.string().uuid()
-})
+  id: z.string().uuid(),
+});
 
 // Request body
-updateLocationSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().nullable().optional()
-}).refine(data => name || description)
+updateLocationSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+  })
+  .refine((data) => name || description);
 ```
 
 ## 💡 Examples
 
 ### Update Name
+
 ```bash
 curl -X PATCH http://localhost:3000/api/locations/UUID \
   -H "Authorization: Bearer TOKEN" \
@@ -114,6 +121,7 @@ curl -X PATCH http://localhost:3000/api/locations/UUID \
 ```
 
 ### Update Description
+
 ```bash
 curl -X PATCH http://localhost:3000/api/locations/UUID \
   -H "Authorization: Bearer TOKEN" \
@@ -122,6 +130,7 @@ curl -X PATCH http://localhost:3000/api/locations/UUID \
 ```
 
 ### Clear Description
+
 ```bash
 curl -X PATCH http://localhost:3000/api/locations/UUID \
   -H "Authorization: Bearer TOKEN" \
@@ -130,6 +139,7 @@ curl -X PATCH http://localhost:3000/api/locations/UUID \
 ```
 
 ### Update Both
+
 ```bash
 curl -X PATCH http://localhost:3000/api/locations/UUID \
   -H "Authorization: Bearer TOKEN" \
@@ -139,12 +149,12 @@ curl -X PATCH http://localhost:3000/api/locations/UUID \
 
 ## 🐛 Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Server not running | `npm run dev` |
-| Token expired | Run `./reset-test-data.sh` |
+| Problem                 | Solution                                  |
+| ----------------------- | ----------------------------------------- |
+| Server not running      | `npm run dev`                             |
+| Token expired           | Run `./reset-test-data.sh`                |
 | Tests fail after reruns | Data modified, run `./reset-test-data.sh` |
-| Port 3000 in use | `lsof -ti:3000 \| xargs kill` |
+| Port 3000 in use        | `lsof -ti:3000 \| xargs kill`             |
 
 ## 📚 Documentation
 

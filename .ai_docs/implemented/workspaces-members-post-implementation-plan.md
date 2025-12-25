@@ -15,13 +15,16 @@ This endpoint is critical for multi-tenant collaboration, allowing authorized us
 **URL Pattern:** `/api/workspaces/:workspace_id/members`
 
 **URL Parameters:**
+
 - `workspace_id` (UUID, required): The ID of the workspace to add a member to. Must be a valid UUID format.
 
 **Request Headers:**
+
 - `Authorization: Bearer <JWT_TOKEN>` (required): Valid Supabase JWT token for authenticated user
 - `Content-Type: application/json` (required)
 
 **Request Body:**
+
 ```json
 {
   "email": "newuser@example.com",
@@ -30,6 +33,7 @@ This endpoint is critical for multi-tenant collaboration, allowing authorized us
 ```
 
 **Parameters:**
+
 - **Required:**
   - `email` (string): Email address of the user to invite. Must be a valid email format. User with this email must already exist in the system (profiles table).
   - `role` (UserRole enum): The role to assign to the new member. Valid values: `'owner'`, `'admin'`, `'member'`, `'read_only'`
@@ -71,6 +75,7 @@ interface WorkspaceMemberWithProfileDto extends WorkspaceMemberDto {
 ### Zod Validation Schemas (to create)
 
 Create validation schemas for:
+
 1. **URL Parameter Validation:** workspace_id must be valid UUID
 2. **Request Body Validation:** email format and role enum values
 3. Use existing enum values from UserRole type
@@ -93,6 +98,7 @@ Create validation schemas for:
 **Status Code:** 201 Created
 
 **Response Properties:**
+
 - `user_id` (UUID): ID of the invited user
 - `workspace_id` (UUID): ID of the workspace
 - `role` (UserRole): The assigned role
@@ -100,14 +106,14 @@ Create validation schemas for:
 
 ### Error Responses
 
-| Status | Error Type | Scenario | Polish Error Message |
-|--------|-----------|----------|------|
-| 400 | Bad Request | Invalid email format, missing fields, invalid role | `"Błąd walidacji"` with `details` object |
-| 401 | Unauthorized | No valid JWT token or user not authenticated | `"Brak autoryzacji"` |
-| 403 | Forbidden | Current user is not owner/admin in workspace | `"Brak uprawnień do zaproszenia członka"` |
-| 404 | Not Found | Workspace doesn't exist OR user with email not found | `"Użytkownik nie został znaleziony"` |
-| 409 | Conflict | User already a member of this workspace | `"Użytkownik jest już członkiem tego workspace'u"` |
-| 500 | Internal Server Error | Database operation failed | `"Nie udało się dodać członka do workspace"` |
+| Status | Error Type            | Scenario                                             | Polish Error Message                               |
+| ------ | --------------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| 400    | Bad Request           | Invalid email format, missing fields, invalid role   | `"Błąd walidacji"` with `details` object           |
+| 401    | Unauthorized          | No valid JWT token or user not authenticated         | `"Brak autoryzacji"`                               |
+| 403    | Forbidden             | Current user is not owner/admin in workspace         | `"Brak uprawnień do zaproszenia członka"`          |
+| 404    | Not Found             | Workspace doesn't exist OR user with email not found | `"Użytkownik nie został znaleziony"`               |
+| 409    | Conflict              | User already a member of this workspace              | `"Użytkownik jest już członkiem tego workspace'u"` |
+| 500    | Internal Server Error | Database operation failed                            | `"Nie udało się dodać członka do workspace"`       |
 
 ---
 
@@ -148,32 +154,38 @@ Client Request (POST /api/workspaces/:workspace_id/members)
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Requirement:** Valid JWT token in Authorization header
 - **Enforcement:** Middleware validates and attaches user to context.locals
 - **Error Response:** 401 Unauthorized with Polish message "Brak autoryzacji"
 
 ### Authorization (Role-Based Access Control)
+
 - **Rule:** Only workspace owners and admins can invite new members
 - **Enforcement:** Query workspace_members to verify current user's role
 - **Error Response:** 403 Forbidden with Polish message "Brak uprawnień do zaproszenia członka"
 - **Query:** `SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ? LIMIT 1`
 
 ### Row Level Security (RLS)
+
 - **Policy:** workspace_members table has RLS enabled
 - **Effect:** Query results automatically filtered by workspace membership
 - **Benefit:** Double-layer security (application + database)
 
 ### Data Validation
+
 - **Email Format:** Use email regex validation (Zod email type)
 - **Role Validation:** Enum check against user_role type values
 - **UUID Format:** Validate workspace_id is valid UUID
 
 ### Data Integrity
+
 - **Foreign Key Constraints:** Database enforces profiles.id exists
 - **Unique Constraint:** workspace_members (workspace_id, user_id) is primary key - prevents duplicates
 - **No Self-Assignment:** No explicit check needed, database constraints handle it
 
 ### Audit Logging
+
 - **What to log:** User ID, workspace ID, invitee email, role assigned, timestamp, outcome
 - **When to log:** Both success and error cases
 - **Format:** Structured logging with consistent field names
@@ -186,19 +198,21 @@ Client Request (POST /api/workspaces/:workspace_id/members)
 ### Input Validation (Zod Schemas)
 
 #### URL Parameters Schema
+
 ```typescript
 const paramsSchema = z.object({
-  workspace_id: z.string().uuid("Nieprawidłowy format ID workspace")
+  workspace_id: z.string().uuid("Nieprawidłowy format ID workspace"),
 });
 ```
 
 #### Request Body Schema
+
 ```typescript
 const bodySchema = z.object({
   email: z.string().email("Nieprawidłowy format email"),
-  role: z.enum(['owner', 'admin', 'member', 'read_only'], {
-    errorMap: () => ({ message: "Nieprawidłowa rola" })
-  })
+  role: z.enum(["owner", "admin", "member", "read_only"], {
+    errorMap: () => ({ message: "Nieprawidłowa rola" }),
+  }),
 });
 ```
 
@@ -236,7 +250,7 @@ console.error("POST /api/workspaces/:workspace_id/members - Błąd:", {
   currentUserId: user.id,
   errorType: "Insufficient permissions|Duplicate member|User not found|...",
   error: error.message,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 
 // Log format for success
@@ -245,7 +259,7 @@ console.info("POST /api/workspaces/:workspace_id/members - Sukces:", {
   invitedUserId: new_member.user_id,
   role: role,
   invitedByUserId: user.id,
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 ```
 
@@ -306,10 +320,11 @@ export async function inviteWorkspaceMember(
   currentUserId: string,
   email: string,
   role: UserRole
-): Promise<WorkspaceMemberWithProfileDto>
+): Promise<WorkspaceMemberWithProfileDto>;
 ```
 
 **Implementation details:**
+
 - Accept Supabase client, workspace ID, current user ID, email, and role
 - Check current user's role in workspace (throw error with 403 status if not owner/admin)
 - Look up user by email in profiles table (throw error with 404 status if not found)
@@ -319,16 +334,19 @@ export async function inviteWorkspaceMember(
 - Log all operations (success and errors) with Polish messages
 
 **Reuse patterns from:**
+
 - getWorkspaceMembers() for role verification pattern
 - createWorkspace() for insert and error handling pattern
 
 ### Step 2: Create Zod Validation Schemas
 
 In the API route file, create schemas:
+
 - `paramsSchema` for URL parameters (workspace_id)
 - `bodySchema` for request body (email, role)
 
 **Validation rules:**
+
 - email: Zod email type (built-in validation) with Polish error message
 - role: Zod enum with valid user_role values and Polish error message
 - workspace_id: Zod uuid string with Polish error message
@@ -345,10 +363,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   // 4. Call service layer inviteWorkspaceMember()
   // 5. Return 201 Created with member data
   // 6. Handle errors with appropriate status codes and Polish messages
-}
+};
 ```
 
 **Error handling:**
+
 - ZodError → 400 Bad Request with "Błąd walidacji" and validation details
 - Permission error → 403 Forbidden with "Brak uprawnień do zaproszenia członka"
 - User not found → 404 Not Found with "Użytkownik nie został znaleziony"
@@ -358,6 +377,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 ### Step 4: Add Unit/Integration Tests (Optional)
 
 Consider testing:
+
 - Valid invitation with owner role
 - Valid invitation with admin role
 - Invalid email format (400)
@@ -370,6 +390,7 @@ Consider testing:
 ### Step 5: Lint and Format
 
 Run code quality tools:
+
 - `npm run lint` to check for issues
 - `npm run lint:fix` to auto-fix issues
 - `npm run format` to format code with Prettier
@@ -377,6 +398,7 @@ Run code quality tools:
 ### Step 6: Testing & Verification
 
 Manual testing checklist:
+
 - [ ] Happy path: invite existing user with valid email and role
 - [ ] Verify response contains user_id, workspace_id, role, joined_at
 - [ ] Verify response status is 201 Created
@@ -400,22 +422,26 @@ Manual testing checklist:
 ## 11. Key Implementation Considerations
 
 ### Database Transactions
+
 - Current implementation uses individual queries (no explicit transaction)
 - Acceptable because unique constraint handles duplicate prevention
 - If duplicate occurs, Supabase will return constraint error (handled as 409 Conflict)
 
 ### Error Messages
+
 - Keep messages user-friendly in Polish (consistent with existing API)
 - Include error details in server logs, not in response body
 - For validation errors, include details object with field names
 - Match error message style from existing endpoints (especially GET /members)
 
 ### User Invitation Logic
+
 - Current implementation requires user to already exist in system
 - Future enhancement: Send email invitation if user doesn't exist
 - For now, return 404 with message: "Użytkownik nie został znaleziony"
 
 ### Role Assignment
+
 - All four roles (owner, admin, member, read_only) are allowed
 - No business logic prevents assigning owner role to new members
 - If restriction needed, add validation in service layer

@@ -7,6 +7,7 @@ The `GET /api/qr-codes/:short_id` endpoint resolves a scanned QR code to its cur
 **Primary Use Case:** When a user scans a QR code label with their mobile device, the application calls this endpoint to retrieve the QR code's current state and decide the next UI action.
 
 **Business Logic:**
+
 - Accepts a QR code short ID (format: QR-XXXXXX) from the URL parameter
 - Returns complete QR code metadata including assignment status and workspace information
 - Enforces workspace-based access control via PostgreSQL Row Level Security (RLS)
@@ -15,31 +16,36 @@ The `GET /api/qr-codes/:short_id` endpoint resolves a scanned QR code to its cur
 ## 2. Request Details
 
 ### HTTP Method
+
 `GET`
 
 ### URL Structure
+
 ```
 GET /api/qr-codes/:short_id
 ```
 
 **Example:**
+
 ```
 GET /api/qr-codes/QR-A1B2C3
 ```
 
 ### URL Parameters
 
-| Parameter | Type   | Required | Format             | Description                                    |
-|-----------|--------|----------|--------------------|------------------------------------------------|
-| short_id  | string | Yes      | `QR-[A-Z0-9]{6}`  | The QR code's unique short identifier          |
+| Parameter | Type   | Required | Format           | Description                           |
+| --------- | ------ | -------- | ---------------- | ------------------------------------- |
+| short_id  | string | Yes      | `QR-[A-Z0-9]{6}` | The QR code's unique short identifier |
 
 **Valid Examples:**
+
 - `QR-A1B2C3`
 - `QR-X7K9P2`
 - `QR-000000`
 - `QR-ZZZZZZ`
 
 **Invalid Examples:**
+
 - `QR-abc123` (lowercase letters not allowed)
 - `QR-12345` (only 5 characters)
 - `QR-1234567` (7 characters)
@@ -48,14 +54,16 @@ GET /api/qr-codes/QR-A1B2C3
 
 ### Request Headers
 
-| Header        | Required | Value                  | Description                    |
-|---------------|----------|------------------------|--------------------------------|
-| Authorization | Yes      | `Bearer <JWT_TOKEN>`   | Supabase JWT authentication token |
+| Header        | Required | Value                | Description                       |
+| ------------- | -------- | -------------------- | --------------------------------- |
+| Authorization | Yes      | `Bearer <JWT_TOKEN>` | Supabase JWT authentication token |
 
 ### Query Parameters
+
 None
 
 ### Request Body
+
 None (GET request)
 
 ## 3. Types Used
@@ -66,11 +74,11 @@ Defined in `src/types.ts` (lines 260-266):
 
 ```typescript
 export interface QrCodeDetailDto {
-  id: string;              // UUID of the QR code record
-  short_id: string;        // Scannable short ID (format: QR-XXXXXX)
-  box_id: string | null;   // UUID of linked box (null if unassigned)
-  status: QrStatus;        // 'generated' | 'printed' | 'assigned'
-  workspace_id: string;    // UUID of workspace that owns this QR code
+  id: string; // UUID of the QR code record
+  short_id: string; // Scannable short ID (format: QR-XXXXXX)
+  box_id: string | null; // UUID of linked box (null if unassigned)
+  status: QrStatus; // 'generated' | 'printed' | 'assigned'
+  workspace_id: string; // UUID of workspace that owns this QR code
 }
 ```
 
@@ -84,6 +92,7 @@ export type QrStatus = Enums<"qr_status">;
 ```
 
 **Status Lifecycle:**
+
 - `generated`: QR code created but not yet printed
 - `printed`: QR code has been printed on a physical label
 - `assigned`: QR code is linked to a box
@@ -111,12 +120,7 @@ import { z } from "zod";
  * Validates the QR code short_id format.
  */
 export const GetQrCodeByShortIdSchema = z.object({
-  short_id: z
-    .string()
-    .regex(
-      /^QR-[A-Z0-9]{6}$/,
-      "Nieprawidłowy format ID kodu QR. Oczekiwany format: QR-XXXXXX"
-    ),
+  short_id: z.string().regex(/^QR-[A-Z0-9]{6}$/, "Nieprawidłowy format ID kodu QR. Oczekiwany format: QR-XXXXXX"),
 });
 
 export type GetQrCodeByShortIdInput = z.infer<typeof GetQrCodeByShortIdSchema>;
@@ -127,11 +131,13 @@ export type GetQrCodeByShortIdInput = z.infer<typeof GetQrCodeByShortIdSchema>;
 ### Success Response (200 OK)
 
 **Headers:**
+
 ```
 Content-Type: application/json
 ```
 
 **Body Structure:**
+
 ```json
 {
   "id": "456e7890-e89b-12d3-a456-426614174000",
@@ -143,6 +149,7 @@ Content-Type: application/json
 ```
 
 **Response for Unassigned QR Code:**
+
 ```json
 {
   "id": "789e4560-e89b-12d3-a456-426614174001",
@@ -154,6 +161,7 @@ Content-Type: application/json
 ```
 
 **Frontend Routing Logic:**
+
 - If `box_id` is `null` and `status` is `"generated"` or `"printed"`: Show "Create New Box" form
 - If `box_id` is present: Redirect to `/boxes/{box_id}` (Box Details page)
 
@@ -168,6 +176,7 @@ Content-Type: application/json
 ```
 
 **Trigger Conditions:**
+
 - short_id doesn't match regex pattern `/^QR-[A-Z0-9]{6}$/`
 - Examples: `QR-abc` (too short), `qr-A1B2C3` (lowercase), `A1B2C3` (no prefix)
 
@@ -180,6 +189,7 @@ Content-Type: application/json
 ```
 
 **Trigger Conditions:**
+
 - No `Authorization` header provided
 - Invalid JWT token
 - Expired JWT token
@@ -194,6 +204,7 @@ Content-Type: application/json
 ```
 
 **Trigger Conditions:**
+
 - No QR code with this short_id exists in database
 - QR code exists but user is not a member of its workspace (RLS denial)
 
@@ -206,6 +217,7 @@ Content-Type: application/json
 ```
 
 **Trigger Conditions:**
+
 - Database connection failure
 - Unexpected service layer errors
 - Supabase client errors
@@ -277,6 +289,7 @@ Content-Type: application/json
 **Table:** `public.qr_codes`
 
 **Query Structure:**
+
 ```sql
 SELECT
   id,
@@ -289,9 +302,11 @@ WHERE short_id = 'QR-A1B2C3';
 ```
 
 **Indexes Used:**
+
 - Unique index on `short_id` (fast lookup, O(log n) complexity)
 
 **RLS Policy Applied:**
+
 ```sql
 -- Policy name: workspace_members_qr_codes_select
 -- Automatically enforced by PostgreSQL
@@ -305,18 +320,21 @@ auth.uid() IN (
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Method:** Supabase Auth (JWT tokens)
 - **Token Location:** `Authorization: Bearer <token>` header
 - **Validation:** `supabase.auth.getUser()` verifies token signature and expiration
 - **Failure Handling:** Return 401 Unauthorized if authentication fails
 
 ### Authorization
+
 - **Mechanism:** PostgreSQL Row Level Security (RLS)
 - **Policy:** User must be a member of the workspace that owns the QR code
 - **Enforcement:** Automatic via database policies (no explicit code needed)
 - **Failure Handling:** RLS denial returns empty result, interpreted as 404 Not Found
 
 ### Input Validation
+
 - **short_id Parameter:**
   - Must match regex: `/^QR-[A-Z0-9]{6}$/`
   - Prevents SQL injection (parameterized queries)
@@ -325,15 +343,16 @@ auth.uid() IN (
 
 ### Potential Security Risks
 
-| Risk                | Mitigation                                      | Severity |
-|---------------------|-------------------------------------------------|----------|
-| SQL Injection       | Supabase client uses parameterized queries      | Low      |
-| Unauthorized Access | RLS policies enforce workspace membership       | Low      |
-| Token Theft         | HTTPS required, short token expiration          | Medium   |
-| Enumeration Attack  | Rate limiting should be added (future)          | Medium   |
-| CORS Issues         | Configured in middleware                        | Low      |
+| Risk                | Mitigation                                 | Severity |
+| ------------------- | ------------------------------------------ | -------- |
+| SQL Injection       | Supabase client uses parameterized queries | Low      |
+| Unauthorized Access | RLS policies enforce workspace membership  | Low      |
+| Token Theft         | HTTPS required, short token expiration     | Medium   |
+| Enumeration Attack  | Rate limiting should be added (future)     | Medium   |
+| CORS Issues         | Configured in middleware                   | Low      |
 
 ### Data Privacy
+
 - QR codes are scoped to workspaces (multi-tenant isolation)
 - User can only access QR codes from workspaces they belong to
 - No sensitive data exposed in QR code short_id (random alphanumeric)
@@ -344,6 +363,7 @@ auth.uid() IN (
 ### Error Handling Strategy
 
 The endpoint follows the **early return pattern** for error conditions:
+
 1. Handle authentication errors first
 2. Validate input parameters
 3. Call service layer with try-catch
@@ -371,20 +391,21 @@ export class QrCodeNotFoundError extends Error {
 
 ### Error Scenarios and Handling
 
-| Scenario                          | Detection Method                     | HTTP Status | Response                                      | Logging                              |
-|-----------------------------------|--------------------------------------|-------------|-----------------------------------------------|--------------------------------------|
-| Missing Authorization header      | `authError` or `!user`              | 401         | `{ "error": "Nieautoryzowany dostęp" }`       | None (expected behavior)             |
-| Invalid JWT token                 | `authError` from getUser()          | 401         | `{ "error": "Nieautoryzowany dostęp" }`       | None (expected behavior)             |
-| Invalid short_id format           | Zod validation fails                | 400         | `{ "error": "Nieprawidłowy format..." }`      | None (invalid input)                 |
-| QR code doesn't exist             | Supabase returns empty result       | 404         | `{ "error": "Kod QR nie został znaleziony" }` | Log with user_id and short_id        |
-| RLS policy denial                 | Supabase returns empty result       | 404         | `{ "error": "Kod QR nie został znaleziony" }` | Log with user_id and short_id        |
-| Database connection error         | Supabase error with code            | 500         | `{ "error": "Nie udało się pobrać kodu QR" }` | console.error() with full error      |
-| Unexpected service error          | Unhandled exception in service      | 500         | `{ "error": "Nie udało się pobrać kodu QR" }` | console.error() with stack trace     |
-| Unexpected route handler error    | Outer try-catch in route handler    | 500         | `{ "error": "Wewnętrzny błąd serwera" }`      | console.error() with context         |
+| Scenario                       | Detection Method                 | HTTP Status | Response                                      | Logging                          |
+| ------------------------------ | -------------------------------- | ----------- | --------------------------------------------- | -------------------------------- |
+| Missing Authorization header   | `authError` or `!user`           | 401         | `{ "error": "Nieautoryzowany dostęp" }`       | None (expected behavior)         |
+| Invalid JWT token              | `authError` from getUser()       | 401         | `{ "error": "Nieautoryzowany dostęp" }`       | None (expected behavior)         |
+| Invalid short_id format        | Zod validation fails             | 400         | `{ "error": "Nieprawidłowy format..." }`      | None (invalid input)             |
+| QR code doesn't exist          | Supabase returns empty result    | 404         | `{ "error": "Kod QR nie został znaleziony" }` | Log with user_id and short_id    |
+| RLS policy denial              | Supabase returns empty result    | 404         | `{ "error": "Kod QR nie został znaleziony" }` | Log with user_id and short_id    |
+| Database connection error      | Supabase error with code         | 500         | `{ "error": "Nie udało się pobrać kodu QR" }` | console.error() with full error  |
+| Unexpected service error       | Unhandled exception in service   | 500         | `{ "error": "Nie udało się pobrać kodu QR" }` | console.error() with stack trace |
+| Unexpected route handler error | Outer try-catch in route handler | 500         | `{ "error": "Wewnętrzny błąd serwera" }`      | console.error() with context     |
 
 ### Logging Examples
 
 **Successful Query:**
+
 ```javascript
 console.log("QR code fetched successfully:", {
   qr_code_id: data.id,
@@ -396,6 +417,7 @@ console.log("QR code fetched successfully:", {
 ```
 
 **QR Code Not Found:**
+
 ```javascript
 console.warn("QR code not found or access denied:", {
   short_id: shortId,
@@ -404,6 +426,7 @@ console.warn("QR code not found or access denied:", {
 ```
 
 **Database Error:**
+
 ```javascript
 console.error("Error fetching QR code:", {
   short_id: shortId,
@@ -417,17 +440,18 @@ console.error("Error fetching QR code:", {
 
 ### Expected Performance Metrics
 
-| Metric                  | Target Value | Measurement Method                          |
-|-------------------------|--------------|---------------------------------------------|
-| Response Time (p50)     | < 50ms       | Database query + JSON serialization         |
-| Response Time (p95)     | < 100ms      | Including authentication overhead           |
-| Response Time (p99)     | < 200ms      | Under high load conditions                  |
-| Database Query Time     | < 10ms       | Single indexed lookup                       |
-| Throughput              | 1000+ req/s  | Stateless, read-only, simple query          |
+| Metric              | Target Value | Measurement Method                  |
+| ------------------- | ------------ | ----------------------------------- |
+| Response Time (p50) | < 50ms       | Database query + JSON serialization |
+| Response Time (p95) | < 100ms      | Including authentication overhead   |
+| Response Time (p99) | < 200ms      | Under high load conditions          |
+| Database Query Time | < 10ms       | Single indexed lookup               |
+| Throughput          | 1000+ req/s  | Stateless, read-only, simple query  |
 
 ### Database Optimization
 
 **Index Usage:**
+
 - `short_id` column has unique index (from migration)
 - Query uses `WHERE short_id = ?` → index scan (fast)
 - No table scans required
@@ -437,13 +461,13 @@ console.error("Error fetching QR code:", {
 
 ### Potential Bottlenecks
 
-| Bottleneck              | Likelihood | Mitigation Strategy                                    |
-|-------------------------|------------|--------------------------------------------------------|
-| Database connection pool| Low        | Supabase manages connection pooling automatically      |
-| JWT verification        | Low        | Supabase caches decoded tokens for short periods       |
-| Network latency         | Medium     | Deploy API and database in same region                 |
-| RLS policy evaluation   | Low        | RLS queries are optimized and use indexes              |
-| JSON serialization      | Very Low   | Minimal payload size (~200 bytes)                      |
+| Bottleneck               | Likelihood | Mitigation Strategy                               |
+| ------------------------ | ---------- | ------------------------------------------------- |
+| Database connection pool | Low        | Supabase manages connection pooling automatically |
+| JWT verification         | Low        | Supabase caches decoded tokens for short periods  |
+| Network latency          | Medium     | Deploy API and database in same region            |
+| RLS policy evaluation    | Low        | RLS queries are optimized and use indexes         |
+| JSON serialization       | Very Low   | Minimal payload size (~200 bytes)                 |
 
 ### Scalability Considerations
 
@@ -469,12 +493,14 @@ console.error("Error fetching QR code:", {
 **File:** `src/lib/validators/qr-code.validators.ts`
 
 **Tasks:**
+
 - Import Zod library
 - Create `GetQrCodeByShortIdSchema` with regex validation for QR-XXXXXX format
 - Export type inference `GetQrCodeByShortIdInput`
 - Add error messages in Polish to match project conventions
 
 **Acceptance Criteria:**
+
 - Schema validates valid short_id formats (QR-A1B2C3, QR-000000, etc.)
 - Schema rejects invalid formats (lowercase, wrong length, missing prefix)
 - Error messages are clear and in Polish
@@ -486,6 +512,7 @@ console.error("Error fetching QR code:", {
 **File:** `src/lib/services/qr-code.service.ts`
 
 **Tasks:**
+
 - Import `SupabaseClient` type from `@/db/supabase.client`
 - Import `QrCodeDetailDto` from `@/types`
 - Create `QrCodeNotFoundError` custom error class
@@ -499,6 +526,7 @@ console.error("Error fetching QR code:", {
   - Return `QrCodeDetailDto` typed response
 
 **Acceptance Criteria:**
+
 - Function signature matches pattern from box.service.ts
 - Proper error handling with custom error class
 - Comprehensive logging for success and error cases
@@ -511,6 +539,7 @@ console.error("Error fetching QR code:", {
 **File:** `src/pages/api/qr-codes/[short_id].ts`
 
 **Tasks:**
+
 - Import `APIRoute` type from Astro
 - Import service function and error class
 - Import validation schema
@@ -529,6 +558,7 @@ console.error("Error fetching QR code:", {
   10. Return 200 OK with JSON on success
 
 **Acceptance Criteria:**
+
 - Follows Astro API route conventions (uppercase GET handler)
 - Proper error handling with appropriate status codes
 - All responses include `Content-Type: application/json` header
@@ -540,6 +570,7 @@ console.error("Error fetching QR code:", {
 ### Step 4: Test Endpoint Manually
 
 **Tasks:**
+
 - Start dev server: `npm run dev`
 - Ensure Supabase is running locally
 - Create test data:
@@ -578,6 +609,7 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 ```
 
 **Acceptance Criteria:**
+
 - All test scenarios return expected status codes
 - Response payloads match specification
 - Error messages are descriptive
@@ -588,12 +620,14 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 ### Step 5: Code Quality Checks
 
 **Tasks:**
+
 - Run linter: `npm run lint`
 - Fix any linting issues: `npm run lint:fix`
 - Verify TypeScript compilation: `npx tsc --noEmit`
 - Check code formatting: `npm run format`
 
 **Acceptance Criteria:**
+
 - No linting errors
 - No TypeScript errors
 - Code follows project style guide
@@ -605,6 +639,7 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 **File:** `.ai_docs/api-plan.md`
 
 **Tasks:**
+
 - Update `GET /qr-codes/:short_id` section (lines 553-575)
 - Add implementation status: `✅ Implemented`
 - Add implementation file reference
@@ -613,6 +648,7 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 - Add testing script reference if created
 
 **Acceptance Criteria:**
+
 - Documentation is accurate and complete
 - Implementation status clearly marked
 - File paths reference actual implementation files
@@ -622,6 +658,7 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 ### Step 7: Integration Testing
 
 **Tasks:**
+
 - Test integration with frontend QR scanner component (if available)
 - Verify correct routing behavior:
   - Unassigned QR → Create Box form
@@ -630,6 +667,7 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 - Verify mobile scanning workflow end-to-end
 
 **Acceptance Criteria:**
+
 - Frontend correctly interprets response
 - Routing logic works as expected
 - No CORS issues
@@ -642,12 +680,14 @@ curl -s http://localhost:3000/api/qr-codes/QR-A1B2C3 \
 **File:** `.ai_docs/test-qr-codes-shortid.sh` (optional)
 
 **Tasks:**
+
 - Create bash script to automate test scenarios
 - Include setup instructions (dev server, Supabase, test data)
 - Document expected outputs for each test case
 - Make script executable: `chmod +x .ai_docs/test-qr-codes-shortid.sh`
 
 **Acceptance Criteria:**
+
 - Script runs without errors
 - All test cases pass
 - Clear output showing pass/fail status

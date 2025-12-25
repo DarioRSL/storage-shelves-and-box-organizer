@@ -5,6 +5,7 @@ This guide explains how to test the PATCH endpoint for updating locations.
 ## Quick Start
 
 ### Prerequisites
+
 1. Local Supabase running (via Docker/Podman)
 2. Dev server running on port 3000
 
@@ -20,6 +21,7 @@ chmod +x run-patch-tests.sh
 ```
 
 The script will automatically:
+
 - ✅ Check if server is running
 - ✅ Run 9 comprehensive tests
 - ✅ Verify path regeneration in database
@@ -30,20 +32,24 @@ The script will automatically:
 The automated test suite includes:
 
 ### Happy Path Tests (200 OK)
+
 1. ✅ Update name only
 2. ✅ Update description only
 3. ✅ Update both name and description
 4. ✅ Clear description (set to null)
 
 ### Validation Error Tests (400 Bad Request)
+
 5. ✅ Empty request body
 6. ✅ Empty name string
 7. ✅ Invalid UUID format
 
 ### Not Found Tests (404 Not Found)
+
 8. ✅ Non-existent location ID
 
 ### Conflict Tests (409 Conflict)
+
 9. ✅ Duplicate sibling name
 
 ## Test Data
@@ -54,6 +60,7 @@ The script uses pre-created test data:
 **Workspace:** `Test Workspace PATCH` (ID: `67b47c38-73a5-4265-a9c1-466f113cb8b9`)
 
 **Test Locations:**
+
 ```
 root
 └── Test Garage
@@ -120,14 +127,17 @@ Then re-run the setup commands from the implementation session.
 ## Troubleshooting
 
 ### "Server is not running"
+
 - Ensure dev server is running: `npm run dev`
 - Check port 3000 is not in use: `lsof -ti:3000`
 
 ### "Token expired" or 401 errors
+
 - The JWT token in the script expires after 1 hour
 - Re-generate by creating a new user or logging in fresh
 
 ### Tests fail after multiple runs
+
 - Some tests modify data (rename locations)
 - Reset test data using command above
 - Or restart with fresh database
@@ -135,6 +145,7 @@ Then re-run the setup commands from the implementation session.
 ## Implementation Details
 
 **Files involved:**
+
 - Service: [`src/lib/services/location.service.ts`](src/lib/services/location.service.ts) - `updateLocation()` function
 - API Route: [`src/pages/api/locations/[id].ts`](src/pages/api/locations/[id].ts) - PATCH handler
 - Test Script: [`run-patch-tests.sh`](run-patch-tests.sh) - Automated test suite

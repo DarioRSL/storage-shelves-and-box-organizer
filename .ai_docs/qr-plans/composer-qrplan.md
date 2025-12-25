@@ -405,5 +405,3 @@ Po implementacji zaktualizuj:
 - Backend (FAZA 1-2): 12-16 godzin
 - Frontend (FAZA 3): 6-8 godzin
 - **RAZEM**: ~20-24 godziny pracy
-
-

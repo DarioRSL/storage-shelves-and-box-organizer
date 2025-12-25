@@ -346,7 +346,6 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 #### GET /boxes
 
-
 - **Description**: Searches and lists boxes based on criteria with full-text search, filtering, and pagination.
 - **Query Parameters**:
   - `workspace_id` (UUID, required): The workspace to query boxes from

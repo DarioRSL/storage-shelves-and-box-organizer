@@ -7,6 +7,7 @@ Creates a new location node in the hierarchical storage structure. Locations use
 **Purpose:** Enable users to build their storage organization hierarchy by creating rooms, shelves, sections, and other nested storage units.
 
 **Key Business Rules:**
+
 - Maximum hierarchy depth: 5 levels
 - Sibling locations cannot have the same name (case-insensitive)
 - Location names are normalized for path generation (lowercase, special characters replaced with underscores)
@@ -23,14 +24,15 @@ Creates a new location node in the hierarchical storage structure. Locations use
 
 **Request Body:**
 
-| Field | Type | Required | Description | Validation |
-|-------|------|----------|-------------|------------|
-| `workspace_id` | UUID | Yes | The workspace where the location will be created | Must be valid UUID, workspace must exist, user must be member |
-| `name` | string | Yes | The location name | Non-empty string, max 255 chars, will be normalized for path |
-| `description` | string | No | Optional description of the location | Max 1000 chars |
-| `parent_id` | UUID | No | Parent location ID for nested locations | Must be valid UUID if provided, parent must exist in same workspace |
+| Field          | Type   | Required | Description                                      | Validation                                                          |
+| -------------- | ------ | -------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+| `workspace_id` | UUID   | Yes      | The workspace where the location will be created | Must be valid UUID, workspace must exist, user must be member       |
+| `name`         | string | Yes      | The location name                                | Non-empty string, max 255 chars, will be normalized for path        |
+| `description`  | string | No       | Optional description of the location             | Max 1000 chars                                                      |
+| `parent_id`    | UUID   | No       | Parent location ID for nested locations          | Must be valid UUID if provided, parent must exist in same workspace |
 
 **Request Body Example:**
+
 ```json
 {
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -43,6 +45,7 @@ Creates a new location node in the hierarchical storage structure. Locations use
 ## 3. Utilized Types
 
 ### Input Type
+
 ```typescript
 // From src/types.ts (already defined)
 CreateLocationRequest {
@@ -54,6 +57,7 @@ CreateLocationRequest {
 ```
 
 ### Output Type
+
 ```typescript
 // From src/types.ts (already defined)
 LocationDto {
@@ -70,21 +74,17 @@ LocationDto {
 ```
 
 ### Validation Schema (Zod)
+
 ```typescript
 const CreateLocationSchema = z.object({
   workspace_id: z.string().uuid("Nieprawidłowy format ID przestrzeni roboczej"),
-  name: z.string()
+  name: z
+    .string()
     .min(1, "Nazwa lokalizacji jest wymagana")
     .max(255, "Nazwa lokalizacji może mieć maksymalnie 255 znaków")
     .trim(),
-  description: z.string()
-    .max(1000, "Opis może mieć maksymalnie 1000 znaków")
-    .nullable()
-    .optional(),
-  parent_id: z.string()
-    .uuid("Nieprawidłowy format ID lokalizacji nadrzędnej")
-    .nullable()
-    .optional(),
+  description: z.string().max(1000, "Opis może mieć maksymalnie 1000 znaków").nullable().optional(),
+  parent_id: z.string().uuid("Nieprawidłowy format ID lokalizacji nadrzędnej").nullable().optional(),
 });
 ```
 
@@ -93,9 +93,11 @@ const CreateLocationSchema = z.object({
 ### Success Response (201 Created)
 
 **Headers:**
+
 - `Content-Type: application/json`
 
 **Body:**
+
 ```json
 {
   "id": "770e8400-e29b-41d4-a716-446655440002",
@@ -110,6 +112,7 @@ const CreateLocationSchema = z.object({
 ### Error Responses
 
 **400 Bad Request** - Invalid input data
+
 ```json
 {
   "error": "Walidacja nie powiodła się",
@@ -120,6 +123,7 @@ const CreateLocationSchema = z.object({
 ```
 
 Or:
+
 ```json
 {
   "error": "Przekroczono maksymalną głębokość hierarchii. Lokalizacje mogą być zagnieżdżone maksymalnie na 5 poziomach."
@@ -127,6 +131,7 @@ Or:
 ```
 
 **401 Unauthorized** - Missing or invalid authentication
+
 ```json
 {
   "error": "Nieautoryzowany dostęp"
@@ -134,6 +139,7 @@ Or:
 ```
 
 **403 Forbidden** - User not a member of workspace
+
 ```json
 {
   "error": "Nie masz uprawnień do tworzenia lokalizacji w tej przestrzeni roboczej"
@@ -141,6 +147,7 @@ Or:
 ```
 
 **404 Not Found** - Parent location doesn't exist
+
 ```json
 {
   "error": "Nie znaleziono lokalizacji nadrzędnej"
@@ -148,6 +155,7 @@ Or:
 ```
 
 **409 Conflict** - Sibling with same name exists
+
 ```json
 {
   "error": "Lokalizacja o tej nazwie już istnieje na tym poziomie"
@@ -155,6 +163,7 @@ Or:
 ```
 
 **500 Internal Server Error** - Database or server error
+
 ```json
 {
   "error": "Nie udało się utworzyć lokalizacji"
@@ -164,6 +173,7 @@ Or:
 ## 5. Data Flow
 
 ### High-Level Flow
+
 1. **Request Reception** → API route receives POST request with location data
 2. **Authentication Check** → Middleware validates JWT token and extracts user ID
 3. **Input Validation** → Zod schema validates request body structure and types
@@ -242,22 +252,27 @@ RETURNING *;
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Mechanism:** Supabase Auth (GoTrue) with JWT tokens
 - **Validation:** Middleware extracts and validates `Authorization: Bearer <token>` header
 - **User Context:** User ID attached to `context.locals.user` for service layer
 
 ### Authorization
+
 - **Workspace Access:** RLS policies enforce that user must be member of workspace
 - **Explicit Checks:** Service layer explicitly validates workspace membership for clear error messages
 - **Parent Validation:** Ensure parent location belongs to same workspace to prevent cross-workspace injection
 
 ### Input Sanitization
+
 - **Path Injection Prevention:** Normalize location names to prevent malicious ltree path manipulation
 - **Character Whitelist:** Only allow alphanumeric characters and underscores in normalized paths
 - **SQL Injection:** Use parameterized queries via Supabase client (prevents SQL injection)
 
 ### RLS Policies
+
 PostgreSQL RLS policies on `locations` table automatically enforce:
+
 ```sql
 -- Users can only insert locations in workspaces they belong to
 CREATE POLICY "Users can insert locations in their workspaces"
@@ -274,17 +289,18 @@ WITH CHECK (
 
 ### Threat Mitigation
 
-| Threat | Mitigation |
-|--------|------------|
+| Threat                         | Mitigation                                                          |
+| ------------------------------ | ------------------------------------------------------------------- |
 | Unauthorized location creation | JWT validation + RLS policies + explicit workspace membership check |
-| Path injection attacks | Input sanitization, character whitelisting, path normalization |
-| Hierarchy depth attacks | Enforce max depth of 5 levels |
-| Cross-workspace injection | Validate parent belongs to same workspace |
-| Name collision attacks | Check sibling uniqueness before insert |
+| Path injection attacks         | Input sanitization, character whitelisting, path normalization      |
+| Hierarchy depth attacks        | Enforce max depth of 5 levels                                       |
+| Cross-workspace injection      | Validate parent belongs to same workspace                           |
+| Name collision attacks         | Check sibling uniqueness before insert                              |
 
 ## 7. Error Handling
 
 ### Error Handling Strategy
+
 - Handle errors at the beginning of functions (early returns)
 - Provide user-friendly error messages in Polish
 - Log detailed errors server-side for debugging
@@ -292,22 +308,23 @@ WITH CHECK (
 
 ### Error Scenarios
 
-| Scenario | Status Code | Error Message | Handling |
-|----------|-------------|---------------|----------|
-| Missing auth token | 401 | "Nieautoryzowany dostęp" | Middleware catches, returns 401 |
-| Invalid JWT token | 401 | "Nieautoryzowany dostęp" | Middleware catches, returns 401 |
-| User not workspace member | 403 | "Nie masz uprawnień do tworzenia lokalizacji w tej przestrzeni roboczej" | Service validates, returns 403 |
-| Missing workspace_id | 400 | Zod validation error | Zod catches, returns 400 with details |
-| Missing name | 400 | "Nazwa lokalizacji jest wymagana" | Zod catches, returns 400 with details |
-| Invalid UUID format | 400 | "Nieprawidłowy format ID" | Zod catches, returns 400 with details |
-| Parent location not found | 404 | "Nie znaleziono lokalizacji nadrzędnej" | Service checks parent existence, returns 404 |
-| Parent in different workspace | 404 | "Nie znaleziono lokalizacji nadrzędnej" | Service validates parent workspace, returns 404 (don't leak workspace info) |
-| Max depth exceeded | 400 | "Przekroczono maksymalną głębokość hierarchii. Lokalizacje mogą być zagnieżdżone maksymalnie na 5 poziomach." | Service calculates depth, returns 400 |
-| Sibling name conflict | 409 | "Lokalizacja o tej nazwie już istnieje na tym poziomie" | Service checks uniqueness, returns 409 |
-| Database constraint violation | 500 | "Nie udało się utworzyć lokalizacji" | Catch database errors, log details, return 500 |
-| Unexpected errors | 500 | "Wewnętrzny błąd serwera" | Catch-all handler, log error, return 500 |
+| Scenario                      | Status Code | Error Message                                                                                                 | Handling                                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Missing auth token            | 401         | "Nieautoryzowany dostęp"                                                                                      | Middleware catches, returns 401                                             |
+| Invalid JWT token             | 401         | "Nieautoryzowany dostęp"                                                                                      | Middleware catches, returns 401                                             |
+| User not workspace member     | 403         | "Nie masz uprawnień do tworzenia lokalizacji w tej przestrzeni roboczej"                                      | Service validates, returns 403                                              |
+| Missing workspace_id          | 400         | Zod validation error                                                                                          | Zod catches, returns 400 with details                                       |
+| Missing name                  | 400         | "Nazwa lokalizacji jest wymagana"                                                                             | Zod catches, returns 400 with details                                       |
+| Invalid UUID format           | 400         | "Nieprawidłowy format ID"                                                                                     | Zod catches, returns 400 with details                                       |
+| Parent location not found     | 404         | "Nie znaleziono lokalizacji nadrzędnej"                                                                       | Service checks parent existence, returns 404                                |
+| Parent in different workspace | 404         | "Nie znaleziono lokalizacji nadrzędnej"                                                                       | Service validates parent workspace, returns 404 (don't leak workspace info) |
+| Max depth exceeded            | 400         | "Przekroczono maksymalną głębokość hierarchii. Lokalizacje mogą być zagnieżdżone maksymalnie na 5 poziomach." | Service calculates depth, returns 400                                       |
+| Sibling name conflict         | 409         | "Lokalizacja o tej nazwie już istnieje na tym poziomie"                                                       | Service checks uniqueness, returns 409                                      |
+| Database constraint violation | 500         | "Nie udało się utworzyć lokalizacji"                                                                          | Catch database errors, log details, return 500                              |
+| Unexpected errors             | 500         | "Wewnętrzny błąd serwera"                                                                                     | Catch-all handler, log error, return 500                                    |
 
 ### Error Response Format
+
 ```typescript
 interface ErrorResponse {
   error: string;
@@ -318,6 +335,7 @@ interface ErrorResponse {
 ## 8. Performance Considerations
 
 ### Potential Bottlenecks
+
 1. **Multiple Database Queries:** Workspace check, parent validation, sibling check, insert
 2. **Path Uniqueness Checks:** Query to check sibling conflicts could be slow with many locations
 3. **RLS Policy Evaluation:** Additional query overhead from RLS policies
@@ -344,6 +362,7 @@ interface ErrorResponse {
    - Use `.maybeSingle()` when record might not exist (null instead of error)
 
 ### Expected Performance
+
 - **Target Response Time:** < 200ms for typical request
 - **Database Queries:** 2-4 queries (membership check, parent fetch, conflict check, insert)
 - **Network Latency:** Depends on Supabase region, typically 10-50ms
@@ -351,6 +370,7 @@ interface ErrorResponse {
 ## 9. Implementation Steps
 
 ### Step 1: Create Location Service
+
 **File:** `src/lib/services/location.service.ts`
 
 1. Define `LocationService` class or module with `createLocation` method
@@ -375,6 +395,7 @@ interface ErrorResponse {
    - Return `LocationDto`
 
 ### Step 2: Create Zod Validation Schema
+
 **File:** `src/lib/validators/location.validators.ts` (or inline in API route)
 
 1. Import Zod: `import { z } from 'zod'`
@@ -382,6 +403,7 @@ interface ErrorResponse {
 3. Export schema for use in API route
 
 ### Step 3: Create API Route Handler
+
 **File:** `src/pages/api/locations/index.ts`
 
 1. Import dependencies:
@@ -400,6 +422,7 @@ interface ErrorResponse {
    - Return 201 with created location on success
 
 ### Step 4: Error Handling
+
 **In API Route:**
 
 1. Wrap main logic in try-catch block
@@ -468,26 +491,30 @@ interface ErrorResponse {
 ## 10. Additional Notes
 
 ### Name Normalization Details
+
 PostgreSQL ltree labels must match: `[A-Za-z0-9_]` and be 1-256 characters.
 
 **Normalization algorithm:**
+
 ```typescript
 function normalizeLocationName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9_]/g, '_') // Replace non-alphanumeric (except _) with _
-    .replace(/_+/g, '_')          // Collapse multiple underscores
-    .replace(/^_|_$/g, '');       // Remove leading/trailing underscores
+    .replace(/[^a-z0-9_]/g, "_") // Replace non-alphanumeric (except _) with _
+    .replace(/_+/g, "_") // Collapse multiple underscores
+    .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
 }
 ```
 
 **Examples:**
+
 - "Shelf A" → "shelf_a"
 - "Top-Left Corner!" → "top_left_corner"
 - "Box #123" → "box_123"
 
 ### Future Enhancements
+
 1. **Batch Location Creation:** Support creating multiple locations in one request
 2. **Location Templates:** Pre-defined location structures (e.g., "Standard Garage Setup")
 3. **Location Move:** Allow changing parent_id (rebuild paths for all descendants)
@@ -496,12 +523,14 @@ function normalizeLocationName(name: string): string {
 6. **Audit Trail:** Track who created/modified locations and when
 
 ### Dependencies
+
 - Supabase client (from `src/db/supabase.client.ts`)
 - Zod for validation
 - Existing types from `src/types.ts`
 - Middleware for auth (from `src/middleware/index.ts`)
 
 ### Files to Create/Modify
+
 - **Create:** `src/lib/services/location.service.ts`
 - **Create:** `src/lib/validators/location.validators.ts` (optional, can inline in route)
 - **Create:** `src/pages/api/locations/index.ts` (add POST handler)
