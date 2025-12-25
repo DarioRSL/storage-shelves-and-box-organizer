@@ -28,3 +28,4 @@ supabase/.temp/*
 #Dokumantacja developmantu, czaty i inne rzeczy niepotrzebne w repozytorium
 dokumentacja_development/*
 .ai_docs/api_todo.md
+.env.bak
