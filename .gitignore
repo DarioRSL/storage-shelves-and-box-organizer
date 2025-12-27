@@ -24,8 +24,9 @@ pnpm-debug.log*
 .idea/
 supabase/.temp/*
 
-
+#own staff
 #Dokumantacja developmantu, czaty i inne rzeczy niepotrzebne w repozytorium
 dokumentacja_development/*
 .ai_docs/api_todo.md
 .env.bak
+.ai_docs/commands/*

@@ -1,5 +1,25 @@
 # Dokument wymagań produktu (PRD) - Storage & Box Organizer
 
+## 0. MVP vs Post-MVP Roadmap
+
+**MVP Release (Current Focus):**
+- Email/Password authentication (US-001)
+- Workspace and location management (US-003, US-004)
+- Box management - create, read, update, delete (US-006, US-007, US-008, US-009)
+- QR code generation in minimal form for desktop (US-005)
+- Live search functionality (US-010)
+- Desktop-first UI design
+
+**Post-MVP Releases:**
+- Account deletion with RODO compliance (US-002)
+- Export to CSV (US-011)
+- OAuth (Google, Apple Auth)
+- Dark mode (Nice-to-have)
+- Full mobile optimization
+- Password recovery via email
+
+---
+
 ## 1. Przegląd produktu
 
 Storage & Box Organizer to aplikacja internetowa typu Progressive Web App (PWA), zaprojektowana, aby pomóc użytkownikom domowym i małym firmom w zarządzaniu przedmiotami przechowywanymi w pudełkach. Aplikacja rozwiązuje problem braku wiedzy o zawartości pudeł bez ich fizycznego otwierania. Kluczową funkcjonalnością jest system kodów QR: użytkownik drukuje etykiety, nakleja je na pudełka, a następnie skanuje telefonem, aby cyfrowo przypisać zawartość (opis, tagi) i lokalizację. System umożliwia szybkie wyszukiwanie przedmiotów oraz zarządzanie strukturą przechowywania (pokoje, regały, półki).
@@ -12,10 +32,15 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 
 ### 3.1 Uwierzytelnianie i Zarządzanie Kontem
 
-- Rejestracja i logowanie za pomocą Google Auth, Apple Auth oraz standardowego loginu i hasła.
-- Brak mechanizmu odzyskiwania hasła drogą mailową w wersji MVP (użytkownik musi pamiętać dane lub używać OAuth).
-- Możliwość trwałego usunięcia konta wraz ze wszystkimi danymi (zgodność z RODO).
+**MVP:**
+- Rejestracja i logowanie za pomocą standardowego loginu i hasła.
+- Brak mechanizmu odzyskiwania hasła drogą mailową w wersji MVP (użytkownik musi pamiętać dane).
 - Automatyczne tworzenie prywatnego Workspace po rejestracji.
+
+**Post-MVP:**
+- Google Auth i Apple Auth (OAuth)
+- Odzyskiwanie hasła drogą mailową
+- Możliwość trwałego usunięcia konta wraz ze wszystkimi danymi (zgodność z RODO)
 
 ### 3.2 Zarządzanie Strukturą (Lokalizacje)
 
@@ -34,11 +59,17 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 
 ### 3.4 System Kodów QR
 
-- Generowanie arkuszy z kodami QR do druku (PDF) bezpośrednio w aplikacji.
+**MVP:**
+- Generowanie arkuszy z kodami QR do druku (PDF) w minimalnej wersji - wymagane do pracy na desktop.
 - Obsługa generowania seryjnego (Batch Generate), np. 20 pustych kodów na raz.
 - Każdy kod QR zawiera unikalny URL prowadzący do zasobu w aplikacji.
-- Etykieta na wydruku zawiera kod QR oraz krótki identyfikator tekstowy (np. X7K-9P2) dla łatwej identyfikacji wzrokowej.
 - Obsługa procesu: Skanowanie pustego kodu QR (przekierowanie do tworzenia nowego pudełka) -> Przypisanie danych.
+- Etykiety do druku zawierają kod QR oraz identyfikator tekstowy dla łatwej identyfikacji wzrokowej.
+
+**PDF Generation (Minimal Implementation):**
+- Layout: Tabela kodów QR w rozmiarze odpowiednim do druku A4
+- Format etykiety: QR code + tekst ID poniżej
+- Funkcjonalność: Pozwala na drukowanie bezpośrednio z przeglądarki (window.print)
 
 ### 3.5 Wyszukiwanie i Przeglądanie
 
@@ -49,17 +80,27 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 
 ### 3.6 Eksport Danych
 
+**Post-MVP:**
 - Możliwość pobrania listy wszystkich pudeł i ich zawartości do pliku CSV/Excel.
 
 ## 4. Granice produktu
 
-### W zakresie (In Scope)
+### W zakresie (In Scope) - MVP
 
-- Aplikacja Webowa / PWA dostępna przez przeglądarkę.
+- Aplikacja Webowa dostępna przez przeglądarkę.
 - Wymagane połączenie z internetem do działania.
 - Interfejs użytkownika w języku polskim.
-- Obsługa trybu ciemnego (Dark Mode).
-- Responsywność (Mobile-First dla operacji na pudełkach, Desktop dla zarządzania strukturą).
+- **Desktop-first design** (mobilny interfejs to post-MVP).
+- Obsługa skanowania QR kodów na wszystkich urządzeniach (desktop i mobile).
+
+### Post-MVP (Later releases)
+
+- Obsługa trybu ciemnego (Dark Mode) - nice-to-have
+- Pełna responsywność (Mobile-optimized UI dla operacji na pudełkach)
+- Eksport danych do CSV/Excel
+- Google Auth i Apple Auth (OAuth)
+- Odzyskiwanie hasła drogą mailową
+- Usunięcie konta (zgodność z RODO)
 
 ### Poza zakresem (Out of Scope)
 
@@ -77,22 +118,27 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 ### Uwierzytelnianie i Konto
 
 ID: US-001
-Tytuł: Rejestracja i logowanie przez OAuth
-Opis: Jako nowy użytkownik chcę szybko założyć konto używając mojego konta Google, aby nie musieć zapamiętywać nowego hasła.
+Tytuł: Rejestracja i logowanie (Email/Hasło)
+Opis: Jako nowy użytkownik chcę założyć konto przy użyciu adresu e-mail i hasła, aby uzyskać dostęp do aplikacji.
 Kryteria akceptacji:
 
-1. Na ekranie logowania widoczny jest przycisk Zaloguj z Google.
-2. Po kliknięciu następuje standardowy proces autoryzacji Google.
-3. Po sukcesie, jeśli użytkownik nie istnieje, system tworzy nowe konto i domyślny Workspace.
-4. Użytkownik zostaje przekierowany do głównego widoku aplikacji.
+1. Dostępna jest strona rejestracji z polami: email, hasło, potwierdzenie hasła.
+2. Po wypełnieniu i zatwierdzeniu, system tworzy nowe konto i domyślny Workspace.
+3. Dostępna jest strona logowania z polami: email, hasło.
+4. Po zalogowaniu użytkownik zostaje przekierowany do głównego widoku aplikacji (/app).
+5. System waliduje siłę hasła (minimum 8 znaków).
 
-ID: US-002
-Tytuł: Usunięcie konta
+**Post-MVP Enhancement:**
+- Dodać OAuth (Google, Apple)
+
+ID: US-002-POST-MVP
+Tytuł: Usunięcie konta (Post-MVP)
 Opis: Jako użytkownik dbający o prywatność chcę mieć możliwość trwałego usunięcia mojego konta i wszystkich danych.
+Status: **Post-MVP - nie wdrażać w MVP**
 Kryteria akceptacji:
 
 1. W ustawieniach dostępna jest opcja Usuń konto.
-2. System wymaga potwierdzenia decyzji.
+2. System wymaga potwierdzenia decyzji (np. wpisanie hasła lub potwierdzenie tekstowe).
 3. Po potwierdzeniu wszystkie dane użytkownika (profil, workspace, lokalizacje, pudełka) są trwale usuwane z bazy danych.
 4. Użytkownik zostaje wylogowany.
 
@@ -190,14 +236,17 @@ Kryteria akceptacji:
 
 ### Eksport
 
-ID: US-011
-Tytuł: Eksport danych
+ID: US-011-POST-MVP
+Tytuł: Eksport danych (Post-MVP)
 Opis: Jako użytkownik chcę pobrać listę moich rzeczy, aby mieć kopię zapasową lub listę inwentarzową.
+Status: **Post-MVP - nie wdrażać w MVP**
 Kryteria akceptacji:
 
 1. W ustawieniach dostępna opcja Eksportuj dane.
-2. System generuje plik CSV lub Excel.
-3. Plik zawiera listę pudełek z ich nazwami, opisami i lokalizacjami.
+2. System generuje plik CSV w formacie UTF-8 z BOM dla kompatybilności Excel.
+3. Plik zawiera kolumny: box_name, description, tags, location_path.
+4. Każda linia zawiera jedno pudełko.
+5. Tagi są rozdzielone przecinkami, lokalizacja to pełna ścieżka (np. "Piwnica > Regał A > Półka Górna").
 
 ## 6. Metryki sukcesu
 
