@@ -803,10 +803,7 @@ export async function deleteWorkspace(
     // 5. Delete workspace
 
     // Delete boxes first (this triggers QR code resets via database trigger)
-    const { error: deleteBoxesError } = await supabase
-      .from("boxes")
-      .delete()
-      .eq("workspace_id", workspaceId);
+    const { error: deleteBoxesError } = await supabase.from("boxes").delete().eq("workspace_id", workspaceId);
 
     if (deleteBoxesError) {
       console.error("Error deleting boxes:", deleteBoxesError);
@@ -827,10 +824,7 @@ export async function deleteWorkspace(
     }
 
     // Delete locations
-    const { error: deleteLocationsError } = await supabase
-      .from("locations")
-      .delete()
-      .eq("workspace_id", workspaceId);
+    const { error: deleteLocationsError } = await supabase.from("locations").delete().eq("workspace_id", workspaceId);
 
     if (deleteLocationsError) {
       console.error("Error deleting locations:", deleteLocationsError);
