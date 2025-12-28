@@ -647,36 +647,82 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ### 2.5 Export
 
-#### GET /export/inventory
+#### GET /api/export/inventory
 
-- **Description**: Generates and downloads a CSV/Excel file of all boxes in the workspace.
+- **Description**: Generates and downloads all boxes from a workspace in CSV or JSON format.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/export/inventory.ts`
+- **Service Layer**: `src/lib/services/exportService.ts::exportInventory()`
 - **Query Parameters**:
-  - `workspace_id` (UUID, required)
+  - `workspace_id` (UUID, required): Workspace to export from
+  - `format` (string, optional): Export format - 'csv' or 'json' (default: 'csv')
 - **Request JSON**: None
 - **Response JSON**: (Binary file stream)
-  - `Content-Type`: `text/csv` or `application/vnd.ms-excel`
+  - `Content-Type`: `text/csv` or `application/json`
+  - `Content-Disposition`: `attachment; filename="inventory-{workspace_id}-{date}.csv"`
+  - Includes header: `Cache-Control: no-cache, no-store, must-revalidate`
+
+**Export Columns (CSV):**
+- id, short_id, name, location, description, tags, qr_code, created_at, updated_at
+
+**Features:**
+- Supports both CSV and JSON formats
+- Automatic file download with proper headers
+- Includes all box metadata with joined location and QR code data
+- Prevents caching of export content
+
+- **Authorization**:
+  - User must be member of the workspace
+  - Verified via workspace_members table + RLS policies
+
 - **Errors**:
-  - `401 Unauthorized`: Permission denied.
-  - `400 Bad Request`: Missing workspace ID.
+  - `400 Bad Request`: Missing workspace_id or invalid format parameter
+  - `401 Unauthorized`: User not authenticated
+  - `403 Forbidden`: User is not workspace member
+  - `404 Not Found`: Workspace does not exist
+  - `500 Internal Server Error`: Export generation failed
 
 ### 2.6 Account Management
 
-#### DELETE /auth/delete-account
+#### DELETE /api/auth/delete-account
 
-- **Description**: Permanently deletes the authenticated user's account and all associated data (Workspace, Profiles, etc.).
+- **Description**: Permanently deletes the authenticated user's account and all associated data (workspaces, profiles, boxes, locations, QR codes). This is an irreversible operation.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/auth/delete-account.ts`
+- **Service Layer**: `src/lib/services/auth.service.ts::deleteUserAccount()`
 - **Query Parameters**: None
 - **Request JSON**: None
-- **Response JSON**:
+- **Request Headers**:
+  - `Authorization: Bearer <JWT_TOKEN>` (required)
+
+- **Response JSON** (200 OK):
 
 ```json
 {
-  "message": "Account successfully deleted."
+  "message": "Account successfully deleted"
 }
 ```
 
+**Cascade Operations:**
+- Deletes user profile
+- Deletes all workspaces owned by user
+- Deletes all workspace memberships
+- Deletes all boxes, locations, QR codes in owned workspaces
+- Revokes user authentication in Supabase Auth
+
+- **Authorization**:
+  - User can only delete their own account (no parameter-based user ID)
+  - Requires valid JWT token in Authorization header
+
 - **Errors**:
-  - `401 Unauthorized`: User not authenticated.
-  - `500 Internal Server Error`: Deletion process failed.
+  - `401 Unauthorized`: User not authenticated (missing or invalid JWT token)
+  - `404 Not Found`: User account not found
+  - `500 Internal Server Error`: Account deletion or auth revocation failed
+
+**Important Notes:**
+- This is an irreversible operation - all user data is permanently deleted
+- User will be logged out after deletion
+- No recovery or grace period available
 
 ---
 
