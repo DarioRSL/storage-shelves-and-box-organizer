@@ -332,7 +332,58 @@ export const ValidationRules = {
   },
 } as const;
 
-// --- 8. Utility Types ---
+// --- 8. Export & Data Portability ---
+
+/**
+ * Request query parameters for GET /api/export/inventory endpoint.
+ */
+export interface ExportInventoryQuery {
+  workspace_id: string; // UUID v4 format
+  format?: "csv" | "json"; // Default: 'csv'
+}
+
+/**
+ * Single box record in CSV/JSON export output.
+ * All fields are strings/nulls for CSV compatibility.
+ */
+export interface ExportedBoxRecord {
+  id: string;
+  short_id: string;
+  name: string;
+  location: string; // Formatted breadcrumb (e.g., "Basement > Shelf A") or empty string
+  description: string | null;
+  tags: string; // CSV format (comma-separated) for CSV export, array for JSON
+  qr_code: string | null; // Format: "QR-XXXXXX" or empty string
+  created_at: string; // ISO 8601 timestamp
+  updated_at: string; // ISO 8601 timestamp
+}
+
+/**
+ * JSON export format with metadata wrapper.
+ * Used for GET /api/export/inventory with format=json.
+ */
+export interface ExportInventoryJsonResponse {
+  meta: {
+    workspace_id: string;
+    export_date: string; // ISO 8601 timestamp
+    total_records: number;
+    format_version: string; // e.g., "1.0"
+  };
+  data: (Omit<ExportedBoxRecord, "tags"> & {
+    tags: string[]; // Array format in JSON (converted from CSV string)
+  })[];
+}
+
+/**
+ * Export file result returned by export service.
+ */
+export interface ExportFileResult {
+  content: string; // CSV or JSON content
+  mimeType: "text/csv" | "application/json";
+  filename: string; // e.g., "inventory-{workspace_id}-{date}.csv"
+}
+
+// --- 9. Utility Types ---
 
 /**
  * Represents pagination metadata that could be returned with list endpoints.
