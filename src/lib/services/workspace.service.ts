@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import type {
   CreateWorkspaceRequest,
+  PatchWorkspaceRequest,
+  PatchWorkspaceResponse,
   UserRole,
   WorkspaceDto,
   WorkspaceMemberDto,
@@ -45,6 +47,26 @@ export class OwnerRemovalError extends Error {
   constructor(message = "Nie można usunąć właściciela workspace'u") {
     super(message);
     this.name = "OwnerRemovalError";
+  }
+}
+
+/**
+ * Custom error for workspace not found.
+ */
+export class WorkspaceNotFoundError extends Error {
+  constructor(message = "Workspace nie został znaleziony") {
+    super(message);
+    this.name = "WorkspaceNotFoundError";
+  }
+}
+
+/**
+ * Custom error for workspace ownership validation.
+ */
+export class WorkspaceOwnershipError extends Error {
+  constructor(message = "Tylko właściciel workspace'u może go aktualizować") {
+    super(message);
+    this.name = "WorkspaceOwnershipError";
   }
 }
 
@@ -629,5 +651,100 @@ export async function removeWorkspaceMember(
       timestamp: new Date().toISOString(),
     });
     throw error instanceof Error ? error : new Error("Nie udało się usunąć członka");
+  }
+}
+
+/**
+ * Updates a workspace's properties (name, description).
+ *
+ * Validates that the current user is the workspace owner and that at least one field
+ * is provided for update. The database trigger `moddatetime` automatically updates the
+ * `updated_at` timestamp.
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace to update
+ * @param userId - UUID of the authenticated user (must be owner)
+ * @param data - Update data (name and/or description)
+ * @returns Updated workspace record
+ * @throws WorkspaceOwnershipError if user is not workspace owner
+ * @throws WorkspaceNotFoundError if workspace doesn't exist or not accessible
+ * @throws Error for database errors
+ */
+export async function updateWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  userId: string,
+  data: PatchWorkspaceRequest
+): Promise<PatchWorkspaceResponse> {
+  try {
+    // 1. Check user is workspace owner
+    const { data: memberData, error: memberError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId)
+      .limit(1)
+      .single();
+
+    if (memberError || !memberData) {
+      console.error("Error checking workspace ownership:", memberError);
+      throw new WorkspaceNotFoundError();
+    }
+
+    if (memberData.role !== "owner") {
+      throw new WorkspaceOwnershipError();
+    }
+
+    // 2. Prepare update object (only include provided fields)
+    const updateObject: Record<string, string | null> = {};
+
+    if (data.name !== undefined) {
+      updateObject.name = data.name;
+    }
+
+    // Note: description is reserved for future use and not currently stored in database
+    // It's accepted in request but not persisted (as per specification)
+
+    // 3. Execute database update
+    const { data: updatedWorkspace, error: updateError } = await supabase
+      .from("workspaces")
+      .update(updateObject)
+      .eq("id", workspaceId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating workspace:", updateError);
+      throw new Error("Nie udało się zaktualizować workspace'u");
+    }
+
+    if (!updatedWorkspace) {
+      throw new WorkspaceNotFoundError();
+    }
+
+    // 4. Log success
+    console.info("PATCH /api/workspaces/:workspace_id - Sukces:", {
+      workspaceId: workspaceId,
+      userId: userId,
+      fields_updated: Object.keys(updateObject),
+      timestamp: new Date().toISOString(),
+    });
+
+    // 5. Return updated workspace
+    return updatedWorkspace as PatchWorkspaceResponse;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof WorkspaceOwnershipError || error instanceof WorkspaceNotFoundError) {
+      throw error;
+    }
+
+    // Log and throw unexpected errors
+    console.error("Unexpected error in updateWorkspace:", {
+      workspaceId: workspaceId,
+      userId: userId,
+      error: error instanceof Error ? error.message : "Nieznany błąd",
+      timestamp: new Date().toISOString(),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się zaktualizować workspace'u");
   }
 }
