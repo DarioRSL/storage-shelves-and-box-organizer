@@ -41,3 +41,16 @@ export const PatchWorkspaceSchema = z
  * Type inference for patch workspace request body validation
  */
 export type PatchWorkspaceInput = z.infer<typeof PatchWorkspaceSchema>;
+
+/**
+ * Validation schema for DELETE /api/workspaces/:workspace_id URL parameter.
+ * Validates the workspace ID from URL params.
+ */
+export const DeleteWorkspaceParamsSchema = z.object({
+  workspace_id: z.string().uuid("Nieprawidłowy format identyfikatora przestrzeni roboczej"),
+});
+
+/**
+ * Type inference for delete workspace parameter validation
+ */
+export type DeleteWorkspaceParamsInput = z.infer<typeof DeleteWorkspaceParamsSchema>;

@@ -22,5 +22,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Make supabase client available to API routes via context.locals
   context.locals.supabase = supabase;
 
+  // Try to get the authenticated user from the token
+  let user = null;
+  if (token) {
+    try {
+      const { data, error } = await supabase.auth.getUser(token);
+      if (!error && data?.user) {
+        user = data.user;
+      }
+    } catch (err) {
+      // Token may be invalid or expired, continue without user
+    }
+  }
+
+  // Make user available to API routes via context.locals
+  context.locals.user = user;
+
   return next();
 });

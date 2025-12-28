@@ -41,6 +41,15 @@ export interface PatchWorkspaceRequest {
  */
 export type PatchWorkspaceResponse = WorkspaceDto;
 
+/**
+ * Response when deleting a workspace via DELETE.
+ * Returns confirmation message with deleted workspace ID.
+ */
+export interface DeleteWorkspaceResponse {
+  message: string;
+  workspace_id: string;
+}
+
 // --- 2.1 Workspace Members ---
 
 /**
