@@ -8,7 +8,10 @@
  * Extends Error to provide custom error handling and identification.
  */
 export abstract class AppError extends Error {
-  constructor(message: string, public readonly statusCode: number = 500) {
+  constructor(
+    message: string,
+    public readonly statusCode = 500
+  ) {
     super(message);
     this.name = this.constructor.name;
     Object.setPrototypeOf(this, AppError.prototype);

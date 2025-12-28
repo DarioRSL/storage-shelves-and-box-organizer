@@ -1,9 +1,5 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import {
-  UserAccountNotFoundError,
-  AccountDeletionError,
-  AuthRevocationError,
-} from "./errors";
+import { UserAccountNotFoundError, AccountDeletionError, AuthRevocationError } from "./errors";
 
 /**
  * Permanently deletes a user's account and all associated data.

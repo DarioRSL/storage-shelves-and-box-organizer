@@ -1,10 +1,6 @@
 import type { APIRoute } from "astro";
 import { deleteUserAccount } from "@/lib/services/auth.service";
-import {
-  UserAccountNotFoundError,
-  AccountDeletionError,
-  AuthRevocationError,
-} from "@/lib/services/errors";
+import { UserAccountNotFoundError, AccountDeletionError, AuthRevocationError } from "@/lib/services/errors";
 import type { DeleteAccountResponse, ErrorResponse } from "@/types";
 
 export const prerender = false;
