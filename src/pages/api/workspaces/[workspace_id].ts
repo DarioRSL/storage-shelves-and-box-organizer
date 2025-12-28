@@ -1,6 +1,15 @@
 import type { APIRoute } from "astro";
-import { deleteWorkspace, updateWorkspace, WorkspaceNotFoundError, WorkspaceOwnershipError } from "@/lib/services/workspace.service";
-import { DeleteWorkspaceParamsSchema, PatchWorkspaceParamsSchema, PatchWorkspaceSchema } from "@/lib/validators/workspace.validators";
+import {
+  deleteWorkspace,
+  updateWorkspace,
+  WorkspaceNotFoundError,
+  WorkspaceOwnershipError,
+} from "@/lib/services/workspace.service";
+import {
+  DeleteWorkspaceParamsSchema,
+  PatchWorkspaceParamsSchema,
+  PatchWorkspaceSchema,
+} from "@/lib/validators/workspace.validators";
 import type { DeleteWorkspaceResponse, ErrorResponse, PatchWorkspaceResponse } from "@/types";
 
 export const prerender = false;

@@ -50,6 +50,14 @@ export interface DeleteWorkspaceResponse {
   workspace_id: string;
 }
 
+/**
+ * Response when deleting a user account via DELETE /api/auth/delete-account.
+ * Returns confirmation message with no sensitive user data.
+ */
+export interface DeleteAccountResponse {
+  message: string;
+}
+
 // --- 2.1 Workspace Members ---
 
 /**
