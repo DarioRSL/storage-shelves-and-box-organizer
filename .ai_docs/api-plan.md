@@ -90,6 +90,79 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   - `400 Bad Request`: Missing `name` field.
   - `401 Unauthorized`: User is not authenticated.
 
+#### PATCH /api/workspaces/:workspace_id
+
+- **Description**: Updates workspace properties (name, description) by the workspace owner.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/workspaces/[workspace_id].ts` (PATCH handler)
+- **Service Layer**: `src/lib/services/workspace.service.ts::updateWorkspace()`
+- **Query Parameters**: None
+- **Request JSON**:
+
+```json
+{
+  "name": "Updated Workspace Name"
+}
+```
+
+- **Response JSON**:
+
+```json
+{
+  "id": "uuid",
+  "owner_id": "uuid",
+  "name": "Updated Workspace Name",
+  "created_at": "2023-10-27T10:00:00Z",
+  "updated_at": "2025-12-28T14:30:00Z"
+}
+```
+
+- **Validation**:
+  - User must be workspace owner
+  - Name: string, 1-255 characters, trimmed
+  - At least one field must be provided
+
+- **Errors**:
+  - `400 Bad Request`: Invalid request body or empty name
+  - `401 Unauthorized`: User not authenticated
+  - `403 Forbidden`: User is not workspace owner
+  - `404 Not Found`: Workspace does not exist
+  - `500 Internal Server Error`: Database error
+
+#### DELETE /api/workspaces/:workspace_id
+
+- **Description**: Permanently deletes a workspace and all associated data (cascade). This is an irreversible operation.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/workspaces/[workspace_id].ts` (DELETE handler)
+- **Service Layer**: `src/lib/services/workspace.service.ts::deleteWorkspace()`
+- **Query Parameters**: None
+- **Request JSON**: None
+- **Response JSON**:
+
+```json
+{
+  "message": "Workspace deleted successfully",
+  "workspace_id": "uuid"
+}
+```
+
+- **Cascade Operations**:
+  - Deletes all boxes in workspace
+  - Resets QR codes (status → 'generated', box_id → NULL)
+  - Deletes all locations in workspace
+  - Removes all workspace members
+  - Deletes the workspace itself
+
+- **Authorization**:
+  - User must be workspace owner
+  - Check via RLS policy
+
+- **Errors**:
+  - `401 Unauthorized`: User not authenticated
+  - `403 Forbidden`: User is not workspace owner
+  - `404 Not Found`: Workspace does not exist
+  - `500 Internal Server Error`: Database error or cascade failure
+
 #### GET /workspaces/:workspace_id/members
 
 - **Description**: Lists all members of a specific workspace with their roles.
