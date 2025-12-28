@@ -27,14 +27,16 @@ A **complete, production-ready implementation roadmap** with:
 - Sign-off templates for stakeholders
 - Complete testing procedures
 
-### 3. ✅ Missing API Endpoint Specifications
-**File:** `MISSING_API_ENDPOINTS.md` (18 KB)
-- 2 critical endpoints (must implement before Phase 3)
-- 2 optional endpoints (Post-MVP)
+### 3. ✅ API Endpoint Specifications (Now Complete!)
+**File:** `MISSING_API_ENDPOINTS.md` (18 KB) - **NOW ARCHIVED**
+- ✅ 2 critical endpoints - **NOW FULLY IMPLEMENTED**
+- ✅ 2 optional endpoints - **SURPRISE: ALSO FULLY IMPLEMENTED**
 - Full HTTP specifications with examples
 - Database queries and RLS policies
 - Frontend integration code
 - Testing strategy for each endpoint
+
+**UPDATE (2025-12-28):** All 4 endpoints are now complete! See updated status in file header and documentation in `api-plan.md`.
 
 ### 4. ✅ Project Overview & Execution Guide
 **File:** `EXECUTION_SUMMARY.md` (15 KB)

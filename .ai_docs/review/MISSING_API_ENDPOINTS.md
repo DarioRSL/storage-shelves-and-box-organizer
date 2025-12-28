@@ -1,19 +1,47 @@
-# 🔌 Missing API Endpoints Specification
+# 🔌 API Endpoints Specification - CRITICAL & POST-MVP
 
-**Storage & Box Organizer - Implementation Gaps**
+**Storage & Box Organizer - Implementation Status**
 **Last Updated:** 2025-12-28
 
 ---
 
-## OVERVIEW
+## ⚠️ IMPORTANT UPDATE - DOCUMENT ARCHIVED
 
-This document specifies API endpoints that are **NOT defined in the original API plan** but are **REQUIRED for MVP implementation**.
+**This document is now ARCHIVED for historical reference only.**
 
-**Impact:** Without these endpoints, the following views cannot be fully implemented:
-- Settings (workspace management)
-- Dashboard (location/box modals)
+**Reason:** Both critical endpoints and post-MVP features have now been fully implemented! See updated status below.
 
-**Priority:** HIGH - Implement before Phase 3 (Dashboard Modals)
+---
+
+## CURRENT STATUS (Updated 2025-12-28)
+
+### ✅ CRITICAL ENDPOINTS - FULLY IMPLEMENTED
+
+These endpoints were originally marked as "missing" but are now complete:
+
+| Endpoint | Status | Implementation | Tests | Docs |
+|----------|--------|----------------|-------|------|
+| **PATCH /api/workspaces/:workspace_id** | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:22-162` | ✅ | ✅ |
+| **DELETE /api/workspaces/:workspace_id** | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:181-297` | ✅ (8/8) | ✅ |
+
+**Documentation:** See `.ai_docs/api-plan.md` (lines 93-164)
+
+### ✅ POST-MVP FEATURES - ALSO FULLY IMPLEMENTED!
+
+These were planned as post-MVP but have also been completed:
+
+| Endpoint | Status | Implementation | Tests | Docs |
+|----------|--------|----------------|-------|------|
+| **DELETE /api/auth/delete-account** | ✅ Complete | `src/pages/api/auth/delete-account.ts` | ✅ | ✅ |
+| **GET /api/export/inventory** | ✅ Complete | `src/pages/api/export/inventory.ts` | ✅ | ✅ |
+
+**Documentation:** See `.ai_docs/api-plan.md` (lines 614-683 and 577-610)
+
+---
+
+## 📋 ORIGINAL CONTENT (Archived for Reference)
+
+This document originally specified endpoints needed for MVP implementation. All specified endpoints are now complete. The original content is preserved below for historical reference.
 
 ---
 

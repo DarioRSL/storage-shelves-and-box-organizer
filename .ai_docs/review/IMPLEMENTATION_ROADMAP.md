@@ -2323,12 +2323,14 @@ src/
 
 ---
 
-# MISSING API ENDPOINTS
+# API ENDPOINTS STATUS
 
-## Critical (MUST IMPLEMENT BEFORE Phase 5)
+## Critical Endpoints (NOW FULLY IMPLEMENTED! ✅)
 
 ### 1. `PATCH /api/workspaces/:workspace_id`
-**Status:** ❌ Not in API plan
+**Status:** ✅ FULLY IMPLEMENTED
+**Implementation File:** `src/pages/api/workspaces/[workspace_id].ts` (lines 22-162)
+**Service Layer:** `src/lib/services/workspace.service.ts::updateWorkspace()`
 **Used by:** Settings (edit workspace name)
 **Endpoint:**
 ```http
@@ -2364,7 +2366,9 @@ Error Responses:
 ---
 
 ### 2. `DELETE /api/workspaces/:workspace_id`
-**Status:** ❌ Not in API plan
+**Status:** ✅ FULLY IMPLEMENTED (8/8 tests passed)
+**Implementation File:** `src/pages/api/workspaces/[workspace_id].ts` (lines 181-297)
+**Service Layer:** `src/lib/services/workspace.service.ts::deleteWorkspace()`
 **Used by:** Settings (delete workspace)
 **Endpoint:**
 ```http
@@ -2390,10 +2394,12 @@ Error Responses:
 
 ---
 
-## Optional (Post-MVP)
+## Optional Features (SURPRISE: ALSO FULLY IMPLEMENTED! ✅)
 
 ### 3. `DELETE /api/auth/delete-account`
-**Status:** ❌ Not in API plan
+**Status:** ✅ FULLY IMPLEMENTED
+**Implementation File:** `src/pages/api/auth/delete-account.ts`
+**Service Layer:** `src/lib/services/auth.service.ts::deleteUserAccount()`
 **Used by:** Settings (delete account)
 **Endpoint:**
 ```http
@@ -2409,7 +2415,9 @@ Response (200 OK):
 ---
 
 ### 4. `GET /api/export/inventory`
-**Status:** ❌ Placeholder in API plan
+**Status:** ✅ FULLY IMPLEMENTED
+**Implementation File:** `src/pages/api/export/inventory.ts`
+**Service Layer:** `src/lib/services/exportService.ts::exportInventory()`
 **Used by:** Settings (export CSV)
 **Endpoint:**
 ```http

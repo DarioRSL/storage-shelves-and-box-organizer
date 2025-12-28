@@ -125,19 +125,21 @@ Gate 5 → Production: Final Approval & Launch
 - 🧪 Testing requirements
 - 🚀 Deployment notes
 
-**Critical Endpoints (Must Implement):**
+**Critical Endpoints (NOW FULLY IMPLEMENTED! ✅):**
 
-| # | Endpoint | Status | Priority | Timeline | Impact |
-|---|----------|--------|----------|----------|--------|
-| 1 | `PATCH /api/workspaces/:id` | ❌ Missing | HIGH | Phase 1-2 | Blocks Phase 3 |
-| 2 | `DELETE /api/workspaces/:id` | ❌ Missing | HIGH | Phase 1-2 | Blocks Phase 3 |
+| # | Endpoint | Status | Priority | Timeline | Implementation |
+|---|----------|--------|----------|----------|-----------------|
+| 1 | `PATCH /api/workspaces/:id` | ✅ DONE | HIGH | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:22-162` |
+| 2 | `DELETE /api/workspaces/:id` | ✅ DONE (8/8 tests) | HIGH | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:181-297` |
 
-**Optional Endpoints (Post-MVP):**
+**Optional Endpoints (SURPRISE: ALSO FULLY IMPLEMENTED! ✅):**
 
-| # | Endpoint | Status | Priority | Timeline |
-|---|----------|--------|----------|----------|
-| 3 | `DELETE /api/auth/delete-account` | ❌ Missing | MEDIUM | Phase 5+ |
-| 4 | `GET /api/export/inventory` | ❌ Missing | MEDIUM | Phase 5+ |
+| # | Endpoint | Status | Priority | Timeline | Implementation |
+|---|----------|--------|----------|----------|-----------------|
+| 3 | `DELETE /api/auth/delete-account` | ✅ DONE | MEDIUM | ✅ Complete | `src/pages/api/auth/delete-account.ts` |
+| 4 | `GET /api/export/inventory` | ✅ DONE | MEDIUM | ✅ Complete | `src/pages/api/export/inventory.ts` |
+
+**UPDATE (2025-12-28):** All 4 endpoints have been successfully implemented and are fully tested! See `.ai_docs/api-plan.md` for complete documentation.
 
 **For Each Endpoint:**
 - ✅ Full HTTP specification (method, URL, headers)
