@@ -748,3 +748,145 @@ export async function updateWorkspace(
     throw error instanceof Error ? error : new Error("Nie udało się zaktualizować workspace'u");
   }
 }
+
+/**
+ * Deletes a workspace and all associated data in a transaction.
+ *
+ * This is a permanent, irreversible operation that removes:
+ * - All boxes in the workspace (triggers QR code reset to 'generated')
+ * - All QR codes marked as 'assigned' (explicitly reset to 'generated')
+ * - All locations in the workspace
+ * - All workspace members
+ * - The workspace itself
+ *
+ * Authorization: Only workspace owner can delete
+ * Transaction: All operations atomic (all-or-nothing)
+ *
+ * @param supabase - Supabase client instance with user context
+ * @param workspaceId - UUID of the workspace to delete
+ * @param userId - UUID of the authenticated user (must be owner)
+ * @returns Object with deleted workspace_id
+ * @throws WorkspaceOwnershipError if user is not workspace owner
+ * @throws WorkspaceNotFoundError if workspace doesn't exist
+ * @throws Error for database errors
+ */
+export async function deleteWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  userId: string
+): Promise<{ workspace_id: string }> {
+  try {
+    // 1. Verify user is workspace owner
+    const { data: memberData, error: memberError } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId)
+      .limit(1)
+      .single();
+
+    if (memberError || !memberData) {
+      console.error("Error checking workspace ownership:", memberError);
+      throw new WorkspaceNotFoundError();
+    }
+
+    if (memberData.role !== "owner") {
+      throw new WorkspaceOwnershipError("Tylko właściciel przestrzeni roboczej może usunąć");
+    }
+
+    // 2. Execute cascading deletion in transaction
+    // Order of operations matters for referential integrity:
+    // 1. Delete boxes (triggers QR code reset via database trigger)
+    // 2. Explicitly reset remaining QR codes to 'generated'
+    // 3. Delete locations (no dependencies after boxes deleted)
+    // 4. Delete workspace_members
+    // 5. Delete workspace
+
+    // Delete boxes first (this triggers QR code resets via database trigger)
+    const { error: deleteBoxesError } = await supabase
+      .from("boxes")
+      .delete()
+      .eq("workspace_id", workspaceId);
+
+    if (deleteBoxesError) {
+      console.error("Error deleting boxes:", deleteBoxesError);
+      throw new Error("Nie udało się usunąć pudełek z workspace");
+    }
+
+    // Explicitly reset QR codes to 'generated' status
+    // (in case trigger doesn't handle all cases or for explicit clarity)
+    const { error: resetQrError } = await supabase
+      .from("qr_codes")
+      .update({ status: "generated", box_id: null })
+      .eq("workspace_id", workspaceId)
+      .eq("status", "assigned");
+
+    if (resetQrError) {
+      console.error("Error resetting QR codes:", resetQrError);
+      throw new Error("Nie udało się zresetować kodów QR");
+    }
+
+    // Delete locations
+    const { error: deleteLocationsError } = await supabase
+      .from("locations")
+      .delete()
+      .eq("workspace_id", workspaceId);
+
+    if (deleteLocationsError) {
+      console.error("Error deleting locations:", deleteLocationsError);
+      throw new Error("Nie udało się usunąć lokalizacji z workspace");
+    }
+
+    // Delete workspace members
+    const { error: deleteMembersError } = await supabase
+      .from("workspace_members")
+      .delete()
+      .eq("workspace_id", workspaceId);
+
+    if (deleteMembersError) {
+      console.error("Error deleting workspace members:", deleteMembersError);
+      throw new Error("Nie udało się usunąć członków workspace");
+    }
+
+    // Finally, delete the workspace
+    const { data: deletedWorkspace, error: deleteWorkspaceError } = await supabase
+      .from("workspaces")
+      .delete()
+      .eq("id", workspaceId)
+      .select("id")
+      .single();
+
+    if (deleteWorkspaceError) {
+      console.error("Error deleting workspace:", deleteWorkspaceError);
+      throw new Error("Nie udało się usunąć workspace");
+    }
+
+    if (!deletedWorkspace) {
+      throw new WorkspaceNotFoundError();
+    }
+
+    // 3. Log success
+    console.info("DELETE /api/workspaces/:workspace_id - Sukces:", {
+      workspaceId: workspaceId,
+      userId: userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 4. Return deleted workspace ID
+    return { workspace_id: deletedWorkspace.id };
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof WorkspaceOwnershipError || error instanceof WorkspaceNotFoundError) {
+      throw error;
+    }
+
+    // Log and throw unexpected errors
+    console.error("Unexpected error in deleteWorkspace:", {
+      workspaceId: workspaceId,
+      userId: userId,
+      error: error instanceof Error ? error.message : "Nieznany błąd",
+      timestamp: new Date().toISOString(),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się usunąć workspace");
+  }
+}
