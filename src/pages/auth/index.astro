@@ -1,0 +1,42 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { AuthLayout } from "@/components/AuthLayout";
+
+// Disable prerendering for auth routes
+export const prerender = false;
+
+// Get current route from URL
+const { pathname } = Astro.url;
+const isRegisterPage = pathname.includes("/register");
+const initialMode = isRegisterPage ? "register" : "login";
+
+// Check if user is already authenticated
+const user = Astro.locals.user;
+if (user) {
+  return Astro.redirect("/app");
+}
+---
+
+<Layout title="Logowanie - Organizator">
+  <div transition:animate="fade" class="view-transition-name-auth-page">
+    <AuthLayout
+      client:load
+      initialMode={initialMode}
+      onAuthSuccess={() => {
+        // Redirect to app after successful authentication
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line no-undef
+          window.location.href = "/app";
+        }
+      }}
+    />
+  </div>
+</Layout>
+
+<style>
+  :global {
+    @view-transition {
+      navigation: auto;
+    }
+  }
+</style>
