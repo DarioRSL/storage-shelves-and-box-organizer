@@ -23,6 +23,7 @@
     "astro": "^5.13.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "csv-stringify": "^6.4.6",
     "lucide-react": "^0.487.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
