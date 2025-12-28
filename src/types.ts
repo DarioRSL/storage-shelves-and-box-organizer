@@ -27,6 +27,20 @@ export type WorkspaceDto = Tables<"workspaces">;
  */
 export type CreateWorkspaceRequest = Pick<Tables<"workspaces">, "name">;
 
+/**
+ * Payload for updating a workspace via PATCH.
+ */
+export interface PatchWorkspaceRequest {
+  name?: string; // Optional, max 255 chars, will be trimmed
+  description?: string | null; // Optional (reserved for future use)
+}
+
+/**
+ * Response when updating a workspace via PATCH.
+ * Extends WorkspaceDto to include all workspace fields.
+ */
+export type PatchWorkspaceResponse = WorkspaceDto;
+
 // --- 2.1 Workspace Members ---
 
 /**
