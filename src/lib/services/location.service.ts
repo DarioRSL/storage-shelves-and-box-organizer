@@ -374,14 +374,29 @@ export async function getLocations(
     .order("name", { ascending: true });
 
   // Step 3: Apply hierarchical filtering
+  // Note: PostgREST doesn't support ltree operators, so we filter in-memory after fetching all locations
+  const { data: allLocations, error: queryError } = await query;
+
+  if (queryError) {
+    console.error("Database error fetching locations:", queryError);
+    throw new Error("Nie udało się pobrać lokalizacji");
+  }
+
+  if (!allLocations) {
+    return [];
+  }
+
+  // Step 4: Apply hierarchical filtering in-memory
+  let filteredLocations = allLocations;
+
   if (parentId === undefined || parentId === null) {
-    // Get root-level locations (depth = 2: "root.location_name")
-    // Filter for paths that match "root.%" but not "root.%.%"
-    // This ensures we get only direct children of root
-    query = query.like("path", "root.%").not("path", "like", "root.%.%");
+    // Get root-level locations only (depth = 2: "root.location_name")
+    filteredLocations = allLocations.filter((loc) => {
+      const pathSegments = (loc.path as string).split(".");
+      return pathSegments.length === 2; // Only "root.something"
+    });
   } else {
     // Get direct children of specific parent
-    // First fetch parent to get its path
     const { data: parent, error: parentError } = await supabase
       .from("locations")
       .select("path")
@@ -399,18 +414,17 @@ export async function getLocations(
     }
 
     const parentPath = parent.path as string;
+    const parentSegments = parentPath.split(".").length;
 
-    // Filter for direct children: parent_path.% but not parent_path.%.%
-    query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}.%.%`);
+    // Filter for direct children only
+    filteredLocations = allLocations.filter((loc) => {
+      const pathSegments = (loc.path as string).split(".");
+      // Direct children have exactly 1 more segment than parent
+      return pathSegments.length === parentSegments + 1 && (loc.path as string).startsWith(parentPath + ".");
+    });
   }
 
-  // Step 4: Execute query
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Database error fetching locations:", error);
-    throw new Error("Nie udało się pobrać lokalizacji");
-  }
+  const data = filteredLocations;
 
   // Step 5: Derive parent_id for all locations
   // Build a map of parent paths to fetch parent IDs in a single query
