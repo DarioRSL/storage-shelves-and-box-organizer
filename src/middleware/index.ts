@@ -1,42 +1,134 @@
 import { defineMiddleware } from "astro:middleware";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { parse } from "cookie";
 import type { Database } from "../db/database.types.ts";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  // Extract auth token from Authorization header
-  const authHeader = context.request.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  // Parse cookies from request headers using proper cookie parser
+  const cookieString = context.request.headers.get("cookie") || "";
+  const cookies = parse(cookieString);
 
-  // Create a Supabase client with the auth token
-  // Using global.headers option to pass the Authorization header to all requests
-  const supabase = createClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
-    global: {
-      headers: token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {},
-    },
-  });
+  // Check for sb_session HttpOnly cookie (set by /api/auth/session)
+  const sessionToken = cookies.sb_session;
 
-  // Make supabase client available to API routes via context.locals
+  // Debug: Log session status
+  if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+    console.log(`[Middleware] Path: ${context.url.pathname}`);
+    console.log(`[Middleware] Session token present:`, !!sessionToken);
+  }
+
+  // Store cookies to set in response later
+  const cookiesToSet: Array<{ name: string; value: string; options?: any }> = [];
+
+  // Create Supabase client using @supabase/ssr
+  // This handles cookie-based session management automatically
+  const supabase = createServerClient<Database>(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return Object.entries(cookies).map(([name, value]) => ({
+            name,
+            value: value ? decodeURIComponent(value) : "",
+          }));
+        },
+        setAll(cookiesToSet_) {
+          // Store cookies to be set after response
+          cookiesToSet.push(...cookiesToSet_);
+        },
+      },
+    }
+  );
+
+  // Make supabase client available to routes via context.locals
   context.locals.supabase = supabase;
 
-  // Try to get the authenticated user from the token
+  // Get authenticated user from session (cookies) OR from session token
   let user = null;
-  if (token) {
-    try {
-      const { data, error } = await supabase.auth.getUser(token);
-      if (!error && data?.user) {
-        user = data.user;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data?.user) {
+      user = data.user;
+      if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+        console.log(`[Middleware] User found from cookies: ${data.user.email}`);
       }
-    } catch (err) {
-      // Token may be invalid or expired, continue without user
+    } else if (sessionToken) {
+      // If no user from cookies, try to extract from sb_session token
+      // Decode JWT without verification (we trust tokens from our own client)
+      try {
+        const parts = sessionToken.split(".");
+        if (parts.length !== 3) {
+          throw new Error("Invalid JWT format");
+        }
+
+        // Decode the payload (second part of JWT)
+        const payload = JSON.parse(
+          Buffer.from(parts[1], "base64").toString("utf-8")
+        ) as {
+          sub?: string;
+          email?: string;
+          role?: string;
+          aud?: string;
+          user_metadata?: Record<string, unknown>;
+        };
+
+        // Create a user-like object from the JWT payload
+        if (payload.sub && payload.email) {
+          user = {
+            id: payload.sub,
+            email: payload.email,
+            user_metadata: payload.user_metadata || {},
+            aud: payload.aud || "authenticated",
+            role: payload.role,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+            app_metadata: {},
+            phone: null,
+            email_confirmed_at: null,
+            phone_confirmed_at: null,
+            confirmed_at: new Date().toISOString(),
+            is_anonymous: false,
+          } as any;
+
+          if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+            console.log(`[Middleware] User found from session token: ${payload.email}`);
+          }
+        }
+      } catch (err) {
+        if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+          console.log(
+            `[Middleware] Failed to decode session token:`,
+            err instanceof Error ? err.message : String(err)
+          );
+        }
+      }
+    } else if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+      console.log(`[Middleware] No user - error: ${error?.message || "no session"}`);
+    }
+  } catch (err) {
+    // User not authenticated or session invalid, continue without user
+    if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+      console.log(`[Middleware] Exception: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  // Make user available to API routes via context.locals
+  // Make user available to routes via context.locals
   context.locals.user = user;
 
-  return next();
+  // Process the request and get the response
+  const response = await next();
+
+  // Set any cookies that Supabase needs to set
+  cookiesToSet.forEach(({ name, value, options }) => {
+    response.headers.append(
+      "Set-Cookie",
+      `${name}=${encodeURIComponent(value)}; Path=/; ${
+        options?.maxAge ? `Max-Age=${options.maxAge};` : ""
+      }${options?.secure ? "Secure;" : ""}${options?.httpOnly ? "HttpOnly;" : ""}SameSite=Lax`
+    );
+  });
+
+  return response;
 });

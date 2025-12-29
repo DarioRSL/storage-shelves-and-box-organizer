@@ -5,7 +5,6 @@ import type { AuthSuccessResponse } from "@/components/hooks/useAuthForm";
 
 export interface AuthLayoutProps {
   initialMode?: "login" | "register";
-  onAuthSuccess?: (data: AuthSuccessResponse) => void;
 }
 
 /**
@@ -13,7 +12,7 @@ export interface AuthLayoutProps {
  * Provides responsive design container, handles page-wide state coordination,
  * and manages error display across the entire authentication interface.
  */
-export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login", onAuthSuccess }) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" }) => {
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<"login" | "register">(initialMode);
 
@@ -28,9 +27,37 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login", o
 
   const handleAuthSuccess = useCallback(
     (data: AuthSuccessResponse) => {
-      onAuthSuccess?.(data);
+      console.log("[AuthLayout] Auth success, token length:", data.token?.length);
+
+      // Send token to backend to establish HttpOnly session cookie
+      if (typeof window !== "undefined") {
+        console.log("[AuthLayout] Sending token to /api/auth/session");
+
+        fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ token: data.token }),
+        })
+          .then(async (res) => {
+            console.log("[AuthLayout] Response status:", res.status);
+            const responseData = await res.json();
+
+            if (res.ok) {
+              console.log("[AuthLayout] Session established, redirecting to /app");
+              window.location.href = "/app";
+            } else {
+              console.error("[AuthLayout] Failed to establish session:", responseData);
+              setGlobalError("Nie udało się ustanowić sesji");
+            }
+          })
+          .catch((err) => {
+            console.error("[AuthLayout] Fetch error:", err);
+            setGlobalError("Błąd połączenia: " + (err instanceof Error ? err.message : String(err)));
+          });
+      }
     },
-    [onAuthSuccess]
+    []
   );
 
   const handleAuthError = useCallback((error: string) => {
