@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 import { createWorkspace, getUserWorkspaces } from "@/lib/services/workspace.service";
 import type { CreateWorkspaceRequest, WorkspaceDto, ErrorResponse } from "@/types";
 
@@ -20,16 +21,10 @@ const CreateWorkspaceSchema = z.object({
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
@@ -41,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 3. Parse request body
+    // 2. Parse request body
     let body: unknown;
     try {
       body = await request.json();
@@ -57,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 4. Validate input
+    // 3. Validate input
     const parseResult = CreateWorkspaceSchema.safeParse(body);
 
     if (!parseResult.success) {
@@ -75,8 +70,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const validatedData: CreateWorkspaceRequest = parseResult.data;
 
+    // 4. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 5. Call service layer
-    const { data: workspace, error: serviceError } = await createWorkspace(supabase, user.id, validatedData);
+    const { data: workspace, error: serviceError } = await createWorkspace(supabase, userId, validatedData);
 
     if (serviceError || !workspace) {
       console.error("Service error:", serviceError);
@@ -114,18 +112,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * GET /api/workspaces
  * Retrieves all workspaces that the authenticated user belongs to.
  */
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
@@ -138,8 +130,11 @@ export const GET: APIRoute = async ({ locals }) => {
       );
     }
 
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 3. Call service layer to get user workspaces
-    const workspaces = await getUserWorkspaces(supabase, user.id);
+    const workspaces = await getUserWorkspaces(supabase, userId);
 
     // 4. Return success response with workspaces array
     return new Response(JSON.stringify(workspaces), {

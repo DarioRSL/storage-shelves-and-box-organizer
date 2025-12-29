@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { batchGenerateQrCodes, isWorkspaceMember } from "@/lib/services/qr-code.service";
 import { BatchGenerateQrCodesRequestSchema } from "@/lib/validators/qr-code.validators";
 import type { ErrorResponse, BatchGenerateQrCodesRequest } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -19,16 +20,10 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -39,6 +34,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Parse request body
     let body: unknown;
@@ -75,11 +73,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const validatedRequest: BatchGenerateQrCodesRequest = parseResult.data;
 
     // 5. Authorization: Check workspace membership
-    const isMember = await isWorkspaceMember(supabase, validatedRequest.workspace_id, user.id);
+    const isMember = await isWorkspaceMember(supabase, validatedRequest.workspace_id, userId);
 
     if (!isMember) {
       console.warn("[POST /api/qr-codes/batch] Unauthorized workspace access:", {
-        user_id: user.id,
+        user_id: userId,
         workspace_id: validatedRequest.workspace_id,
       });
 
@@ -100,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       // 7. Log success
       console.log("[POST /api/qr-codes/batch] Success:", {
-        user_id: user.id,
+        user_id: userId,
         workspace_id: validatedRequest.workspace_id,
         quantity: validatedRequest.quantity,
         generated_count: response.data.length,
@@ -113,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } catch (error) {
       // Handle service layer errors
       console.error("[POST /api/qr-codes/batch] Service error:", {
-        user_id: user.id,
+        user_id: userId,
         workspace_id: validatedRequest.workspace_id,
         error: error instanceof Error ? error.message : "Unknown error",
       });

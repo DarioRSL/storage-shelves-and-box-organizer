@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 import {
   getBoxById,
   deleteBox,
@@ -26,18 +27,12 @@ export const prerender = false;
  *
  * Returns 200 OK with BoxDto on success.
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ request, params, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -48,6 +43,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate box ID from URL params
     const parseResult = GetBoxByIdSchema.safeParse({ id: params.id });
@@ -67,9 +65,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     const { id } = parseResult.data;
 
-    // 4. Call service layer to fetch box
+    // 3. Call service layer to fetch box
     try {
-      const box: BoxDto = await getBoxById(supabase, id, user.id);
+      const box: BoxDto = await getBoxById(supabase, id, userId);
 
       // 5. Return success response (200 OK)
       return new Response(JSON.stringify(box), {
@@ -127,18 +125,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
  *
  * Returns 200 OK with success message on completion.
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ request, params, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -149,6 +141,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate box ID from URL params
     const parseResult = DeleteBoxSchema.safeParse({ id: params.id });
@@ -170,7 +165,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     // 4. Call service layer to delete box
     try {
-      await deleteBox(supabase, id, user.id);
+      await deleteBox(supabase, id, userId);
 
       // 5. Return success response (200 OK)
       return new Response(
@@ -241,16 +236,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -261,6 +250,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate box ID from URL params
     const paramsParseResult = UpdateBoxParamsSchema.safeParse({ id: params.id });
@@ -313,7 +305,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // 5. Call service layer to update box
     try {
-      const updatedBox: UpdateBoxResponse = await updateBox(supabase, id, user.id, bodyParseResult.data);
+      const updatedBox: UpdateBoxResponse = await updateBox(supabase, id, userId, bodyParseResult.data);
 
       // 6. Return success response (200 OK)
       return new Response(JSON.stringify(updatedBox), {

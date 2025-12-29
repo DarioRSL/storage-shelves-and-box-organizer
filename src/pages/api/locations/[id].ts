@@ -8,6 +8,7 @@ import {
   ForbiddenError,
 } from "@/lib/services/location.service";
 import type { ErrorResponse, SuccessResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -55,16 +56,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    // 2. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Unauthorized",
@@ -75,6 +70,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
+
+    // 3. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 4. Parse and validate request body
     const body = await request.json();
@@ -94,7 +92,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // 5. Call service layer
-    const result = await updateLocation(supabase, paramValidation.data.id, user.id, validation.data);
+    const result = await updateLocation(supabase, paramValidation.data.id, userId, validation.data);
 
     // 6. Return success response
     return new Response(JSON.stringify(result), {
@@ -182,7 +180,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  *
  * @returns 200 OK with success message, or appropriate error response
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, request, locals }) => {
   try {
     // 1. Extract and validate path parameters
     const paramValidation = paramsSchema.safeParse({ id: params.id });
@@ -199,16 +197,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       );
     }
 
-    // 2. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -220,8 +212,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       );
     }
 
+    // 3. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 4. Call service layer to perform soft delete
-    await deleteLocation(supabase, paramValidation.data.id, user.id);
+    await deleteLocation(supabase, paramValidation.data.id, userId);
 
     // 5. Return success response
     return new Response(

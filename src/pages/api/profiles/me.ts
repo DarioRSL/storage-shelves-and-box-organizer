@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
 import type { ProfileDto, ErrorResponse } from "@/types";
 
@@ -16,18 +17,13 @@ export const prerender = false;
  * @returns 404 - Profile not found (edge case)
  * @returns 500 - Internal server error
  */
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context (injected by middleware)
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication - get user from session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
+      console.error("[GET /api/profiles/me] Failed to extract user from session");
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
@@ -40,8 +36,13 @@ export const GET: APIRoute = async ({ locals }) => {
       );
     }
 
+    console.log("[GET /api/profiles/me] Authenticated user:", userId);
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 3. Call service layer to retrieve user profile
-    const profile = await getAuthenticatedUserProfile(supabase, user.id);
+    const profile = await getAuthenticatedUserProfile(supabase, userId);
 
     // 4. Return success response with profile data
     return new Response(JSON.stringify(profile as ProfileDto), {

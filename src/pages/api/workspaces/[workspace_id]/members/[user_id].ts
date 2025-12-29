@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/workspace.service";
 import { NotFoundError } from "@/lib/services/location.service";
 import type { ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -41,16 +42,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const validatedParams = paramsSchema.parse(params);
     const { workspace_id, user_id } = validatedParams;
 
-    // 2. Get Supabase client from locals
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -62,13 +57,16 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
+    // 3. Get Supabase client from locals
+    const supabase = locals.supabase;
+
     // 4. Parse and validate request body
     const body = await request.json();
     const validatedBody = bodySchema.parse(body);
     const { role } = validatedBody;
 
     // 5. Call service layer to update member role
-    const updatedMember = await updateWorkspaceMemberRole(supabase, workspace_id, user_id, user.id, role);
+    const updatedMember = await updateWorkspaceMemberRole(supabase, workspace_id, user_id, userId, role);
 
     // 6. Return 200 OK with updated member data
     return new Response(JSON.stringify(updatedMember), {
@@ -168,22 +166,16 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  *
  * @returns 200 OK with success message, or appropriate error response
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, request, locals }) => {
   try {
     // 1. Validate path parameters
     const validatedParams = paramsSchema.parse(params);
     const { workspace_id, user_id } = validatedParams;
 
-    // 2. Get Supabase client from locals
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -195,8 +187,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       );
     }
 
+    // 3. Get Supabase client from locals
+    const supabase = locals.supabase;
+
     // 4. Call service layer to remove member
-    await removeWorkspaceMember(supabase, workspace_id, user_id, user.id);
+    await removeWorkspaceMember(supabase, workspace_id, user_id, userId);
 
     // 5. Return 200 OK with success message
     return new Response(

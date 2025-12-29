@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { deleteUserAccount } from "@/lib/services/auth.service";
 import { UserAccountNotFoundError, AccountDeletionError, AuthRevocationError } from "@/lib/services/errors";
 import type { DeleteAccountResponse, ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -19,18 +20,12 @@ export const prerender = false;
  * Returns 200 OK with deletion confirmation on success.
  * Returns appropriate error status for authentication and deletion failures.
  */
-export const DELETE: APIRoute = async ({ locals }) => {
+export const DELETE: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brakujący lub nieprawidłowy token JWT",
@@ -42,9 +37,12 @@ export const DELETE: APIRoute = async ({ locals }) => {
       );
     }
 
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 3. Call service layer to delete user account
     try {
-      await deleteUserAccount(supabase, user.id);
+      await deleteUserAccount(supabase, userId);
 
       // 4. Return success response (200 OK)
       return new Response(

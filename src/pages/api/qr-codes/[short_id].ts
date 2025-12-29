@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { getQrCodeByShortId, QrCodeNotFoundError } from "@/lib/services/qr-code.service";
 import { GetQrCodeByShortIdSchema } from "@/lib/validators/qr-code.validators";
 import type { QrCodeDetailDto, ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -14,18 +15,12 @@ export const prerender = false;
  *
  * Returns 200 OK with QrCodeDetailDto on success.
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -36,6 +31,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate short_id from URL params
     const parseResult = GetQrCodeByShortIdSchema.safeParse({ short_id: params.short_id });
@@ -57,7 +55,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     // 4. Call service layer to fetch QR code
     try {
-      const qrCode: QrCodeDetailDto = await getQrCodeByShortId(supabase, short_id, user.id);
+      const qrCode: QrCodeDetailDto = await getQrCodeByShortId(supabase, short_id, userId);
 
       // 5. Return success response (200 OK)
       return new Response(JSON.stringify(qrCode), {

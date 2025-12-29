@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { ZodError } from "zod";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 import {
   createLocation,
   getLocations,
@@ -21,16 +22,10 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -42,14 +37,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 3. Parse request body
+    // 2. Parse request body
     const body = await request.json();
 
-    // 4. Validate request body with Zod schema
+    // 3. Validate request body with Zod schema
     const validatedData = CreateLocationSchema.parse(body);
 
+    // 4. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 5. Call service layer to create location
-    const location = await createLocation(supabase, user.id, validatedData);
+    const location = await createLocation(supabase, userId, validatedData);
 
     // 6. Return 201 Created with location data
     return new Response(JSON.stringify(location), {
@@ -153,16 +151,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
  */
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract user ID from sb_session cookie
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -174,7 +166,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 3. Parse and validate query parameters
+    // 2. Parse and validate query parameters
     const url = new URL(request.url);
     const rawParams = {
       workspace_id: url.searchParams.get("workspace_id"),
@@ -183,8 +175,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const validatedParams = GetLocationsQuerySchema.parse(rawParams);
 
+    // 3. Get Supabase client from context
+    const supabase = locals.supabase;
+
     // 4. Call service layer to retrieve locations
-    const locations = await getLocations(supabase, user.id, validatedParams.workspace_id, validatedParams.parent_id);
+    const locations = await getLocations(supabase, userId, validatedParams.workspace_id, validatedParams.parent_id);
 
     // 5. Return 200 OK with locations array
     return new Response(JSON.stringify(locations), {

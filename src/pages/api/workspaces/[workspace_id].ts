@@ -11,6 +11,7 @@ import {
   PatchWorkspaceSchema,
 } from "@/lib/validators/workspace.validators";
 import type { DeleteWorkspaceResponse, ErrorResponse, PatchWorkspaceResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -30,16 +31,10 @@ export const prerender = false;
  */
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
@@ -50,6 +45,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate workspace_id parameter
     const paramsParseResult = PatchWorkspaceParamsSchema.safeParse({
@@ -107,7 +105,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       const updatedWorkspace: PatchWorkspaceResponse = await updateWorkspace(
         supabase,
         workspace_id,
-        user.id,
+        userId,
         bodyParseResult.data
       );
 
@@ -187,18 +185,12 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
  * Returns 200 OK with deletion confirmation on success.
  * Returns appropriate error status for validation and authorization failures.
  */
-export const DELETE: APIRoute = async ({ params, locals }) => {
+export const DELETE: APIRoute = async ({ params, request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Unauthorized",
@@ -210,6 +202,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Extract and validate workspace_id parameter
     const paramsParseResult = DeleteWorkspaceParamsSchema.safeParse({
@@ -234,7 +229,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     // 4. Call service layer to delete workspace
     try {
-      const result = await deleteWorkspace(supabase, workspace_id, user.id);
+      const result = await deleteWorkspace(supabase, workspace_id, userId);
 
       // 5. Return success response (200 OK)
       return new Response(

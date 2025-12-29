@@ -8,6 +8,7 @@ import {
 } from "@/lib/services/workspace.service";
 import { NotFoundError } from "@/lib/services/location.service";
 import type { ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -34,22 +35,16 @@ const bodySchema = z.object({
  *
  * @returns 200 OK with array of workspace members, or appropriate error response
  */
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, request, locals }) => {
   try {
     // 1. Validate path parameters
     const validatedParams = paramsSchema.parse(params);
     const { workspace_id } = validatedParams;
 
-    // 2. Get Supabase client from locals
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -60,6 +55,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
+
+    // 3. Get Supabase client from locals
+    const supabase = locals.supabase;
 
     // 4. Call service layer to get workspace members
     const members = await getWorkspaceMembers(supabase, workspace_id);
@@ -135,16 +133,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const validatedParams = paramsSchema.parse(params);
     const { workspace_id } = validatedParams;
 
-    // 2. Get Supabase client from locals
-    const supabase = locals.supabase;
+    // 2. Verify authentication
+    const userId = extractUserIdFromSession(request);
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -156,13 +148,16 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
+    // 3. Get Supabase client from locals
+    const supabase = locals.supabase;
+
     // 4. Parse and validate request body
     const body = await request.json();
     const validatedBody = bodySchema.parse(body);
     const { email, role } = validatedBody;
 
     // 5. Call service layer to invite member
-    const newMember = await inviteWorkspaceMember(supabase, workspace_id, user.id, email, role);
+    const newMember = await inviteWorkspaceMember(supabase, workspace_id, userId, email, role);
 
     // 6. Return 201 Created with member data
     return new Response(JSON.stringify(newMember), {

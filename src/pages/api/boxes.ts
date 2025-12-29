@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/box.service";
 import { CreateBoxSchema, GetBoxesQuerySchema } from "@/lib/validators/box.validators";
 import type { CreateBoxRequest, CreateBoxResponse, GetBoxesQuery, BoxDto, ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -23,16 +24,10 @@ export const prerender = false;
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract and verify user ID from session
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -43,6 +38,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Parse request body
     let body: unknown;
@@ -182,16 +180,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
  */
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get Supabase client from context
-    const supabase = locals.supabase;
+    // 1. Extract and verify user ID from session
+    const userId = extractUserIdFromSession(request);
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nieautoryzowany dostęp",
@@ -202,6 +194,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
         }
       );
     }
+
+    // 2. Get Supabase client from context
+    const supabase = locals.supabase;
 
     // 3. Parse query parameters from URL
     const url = new URL(request.url);

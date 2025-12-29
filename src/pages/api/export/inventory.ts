@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { exportInventory } from "@/lib/services/exportService";
 import { ExportInventoryQuerySchema } from "@/lib/validators/export.validators";
 import type { ErrorResponse } from "@/types";
+import { extractUserIdFromSession } from "@/lib/auth.utils";
 
 export const prerender = false;
 
@@ -30,17 +31,12 @@ export const prerender = false;
  * Authorization: Bearer <JWT_TOKEN>
  */
 export async function GET(context: APIContext) {
-  const supabase = context.locals.supabase;
-
   try {
     // --- Step 1: Verify Authentication ---
-    // Extract authenticated user from JWT token via Supabase
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Extract authenticated user from JWT token
+    const userId = extractUserIdFromSession(context.request);
 
-    if (authError || !user) {
+    if (!userId) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
@@ -51,6 +47,8 @@ export async function GET(context: APIContext) {
         }
       );
     }
+
+    const supabase = context.locals.supabase;
 
     // --- Step 2: Parse and Validate Query Parameters ---
     // Extract query parameters from URL
@@ -102,7 +100,7 @@ export async function GET(context: APIContext) {
       .from("workspace_members")
       .select("role")
       .eq("workspace_id", workspace_id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (membershipError || !membership) {
@@ -123,7 +121,7 @@ export async function GET(context: APIContext) {
 
     // --- Step 6: Log successful export (for monitoring) ---
     console.info("[GET /api/export/inventory] Success", {
-      userId: user?.id,
+      userId,
       workspaceId: workspace_id,
       format,
       recordCount: result.content.split("\n").length - 1, // Approximate for monitoring
