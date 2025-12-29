@@ -12,9 +12,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const sessionToken = cookies.sb_session;
 
   // Debug: Log session status
-  if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
+  const isDebugPath = context.url.pathname.startsWith("/api/") || context.url.pathname === "/app" || context.url.pathname === "/auth";
+  if (isDebugPath) {
     console.log(`[Middleware] Path: ${context.url.pathname}`);
     console.log(`[Middleware] Session token present:`, !!sessionToken);
+    if (sessionToken) {
+      console.log(`[Middleware] Session token length:`, sessionToken.length);
+    }
   }
 
   // Store cookies to set in response later
