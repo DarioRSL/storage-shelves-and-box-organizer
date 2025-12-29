@@ -401,3 +401,35 @@ export interface PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
 }
+
+// --- 10. Form & UI Types ---
+
+/**
+ * Represents validation errors for form fields.
+ */
+export interface FormFieldError {
+  field: string;
+  message: string;
+}
+
+/**
+ * Represents form submission error with optional field-specific errors.
+ */
+export interface FormSubmissionError {
+  message: string;
+  fieldErrors?: Record<string, string>;
+}
+
+/**
+ * Extended workspace information with ownership and member count.
+ * Used for displaying workspace details in settings.
+ */
+export interface WorkspaceWithOwnershipInfo extends WorkspaceDto {
+  isOwner: boolean;
+  memberCount: number;
+}
+
+/**
+ * Theme preference type for light/dark/system modes.
+ */
+export type ThemeMode = "light" | "dark" | "system";
