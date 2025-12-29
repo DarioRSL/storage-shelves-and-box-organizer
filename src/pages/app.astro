@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import DashboardContainer from "@/components/dashboard/DashboardContainer";
+
+// Check if user is authenticated via middleware (from sb_session cookie)
+const user = Astro.locals.user;
+if (!user) {
+  // User is not authenticated
+  return Astro.redirect("/auth");
+}
+---
+
+<Layout title="Dashboard">
+  <main role="main">
+    <DashboardContainer client:load />
+  </main>
+</Layout>
