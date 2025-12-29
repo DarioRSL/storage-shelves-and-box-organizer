@@ -19,17 +19,7 @@ if (user) {
 
 <Layout title="Logowanie - Organizator">
   <div transition:animate="fade" class="view-transition-name-auth-page">
-    <AuthLayout
-      client:load
-      initialMode={initialMode}
-      onAuthSuccess={() => {
-        // Redirect to app after successful authentication
-        if (typeof window !== "undefined") {
-          // eslint-disable-next-line no-undef
-          window.location.href = "/app";
-        }
-      }}
-    />
+    <AuthLayout client:load initialMode={initialMode} />
   </div>
 </Layout>
 
