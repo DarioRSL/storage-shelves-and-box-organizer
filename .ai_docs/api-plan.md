@@ -17,6 +17,55 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ## 2. Endpoints
 
+### 2.0 Authentication & Session
+
+#### POST /api/auth/session
+
+- **Description**: Establishes a server-side session with HttpOnly cookie after successful Supabase login.
+- **Request JSON**:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+- **Response JSON**:
+
+```json
+{
+  "success": true
+}
+```
+
+- **Security Flags:**
+  - HttpOnly: Prevents JavaScript access (XSS protection)
+  - Secure: Only HTTPS in production
+  - SameSite=Strict: Only same-origin requests (CSRF protection)
+  - Max-Age=3600: 1 hour expiration
+  - Path=/: Available to all routes
+
+- **Errors:**
+  - `400 Bad Request`: Token missing or invalid format
+  - `500 Internal Server Error`: Token validation failed
+
+#### DELETE /api/auth/session
+
+- **Description**: Clears the session cookie (logout).
+- **Request JSON**: None
+- **Response JSON**:
+
+```json
+{
+  "success": true
+}
+```
+
+- **Errors:**
+  - `500 Internal Server Error`: Unexpected server error
+
+---
+
 ### 2.1 Profiles & Workspace
 
 #### GET /profiles/me
@@ -728,12 +777,77 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ## 3. Authentication and Authorization
 
-- **Mechanism:** Supabase Auth (GoTrue).
-- **Tokens:** JWT (JSON Web Tokens) passed in the `Authorization: Bearer <token>` header.
-- **RLS (Row Level Security):**
-  - All database access is guarded by Postgres RLS policies.
-  - **Policy Rule:** `auth.uid() IN (SELECT user_id FROM workspace_members WHERE workspace_id = current_row.workspace_id)`.
-  - **Context:** The API (PostgREST) automatically applies these policies based on the JWT user.
+### 3.1 HttpOnly Cookie-Based Authentication
+
+- **Mechanism:** Supabase Auth (GoTrue) with server-side session management
+- **Session Establishment:**
+  1. User authenticates via `/auth` page with Supabase
+  2. Client receives JWT token
+  3. Client calls `POST /api/auth/session` with token in request body
+  4. Endpoint validates JWT and sets HttpOnly cookie `sb_session`
+  5. All subsequent requests include cookie automatically
+
+- **Cookie Properties:**
+  - **Name:** `sb_session`
+  - **HttpOnly:** Prevents JavaScript access (XSS protection)
+  - **Secure:** Only HTTPS in production
+  - **SameSite:** Strict (CSRF protection)
+  - **Path:** `/` (all routes)
+  - **Max-Age:** 3600 seconds (1 hour)
+
+- **Client-Side API Requests:**
+  - Use `apiFetch()` utility from `src/lib/api-client.ts`
+  - Utility automatically includes `credentials: 'include'` for cookie transmission
+  - Example: `const data = await apiFetch('/api/workspaces')`
+
+- **Middleware Authentication Flow:**
+  ```
+  Request → Parse Cookies → Extract sb_session
+           → Try Supabase auth (primary)
+           → Fallback: Decode JWT directly (trusted internal)
+           → Set context.locals.user
+           → Pass to route handler
+  ```
+
+- **API Endpoint Authentication:**
+  - Endpoints access user via `context.locals.user`
+  - All endpoints return 401 if user is not authenticated
+  - Examples:
+    ```typescript
+    export const GET = async ({ locals }) => {
+      if (!locals.user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      }
+      // User authenticated, proceed with business logic
+    }
+    ```
+
+### 3.2 Row Level Security (RLS)
+
+- **Database-Level Access Control:**
+  - All database access is guarded by Postgres RLS policies
+  - **Policy Rule:** `auth.uid() IN (SELECT user_id FROM workspace_members WHERE workspace_id = current_row.workspace_id)`
+  - **Context:** Supabase client uses authenticated user context from cookies
+  - **Fallback:** If RLS fails, JavaScript-based validation in service layer provides additional protection
+
+### 3.3 Security Features
+
+✅ **XSS Protection (HttpOnly flag)**
+- JWT tokens cannot be accessed by JavaScript
+- Prevents token theft via malicious scripts
+
+✅ **CSRF Protection (SameSite=Strict)**
+- Cookies only sent to same-origin requests
+- Cross-site requests automatically blocked
+
+✅ **Token Security**
+- Tokens never exposed in URL
+- Tokens never in Authorization header (browser-readable)
+- Tokens stored securely by browser in HttpOnly cookies
+
+✅ **Session Management**
+- 1-hour expiration ensures time-limited access
+- Logout clears cookie immediately (Max-Age=0)
 
 ---
 

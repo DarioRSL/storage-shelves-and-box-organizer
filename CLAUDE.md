@@ -160,11 +160,46 @@ See `.ai_docs/api-plan.md` for complete API specification.
 - Auto-generated in `src/db/database.types.ts`
 - Entity types and DTOs should be defined in `src/types.ts` for frontend/backend sharing
 
-**Authentication:**
+**Authentication: HttpOnly Cookie-Based System**
 
-- Handled by Supabase Auth (GoTrue)
-- JWT tokens in `Authorization: Bearer <token>` header
-- Middleware validates session and attaches user to `context.locals`
+Authentication uses secure HttpOnly cookies for XSS and CSRF protection:
+
+1. **Login Flow:**
+   - User logs in via Supabase on `/auth` page
+   - `AuthLayout` component receives JWT token
+   - Token sent to `POST /api/auth/session` endpoint (body, not URL)
+   - Endpoint validates JWT and sets HttpOnly cookie `sb_session`
+
+2. **Session Cookie Properties:**
+   - **HttpOnly**: Prevents JavaScript access (XSS protection)
+   - **Secure**: Only HTTPS in production
+   - **SameSite=Strict**: Only same-origin requests (CSRF protection)
+   - **Max-Age=3600**: 1 hour expiration
+   - **Path=/**: Available to all routes
+
+3. **API Requests:**
+   - Use `apiFetch()` from `src/lib/api-client.ts` which includes `credentials: 'include'`
+   - Cookies automatically sent with all requests
+   - Middleware extracts `sb_session` and authenticates user
+
+4. **Middleware Authentication:**
+   - Parses cookies from request headers using `cookie` package
+   - Extracts `sb_session` token
+   - **Primary:** Attempts Supabase auth via cookies
+   - **Fallback:** Decodes JWT directly from `sb_session` (trusted internal source)
+   - Makes user available via `context.locals.user`
+
+5. **Logout:**
+   - Client calls `DELETE /api/auth/session`
+   - Endpoint clears `sb_session` cookie by setting `Max-Age=0`
+
+**Security Considerations:**
+
+✅ JWT tokens never exposed in URL or Authorization header
+✅ Tokens never accessible to JavaScript (HttpOnly flag)
+✅ CSRF tokens sent only to same-origin (SameSite=Strict)
+✅ All API endpoints use `context.locals.user` from middleware
+✅ OWASP Top 10 compliant (XSS, CSRF, session hijacking protections)
 
 ## React Component Patterns
 
