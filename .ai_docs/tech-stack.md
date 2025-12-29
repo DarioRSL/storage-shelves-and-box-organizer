@@ -1,21 +1,244 @@
-Frontend
+# Tech Stack - Storage & Box Organizer
 
-- Astro 5
-- React 19
-- TypeScript 5
-- Tailwind 4
-- Nano Stores
-- Shadcn/ui
+## Frontend Framework
 
-Backend
+- **Astro 5** - Static Site Generation + Server-Side Rendering
+  - Uses `@astrojs/node` adapter for SSR
+  - Server-side middleware for authentication
+  - File-based routing with dynamic segments
 
-- Supabase
+- **React 19** - Interactive UI Components
+  - Astro integration for component hydration
+  - Custom hooks for data management
+  - Optimized rendering with React.memo, useCallback, useMemo
 
-CI/CD i Hosting
+- **TypeScript 5** - Type Safety
+  - Strict mode enabled
+  - Auto-generated types from Supabase schema
+  - Zod schemas for runtime validation
 
-- Github Actions
-- DigitalOcean
+- **Tailwind CSS 4** - Styling
+  - Mobile-first responsive design
+  - Dark mode support via `dark:` prefix
+  - Arbitrary values with square brackets
 
-Dodatkowe biblioteki
+- **Shadcn/ui** - Component Library
+  - Unstyled, accessible components
+  - Built on Radix UI primitives
+  - Full Tailwind CSS integration
 
-- react-qr-code / qrcode.react
+- **Nano Stores** - State Management
+  - Lightweight alternative to Redux
+  - Simple reactive stores for global state
+  - Used for dashboard state, user context
+
+## Backend & Infrastructure
+
+- **Supabase (PostgreSQL + Auth)** - Backend-as-a-Service
+  - PostgreSQL database with Row Level Security (RLS)
+  - Built-in authentication (GoTrue)
+  - Real-time subscriptions (optional future feature)
+  - Recommended extensions:
+    - `uuid-ossp` - UUID generation
+    - `ltree` - Hierarchical data (locations)
+    - `moddatetime` - Auto-update timestamps
+    - `pg_trgm` - Fuzzy text search (optional)
+
+- **PostgREST** - Auto-generated REST API
+  - Automatic endpoint generation from PostgreSQL schema
+  - Limitation: Doesn't support ltree operators (see LOCATION_SERVICE_OPTIMIZATION.md)
+  - Workaround: In-memory filtering in JavaScript
+
+## Authentication & Security
+
+### HttpOnly Cookie-Based Sessions (PR #62)
+
+- **Mechanism:** Secure HTTP-only cookies instead of Authorization headers
+- **Benefits:**
+  - ✅ XSS Protection (JavaScript cannot access cookies)
+  - ✅ CSRF Protection (SameSite=Strict)
+  - ✅ Automatic cookie transmission
+- **Implementation:**
+  - `POST /api/auth/session` - Establishes session
+  - Middleware extracts cookie from request headers
+  - Fallback JWT decoding if Supabase unavailable
+- **Documentation:** See AUTHENTICATION_ARCHITECTURE.md
+
+### Multi-Layer Authorization
+
+1. **Application Layer** - Middleware validates user from cookies
+2. **Database Layer** - PostgreSQL RLS policies enforce access control
+3. **API Layer** - Endpoints validate user and business rules
+4. **Service Layer** - Business logic validation
+
+### Row Level Security (RLS)
+
+- All tables have RLS enabled
+- Helper function: `is_workspace_member(workspace_id)`
+- Automatic filtering based on authenticated user
+- Prevents direct database access without authorization
+
+## Additional Libraries
+
+### Data & Validation
+
+- **Zod** - Runtime schema validation
+  - Validates request bodies, query parameters
+  - Polish error messages
+  - Type inference for TypeScript
+
+- **@supabase/supabase-js** - Supabase client SDK
+  - Server-side (SSR) and client-side usage
+  - Automatic cookie management
+  - RLS enforcement through auth context
+
+### UI & UX
+
+- **react-qr-code / qrcode.react** - QR Code generation
+  - Client-side QR generation
+  - SVG and canvas rendering options
+
+- **lucide-react** - Icon library
+  - Consistent, accessible icons
+  - Integrated with Shadcn/ui
+
+### Utilities
+
+- **cookie** - Parse HTTP cookies
+  - Used in middleware for session extraction
+  - Handles cookie format and encoding
+
+- **csv-stringify** - CSV export
+  - Inventory export functionality
+  - Configurable formatting options
+
+## CI/CD & Deployment
+
+- **GitHub Actions** - Continuous Integration
+  - Automated testing (planned)
+  - Linting and formatting checks
+  - Build verification
+
+- **DigitalOcean (Recommended)** - Hosting
+  - App Platform for Astro deployment
+  - PostgreSQL managed database
+  - Automatic SSL certificates
+
+## Development Tools
+
+### Code Quality
+
+- **ESLint** - Code linting
+  - Configuration: eslint.config.js
+  - Enforces code standards
+  - Auto-fix on save
+
+- **Prettier** - Code formatting
+  - Configuration: .prettierrc.json
+  - Consistent code style
+  - Integrated with lint-staged
+
+- **Husky** - Git hooks
+  - Pre-commit hook runs lint-staged
+  - Prevents commits with linting errors
+  - Ensures code quality standards
+
+### Package Management
+
+- **npm** - Node package manager
+  - Dependency lock file (package-lock.json)
+  - Required Node.js version: 22.14.0 (specify in .nvmrc)
+  - Use `nvm use` before development
+
+## Database Schema Features
+
+### Key PostgreSQL Extensions
+
+1. **uuid-ossp** - UUID generation
+   - Function: gen_random_uuid()
+   - Used for all ID fields
+
+2. **ltree** - Hierarchical paths
+   - Location hierarchy (up to 5 levels deep)
+   - Indexed with GIST
+   - Note: PostgREST limitations led to JavaScript filtering approach
+
+3. **moddatetime** - Automatic timestamp updates
+   - Maintains `updated_at` on all record updates
+   - Reduces manual trigger code
+
+### Generated Columns & Triggers
+
+- **search_vector** - Full-text search
+  - Generated column on boxes table
+  - Automatically updated from name, description, tags
+  - Indexed with GIN for fast searches
+
+- **short_id** - Unique identifiers
+  - Box short_ids: 10-char alphanumeric (BEFORE INSERT trigger)
+  - QR codes: QR-XXXXXX format (BEFORE INSERT trigger)
+
+- **is_deleted** - Soft deletes
+  - Locations use soft delete pattern
+  - Preserves audit trail
+
+## Architectural Patterns
+
+### API Design
+
+- **REST Architecture** - RESTful endpoints
+- **Resource-Based URLs** - `/api/workspaces`, `/api/boxes`, etc.
+- **Standard HTTP Methods** - GET, POST, PATCH, DELETE
+- **Consistent Response Format** - JSON with error handling
+
+### Error Handling
+
+- **Zod Validation** - Input validation with schema
+- **Custom Error Classes** - Domain-specific errors
+- **Consistent Status Codes** - 400, 401, 403, 404, 409, 500
+- **Polish Error Messages** - User-friendly localization
+
+### State Management
+
+- **Nano Stores** - Simple reactive state
+- **Server State** - Context.locals for request-scoped data
+- **Client State** - React hooks for component state
+
+## Security Best Practices
+
+✅ **OWASP Top 10 Addressed**
+- A01: Broken Access Control - RLS + API validation
+- A02: Cryptographic Failures - HTTPS + secure cookies
+- A03: Injection - Supabase prepared statements
+- A04: Insecure Design - Secure-by-default approach
+- A05: Security Misconfiguration - RLS enabled by default
+- A06: Vulnerable Components - Regular dependency updates
+- A07: Authentication Failures - HttpOnly cookies + JWT fallback
+- A08: Data Integrity - Dependency lock files
+- A09: Logging & Monitoring - Error logging with context
+- A10: SSRF - All external requests through vetted APIs
+
+## Performance Considerations
+
+- **Query Optimization**
+  - Single efficient queries (no N+1 problems)
+  - Indexes on foreign keys and search vectors
+  - In-memory filtering for hierarchical data (see LOCATION_SERVICE_OPTIMIZATION.md)
+
+- **Caching**
+  - Browser caching for static assets
+  - Client-side cache in Nano Stores
+  - Future: Redis for server-side caching
+
+- **Code Splitting**
+  - Astro automatically splits code per route
+  - React lazy loading for components
+  - Minimal JavaScript sent to client
+
+## Documentation References
+
+- **Architecture:** See CLAUDE.md for project overview
+- **Authentication:** See AUTHENTICATION_ARCHITECTURE.md for security details
+- **Location System:** See LOCATION_SERVICE_OPTIMIZATION.md for hierarchy implementation
+- **API Specification:** See api-plan.md for all endpoints
+- **Database Schema:** See db-plan.md for tables and relationships
