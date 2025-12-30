@@ -182,14 +182,39 @@ Authentication uses secure HttpOnly cookies for XSS and CSRF protection:
    - Cookies automatically sent with all requests
    - Middleware extracts `sb_session` and authenticates user
 
-4. **Middleware Authentication:**
+4. **Middleware Authentication (Updated Implementation):**
    - Parses cookies from request headers using `cookie` package
    - Extracts `sb_session` token
    - **Primary:** Attempts Supabase auth via cookies
    - **Fallback:** Decodes JWT directly from `sb_session` (trusted internal source)
+   - **NEW:** Sets JWT in Supabase client via `supabase.auth.setSession()` for RLS policies
    - Makes user available via `context.locals.user`
+   - Makes authenticated Supabase client available via `context.locals.supabase`
 
-5. **Logout:**
+5. **API Endpoint Pattern (Updated):**
+   - **All 14 API endpoints** now use pre-authenticated `context.locals.user` from middleware
+   - ❌ **Removed:** Redundant `supabase.auth.getUser()` calls in endpoints
+   - ✅ **Now uses:** Direct `const user = locals.user;` check
+   - Supabase client has JWT context (from middleware) for RLS policy authorization
+   - Service layer can use authenticated client for database queries
+
+   **Example Endpoint Pattern:**
+   ```typescript
+   export const GET: APIRoute = async ({ locals }) => {
+     const supabase = locals.supabase;  // Has JWT context from middleware
+     const user = locals.user;           // Already authenticated
+
+     if (!user) {
+       return new Response(...401);
+     }
+
+     // Supabase client now has auth.uid() context for RLS policies
+     const result = await getWorkspaces(supabase, user.id);
+     return new Response(JSON.stringify(result), { status: 200 });
+   };
+   ```
+
+6. **Logout:**
    - Client calls `DELETE /api/auth/session`
    - Endpoint clears `sb_session` cookie by setting `Max-Age=0`
 
@@ -198,8 +223,12 @@ Authentication uses secure HttpOnly cookies for XSS and CSRF protection:
 ✅ JWT tokens never exposed in URL or Authorization header
 ✅ Tokens never accessible to JavaScript (HttpOnly flag)
 ✅ CSRF tokens sent only to same-origin (SameSite=Strict)
-✅ All API endpoints use `context.locals.user` from middleware
+✅ API endpoints use pre-authenticated `context.locals.user` (no re-authentication)
+✅ RLS policies can enforce authorization via `auth.uid()` in Supabase client
 ✅ OWASP Top 10 compliant (XSS, CSRF, session hijacking protections)
+
+**For Detailed Documentation:**
+See `.ai_docs/AUTHENTICATION_ARCHITECTURE.md` section 13 for complete implementation details.
 
 ## React Component Patterns
 

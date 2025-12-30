@@ -8,7 +8,7 @@ export const prerender = false;
  * GET /api/profiles/me
  * Retrieves the profile information of the currently authenticated user.
  *
- * Authentication is required via JWT token in Authorization header.
+ * Authentication is required via JWT token in session cookie.
  * The middleware validates the token and attaches user session to context.locals.
  *
  * @returns 200 - Profile data (ProfileDto)
@@ -21,13 +21,10 @@ export const GET: APIRoute = async ({ locals }) => {
     // 1. Get Supabase client from context (injected by middleware)
     const supabase = locals.supabase;
 
-    // 2. Verify authentication - get user from session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // 2. Verify authentication using context.locals.user (already authenticated by middleware)
+    const user = locals.user;
 
-    if (authError || !user) {
+    if (!user) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",

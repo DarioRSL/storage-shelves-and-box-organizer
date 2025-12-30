@@ -44,13 +44,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     // 2. Get Supabase client from locals
     const supabase = locals.supabase;
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // 3. Verify authentication using context.locals.user (already authenticated by middleware)
+    const user = locals.user;
 
-    if (authError || !user) {
+    if (!user) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",
@@ -177,13 +174,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     // 2. Get Supabase client from locals
     const supabase = locals.supabase;
 
-    // 3. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // 3. Verify authentication using context.locals.user (already authenticated by middleware)
+    const user = locals.user;
 
-    if (authError || !user) {
+    if (!user) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",

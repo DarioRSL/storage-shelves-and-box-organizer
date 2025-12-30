@@ -22,13 +22,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // 1. Get Supabase client from context
     const supabase = locals.supabase;
 
-    // 2. Verify authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // 2. Verify authentication using context.locals.user (already authenticated by middleware)
+    const user = locals.user;
 
-    if (authError || !user) {
+    if (!user) {
       return new Response(
         JSON.stringify({
           error: "Brak autoryzacji",

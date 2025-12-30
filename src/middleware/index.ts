@@ -92,6 +92,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
             is_anonymous: false,
           } as any;
 
+          // Set JWT in Supabase client so RLS policies can check auth.uid()
+          // Manually set the session with the JWT token and empty refresh token
+          await supabase.auth.setSession({
+            access_token: sessionToken,
+            refresh_token: "",
+          });
+
           if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
             console.log(`[Middleware] User found from session token: ${payload.email}`);
           }
