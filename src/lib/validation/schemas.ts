@@ -7,11 +7,7 @@ import { z } from "zod";
 
 // ============= COMMON PATTERNS =============
 
-export const emailSchema = z
-  .string()
-  .email("Nieprawidłowy format adresu email")
-  .trim()
-  .toLowerCase();
+export const emailSchema = z.string().email("Nieprawidłowy format adresu email").trim().toLowerCase();
 
 export const passwordSchema = z
   .string()
@@ -35,12 +31,7 @@ export const descriptionSchema = z
 export const uuidSchema = z.string().uuid("Nieprawidłowy format identyfikatora");
 
 export const tagsSchema = z
-  .array(
-    z
-      .string()
-      .max(50, "Tag nie może być dłuższy niż 50 znaków")
-      .trim()
-  )
+  .array(z.string().max(50, "Tag nie może być dłuższy niż 50 znaków").trim())
   .max(10, "Maksymalna liczba tagów to 10")
   .optional()
   .nullable();
