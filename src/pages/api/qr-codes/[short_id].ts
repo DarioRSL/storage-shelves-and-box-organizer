@@ -61,12 +61,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle QrCodeNotFoundError (404)
-      if (error instanceof QrCodeNotFoundError) {
+      if (_error instanceof QrCodeNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -78,7 +78,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       // Handle generic service errors (500)
       return new Response(
         JSON.stringify({
-          error: error instanceof Error ? error.message : "Nie udało się pobrać kodu QR",
+          error: _error instanceof Error ? _error.message : "Nie udało się pobrać kodu QR",
         } as ErrorResponse),
         {
           status: 500,
@@ -86,7 +86,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({

@@ -96,7 +96,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 201,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       // Handle service layer errors
 
       return new Response(
@@ -109,7 +110,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Unexpected errors
 
     return new Response(

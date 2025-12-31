@@ -53,11 +53,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle Zod validation errors
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
@@ -75,10 +75,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Handle custom service errors
-    if (error instanceof WorkspaceMembershipError) {
+    if (_error instanceof WorkspaceMembershipError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 403,
@@ -87,10 +87,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (error instanceof ParentNotFoundError) {
+    if (_error instanceof ParentNotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,
@@ -99,10 +99,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (error instanceof MaxDepthExceededError) {
+    if (_error instanceof MaxDepthExceededError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 400,
@@ -111,10 +111,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (error instanceof SiblingConflictError) {
+    if (_error instanceof SiblingConflictError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 409,
@@ -187,11 +187,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
         "Cache-Control": "private, max-age=60",
       },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle Zod validation errors
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
@@ -209,10 +209,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Handle custom service errors
-    if (error instanceof WorkspaceMembershipError) {
+    if (_error instanceof WorkspaceMembershipError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 403,
@@ -221,10 +221,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (error instanceof ParentNotFoundError) {
+    if (_error instanceof ParentNotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,

@@ -113,12 +113,12 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle WorkspaceOwnershipError (403)
-      if (error instanceof WorkspaceOwnershipError) {
+      if (_error instanceof WorkspaceOwnershipError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 403,
@@ -128,10 +128,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       }
 
       // Handle WorkspaceNotFoundError (404)
-      if (error instanceof WorkspaceNotFoundError) {
+      if (_error instanceof WorkspaceNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -151,7 +151,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({
@@ -239,13 +240,13 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
           headers: { "Content-Type": "application/json" },
         }
       );
-    } catch (error) {
+    } catch (_error) {
       // Handle WorkspaceOwnershipError (403)
-      if (error instanceof WorkspaceOwnershipError) {
+      if (_error instanceof WorkspaceOwnershipError) {
         return new Response(
           JSON.stringify({
             error: "Forbidden",
-            details: error.message,
+            details: _error.message,
           } as ErrorResponse),
           {
             status: 403,
@@ -255,11 +256,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       }
 
       // Handle WorkspaceNotFoundError (404)
-      if (error instanceof WorkspaceNotFoundError) {
+      if (_error instanceof WorkspaceNotFoundError) {
         return new Response(
           JSON.stringify({
             error: "Not Found",
-            details: error.message,
+            details: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -280,7 +281,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({

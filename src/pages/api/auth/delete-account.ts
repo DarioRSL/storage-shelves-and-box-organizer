@@ -53,12 +53,12 @@ export const DELETE: APIRoute = async ({ locals }) => {
           headers: { "Content-Type": "application/json" },
         }
       );
-    } catch (error) {
+    } catch (_error) {
       // Handle UserAccountNotFoundError (404)
-      if (error instanceof UserAccountNotFoundError) {
+      if (_error instanceof UserAccountNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -68,10 +68,10 @@ export const DELETE: APIRoute = async ({ locals }) => {
       }
 
       // Handle AuthRevocationError (500)
-      if (error instanceof AuthRevocationError) {
+      if (_error instanceof AuthRevocationError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 500,
@@ -81,10 +81,10 @@ export const DELETE: APIRoute = async ({ locals }) => {
       }
 
       // Handle AccountDeletionError (500)
-      if (error instanceof AccountDeletionError) {
+      if (_error instanceof AccountDeletionError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 500,
@@ -104,7 +104,8 @@ export const DELETE: APIRoute = async ({ locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({

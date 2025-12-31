@@ -85,12 +85,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 201,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle custom errors from service layer with appropriate status codes
-      if (error instanceof QrCodeAlreadyAssignedError) {
+      if (_error instanceof QrCodeAlreadyAssignedError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 409, // Conflict
@@ -99,10 +99,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
       }
 
-      if (error instanceof QrCodeNotFoundError || error instanceof LocationNotFoundError) {
+      if (_error instanceof QrCodeNotFoundError || _error instanceof LocationNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404, // Not Found
@@ -111,10 +111,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
       }
 
-      if (error instanceof WorkspaceMismatchError) {
+      if (_error instanceof WorkspaceMismatchError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 403, // Forbidden
@@ -124,10 +124,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       // Handle RLS policy violation (user not workspace member)
-      if (error instanceof Error && error.message.includes("Brak dostępu")) {
+      if (_error instanceof Error && _error.message.includes("Brak dostępu")) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 403, // Forbidden
@@ -139,7 +139,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Handle generic errors from service layer
       return new Response(
         JSON.stringify({
-          error: error instanceof Error ? error.message : "Nie udało się utworzyć pudełka",
+          error: _error instanceof Error ? _error.message : "Nie udało się utworzyć pudełka",
         } as ErrorResponse),
         {
           status: 500,
@@ -147,7 +147,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors
     return new Response(
       JSON.stringify({
@@ -234,11 +235,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle errors from service layer
       return new Response(
         JSON.stringify({
-          error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek",
+          error: _error instanceof Error ? _error.message : "Nie udało się pobrać pudełek",
         } as ErrorResponse),
         {
           status: 500,
@@ -246,7 +247,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors
     return new Response(
       JSON.stringify({

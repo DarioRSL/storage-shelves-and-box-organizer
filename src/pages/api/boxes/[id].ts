@@ -73,12 +73,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle BoxNotFoundError (404)
-      if (error instanceof BoxNotFoundError) {
+      if (_error instanceof BoxNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -90,7 +90,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       // Handle generic service errors (500)
       return new Response(
         JSON.stringify({
-          error: error instanceof Error ? error.message : "Nie udało się pobrać pudełka",
+          error: _error instanceof Error ? _error.message : "Nie udało się pobrać pudełka",
         } as ErrorResponse),
         {
           status: 500,
@@ -98,7 +98,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({
@@ -174,9 +175,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
           headers: { "Content-Type": "application/json" },
         }
       );
-    } catch (error) {
+    } catch (_error) {
       // Handle BoxNotFoundError (404)
-      if (error instanceof BoxNotFoundError) {
+      if (_error instanceof BoxNotFoundError) {
         return new Response(
           JSON.stringify({
             error: "Pudełko nie znalezione",
@@ -199,7 +200,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({
@@ -307,9 +309,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    } catch (error) {
+    } catch (_error) {
       // Handle BoxNotFoundError (404)
-      if (error instanceof BoxNotFoundError) {
+      if (_error instanceof BoxNotFoundError) {
         return new Response(
           JSON.stringify({
             error: "Pudełko nie zostało znalezione",
@@ -322,10 +324,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       }
 
       // Handle LocationNotFoundError (404)
-      if (error instanceof LocationNotFoundError) {
+      if (_error instanceof LocationNotFoundError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 404,
@@ -335,10 +337,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       }
 
       // Handle WorkspaceMismatchError (403)
-      if (error instanceof WorkspaceMismatchError) {
+      if (_error instanceof WorkspaceMismatchError) {
         return new Response(
           JSON.stringify({
-            error: error.message,
+            error: _error.message,
           } as ErrorResponse),
           {
             status: 403,
@@ -350,7 +352,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       // Handle generic service errors (500)
       return new Response(
         JSON.stringify({
-          error: error instanceof Error ? error.message : "Nie udało się zaktualizować pudełka",
+          error: _error instanceof Error ? _error.message : "Nie udało się zaktualizować pudełka",
         } as ErrorResponse),
         {
           status: 500,
@@ -358,7 +360,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         }
       );
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Handle unexpected errors (500)
     return new Response(
       JSON.stringify({

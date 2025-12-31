@@ -92,7 +92,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     return new Response(
       JSON.stringify({
         error: "Wystąpił nieoczekiwany błąd",
@@ -138,7 +139,8 @@ export const GET: APIRoute = async ({ locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     return new Response(
       JSON.stringify({
         error: "Wystąpił błąd wewnętrzny serwera",

@@ -45,9 +45,9 @@ export const GET: APIRoute = async ({ locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle specific error cases
-    if (error instanceof Error && error.message === "User profile not found") {
+    if (_error instanceof Error && _error.message === "User profile not found") {
       return new Response(
         JSON.stringify({
           error: "Nie znaleziono",

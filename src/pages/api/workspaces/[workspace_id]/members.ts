@@ -66,11 +66,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle Zod validation errors (invalid UUID format)
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
@@ -88,10 +88,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     // Handle NotFoundError (workspace not found or no access)
-    if (error instanceof NotFoundError) {
+    if (_error instanceof NotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,
@@ -157,11 +157,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle Zod validation errors
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
@@ -179,10 +179,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle insufficient permissions error (403)
-    if (error instanceof InsufficientPermissionsError) {
+    if (_error instanceof InsufficientPermissionsError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 403,
@@ -192,10 +192,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle NotFoundError (404)
-    if (error instanceof NotFoundError) {
+    if (_error instanceof NotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,
@@ -205,10 +205,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle duplicate member error (409)
-    if (error instanceof DuplicateMemberError) {
+    if (_error instanceof DuplicateMemberError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 409,
@@ -221,7 +221,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     console.error("POST /api/workspaces/:workspace_id/members - Błąd:", {
       workspaceId: params.workspace_id,
       userId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
+      error: _error instanceof Error ? _error.message : "Nieznany błąd",
       timestamp: new Date().toISOString(),
     });
 

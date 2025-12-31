@@ -98,12 +98,12 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (_error) {
     // Handle specific error types
-    if (error instanceof NotFoundError) {
+    if (_error instanceof NotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,
@@ -112,10 +112,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    if (error instanceof ConflictError) {
+    if (_error instanceof ConflictError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 409,
@@ -124,10 +124,10 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    if (error instanceof ForbiddenError) {
+    if (_error instanceof ForbiddenError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 403,
@@ -137,9 +137,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle Zod validation errors (should be caught earlier, but safety fallback)
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
@@ -226,12 +226,12 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (_error) {
     // Handle specific error types
-    if (error instanceof NotFoundError) {
+    if (_error instanceof NotFoundError) {
       return new Response(
         JSON.stringify({
-          error: error.message,
+          error: _error.message,
         } as ErrorResponse),
         {
           status: 404,
@@ -241,9 +241,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     }
 
     // Handle Zod validation errors (safety fallback)
-    if (error instanceof ZodError) {
+    if (_error instanceof ZodError) {
       const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
+      _error.errors.forEach((err) => {
         const path = err.path.join(".");
         formattedErrors[path] = err.message;
       });
