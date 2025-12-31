@@ -373,15 +373,10 @@ export async function getLocations(
     .eq("is_deleted", false)
     .order("name", { ascending: true });
 
-  // Step 3: Apply hierarchical filtering
-  if (parentId === undefined || parentId === null) {
-    // Get root-level locations (depth = 2: "root.location_name")
-    // Filter for paths that match "root.%" but not "root.%.%"
-    // This ensures we get only direct children of root
-    query = query.like("path", "root.%").not("path", "like", "root.%.%");
-  } else {
-    // Get direct children of specific parent
-    // First fetch parent to get its path
+  // Step 3: Get parent path if needed for hierarchical filtering
+  let parentPath: string | null = null;
+
+  if (parentId !== undefined && parentId !== null) {
     const { data: parent, error: parentError } = await supabase
       .from("locations")
       .select("path")
@@ -398,13 +393,10 @@ export async function getLocations(
       throw new ParentNotFoundError();
     }
 
-    const parentPath = parent.path as string;
-
-    // Filter for direct children: parent_path.% but not parent_path.%.%
-    query = query.like("path", `${parentPath}.%`).not("path", "like", `${parentPath}.%.%`);
+    parentPath = parent.path as string;
   }
 
-  // Step 4: Execute query
+  // Step 4: Execute query - fetch all locations then filter client-side for ltree hierarchy
   const { data, error } = await query;
 
   if (error) {
@@ -412,12 +404,36 @@ export async function getLocations(
     throw new Error("Nie udało się pobrać lokalizacji");
   }
 
-  // Step 5: Derive parent_id for all locations
+  // Step 5: Filter by hierarchy depth client-side (ltree comparisons not directly supported by Supabase JS client)
+  let filteredData = data;
+
+  if (parentId === undefined || parentId === null) {
+    // Root-level locations have depth 2 (e.g., "root.garage")
+    filteredData = data.filter((loc) => {
+      const pathSegments = (loc.path as string).split(".");
+      return pathSegments.length === 2;
+    });
+  } else if (parentPath) {
+    // Direct children of parent (depth = parent depth + 1)
+    const parentDepth = parentPath.split(".").length;
+    const targetDepth = parentDepth + 1;
+
+    filteredData = data.filter((loc) => {
+      const pathSegments = (loc.path as string).split(".");
+      // Must be direct child (next level only) and start with parent path
+      return (
+        pathSegments.length === targetDepth &&
+        (loc.path as string).startsWith(`${parentPath}.`)
+      );
+    });
+  }
+
+  // Step 6: Derive parent_id for all filtered locations
   // Build a map of parent paths to fetch parent IDs in a single query
   const parentPathsToFetch = new Set<string>();
   const locationDataMap = new Map();
 
-  data.forEach((location) => {
+  filteredData.forEach((location) => {
     const path = location.path as string;
     const pathSegments = path.split(".");
 
@@ -431,7 +447,7 @@ export async function getLocations(
     }
   });
 
-  // Step 6: Fetch all parent IDs in a single query (if needed)
+  // Step 7: Fetch all parent IDs in a single query (if needed)
   const parentPathToIdMap = new Map<string, string>();
 
   if (parentPathsToFetch.size > 0) {
@@ -452,8 +468,8 @@ export async function getLocations(
     });
   }
 
-  // Step 7: Transform data to LocationDto format with parent_id
-  return data.map((location) => {
+  // Step 8: Transform filtered data to LocationDto format with parent_id
+  return filteredData.map((location) => {
     const { path, pathSegments } = locationDataMap.get(location.id);
     let derivedParentId: string | null = null;
 
