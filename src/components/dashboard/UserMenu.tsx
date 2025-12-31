@@ -19,9 +19,9 @@ export default function UserMenu() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
+      const res = await fetch("/api/auth/session", { method: "DELETE" });
       if (res.ok) {
-        window.location.href = "/login";
+        window.location.href = "/auth";
       }
     } catch (err) {
       console.error("[UserMenu] Błąd wylogowania:", err);

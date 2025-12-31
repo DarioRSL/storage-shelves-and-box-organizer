@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Package, Search } from "lucide-react";
+import { Package, Search, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 interface EmptyStateProps {
   type: "empty-workspace" | "no-results" | "no-locations";
@@ -15,6 +16,22 @@ interface EmptyStateProps {
  * - no-locations: No locations created
  */
 export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyStateProps) {
+  const [showBoxOptions, setShowBoxOptions] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowBoxOptions(false);
+      }
+    };
+
+    if (showBoxOptions) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showBoxOptions]);
+
   if (type === "no-results") {
     return (
       <div
@@ -45,9 +62,42 @@ export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyState
           </Button>
         )}
         {onAddBox && (
-          <Button onClick={onAddBox} size="sm" aria-label="Dodaj nowe pudełko">
-            Dodaj pudełko
-          </Button>
+          <div className="relative" ref={menuRef}>
+            <Button
+              onClick={() => setShowBoxOptions(!showBoxOptions)}
+              size="sm"
+              aria-label="Opcje dodawania pudełka"
+              className="flex items-center gap-2"
+            >
+              Dodaj pudełko
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+
+            {showBoxOptions && (
+              <div
+                className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-max"
+                role="menu"
+              >
+                <button
+                  onClick={() => {
+                    onAddBox();
+                    setShowBoxOptions(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-md"
+                  role="menuitem"
+                >
+                  Szybkie dodanie (Modal)
+                </button>
+                <a
+                  href="/app/boxes/new"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 last:rounded-b-md"
+                  role="menuitem"
+                >
+                  Pełny formularz
+                </a>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

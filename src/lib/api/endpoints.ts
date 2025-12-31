@@ -101,10 +101,7 @@ export const workspacesApi = {
     });
   },
 
-  update: async (
-    workspaceId: string,
-    data: Types.PatchWorkspaceRequest
-  ): Promise<Types.PatchWorkspaceResponse> => {
+  update: async (workspaceId: string, data: Types.PatchWorkspaceRequest): Promise<Types.PatchWorkspaceResponse> => {
     return apiFetch(`/api/workspaces/${workspaceId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -189,10 +186,7 @@ export const locationsApi = {
     });
   },
 
-  update: async (
-    locationId: string,
-    data: Partial<Types.LocationDto>
-  ): Promise<Types.LocationDto> => {
+  update: async (locationId: string, data: Partial<Types.LocationDto>): Promise<Types.LocationDto> => {
     return apiFetch(`/api/locations/${locationId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -246,10 +240,7 @@ export const boxesApi = {
     });
   },
 
-  update: async (
-    boxId: string,
-    data: Types.UpdateBoxRequest | Partial<Types.BoxDto>
-  ): Promise<Types.BoxDto> => {
+  update: async (boxId: string, data: Types.UpdateBoxRequest | Partial<Types.BoxDto>): Promise<Types.BoxDto> => {
     return apiFetch(`/api/boxes/${boxId}`, {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -269,10 +260,7 @@ export const boxesApi = {
  * GET /api/qr-codes/:short_id - Get QR code details
  */
 export const qrCodesApi = {
-  generateBatch: async (
-    workspaceId: string,
-    quantity: number
-  ): Promise<Types.BatchGenerateQrCodesResponse> => {
+  generateBatch: async (workspaceId: string, quantity: number): Promise<Types.BatchGenerateQrCodesResponse> => {
     return apiFetch("/api/qr-codes/batch", {
       method: "POST",
       body: JSON.stringify({

@@ -46,9 +46,7 @@ export type SearchBoxesData = z.infer<typeof searchBoxesSchema>;
 /**
  * Validate box data exists and has required fields
  */
-export function validateBoxData(
-  data: unknown
-): data is { id: string; name: string; workspace_id: string } {
+export function validateBoxData(data: unknown): data is { id: string; name: string; workspace_id: string } {
   try {
     const schema = z.object({
       id: CommonValidation.uuid,
@@ -128,10 +126,7 @@ export function formatSearchResultsMessage(count: number, query?: string): strin
  * Validate that box can be assigned to location
  * (i.e., location exists and is in same workspace)
  */
-export function validateLocationAssignment(
-  boxWorkspaceId: string,
-  locationWorkspaceId: string
-): boolean {
+export function validateLocationAssignment(boxWorkspaceId: string, locationWorkspaceId: string): boolean {
   return boxWorkspaceId === locationWorkspaceId;
 }
 
@@ -139,9 +134,6 @@ export function validateLocationAssignment(
  * Validate that box can be assigned QR code
  * (i.e., QR code exists and is in same workspace)
  */
-export function validateQrCodeAssignment(
-  boxWorkspaceId: string,
-  qrCodeWorkspaceId: string
-): boolean {
+export function validateQrCodeAssignment(boxWorkspaceId: string, qrCodeWorkspaceId: string): boolean {
   return boxWorkspaceId === qrCodeWorkspaceId;
 }

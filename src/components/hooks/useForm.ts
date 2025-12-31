@@ -103,29 +103,32 @@ export function useForm<T extends Record<string, any>>({
   /**
    * Mark field as touched
    */
-  const setFieldTouched = useCallback((field: keyof T, value: boolean) => {
-    setTouched((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const setFieldTouched = useCallback(
+    (field: keyof T, value: boolean) => {
+      setTouched((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
 
-    // Validate field when blurred
-    if (value === false) {
-      const fieldErrors = validateField(field);
-      if (Object.keys(fieldErrors).length > 0) {
-        setErrorsState((prev) => ({
-          ...prev,
-          ...fieldErrors,
-        }));
-      } else {
-        setErrorsState((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
+      // Validate field when blurred
+      if (value === false) {
+        const fieldErrors = validateField(field);
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrorsState((prev) => ({
+            ...prev,
+            ...fieldErrors,
+          }));
+        } else {
+          setErrorsState((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[field];
+            return newErrors;
+          });
+        }
       }
-    }
-  }, [validateField]);
+    },
+    [validateField]
+  );
 
   /**
    * Set errors directly

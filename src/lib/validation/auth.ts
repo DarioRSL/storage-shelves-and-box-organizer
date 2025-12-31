@@ -63,16 +63,8 @@ export type PasswordUpdateData = z.infer<typeof passwordUpdateSchema>;
 // ============= PROFILE UPDATE VALIDATION =============
 
 export const profileUpdateSchema = z.object({
-  full_name: z
-    .string()
-    .max(255, "Imię i nazwisko nie może być dłuższe niż 255 znaków")
-    .optional()
-    .nullable(),
-  avatar_url: z
-    .string()
-    .url("Nieprawidłowy URL avatara")
-    .optional()
-    .nullable(),
+  full_name: z.string().max(255, "Imię i nazwisko nie może być dłuższe niż 255 znaków").optional().nullable(),
+  avatar_url: z.string().url("Nieprawidłowy URL avatara").optional().nullable(),
 });
 
 export type ProfileUpdateData = z.infer<typeof profileUpdateSchema>;
