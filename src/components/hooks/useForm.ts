@@ -1,4 +1,4 @@
-import { useState, useCallback, useReducer } from "react";
+import { useState, useCallback } from "react";
 import { z } from "zod";
 
 export interface UseFormOptions<T extends Record<string, any>> {
@@ -14,7 +14,7 @@ export interface UseFormReturn<T extends Record<string, any>> {
   isDirty: boolean;
   isSubmitting: boolean;
 
-  setFieldValue: (field: keyof T, value: any) => void;
+  setFieldValue: (field: keyof T, value: T[keyof T]) => void;
   setFieldTouched: (field: keyof T, value: boolean) => void;
   setErrors: (errors: Partial<Record<keyof T, string>>) => void;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
@@ -103,29 +103,32 @@ export function useForm<T extends Record<string, any>>({
   /**
    * Mark field as touched
    */
-  const setFieldTouched = useCallback((field: keyof T, value: boolean) => {
-    setTouched((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const setFieldTouched = useCallback(
+    (field: keyof T, value: boolean) => {
+      setTouched((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
 
-    // Validate field when blurred
-    if (value === false) {
-      const fieldErrors = validateField(field);
-      if (Object.keys(fieldErrors).length > 0) {
-        setErrorsState((prev) => ({
-          ...prev,
-          ...fieldErrors,
-        }));
-      } else {
-        setErrorsState((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
+      // Validate field when blurred
+      if (value === false) {
+        const fieldErrors = validateField(field);
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrorsState((prev) => ({
+            ...prev,
+            ...fieldErrors,
+          }));
+        } else {
+          setErrorsState((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[field];
+            return newErrors;
+          });
+        }
       }
-    }
-  }, [validateField]);
+    },
+    [validateField]
+  );
 
   /**
    * Set errors directly

@@ -134,7 +134,7 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         setIsLoading(false);
       }
     },
-    [options]
+    [options, error]
   );
 
   /**
@@ -219,7 +219,7 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         setIsLoading(false);
       }
     },
-    [options]
+    [options, error]
   );
 
   return {
