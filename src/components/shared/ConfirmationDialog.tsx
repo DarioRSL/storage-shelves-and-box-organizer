@@ -52,8 +52,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   }, [isOpen]);
 
   // Check if confirm button should be enabled
-  const isConfirmDisabled =
-    isLoading || (requiresTextConfirmation && inputValue !== confirmText);
+  const isConfirmDisabled = isLoading || (requiresTextConfirmation && inputValue !== confirmText);
 
   const handleConfirm = useCallback(async () => {
     try {
@@ -84,9 +83,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               placeholder={`Type: ${confirmText}`}
               disabled={isLoading}
               className={
-                inputValue && inputValue !== confirmText
-                  ? "border-yellow-500 focus-visible:ring-yellow-500"
-                  : ""
+                inputValue && inputValue !== confirmText ? "border-yellow-500 focus-visible:ring-yellow-500" : ""
               }
               aria-describedby="confirmation-description"
             />

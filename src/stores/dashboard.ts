@@ -1,4 +1,5 @@
 import { atom } from "nanostores";
+import type { WorkspaceDto, LocationDto, BoxDto, ProfileDto } from "@/types";
 
 /**
  * Global dashboard state atoms using Nano Stores.
@@ -18,16 +19,16 @@ export const searchQuery = atom<string>("");
 export const expandedLocationIds = atom<Set<string>>(new Set());
 
 /** User's workspaces list */
-export const userWorkspaces = atom<any[]>([]);
+export const userWorkspaces = atom<WorkspaceDto[]>([]);
 
 /** All locations for current workspace */
-export const workspaceLocations = atom<any[]>([]);
+export const workspaceLocations = atom<LocationDto[]>([]);
 
 /** Boxes for current view (filtered by location or search) */
-export const currentBoxes = atom<any[]>([]);
+export const currentBoxes = atom<BoxDto[]>([]);
 
 /** Total count of boxes in workspace */
 export const totalBoxesCount = atom<number>(0);
 
 /** Currently logged-in user profile */
-export const userProfile = atom<any>(null);
+export const userProfile = atom<ProfileDto | null>(null);
