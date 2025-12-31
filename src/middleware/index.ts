@@ -18,24 +18,28 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Store cookies to set in response later
-  const cookiesToSet: { name: string; value: string; options?: any }[] = [];
+  const cookiesToSet: Array<{ name: string; value: string; options?: any }> = [];
 
   // Create Supabase client using @supabase/ssr
   // This handles cookie-based session management automatically
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        return Object.entries(cookies).map(([name, value]) => ({
-          name,
-          value: value ? decodeURIComponent(value) : "",
-        }));
+  const supabase = createServerClient<Database>(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return Object.entries(cookies).map(([name, value]) => ({
+            name,
+            value: value ? decodeURIComponent(value) : "",
+          }));
+        },
+        setAll(cookiesToSet_) {
+          // Store cookies to be set after response
+          cookiesToSet.push(...cookiesToSet_);
+        },
       },
-      setAll(cookiesToSet_) {
-        // Store cookies to be set after response
-        cookiesToSet.push(...cookiesToSet_);
-      },
-    },
-  });
+    }
+  );
 
   // Make supabase client available to routes via context.locals
   context.locals.supabase = supabase;
@@ -59,7 +63,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
 
         // Decode the payload (second part of JWT)
-        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8")) as {
+        const payload = JSON.parse(
+          Buffer.from(parts[1], "base64").toString("utf-8")
+        ) as {
           sub?: string;
           email?: string;
           role?: string;
@@ -86,13 +92,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
             is_anonymous: false,
           } as any;
 
+          // Set JWT in Supabase client so RLS policies can check auth.uid()
+          // Manually set the session with the JWT token and empty refresh token
+          await supabase.auth.setSession({
+            access_token: sessionToken,
+            refresh_token: "",
+          });
+
           if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
             console.log(`[Middleware] User found from session token: ${payload.email}`);
           }
         }
       } catch (err) {
         if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-          console.log(`[Middleware] Failed to decode session token:`, err instanceof Error ? err.message : String(err));
+          console.log(
+            `[Middleware] Failed to decode session token:`,
+            err instanceof Error ? err.message : String(err)
+          );
         }
       }
     } else if (context.url.pathname === "/app" || context.url.pathname === "/auth") {

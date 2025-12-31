@@ -34,13 +34,10 @@ export async function GET(context: APIContext) {
 
   try {
     // --- Step 1: Verify Authentication ---
-    // Extract authenticated user from JWT token via Supabase
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Use authenticated user from context.locals (already validated by middleware)
+    const user = context.locals.user;
 
-    if (authError || !user) {
+    if (!user) {
       return new Response(
         JSON.stringify({
           error: "Nie jesteś uwierzytelniony",
