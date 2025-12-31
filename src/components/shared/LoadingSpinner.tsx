@@ -38,11 +38,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       aria-label={message || "Loading"}
     >
       {/* Spinner SVG */}
-      <svg
-        className={`${spinnerSize} animate-spin text-blue-600 dark:text-blue-400`}
-        fill="none"
-        viewBox="0 0 24 24"
-      >
+      <svg className={`${spinnerSize} animate-spin text-blue-600 dark:text-blue-400`} fill="none" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path
           className="opacity-75"
