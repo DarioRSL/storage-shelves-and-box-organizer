@@ -25,40 +25,27 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
     setGlobalError(null);
   }, []);
 
-  const handleAuthSuccess = useCallback(
-    (data: AuthSuccessResponse) => {
-      console.log("[AuthLayout] Auth success, token length:", data.token?.length);
-
-      // Send token to backend to establish HttpOnly session cookie
-      if (typeof window !== "undefined") {
-        console.log("[AuthLayout] Sending token to /api/auth/session");
-
-        fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ token: data.token }),
+  const handleAuthSuccess = useCallback((data: AuthSuccessResponse) => {
+    // Send token to backend to establish HttpOnly session cookie
+    if (typeof window !== "undefined") {
+      fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: data.token }),
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            window.location.href = "/app";
+          } else {
+            setGlobalError("Nie udało się ustanowić sesji");
+          }
         })
-          .then(async (res) => {
-            console.log("[AuthLayout] Response status:", res.status);
-            const responseData = await res.json();
-
-            if (res.ok) {
-              console.log("[AuthLayout] Session established, redirecting to /app");
-              window.location.href = "/app";
-            } else {
-              console.error("[AuthLayout] Failed to establish session:", responseData);
-              setGlobalError("Nie udało się ustanowić sesji");
-            }
-          })
-          .catch((err) => {
-            console.error("[AuthLayout] Fetch error:", err);
-            setGlobalError("Błąd połączenia: " + (err instanceof Error ? err.message : String(err)));
-          });
-      }
-    },
-    []
-  );
+        .catch((err) => {
+          setGlobalError("Błąd połączenia: " + (err instanceof Error ? err.message : String(err)));
+        });
+    }
+  }, []);
 
   const handleAuthError = useCallback((error: string) => {
     setGlobalError(error);

@@ -70,7 +70,7 @@ export default function LocationEditorModal({
 
       await onSubmit(data);
     } catch (err) {
-      console.error("[LocationEditorModal] Error:", err);
+      // Error is handled by parent component
     }
   };
 

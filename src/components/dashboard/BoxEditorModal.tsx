@@ -73,7 +73,7 @@ export default function BoxEditorModal({
 
       await onSubmit(data);
     } catch (err) {
-      console.error("[BoxEditorModal] Error:", err);
+      // Error is handled by parent component
     }
   };
 

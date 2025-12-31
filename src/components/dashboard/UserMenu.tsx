@@ -24,7 +24,7 @@ export default function UserMenu() {
         window.location.href = "/login";
       }
     } catch (err) {
-      console.error("[UserMenu] Błąd wylogowania:", err);
+      // Error during logout - user can try again
     }
   };
 
