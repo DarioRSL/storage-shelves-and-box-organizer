@@ -35,12 +35,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    console.log("[POST /api/auth/session] Token received, length:", token.length);
-
     // 2. Validate JWT format
     const parts = token.split(".");
     if (parts.length !== 3) {
-      console.error("[POST /api/auth/session] Invalid JWT format, parts:", parts.length);
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -60,17 +57,11 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 4. Validate required claims
     if (!payload.sub || !payload.email) {
-      console.error("[POST /api/auth/session] Invalid token claims:", {
-        hasSub: !!payload.sub,
-        hasEmail: !!payload.email,
-      });
       return new Response(JSON.stringify({ error: "Invalid token claims" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
-
-    console.log("[POST /api/auth/session] Valid token for user:", payload.email);
 
     // 5. Set HttpOnly secure cookie
     // Security flags:
@@ -84,8 +75,6 @@ export const POST: APIRoute = async ({ request }) => {
     const isProduction = import.meta.env.PROD;
     const secureCookie = isProduction ? `${cookieValue}; Secure` : cookieValue;
 
-    console.log("[POST /api/auth/session] Setting HttpOnly cookie for", payload.email);
-
     const response = new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
@@ -94,10 +83,8 @@ export const POST: APIRoute = async ({ request }) => {
       },
     });
 
-    console.log("[POST /api/auth/session] Response sent with status 200");
     return response;
   } catch (error) {
-    console.error("[POST /api/auth/session] Unexpected error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -120,7 +107,6 @@ export const DELETE: APIRoute = async () => {
       },
     });
   } catch (error) {
-    console.error("[DELETE /api/auth/session] Unexpected error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

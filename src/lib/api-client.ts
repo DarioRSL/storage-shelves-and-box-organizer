@@ -144,13 +144,9 @@ export function shouldRedirectToLogin(error: unknown): boolean {
  */
 export function logError(context: string, error: unknown): void {
   if (error instanceof ApiError) {
-    console.error(`[${context}] API Error ${error.status}:`, error.message);
     if (error.code) {
-      console.error(`Code: ${error.code}`);
     }
   } else if (error instanceof Error) {
-    console.error(`[${context}] Error:`, error.message);
   } else {
-    console.error(`[${context}] Unknown error:`, error);
   }
 }

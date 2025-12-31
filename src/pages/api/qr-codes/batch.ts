@@ -75,11 +75,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const isMember = await isWorkspaceMember(supabase, validatedRequest.workspace_id, user.id);
 
     if (!isMember) {
-      console.warn("[POST /api/qr-codes/batch] Unauthorized workspace access:", {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
-      });
-
       return new Response(
         JSON.stringify({
           error: "Nie masz dostępu do tego obszaru roboczego",
@@ -96,12 +91,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const response = await batchGenerateQrCodes(supabase, validatedRequest);
 
       // 7. Log success
-      console.log("[POST /api/qr-codes/batch] Success:", {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
-        quantity: validatedRequest.quantity,
-        generated_count: response.data.length,
-      });
 
       return new Response(JSON.stringify(response), {
         status: 201,
@@ -109,11 +98,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     } catch (error) {
       // Handle service layer errors
-      console.error("[POST /api/qr-codes/batch] Service error:", {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
 
       return new Response(
         JSON.stringify({
@@ -127,9 +111,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Unexpected errors
-    console.error("[POST /api/qr-codes/batch] Unexpected error:", {
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
 
     return new Response(
       JSON.stringify({

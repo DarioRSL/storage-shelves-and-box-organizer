@@ -140,8 +140,6 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
       .single();
 
     if (boxError) {
-      console.error("Error creating box:", boxError);
-
       // Check for RLS policy violation (user not workspace member)
       if (boxError.code === "42501" || boxError.code === "PGRST301") {
         throw new Error("Brak dostępu: nie jesteś członkiem tego obszaru roboczego");
@@ -165,7 +163,6 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
         .eq("id", request.qr_code_id);
 
       if (updateError) {
-        console.error("Error updating QR code:", updateError);
         // Note: Box was created but QR assignment failed
         // This is a partial failure - consider implementing transaction rollback
         throw new Error("Nie udało się przypisać kodu QR do pudełka");
@@ -173,12 +170,6 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     }
 
     // Log successful creation
-    console.log("Box created successfully:", {
-      box_id: box.id,
-      short_id: box.short_id,
-      workspace_id: box.workspace_id,
-      qr_assigned: !!request.qr_code_id,
-    });
 
     return {
       id: box.id,
@@ -199,7 +190,6 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in createBox:", error);
 
     // Re-throw or wrap unknown errors
     if (error instanceof Error) {
@@ -283,25 +273,13 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
     const { data, error } = await dbQuery;
 
     if (error) {
-      console.error("Error fetching boxes:", error);
       throw new Error("Nie udało się pobrać pudełek");
     }
 
     // Log successful query
-    console.log("Boxes fetched successfully:", {
-      workspace_id: query.workspace_id,
-      count: data?.length ?? 0,
-      filters_applied: {
-        search: !!query.q,
-        location: !!query.location_id,
-        is_assigned: query.is_assigned,
-      },
-    });
 
     return data as BoxDto[];
   } catch (error) {
-    console.error("Unexpected error in getBoxes:", error);
-
     if (error instanceof Error) {
       throw error;
     }
@@ -357,13 +335,6 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
 
     // Handle Supabase errors
     if (error) {
-      console.error("Error fetching box:", {
-        boxId,
-        userId,
-        error: error.message,
-        code: error.code,
-      });
-
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
       if (error.code === "PGRST116") {
         throw new BoxNotFoundError();
@@ -374,18 +345,10 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.log("Box not found:", { boxId, userId });
       throw new BoxNotFoundError();
     }
 
     // Log successful retrieval
-    console.log("Box fetched successfully:", {
-      boxId: data.id,
-      userId,
-      workspace_id: data.workspace_id,
-      has_location: !!data.location,
-      has_qr_code: !!data.qr_code,
-    });
 
     return data as BoxDto;
   } catch (error) {
@@ -395,11 +358,6 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in getBoxById:", {
-      boxId,
-      userId,
-      error,
-    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {
@@ -426,11 +384,6 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
  */
 export async function deleteBox(supabase: SupabaseClient, boxId: string, userId: string): Promise<void> {
   try {
-    console.log("[box.service] Deleting box", {
-      user_id: userId,
-      box_id: boxId,
-    });
-
     // Execute DELETE query
     // RLS automatically verifies workspace membership
     // Database trigger automatically resets QR code
@@ -438,29 +391,15 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
 
     // Check for database errors
     if (error) {
-      console.error("[box.service] Database error deleting box", {
-        user_id: userId,
-        box_id: boxId,
-        error: error.message,
-        code: error.code,
-      });
       throw new Error("Database error occurred while deleting box");
     }
 
     // Check if box was actually deleted (RLS might have blocked it)
     if (count === 0) {
-      console.warn("[box.service] Box not found or access denied", {
-        user_id: userId,
-        box_id: boxId,
-      });
       throw new BoxNotFoundError();
     }
 
     // Log successful deletion
-    console.log("[box.service] Box deleted successfully", {
-      user_id: userId,
-      box_id: boxId,
-    });
   } catch (error) {
     // Re-throw BoxNotFoundError as-is
     if (error instanceof BoxNotFoundError) {
@@ -468,11 +407,6 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
     }
 
     // Log unexpected errors
-    console.error("[box.service] Unexpected error in deleteBox", {
-      box_id: boxId,
-      user_id: userId,
-      error,
-    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {
@@ -524,20 +458,11 @@ export async function updateBox(
         .single();
 
       if (locationError || !location) {
-        console.error("[box.service] Location not found", {
-          user_id: userId,
-          location_id: updates.location_id,
-          error: locationError?.message,
-        });
         throw new LocationNotFoundError();
       }
 
       // Verify location is not soft-deleted
       if (location.is_deleted) {
-        console.error("[box.service] Location is deleted", {
-          user_id: userId,
-          location_id: updates.location_id,
-        });
         throw new LocationNotFoundError();
       }
 
@@ -549,21 +474,11 @@ export async function updateBox(
         .single();
 
       if (boxError || !box) {
-        console.error("[box.service] Box not found during location validation", {
-          user_id: userId,
-          box_id: boxId,
-          error: boxError?.message,
-        });
         throw new BoxNotFoundError();
       }
 
       // Verify location belongs to same workspace as box
       if (location.workspace_id !== box.workspace_id) {
-        console.error("[box.service] Workspace mismatch", {
-          user_id: userId,
-          box_workspace: box.workspace_id,
-          location_workspace: location.workspace_id,
-        });
         throw new WorkspaceMismatchError("location");
       }
     }
@@ -580,13 +495,6 @@ export async function updateBox(
 
     // Check for database errors
     if (updateError) {
-      console.error("[box.service] Database error updating box", {
-        user_id: userId,
-        box_id: boxId,
-        error: updateError.message,
-        code: updateError.code,
-      });
-
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
       if (updateError.code === "PGRST116") {
         throw new BoxNotFoundError();
@@ -597,10 +505,6 @@ export async function updateBox(
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.warn("[box.service] Box not found or access denied", {
-        user_id: userId,
-        box_id: boxId,
-      });
       throw new BoxNotFoundError();
     }
 
@@ -628,11 +532,6 @@ export async function updateBox(
     }
 
     // Log unexpected errors
-    console.error("[box.service] Unexpected error in updateBox", {
-      box_id: boxId,
-      user_id: userId,
-      error,
-    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {

@@ -137,7 +137,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       // Handle generic errors from service layer
-      console.error("Service error in POST /api/boxes:", error);
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się utworzyć pudełka",
@@ -150,7 +149,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors
-    console.error("Unexpected error in POST /api/boxes:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",
@@ -238,7 +236,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     } catch (error) {
       // Handle errors from service layer
-      console.error("Service error in GET /api/boxes:", error);
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek",
@@ -251,7 +248,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors
-    console.error("Unexpected error in GET /api/boxes:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",

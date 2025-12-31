@@ -88,7 +88,6 @@ export function restoreSessionFromStorage(): void {
       authStore.set(session);
     }
   } catch (error) {
-    console.error("[Auth Store] Failed to restore session:", error);
     clearAuth();
   }
 }
@@ -104,7 +103,5 @@ export function persistAuthState(): void {
     if (state.isAuthenticated && state.token) {
       localStorage.setItem("authSession", JSON.stringify(state));
     }
-  } catch (error) {
-    console.error("[Auth Store] Failed to persist session:", error);
-  }
+  } catch (error) {}
 }

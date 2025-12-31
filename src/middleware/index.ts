@@ -46,9 +46,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { data, error } = await supabase.auth.getUser();
     if (!error && data?.user) {
       user = data.user;
-      if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-        console.log(`[Middleware] User found from cookies: ${data.user.email}`);
-      }
     } else if (sessionToken) {
       // If no user from cookies, try to extract from sb_session token
       // Decode JWT without verification (we trust tokens from our own client)
@@ -92,24 +89,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
             access_token: sessionToken,
             refresh_token: "",
           });
-
-          if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-            console.log(`[Middleware] User found from session token: ${payload.email}`);
-          }
         }
       } catch (err) {
-        if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-          console.log(`[Middleware] Failed to decode session token:`, err instanceof Error ? err.message : String(err));
-        }
+        // Token decoding failed, continue without user
       }
-    } else if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] No user - error: ${error?.message || "no session"}`);
     }
   } catch (err) {
     // User not authenticated or session invalid, continue without user
-    if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] Exception: ${err instanceof Error ? err.message : String(err)}`);
-    }
   }
 
   // Make user available to routes via context.locals

@@ -173,7 +173,6 @@ export function useForm<T extends Record<string, any>>({
         reset();
       } catch (error) {
         // Error handling should be done in onSubmit callback
-        console.error("Form submission error:", error);
       } finally {
         setIsSubmitting(false);
       }

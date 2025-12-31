@@ -46,8 +46,6 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in GET /api/profiles/me:", error);
-
     // Handle specific error cases
     if (error instanceof Error && error.message === "User profile not found") {
       return new Response(

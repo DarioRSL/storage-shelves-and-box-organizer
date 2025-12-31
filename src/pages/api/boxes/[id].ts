@@ -88,7 +88,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       }
 
       // Handle generic service errors (500)
-      console.error("Service error in GET /api/boxes/:id:", error);
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się pobrać pudełka",
@@ -101,7 +100,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors (500)
-    console.error("Unexpected error in GET /api/boxes/:id:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",
@@ -191,7 +189,6 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       }
 
       // Handle generic service errors (500)
-      console.error("Service error in DELETE /api/boxes/:id:", error);
       return new Response(
         JSON.stringify({
           error: "Nie udało się usunąć pudełka",
@@ -204,7 +201,6 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors (500)
-    console.error("Unexpected error in DELETE /api/boxes/:id:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",
@@ -352,7 +348,6 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       }
 
       // Handle generic service errors (500)
-      console.error("Service error in PATCH /api/boxes/:id:", error);
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się zaktualizować pudełka",
@@ -365,7 +360,6 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors (500)
-    console.error("Unexpected error in PATCH /api/boxes/:id:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",

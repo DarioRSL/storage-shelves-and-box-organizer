@@ -132,14 +132,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    // Handle unexpected errors
-    console.error("PATCH /api/workspaces/:workspace_id/members/:user_id - Błąd:", {
-      workspaceId: params.workspace_id,
-      targetUserId: params.user_id,
-      currentUserId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
-    });
+    // Error handled by middleware authentication
 
     return new Response(
       JSON.stringify({

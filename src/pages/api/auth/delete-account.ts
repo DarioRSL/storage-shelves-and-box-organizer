@@ -94,7 +94,6 @@ export const DELETE: APIRoute = async ({ locals }) => {
       }
 
       // Handle generic service errors (500)
-      console.error("Service error in DELETE /api/auth/delete-account:", error);
       return new Response(
         JSON.stringify({
           error: "Nie udało się usunąć konta",
@@ -107,7 +106,6 @@ export const DELETE: APIRoute = async ({ locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors (500)
-    console.error("Unexpected error in DELETE /api/auth/delete-account:", error);
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",

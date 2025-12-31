@@ -39,7 +39,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       .single();
 
     if (profileError || !userProfile) {
-      console.error("Error verifying user profile:", profileError);
       throw new UserAccountNotFoundError();
     }
 
@@ -50,7 +49,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       .eq("owner_id", userId);
 
     if (workspacesError) {
-      console.error("Error fetching user workspaces:", workspacesError);
       throw new AccountDeletionError("Nie udało się pobrać workspaces użytkownika");
     }
 
@@ -68,7 +66,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       const { error: deleteBoxesError } = await supabase.from("boxes").delete().in("workspace_id", workspaceIds);
 
       if (deleteBoxesError) {
-        console.error("Error deleting boxes during account deletion:", deleteBoxesError);
         throw new AccountDeletionError("Nie udało się usunąć pudełek");
       }
     }
@@ -83,7 +80,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .eq("status", "assigned");
 
       if (resetQrError) {
-        console.error("Error resetting QR codes during account deletion:", resetQrError);
         throw new AccountDeletionError("Nie udało się zresetować kodów QR");
       }
     }
@@ -96,7 +92,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .in("workspace_id", workspaceIds);
 
       if (deleteLocationsError) {
-        console.error("Error deleting locations during account deletion:", deleteLocationsError);
         throw new AccountDeletionError("Nie udało się usunąć lokalizacji");
       }
     }
@@ -110,7 +105,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .in("workspace_id", workspaceIds);
 
       if (deleteMembersError) {
-        console.error("Error deleting workspace members during account deletion:", deleteMembersError);
         throw new AccountDeletionError("Nie udało się usunąć członkostwa w workspaces");
       }
     }
@@ -120,7 +114,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       const { error: deleteWorkspacesError } = await supabase.from("workspaces").delete().eq("owner_id", userId);
 
       if (deleteWorkspacesError) {
-        console.error("Error deleting workspaces during account deletion:", deleteWorkspacesError);
         throw new AccountDeletionError("Nie udało się usunąć workspaces");
       }
     }
@@ -129,7 +122,6 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
     const { error: deleteProfileError } = await supabase.from("profiles").delete().eq("id", userId);
 
     if (deleteProfileError) {
-      console.error("Error deleting profile during account deletion:", deleteProfileError);
       throw new AccountDeletionError("Nie udało się usunąć profilu użytkownika");
     }
 

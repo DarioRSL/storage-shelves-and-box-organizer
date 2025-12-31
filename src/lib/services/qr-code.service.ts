@@ -41,13 +41,6 @@ export async function getQrCodeByShortId(
 
     // Handle Supabase errors
     if (error) {
-      console.error("Error fetching QR code:", {
-        short_id: shortId,
-        user_id: userId,
-        error: error.message,
-        code: error.code,
-      });
-
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
       if (error.code === "PGRST116") {
         throw new QrCodeNotFoundError();
@@ -58,21 +51,10 @@ export async function getQrCodeByShortId(
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.warn("QR code not found or access denied:", {
-        short_id: shortId,
-        user_id: userId,
-      });
       throw new QrCodeNotFoundError();
     }
 
     // Log successful retrieval
-    console.log("QR code fetched successfully:", {
-      qr_code_id: data.id,
-      short_id: data.short_id,
-      user_id: userId,
-      workspace_id: data.workspace_id,
-      is_assigned: !!data.box_id,
-    });
 
     return data;
   } catch (error) {
@@ -82,11 +64,6 @@ export async function getQrCodeByShortId(
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in getQrCodeByShortId:", {
-      short_id: shortId,
-      user_id: userId,
-      error,
-    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {
@@ -169,21 +146,10 @@ export async function batchGenerateQrCodes(
       .select("id, short_id, status, workspace_id, created_at");
 
     if (error) {
-      console.error("[QRCodeService] Failed to generate QR codes:", {
-        workspace_id,
-        quantity,
-        error: error.message,
-        code: error.code,
-      });
       throw new Error("Nie udało się wygenerować kodów QR");
     }
 
     if (!data || data.length !== quantity) {
-      console.error("[QRCodeService] Generated count mismatch:", {
-        workspace_id,
-        expected: quantity,
-        actual: data?.length || 0,
-      });
       throw new Error("Nie udało się wygenerować wszystkich kodów QR");
     }
 
@@ -203,11 +169,6 @@ export async function batchGenerateQrCodes(
     }
 
     // Log unexpected errors
-    console.error("[QRCodeService] Unexpected error in batchGenerateQrCodes:", {
-      workspace_id,
-      quantity,
-      error,
-    });
 
     throw new Error("Nie udało się wygenerować kodów QR");
   }

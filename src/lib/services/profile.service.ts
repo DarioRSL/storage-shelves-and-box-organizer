@@ -18,18 +18,15 @@ export async function getAuthenticatedUserProfile(supabase: SupabaseClient, user
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
 
     if (error) {
-      console.error("Error fetching user profile:", error);
       throw new Error("Failed to retrieve profile");
     }
 
     if (!data) {
-      console.warn(`Profile not found for user: ${userId}`);
       throw new Error("User profile not found");
     }
 
     return data;
   } catch (error) {
-    console.error("Unexpected error in getAuthenticatedUserProfile:", error);
     throw error instanceof Error ? error : new Error("Failed to retrieve profile");
   }
 }

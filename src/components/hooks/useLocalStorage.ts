@@ -69,7 +69,6 @@ export function useLocalStorage<T>(
       }
       return initialValue;
     } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -91,9 +90,7 @@ export function useLocalStorage<T>(
         } else {
           fallbackStorage.set(key, JSON.stringify(valueToStore));
         }
-      } catch (error) {
-        console.error(`Error setting localStorage key "${key}":`, error);
-      }
+      } catch (error) {}
     },
     [key, storedValue, options, hasLocalStorage]
   );
@@ -106,9 +103,7 @@ export function useLocalStorage<T>(
           const newValue = JSON.parse(e.newValue) as T;
           setStoredValue(newValue);
           options?.onChange?.(newValue);
-        } catch (error) {
-          console.error(`Error parsing storage event for key "${key}":`, error);
-        }
+        } catch (error) {}
       }
     };
 

@@ -100,13 +100,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       );
     }
 
-    // Handle unexpected errors
-    console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
-      workspaceId: params.workspace_id,
-      userId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
-    });
+    // Error handled by middleware authentication
 
     return new Response(
       JSON.stringify({
