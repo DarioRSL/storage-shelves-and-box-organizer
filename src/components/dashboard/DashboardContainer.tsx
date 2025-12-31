@@ -13,8 +13,8 @@ import {
 } from "@/stores/dashboard";
 import { DashboardContext, type DashboardContextType, type DashboardState } from "@/contexts/DashboardContext";
 import { useWorkspaces } from "@/components/hooks/useWorkspaces";
-import { useLocations, type LocationTreeNode } from "@/components/hooks/useLocations";
-import { useBoxes, type BoxListItem } from "@/components/hooks/useBoxes";
+import { useLocations } from "@/components/hooks/useLocations";
+import { useBoxes } from "@/components/hooks/useBoxes";
 import type { CreateLocationRequest, CreateBoxRequest, UpdateBoxRequest } from "@/types";
 import { apiFetch, getUserFriendlyErrorMessage, logError, shouldRedirectToLogin } from "@/lib/api-client";
 
@@ -35,7 +35,6 @@ export default function DashboardContainer() {
   const $searchQuery = useStore(searchQuery);
   const $expandedLocationIds = useStore(expandedLocationIds);
   const $userWorkspaces = useStore(userWorkspaces);
-  const $userProfile = useStore(userProfile);
 
   // API hooks
   const { workspaces, isLoading: isLoadingWorkspaces, error: workspacesError } = useWorkspaces();
@@ -95,7 +94,7 @@ export default function DashboardContainer() {
         const profile = await res.json();
         userProfile.set(profile);
       } catch (err) {
-        console.error("[DashboardContainer] Błąd pobierania profilu:", err);
+        logError("[DashboardContainer] Błąd pobierania profilu", err);
       }
     }
     fetchProfile();
@@ -175,7 +174,7 @@ export default function DashboardContainer() {
       setModalData({ mode: "create" });
     },
 
-    openDeleteConfirm: (type: "location" | "box", itemId: string, itemName?: string) => {
+    openDeleteConfirm: (type: "location" | "box", itemId: string) => {
       setModalData({ mode: "create", itemType: type, itemId });
       setActiveModal("delete-confirm");
     },

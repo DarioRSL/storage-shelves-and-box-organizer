@@ -103,7 +103,6 @@ export default function LocationTreeNode({ location, level, onSelect, onAddChild
           onClick={() => onSelect(location.id)}
           onKeyDown={handleKeyDown}
           className="flex-1 text-left text-sm font-medium cursor-pointer outline-none"
-          aria-selected={isSelected}
           aria-label={`${location.name}${location.boxCount > 0 ? `, ${location.boxCount} pudełek` : ""}`}
         >
           {location.name}
@@ -151,9 +150,9 @@ export default function LocationTreeNode({ location, level, onSelect, onAddChild
       </div>
 
       {/* Nested children */}
-      {isExpanded && hasChildren && (
+      {isExpanded && hasChildren && location.children && (
         <div id={`location-children-${location.id}`} role="group">
-          {location.children!.map((child) => (
+          {location.children.map((child) => (
             <LocationTreeNode
               key={child.id}
               location={child}

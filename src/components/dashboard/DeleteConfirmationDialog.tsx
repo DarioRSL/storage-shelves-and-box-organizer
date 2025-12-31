@@ -16,7 +16,6 @@ interface DeleteConfirmationDialogProps {
   type: "location" | "box";
   title: string;
   description: string;
-  itemName: string;
   warning?: string;
   isLoading: boolean;
   onConfirm: () => void;
