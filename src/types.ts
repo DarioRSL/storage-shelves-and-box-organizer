@@ -434,6 +434,20 @@ export interface WorkspaceWithOwnershipInfo extends WorkspaceDto {
  */
 export type ThemeMode = "light" | "dark" | "system";
 
+/**
+ * Request to update user's theme preference.
+ */
+export interface UpdateThemeRequest {
+  theme_preference: ThemeMode;
+}
+
+/**
+ * Response from theme update.
+ */
+export interface UpdateThemeResponse {
+  theme_preference: ThemeMode;
+}
+
 // --- 11. Settings View Types ---
 
 /**
