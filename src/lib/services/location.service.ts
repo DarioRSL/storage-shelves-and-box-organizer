@@ -366,7 +366,7 @@ export async function getLocations(
   }
 
   // Step 2: Build base query
-  let query = supabase
+  const query = supabase
     .from("locations")
     .select("*")
     .eq("workspace_id", workspaceId)
@@ -421,10 +421,7 @@ export async function getLocations(
     filteredData = data.filter((loc) => {
       const pathSegments = (loc.path as string).split(".");
       // Must be direct child (next level only) and start with parent path
-      return (
-        pathSegments.length === targetDepth &&
-        (loc.path as string).startsWith(`${parentPath}.`)
-      );
+      return pathSegments.length === targetDepth && (loc.path as string).startsWith(`${parentPath}.`);
     });
   }
 

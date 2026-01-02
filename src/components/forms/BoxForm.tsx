@@ -23,14 +23,7 @@ export interface BoxFormProps {
  * Orchestrates all form fields and handles submission/deletion flows.
  * Supports both create and edit modes with conditional rendering.
  */
-export function BoxForm({
-  mode,
-  boxId,
-  workspaceId,
-  initialLocationId,
-  onSuccess,
-  onCancel,
-}: BoxFormProps) {
+export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess, onCancel }: BoxFormProps) {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -48,10 +41,7 @@ export function BoxForm({
 
   // Set initial location if provided
   React.useEffect(() => {
-    if (
-      initialLocationId &&
-      formState.location_id !== initialLocationId
-    ) {
+    if (initialLocationId && formState.location_id !== initialLocationId) {
       setFormField("location_id", initialLocationId);
     }
   }, [initialLocationId, formState.location_id, setFormField]);
