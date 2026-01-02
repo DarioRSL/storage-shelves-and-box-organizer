@@ -60,7 +60,11 @@ export default function UserMenu() {
           <User className="h-4 w-4" aria-hidden="true" />
           <span>Profil</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer gap-2" aria-label="Otwórz ustawienia">
+        <DropdownMenuItem
+          className="cursor-pointer gap-2"
+          aria-label="Otwórz ustawienia"
+          onClick={() => (window.location.href = "/settings")}
+        >
           <Settings className="h-4 w-4" aria-hidden="true" />
           <span>Ustawienia</span>
         </DropdownMenuItem>
