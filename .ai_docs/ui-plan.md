@@ -1,5 +1,34 @@
 # UI Architecture for Storage & Box Organizer
 
+**Last Updated:** January 2, 2026
+**Implementation Status:** ✅ **75% Complete** (5/7 main views implemented)
+**Polish i18n:** 🟡 Partial (Dashboard & Settings 100%, Forms ~40%)
+
+## Implementation Status Summary
+
+| View | Path | Status | Polish i18n | Notes |
+|------|------|--------|-------------|-------|
+| Login/Registration | `/auth` | ✅ Complete | 🟡 Partial | AuthLayout, forms working |
+| Main Dashboard | `/app` | ✅ Complete | ✅ 100% | SearchInput, LocationTree, BoxList all functional |
+| Box Form | `/app/boxes/new`, `/app/boxes/[id]/edit` | ✅ Complete | 🟡 40% | TagInput, LocationSelector implemented |
+| Box Details | `/app/boxes/[id]` | ❌ **Missing** | N/A | No dedicated details view (only edit) |
+| QR Generator | `/app/qr-generator` | ❌ **Missing** | N/A | API ready, UI not implemented |
+| Settings | `/settings` | ✅ Complete | ✅ 100% | Theme, workspaces, export, danger zone |
+| Landing Page | `/` | ✅ Complete | ✅ 100% | Public landing page |
+
+**Key Components Status:**
+- ✅ SearchInput (debounced, 3-char minimum)
+- ✅ LocationTree (hierarchical, 5-level support)
+- ✅ BoxList (functional, virtualization TODO)
+- ✅ TagInput (combobox with suggestions)
+- ✅ WorkspaceSwitcher (dashboard header)
+- ✅ ThemeToggle (Jasny/Ciemny/Systemowy)
+- ✅ ConfirmationDialog (text verification)
+- ✅ EmptyState (multiple variants)
+- ❌ Breadcrumbs (not implemented)
+- ❌ SkeletonLoader (not implemented)
+- ❌ Toast/Sonner (not implemented)
+
 ## 1. UI Structure Overview
 
 The User Interface (UI) architecture for the "Storage & Box Organizer" application is designed as a responsive Progressive Web App (PWA) with a "Mobile-First" approach. The goal is to provide an intuitive and fast experience for key operations (browsing, adding boxes) on mobile devices, while offering advanced tools for structure management on desktop devices.

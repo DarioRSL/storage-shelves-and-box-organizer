@@ -1,6 +1,31 @@
 # REST API Plan
 
+**Last Updated:** January 2, 2026
+**Implementation Status:** ✅ **100% Complete** (24/24 endpoints implemented)
+
 This document outlines the REST API structure for the Storage & Box Organizer application. Given the architecture uses Supabase (PostgreSQL + PostgREST), many endpoints map directly to database operations secured by Row Level Security (RLS). Custom business logic is handled via RPC functions or Edge Functions.
+
+## Implementation Status Summary
+
+| Category | Endpoints | Status | Notes |
+|----------|-----------|--------|-------|
+| **Authentication** | 3 | ✅ Complete | HttpOnly cookie-based sessions |
+| **Profiles** | 2 | ✅ Complete | Includes theme preference endpoint |
+| **Workspaces** | 6 | ✅ Complete | Full CRUD + member management |
+| **Locations** | 4 | ✅ Complete | Hierarchical structure with soft delete |
+| **Boxes** | 5 | ✅ Complete | Full CRUD with search & pagination |
+| **QR Codes** | 2 | ✅ Complete | Batch generation + lookup |
+| **Export** | 1 | ✅ Complete | CSV/JSON inventory export |
+| **Account Management** | 1 | ✅ Complete | Account deletion with cascade |
+| **TOTAL** | **24** | ✅ **100%** | All endpoints production-ready |
+
+**Architecture Highlights:**
+- ✅ Consistent Zod validation on all inputs
+- ✅ Service layer separation for business logic
+- ✅ Middleware-based authentication via `context.locals.user`
+- ✅ Comprehensive error handling with Polish messages
+- ✅ RLS enforcement via authenticated Supabase client
+- ✅ OpenAPI-compliant REST design
 
 ## 1. Resources
 

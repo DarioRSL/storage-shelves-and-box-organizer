@@ -1,5 +1,25 @@
 # Tech Stack - Storage & Box Organizer
 
+**Last Updated:** January 2, 2026
+**Status:** ✅ **Production-Ready**
+**Node Version:** 22.14.0 (LTS)
+**Package Manager:** npm
+
+## Technology Stack Summary
+
+| Layer | Technology | Version | Status |
+|-------|-----------|---------|--------|
+| **Frontend Framework** | Astro | 5.x | ✅ SSR configured |
+| **UI Library** | React | 19.x | ✅ Full integration |
+| **Language** | TypeScript | 5.x | ✅ Strict mode |
+| **Styling** | Tailwind CSS | 4.x | ✅ OKLCH colors |
+| **Component Library** | Shadcn/ui | Latest | ✅ Radix UI |
+| **State Management** | Nano Stores | Latest | ✅ Lightweight |
+| **Backend** | Supabase | Latest | ✅ PostgreSQL + Auth |
+| **Database** | PostgreSQL | 15.x | ✅ RLS ready |
+| **Validation** | Zod | Latest | ✅ Type-safe |
+| **Package Manager** | npm | 10.x | ✅ Lock file |
+
 ## Frontend Framework
 
 - **Astro 5** - Static Site Generation + Server-Side Rendering
