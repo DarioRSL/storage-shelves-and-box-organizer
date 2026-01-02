@@ -1,11 +1,13 @@
 ---
 import "../styles/global.css";
+import ThemeInitializer from "@/components/theme/ThemeInitializer.astro";
 
 interface Props {
   title?: string;
+  themePreference?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", themePreference } = Astro.props;
 ---
 
 <!doctype html>
@@ -16,6 +18,8 @@ const { title = "10x Astro Starter" } = Astro.props;
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <!-- Theme initialization script (prevents FOUC) -->
+    <ThemeInitializer themePreference={themePreference} />
   </head>
   <body>
     <slot />
