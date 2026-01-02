@@ -34,7 +34,7 @@ export default function SettingsContainer({ userId }: SettingsContainerProps) {
     closeEditModal,
   } = useSettingsView(userId);
 
-  const { currentTheme, setTheme } = useTheme();
+  const { currentTheme, setTheme } = useTheme(state.currentProfile?.theme_preference as "light" | "dark" | "system");
 
   const [confirmationState, setConfirmationState] = useState<{
     type: "workspace" | "account" | null;
