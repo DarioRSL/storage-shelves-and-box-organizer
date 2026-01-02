@@ -14,13 +14,7 @@ export function SettingsHeader({ onBack }: SettingsHeaderProps) {
       <div className="flex items-center justify-between px-6 py-4">
         {/* Logo/Title with Back Button */}
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="rounded-lg"
-            aria-label="Back to dashboard"
-          >
+          <Button variant="ghost" size="icon" onClick={onBack} className="rounded-lg" aria-label="Back to dashboard">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
