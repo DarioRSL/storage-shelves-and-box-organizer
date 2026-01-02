@@ -36,7 +36,7 @@ export default function LocationTree() {
         variant="outline"
         size="sm"
         onClick={handleAddRootLocation}
-        className="w-full justify-start gap-2 text-gray-700"
+        className="w-full justify-start gap-2 text-foreground"
         aria-label="Dodaj nową lokalizację główną"
       >
         <Plus className="h-4 w-4" />
@@ -47,8 +47,8 @@ export default function LocationTree() {
       <div
         onClick={handleUnassignedClick}
         onKeyDown={handleUnassignedKeyDown}
-        className={`flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 ${
-          isUnassignedSelected ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+        className={`flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0 ${
+          isUnassignedSelected ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
         }`}
         role="button"
         tabIndex={0}
