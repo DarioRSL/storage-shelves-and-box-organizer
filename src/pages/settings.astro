@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SettingsContainer from "@/components/settings/SettingsContainer";
+
+// Check if user is authenticated via middleware (from sb_session cookie)
+const user = Astro.locals.user;
+if (!user) {
+  // User is not authenticated
+  return Astro.redirect("/auth");
+}
+---
+
+<Layout title="Settings - Storage Organizer">
+  <main role="main">
+    <SettingsContainer client:load userId={user.id} />
+  </main>
+</Layout>
