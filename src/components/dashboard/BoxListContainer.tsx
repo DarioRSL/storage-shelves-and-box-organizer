@@ -20,14 +20,14 @@ export default function BoxListContainer() {
   const showBoxList = state.boxes.length > 0 && state.userWorkspaces.length > 0;
 
   return (
-    <div className="flex h-full flex-col bg-white" role="region" aria-label="Zawartość pudełek">
+    <div className="flex h-full flex-col bg-card" role="region" aria-label="Zawartość pudełek">
       {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">
+      <div className="border-b border-border px-6 py-4">
+        <h2 className="text-lg font-semibold text-foreground">
           {state.isSearchActive ? "Wyniki wyszukiwania" : "Pudełka"}
         </h2>
         {state.boxes.length > 0 && (
-          <p className="text-sm text-gray-500" role="status">
+          <p className="text-sm text-muted-foreground" role="status">
             {state.isSearchActive ? "Znaleziono" : "Razem"}: {state.boxes.length}{" "}
             {state.boxes.length === 1 ? "pudełko" : "pudełek"}
           </p>
@@ -44,8 +44,8 @@ export default function BoxListContainer() {
             aria-label="Ładowanie pudełek"
           >
             <div className="flex flex-col items-center gap-2">
-              <Loader className="h-6 w-6 animate-spin text-gray-400" aria-hidden="true" />
-              <p className="text-sm text-gray-500">Ładowanie pudełek...</p>
+              <Loader className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground">Ładowanie pudełek...</p>
             </div>
           </div>
         ) : showEmptyState ? (
