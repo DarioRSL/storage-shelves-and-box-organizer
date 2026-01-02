@@ -15,9 +15,12 @@ const user = Astro.locals.user;
 if (user) {
   return Astro.redirect("/app");
 }
+
+// Auth page always uses light theme
+const themePreference = "light";
 ---
 
-<Layout title="Logowanie - Organizator">
+<Layout title="Logowanie - Organizator" themePreference={themePreference}>
   <div transition:animate="fade" class="view-transition-name-auth-page">
     <AuthLayout client:load initialMode={initialMode} />
   </div>

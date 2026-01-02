@@ -81,6 +81,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   "email": "user@example.com",
   "full_name": "John Doe",
   "avatar_url": "https://example.com/avatar.jpg",
+  "theme_preference": "dark",
   "created_at": "2023-10-27T10:00:00Z",
   "updated_at": "2023-10-27T10:00:00Z"
 }
@@ -88,6 +89,51 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 - **Errors**:
   - `401 Unauthorized`: User is not authenticated or token is invalid.
+
+#### PATCH /api/profiles/me/theme
+
+- **Description**: Updates the authenticated user's theme preference (light, dark, or system). The theme is persisted to the database and applied across all sessions and devices.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/profiles/me/theme.ts` (PATCH handler)
+- **Service Layer**: Database update via direct Supabase client call
+- **Query Parameters**: None
+- **Request JSON**:
+
+```json
+{
+  "theme_preference": "dark"
+}
+```
+
+- **Valid Theme Values**: `"light"`, `"dark"`, `"system"`
+
+- **Response JSON**:
+
+```json
+{
+  "theme_preference": "dark"
+}
+```
+
+- **Validation**:
+  - User must be authenticated
+  - theme_preference: enum ("light", "dark", "system")
+  - Validated via Zod schema
+
+- **Authorization**:
+  - User can only update their own theme preference
+  - RLS policy enforces user can only update their own profile
+
+- **Errors**:
+  - `400 Bad Request`: Invalid theme_preference value (not "light", "dark", or "system")
+  - `401 Unauthorized`: User not authenticated
+  - `500 Internal Server Error`: Database update failed
+
+- **Implementation Details**:
+  - Updates `profiles.theme_preference` column
+  - Client-side optimistic UI updates for instant feedback
+  - Used by `useTheme()` hook for global theme management
+  - SSR-compatible: theme fetched before page render to prevent FOUC
 
 #### GET /workspaces
 

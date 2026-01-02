@@ -37,7 +37,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
 
   return (
     <article
-      className="group flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg"
+      className="group flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -45,16 +45,16 @@ export default function BoxListItem({ box }: BoxListItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 truncate">{box.name}</h3>
-            <div className="mt-1 flex flex-col gap-1 text-xs text-gray-500">
+            <h3 className="font-medium text-foreground truncate">{box.name}</h3>
+            <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
               <p aria-label={`Lokalizacja: ${location}`}>{location}</p>
               {box.description && (
-                <p className="line-clamp-1 text-gray-600" aria-label={`Opis: ${box.description}`}>
+                <p className="line-clamp-1 text-muted-foreground" aria-label={`Opis: ${box.description}`}>
                   {box.description}
                 </p>
               )}
               {tagsDisplay && (
-                <p className="text-gray-600" aria-label={`Tagi: ${tagsDisplay}`}>
+                <p className="text-muted-foreground" aria-label={`Tagi: ${tagsDisplay}`}>
                   {tagsDisplay}
                 </p>
               )}
@@ -66,7 +66,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
       {/* QR code */}
       {box.qr_code && (
         <div className="flex-shrink-0 text-right">
-          <p className="text-sm font-mono text-gray-600" aria-label={`Kod QR: ${box.qr_code.short_id}`}>
+          <p className="text-sm font-mono text-muted-foreground" aria-label={`Kod QR: ${box.qr_code.short_id}`}>
             {box.qr_code.short_id}
           </p>
         </div>

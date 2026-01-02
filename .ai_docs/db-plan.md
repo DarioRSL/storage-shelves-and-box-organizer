@@ -43,8 +43,17 @@ Stores public user data, linked 1:1 with the `auth.users` table.
 - email: TEXT NOT NULL
 - full_name: TEXT
 - avatar_url: TEXT
+- theme_preference: TEXT NOT NULL DEFAULT 'system' CHECK (theme_preference IN ('light', 'dark', 'system'))
 - created_at: TIMESTAMPTZ NOT NULL DEFAULT now()
 - updated_at: TIMESTAMPTZ NOT NULL DEFAULT now()
+
+**Theme Preference Column:**
+- **Purpose**: Stores user's preferred theme mode (light, dark, or system)
+- **Default**: 'system' (follows OS theme preference)
+- **Validation**: CHECK constraint ensures only valid values ('light', 'dark', 'system')
+- **Migration**: Added in `20260102182001_add_theme_preference_to_profiles.sql`
+- **API Integration**: Updated via PATCH /api/profiles/me/theme endpoint
+- **SSR Support**: Fetched server-side before page render to prevent FOUC (Flash of Unstyled Content)
 
 _Trigger: Automatically update the `updated_at` column on record updates._
 
@@ -267,6 +276,7 @@ const children = locations.filter(loc =>
 **Current Migration Files:**
 - `20251212120000_initial_schema.sql` - Initial database setup with all tables, enums, RLS policies
 - `20251214120000_workspace_creation_trigger.sql` - Workspace owner auto-assignment
+- `20260102182001_add_theme_preference_to_profiles.sql` - Added theme_preference column to profiles table
 
 **Future Migration Guidelines:**
 - Use UTC timestamps in naming: `YYYYMMDDHHmmss_description.sql`

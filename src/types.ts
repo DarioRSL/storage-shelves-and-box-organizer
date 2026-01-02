@@ -433,3 +433,79 @@ export interface WorkspaceWithOwnershipInfo extends WorkspaceDto {
  * Theme preference type for light/dark/system modes.
  */
 export type ThemeMode = "light" | "dark" | "system";
+
+/**
+ * Request to update user's theme preference.
+ */
+export interface UpdateThemeRequest {
+  theme_preference: ThemeMode;
+}
+
+/**
+ * Response from theme update.
+ */
+export interface UpdateThemeResponse {
+  theme_preference: ThemeMode;
+}
+
+// --- 11. Settings View Types ---
+
+/**
+ * Request to update workspace.
+ */
+export interface UpdateWorkspaceRequest {
+  name: string;
+}
+
+/**
+ * Response from workspace update.
+ */
+export interface UpdateWorkspaceResponse {
+  id: string;
+  name: string;
+  updated_at: string | null;
+}
+
+/**
+ * Confirmation dialog state.
+ */
+export interface ConfirmationDialogState {
+  isOpen: boolean;
+  confirmationType: "workspace" | "account";
+  targetId: string | null;
+  inputValue: string;
+  expectedConfirmText: string;
+  isLoading: boolean;
+  error: string | null;
+}
+
+/**
+ * Settings view state.
+ */
+export interface SettingsViewState {
+  workspaces: WorkspaceWithOwnershipInfo[];
+  currentProfile: ProfileDto | null;
+  selectedWorkspaceForEdit: WorkspaceDto | null;
+  isCreateWorkspaceModalOpen: boolean;
+  isEditWorkspaceModalOpen: boolean;
+  isDeleteConfirmationOpen: boolean;
+  deleteConfirmationType: "workspace" | "account";
+  deleteTargetId: string | null;
+  isLoading: Record<string, boolean>;
+  error: string | null;
+  successMessage: string | null;
+  theme: ThemeMode;
+}
+
+/**
+ * Type for tracking loading state of specific operations.
+ */
+export type OperationType =
+  | "fetchProfile"
+  | "fetchWorkspaces"
+  | "createWorkspace"
+  | "updateWorkspace"
+  | "deleteWorkspace"
+  | "deleteAccount"
+  | "exportData"
+  | "logout";

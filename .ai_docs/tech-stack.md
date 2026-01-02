@@ -19,8 +19,10 @@
 
 - **Tailwind CSS 4** - Styling
   - Mobile-first responsive design
-  - Dark mode support via `dark:` prefix
+  - Dark mode support via `dark:` prefix (class-based strategy)
   - Arbitrary values with square brackets
+  - OKLCH color space for perceptually uniform colors
+  - CSS variables for semantic theming
 
 - **Shadcn/ui** - Component Library
   - Unstyled, accessible components
@@ -218,6 +220,67 @@
 - A09: Logging & Monitoring - Error logging with context
 - A10: SSRF - All external requests through vetted APIs
 
+## Theme System Architecture
+
+### Database-Backed Global Theme (PR #69)
+
+**Implementation Date**: January 2, 2026
+
+**Core Components**:
+
+1. **Database Layer**:
+   - Column: `profiles.theme_preference` (TEXT, CHECK constraint)
+   - Valid values: 'light', 'dark', 'system'
+   - Default: 'system'
+   - Migration: `20260102182001_add_theme_preference_to_profiles.sql`
+
+2. **API Layer**:
+   - Endpoint: `PATCH /api/profiles/me/theme`
+   - Validation: Zod schema
+   - Authorization: RLS policy (user can only update own theme)
+
+3. **Hook Layer** (`useTheme.ts`):
+   - SSR support with `initialTheme` prop
+   - Optimistic UI updates
+   - Database persistence via API call
+   - localStorage cache for fast repeat visits
+   - System preference fallback
+
+4. **SSR Integration**:
+   - Theme fetched server-side in authenticated pages (`app.astro`, `settings.astro`)
+   - Passed to Layout component as prop
+   - `ThemeInitializer.astro` applies theme before React hydration (prevents FOUC)
+   - Public pages (`index.astro`, `auth/index.astro`) use hardcoded 'light' theme
+
+5. **Client-Side Application**:
+   - Inline script in `<head>` applies theme synchronously
+   - Priority: Database → localStorage → system preference
+   - MediaQuery listener for system theme changes
+   - Dark mode toggle via class on `<html>` element
+
+**Color System**:
+- **Color Space**: OKLCH (perceptually uniform, better for interpolation)
+- **Semantic Tokens**: `--background`, `--foreground`, `--card`, `--border`, etc.
+- **Tailwind Integration**: `bg-background`, `text-foreground`, `border-border`
+- **Dark Mode Adjustment**: Lightened by ~10% based on user feedback (January 2, 2026)
+  - Background: 0.21 → 0.25 lightness (+19%)
+  - Card: 0.25 → 0.30 (+20%)
+  - Muted: 0.30 → 0.35 (+17%)
+
+**Benefits**:
+- ✅ Cross-device theme sync (database-backed)
+- ✅ Zero FOUC (server-side theme application)
+- ✅ Optimistic UI (instant feedback)
+- ✅ Graceful degradation (localStorage fallback)
+- ✅ System preference respect
+
+**Implementation Files**:
+- `src/components/hooks/useTheme.ts` - React hook
+- `src/components/theme/ThemeInitializer.astro` - SSR theme script
+- `src/components/settings/ThemeToggle.tsx` - UI component (Polish i18n)
+- `src/pages/api/profiles/me/theme.ts` - API endpoint
+- `src/styles/global.css` - Theme color definitions
+
 ## Performance Considerations
 
 - **Query Optimization**
@@ -228,6 +291,7 @@
 - **Caching**
   - Browser caching for static assets
   - Client-side cache in Nano Stores
+  - Theme localStorage cache (fast repeat visits)
   - Future: Redis for server-side caching
 
 - **Code Splitting**

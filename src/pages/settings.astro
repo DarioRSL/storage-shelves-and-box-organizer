@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import DashboardContainer from "@/components/dashboard/DashboardContainer";
+import SettingsContainer from "@/components/settings/SettingsContainer";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
 
 // Check if user is authenticated via middleware (from sb_session cookie)
@@ -21,8 +21,8 @@ try {
 }
 ---
 
-<Layout title="Dashboard" themePreference={themePreference}>
+<Layout title="Settings - Storage Organizer" themePreference={themePreference}>
   <main role="main">
-    <DashboardContainer client:load />
+    <SettingsContainer client:load userId={user.id} />
   </main>
 </Layout>

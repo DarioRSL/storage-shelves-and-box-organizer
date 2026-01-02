@@ -9,10 +9,10 @@ import BoxListContainer from "./BoxListContainer";
  */
 export default function DashboardContent() {
   return (
-    <div className="flex h-[calc(100vh-73px)] bg-gray-50">
+    <div className="flex h-[calc(100vh-73px)] bg-background">
       {/* Left panel: Search and Location tree */}
       <aside
-        className="w-80 border-r border-gray-200 bg-white p-4 overflow-y-auto"
+        className="w-80 border-r border-border bg-card p-4 overflow-y-auto"
         role="navigation"
         aria-label="Filtry i nawigacja"
       >

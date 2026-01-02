@@ -91,24 +91,71 @@ Application state management will be handled globally (using `Nano Stores`), and
     - **Accessibility**: Accessibility of the form and buttons.
 
 ### Settings View
-- **View Name**: Settings
+- **View Name**: Settings (Ustawienia)
 - **View Path**: `/app/settings`
 - **Main Purpose**: To manage account and application settings.
-- **Key Information to Display**: Available configuration options.
+- **Implementation Status**: ✅ Fully implemented with Polish i18n
+- **Key Information to Display**: Available configuration options in Polish language.
 - **Key View Components**:
-    - **Workspace Management Section**:
-        - `WorkspaceList`: A list of workspaces the user belongs to.
-        - "Edit" button for each workspace (to change the name, opens a modal).
-        - "Create New Workspace" button.
-    - `ThemeToggle`: A switch for Light / Dark / System mode.
-    - "Export data to CSV/Excel" button.
-    - **Danger Zone Section**:
-        - "Delete Workspace" button (visible if the user is the owner).
-        - "Delete Account" button.
-    - `ConfirmationDialog`: A modal to confirm account deletion, requiring the user to type text to unlock the action.
+    - **Profile Header**:
+        - User avatar (initials or image)
+        - Full name or "Użytkownik" (User)
+        - Email address
+        - Logout button
+    - **Appearance Section (Wygląd)**:
+        - `ThemeToggle`: Radio group for theme selection
+        - Options: "Jasny" (Light), "Ciemny" (Dark), "Systemowy" (System)
+        - Database-backed theme persistence via PATCH /api/profiles/me/theme
+        - Icons for each theme option (sun, moon, monitor)
+    - **Data Section (Dane)**:
+        - `ExportDataButton`: Export inventory to CSV
+        - Workspace selector integration
+        - Button text: "Eksportuj Dane" with loading state "Eksportowanie..."
+        - Error messages in Polish (e.g., "Nie wybrano przestrzeni roboczej", "Brak danych do eksportu")
+    - **Workspace Management Section (Przestrzenie Robocze)**:
+        - `WorkspaceManagementSection`: List of workspaces with ownership info
+        - `WorkspaceCard`: Individual workspace card with avatar, name, member count
+        - "Właściciel" (Owner) badge for owned workspaces
+        - "Edytuj" (Edit) button per workspace
+        - "Utwórz Przestrzeń" (Create Workspace) button
+        - Empty state: "Nie masz jeszcze żadnych przestrzeni roboczych"
+        - **Note**: Delete button removed from cards (consolidated to Danger Zone)
+    - **Danger Zone Section (Strefa Niebezpieczna)**:
+        - Integrated workspace selector with label "Wybierz przestrzeń do usunięcia"
+        - Workspace selector shows ownership status "(Właściciel)"
+        - "Usuń '{workspace_name}'" button (dynamic workspace name)
+        - "Usuń Konto" (Delete Account) button
+        - Confirmation dialogs for both actions
+    - `ConfirmationDialog`: Modal for account deletion with text confirmation requirement
 - **UX, Accessibility, and Security Considerations**:
-    - **UX**: Grouping options into logical sections. Clear warnings before irreversible actions.
-    - **Security**: Critical actions, like deleting a workspace or account, require extra confirmation (e.g., typing the name to confirm) to prevent accidental clicks.
+    - **UX**:
+        - Complete Polish translation for consistency
+        - Logical grouping with border-separated sections
+        - Workspace deletion consolidated in Danger Zone (no duplicate buttons)
+        - Dynamic button labels showing selected workspace name
+        - Clear visual hierarchy with icons and badges
+    - **Accessibility**:
+        - aria-label attributes on all interactive elements
+        - aria-hidden="true" on decorative icons
+        - Keyboard navigation support in radio groups and selectors
+        - Screen reader friendly labels in Polish
+    - **Security**:
+        - Critical actions require workspace selection first
+        - Confirmation dialogs prevent accidental deletion
+        - Clear visual separation of destructive actions in Danger Zone
+- **Polish Translations Reference**:
+    - Settings → "Ustawienia"
+    - Appearance → "Wygląd"
+    - Data → "Dane"
+    - Workspaces → "Przestrzenie Robocze"
+    - Theme options: "Jasny", "Ciemny", "Systemowy"
+    - Export Data → "Eksportuj Dane"
+    - Exporting... → "Eksportowanie..."
+    - Create Workspace → "Utwórz Przestrzeń"
+    - Owner → "Właściciel"
+    - Edit → "Edytuj"
+    - Delete → "Usuń"
+    - Delete Account → "Usuń Konto"
 
 ## 3. User Journey Map
 

@@ -125,6 +125,7 @@ export interface Database {
           email: string;
           full_name: string | null;
           id: string;
+          theme_preference: string;
           updated_at: string;
         };
         Insert: {
@@ -133,6 +134,7 @@ export interface Database {
           email: string;
           full_name?: string | null;
           id: string;
+          theme_preference?: string;
           updated_at?: string;
         };
         Update: {
@@ -141,6 +143,7 @@ export interface Database {
           email?: string;
           full_name?: string | null;
           id?: string;
+          theme_preference?: string;
           updated_at?: string;
         };
         Relationships: [];

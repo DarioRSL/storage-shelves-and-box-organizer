@@ -39,10 +39,10 @@ export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyState
         role="status"
         aria-live="polite"
       >
-        <Search className="h-12 w-12 text-gray-300" aria-hidden="true" />
+        <Search className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">Brak wyników</h3>
-          <p className="mt-1 text-sm text-gray-500">Nie znaleziono pudełek dla tego wyszukiwania</p>
+          <h3 className="text-lg font-semibold text-foreground">Brak wyników</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Nie znaleziono pudełek dla tego wyszukiwania</p>
         </div>
       </div>
     );
@@ -50,10 +50,10 @@ export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyState
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-6 py-12" role="status" aria-live="polite">
-      <Package className="h-12 w-12 text-gray-300" aria-hidden="true" />
+      <Package className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
       <div className="text-center max-w-sm">
-        <h3 className="text-lg font-semibold text-gray-900">Brak pudełek</h3>
-        <p className="mt-2 text-sm text-gray-500">Zacznij od utworzenia lokalizacji lub dodania pudełka</p>
+        <h3 className="text-lg font-semibold text-foreground">Brak pudełek</h3>
+        <p className="mt-2 text-sm text-muted-foreground">Zacznij od utworzenia lokalizacji lub dodania pudełka</p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
         {onAddLocation && (
@@ -75,7 +75,7 @@ export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyState
 
             {showBoxOptions && (
               <div
-                className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-max"
+                className="absolute top-full mt-2 right-0 bg-card border border-border rounded-md shadow-lg z-10 min-w-max"
                 role="menu"
               >
                 <button
@@ -83,14 +83,14 @@ export default function EmptyState({ type, onAddLocation, onAddBox }: EmptyState
                     onAddBox();
                     setShowBoxOptions(false);
                   }}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-md"
+                  className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted first:rounded-t-md"
                   role="menuitem"
                 >
                   Szybkie dodanie (Modal)
                 </button>
                 <a
                   href="/app/boxes/new"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 last:rounded-b-md"
+                  className="block px-4 py-2 text-sm text-foreground hover:bg-muted last:rounded-b-md"
                   role="menuitem"
                 >
                   Pełny formularz
