@@ -136,8 +136,8 @@ export default function SettingsContainer({ userId }: SettingsContainerProps) {
 
       <div className="mx-auto max-w-4xl space-y-8 p-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account, workspaces, and preferences</p>
+          <h1 className="text-3xl font-bold">Ustawienia</h1>
+          <p className="text-muted-foreground">Zarządzaj swoim kontem, przestrzeniami roboczymi i preferencjami</p>
         </div>
 
         {state.error && <ErrorBanner message={state.error} onDismiss={clearError} />}
@@ -148,8 +148,8 @@ export default function SettingsContainer({ userId }: SettingsContainerProps) {
 
         <section className="space-y-4 rounded-lg border p-6">
           <div>
-            <h3 className="text-lg font-semibold">Appearance</h3>
-            <p className="text-sm text-muted-foreground">Customize the appearance of the application</p>
+            <h3 className="text-lg font-semibold">Wygląd</h3>
+            <p className="text-sm text-muted-foreground">Dostosuj wygląd aplikacji</p>
           </div>
           <ThemeToggle currentTheme={currentTheme} onChange={setTheme} />
         </section>
@@ -165,30 +165,18 @@ export default function SettingsContainer({ userId }: SettingsContainerProps) {
 
         <section className="space-y-4 rounded-lg border p-6">
           <div>
-            <h3 className="text-lg font-semibold">Workspace Context</h3>
-            <p className="text-sm text-muted-foreground">
-              Select which workspace to use for data export and danger zone operations
-            </p>
-          </div>
-          <WorkspaceSelector
-            workspaces={state.workspaces}
-            selectedWorkspaceId={selectedWorkspaceId}
-            onWorkspaceChange={setSelectedWorkspaceId}
-          />
-        </section>
-
-        <section className="space-y-4 rounded-lg border p-6">
-          <div>
-            <h3 className="text-lg font-semibold">Data</h3>
-            <p className="text-sm text-muted-foreground">Export your inventory data</p>
+            <h3 className="text-lg font-semibold">Dane</h3>
+            <p className="text-sm text-muted-foreground">Eksportuj dane z inwentaryzacji</p>
           </div>
           {currentWorkspace && <ExportDataButton workspaceId={currentWorkspace.id} onError={setError} />}
         </section>
 
         <DangerZoneSection
-          currentWorkspace={currentWorkspace}
+          workspaces={state.workspaces}
+          selectedWorkspaceId={selectedWorkspaceId}
+          onWorkspaceChange={setSelectedWorkspaceId}
           currentUserId={userId}
-          onDeleteWorkspace={() => currentWorkspace && handleDeleteWorkspaceClick(currentWorkspace.id)}
+          onDeleteWorkspace={handleDeleteWorkspaceClick}
           onDeleteAccount={handleDeleteAccountClick}
         />
 
@@ -213,19 +201,19 @@ export default function SettingsContainer({ userId }: SettingsContainerProps) {
           isOpen={confirmationState.isOpen}
           title={
             confirmationState.type === "workspace"
-              ? "Delete Workspace"
+              ? "Usuń Przestrzeń Roboczą"
               : confirmationState.type === "account"
-                ? "Delete Account"
+                ? "Usuń Konto"
                 : ""
           }
           description={
             confirmationState.type === "workspace"
-              ? "This will permanently delete the workspace and all its data including boxes, locations, and QR codes. This action cannot be undone."
+              ? "Ta operacja trwale usunie przestrzeń roboczą i wszystkie jej dane, włącznie z pudełkami, lokalizacjami i kodami QR. Ta akcja jest nieodwracalna."
               : confirmationState.type === "account"
-                ? "This will permanently delete your account and all workspaces you own. This action cannot be undone."
+                ? "Ta operacja trwale usunie Twoje konto i wszystkie przestrzenie robocze, których jesteś właścicielem. Ta akcja jest nieodwracalna."
                 : ""
           }
-          confirmText={confirmationState.type === "workspace" ? "DELETE WORKSPACE" : "DELETE ACCOUNT"}
+          confirmText={confirmationState.type === "workspace" ? "USUŃ PRZESTRZEŃ" : "USUŃ KONTO"}
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
           isDangerous={true}

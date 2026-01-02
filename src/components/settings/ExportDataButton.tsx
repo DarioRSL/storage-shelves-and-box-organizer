@@ -12,7 +12,7 @@ export function ExportDataButton({ workspaceId, isLoading: externalLoading = fal
 
   const handleExport = async () => {
     if (!workspaceId) {
-      onError?.("No workspace selected");
+      onError?.("Nie wybrano przestrzeni roboczej");
       return;
     }
 
@@ -25,13 +25,13 @@ export function ExportDataButton({ workspaceId, isLoading: externalLoading = fal
       });
 
       if (!response.ok) {
-        throw new Error("Failed to export data");
+        throw new Error("Nie udało się wyeksportować danych");
       }
 
       const blob = await response.blob();
 
       if (blob.size === 0) {
-        onError?.("No data to export");
+        onError?.("Brak danych do eksportu");
         setIsExporting(false);
         return;
       }
@@ -39,13 +39,13 @@ export function ExportDataButton({ workspaceId, isLoading: externalLoading = fal
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `inventory-export-${new Date().toISOString().split("T")[0]}.csv`;
+      a.download = `inwentaryzacja-eksport-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to export data";
+      const message = error instanceof Error ? error.message : "Nie udało się wyeksportować danych";
       onError?.(message);
     } finally {
       setIsExporting(false);
@@ -60,12 +60,12 @@ export function ExportDataButton({ workspaceId, isLoading: externalLoading = fal
       disabled={isLoading || !workspaceId}
       variant="outline"
       className="gap-2"
-      aria-label="Export inventory data to CSV"
+      aria-label="Eksportuj dane inwentaryzacji do CSV"
     >
       {isLoading ? (
         <>
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          Exporting...
+          Eksportowanie...
         </>
       ) : (
         <>
@@ -85,7 +85,7 @@ export function ExportDataButton({ workspaceId, isLoading: externalLoading = fal
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          Export Data
+          Eksportuj Dane
         </>
       )}
     </Button>

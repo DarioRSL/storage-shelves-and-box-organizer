@@ -16,7 +16,7 @@ export function ThemeToggle({ currentTheme, onChange }: ThemeToggleProps) {
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium">Theme</Label>
+      <Label className="text-sm font-medium">Motyw</Label>
       <RadioGroup value={currentTheme} onValueChange={handleChange} className="flex gap-4">
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="light" id="theme-light" />
@@ -43,7 +43,7 @@ export function ThemeToggle({ currentTheme, onChange }: ThemeToggleProps) {
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
-            Light
+            Jasny
           </Label>
         </div>
 
@@ -64,7 +64,7 @@ export function ThemeToggle({ currentTheme, onChange }: ThemeToggleProps) {
             >
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
-            Dark
+            Ciemny
           </Label>
         </div>
 
@@ -87,7 +87,7 @@ export function ThemeToggle({ currentTheme, onChange }: ThemeToggleProps) {
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
-            System
+            Systemowy
           </Label>
         </div>
       </RadioGroup>

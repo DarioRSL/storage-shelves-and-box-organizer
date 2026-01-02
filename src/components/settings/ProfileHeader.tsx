@@ -32,7 +32,7 @@ export function ProfileHeader({ profile, onLogout, isLoggingOut = false }: Profi
           )}
         </div>
         <div>
-          <h2 className="text-2xl font-semibold">{profile.full_name || "User"}</h2>
+          <h2 className="text-2xl font-semibold">{profile.full_name || "Użytkownik"}</h2>
           <p className="text-sm text-muted-foreground">{profile.email}</p>
         </div>
       </div>
