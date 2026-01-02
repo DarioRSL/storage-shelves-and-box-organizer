@@ -1,26 +1,56 @@
-import { useState, useEffect } from "react";
-import type { ThemeMode } from "../../types";
+import { useState, useEffect, useCallback } from "react";
+import type { ThemeMode, UpdateThemeRequest } from "../../types";
+import { apiFetch } from "../../lib/api-client";
 
 /**
- * Custom hook for managing theme selection and localStorage persistence.
+ * Custom hook for managing theme selection with database and localStorage sync.
  * Handles light, dark, and system theme modes.
+ *
+ * Theme priority:
+ * 1. Database (source of truth, persisted across devices)
+ * 2. localStorage (for fast initial render before DB fetch)
+ * 3. Default "system" (if no preference set)
  */
-export function useTheme() {
-  const [currentTheme, setCurrentTheme] = useState<ThemeMode>("system");
+export function useTheme(initialTheme?: ThemeMode) {
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(initialTheme || "system");
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Apply theme on mount and when initialTheme changes
   useEffect(() => {
-    const storedTheme = getThemeFromStorage();
-    setCurrentTheme(storedTheme);
-    applyTheme(storedTheme);
+    if (initialTheme) {
+      setCurrentTheme(initialTheme);
+      applyTheme(initialTheme);
+      saveThemeToStorage(initialTheme);
+    } else {
+      const storedTheme = getThemeFromStorage();
+      setCurrentTheme(storedTheme);
+      applyTheme(storedTheme);
+    }
+  }, [initialTheme]);
+
+  const setTheme = useCallback(async (theme: ThemeMode) => {
+    try {
+      setIsLoading(true);
+
+      // Optimistically update UI
+      setCurrentTheme(theme);
+      applyTheme(theme);
+      saveThemeToStorage(theme);
+
+      // Persist to database
+      await apiFetch<UpdateThemeRequest>("/api/profiles/me/theme", {
+        method: "PATCH",
+        body: JSON.stringify({ theme_preference: theme }),
+      });
+    } catch (error) {
+      console.error("Failed to save theme preference:", error);
+      // UI remains updated even if DB save fails (localStorage is backup)
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const setTheme = (theme: ThemeMode) => {
-    setCurrentTheme(theme);
-    applyTheme(theme);
-    saveThemeToStorage(theme);
-  };
-
-  return { currentTheme, setTheme };
+  return { currentTheme, setTheme, isLoading };
 }
 
 function getThemeFromStorage(): ThemeMode {
@@ -43,7 +73,11 @@ function saveThemeToStorage(theme: ThemeMode): void {
   }
 }
 
-function applyTheme(theme: ThemeMode): void {
+/**
+ * Applies the selected theme to the document element.
+ * Exported to allow application-wide theme initialization.
+ */
+export function applyTheme(theme: ThemeMode): void {
   const htmlElement = document.documentElement;
 
   if (theme === "dark") {
