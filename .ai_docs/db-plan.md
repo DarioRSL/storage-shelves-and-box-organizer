@@ -1,6 +1,24 @@
 # Database Schema - Storage & Box Organizer
 
+**Last Updated:** January 2, 2026
+**Migration Status:** ✅ **Complete** (3 migrations applied)
+**Schema Version:** 20260102182001
+
 This document describes the PostgreSQL database schema for the Storage & Box Organizer application, designed based on the Product Requirements Document (PRD) and planning session notes.
+
+## Migration Timeline
+
+| Migration | Date | Status | Description |
+|-----------|------|--------|-------------|
+| `20251212120000_initial_schema.sql` | 2025-12-12 | ✅ Applied | Initial schema with all tables, triggers, indexes |
+| `20251214120000_workspace_creation_trigger.sql` | 2025-12-14 | ✅ Applied | Workspace owner auto-assignment trigger |
+| `20260102182001_add_theme_preference_to_profiles.sql` | 2026-01-02 | ✅ Applied | Theme preference column in profiles |
+
+**⚠️ CRITICAL SECURITY NOTE:**
+- RLS policies are currently **commented out** in the initial migration (`20251212120000_initial_schema.sql`, lines 198-382)
+- All tables have RLS-ready policy definitions but policies are **NOT ENABLED**
+- This is a **known security gap** that should be addressed before production deployment
+- Recommendation: Create migration `20260103000000_enable_rls_policies.sql` to uncomment and apply all RLS policies
 
 ## 1. Conventions and Extensions
 
@@ -312,3 +330,20 @@ $$ LANGUAGE SQL STABLE;
 ```
 
 This ensures all workspace-scoped data is accessible only to workspace members.
+
+### 6.6 Schema Implementation Completeness
+
+**✅ Fully Implemented Features:**
+1. All 6 core tables (profiles, workspaces, workspace_members, locations, boxes, qr_codes)
+2. All PostgreSQL extensions (uuid-ossp, ltree, moddatetime, pg_trgm, unaccent)
+3. All enums (user_role, qr_status)
+4. All triggers (updated_at, short_id generation, QR reset, new user handling, workspace owner)
+5. All indexes (GIST on path, GIN on search_vector and tags)
+6. All constraints (foreign keys, check constraints, unique constraints)
+7. Theme preference column (added 2026-01-02)
+8. Workspace owner auto-assignment (added 2025-12-14)
+
+**⚠️ Pending Implementation:**
+1. RLS policy enablement (all policies defined but commented out in migration)
+
+**Schema Matches Documentation:** 100% (except RLS enablement)
