@@ -509,3 +509,123 @@ export type OperationType =
   | "deleteAccount"
   | "exportData"
   | "logout";
+
+// --- 12. QR Generator View Types ---
+
+/**
+ * Available label formats for QR code printing
+ */
+export type LabelFormat = "a4-grid" | "brother-62x29" | "brother-62x100";
+
+/**
+ * Label format configuration
+ */
+export interface LabelFormatConfig {
+  id: LabelFormat;
+  name: string;
+  description: string;
+  /** Page width in mm */
+  pageWidth: number;
+  /** Page height in mm */
+  pageHeight: number;
+  /** QR code size in mm */
+  qrSize: number;
+  /** Codes per page (1 for label printers) */
+  codesPerPage: number;
+  /** Grid columns (for A4) */
+  cols?: number;
+  /** Grid rows (for A4) */
+  rows?: number;
+}
+
+/**
+ * Item in response from /api/qr-codes/batch
+ * Represents a single generated QR code
+ */
+export interface QrCodeGeneratedItem {
+  id: string;
+  short_id: string;
+  status: "generated";
+  workspace_id: string;
+  created_at: string | null;
+}
+
+/**
+ * ViewModel for QRGeneratorView
+ * Represents the entire view state
+ */
+export interface QRGeneratorViewModel {
+  quantity: number;
+  isQuantityValid: boolean;
+  isLoading: boolean;
+  error: string | null;
+  lastGeneratedCodes: QrCodeGeneratedItem[];
+  workspaceId: string;
+  userId: string;
+}
+
+/**
+ * State for QRGeneratorForm component
+ * Local UI state of the form
+ */
+export interface GenerateQRCodesFormState {
+  quantity: number;
+  isQuantityValid: boolean;
+  quantityError: string | null;
+  isDirty: boolean;
+  touched: {
+    quantity: boolean;
+  };
+}
+
+/**
+ * Available label format configurations
+ */
+export const LABEL_FORMATS: Record<LabelFormat, LabelFormatConfig> = {
+  "a4-grid": {
+    id: "a4-grid",
+    name: "A4 - Arkusz 4x5",
+    description: "20 kodów na stronę A4, do wydruku na zwykłej drukarce",
+    pageWidth: 210,
+    pageHeight: 297,
+    qrSize: 35,
+    codesPerPage: 20,
+    cols: 4,
+    rows: 5,
+  },
+  "brother-62x29": {
+    id: "brother-62x29",
+    name: "Brother 62x29mm",
+    description: "Mała etykieta, 1 kod na etykietę (DK-11209)",
+    pageWidth: 62,
+    pageHeight: 29,
+    qrSize: 22,
+    codesPerPage: 1,
+  },
+  "brother-62x100": {
+    id: "brother-62x100",
+    name: "Brother 62x100mm",
+    description: "Duża etykieta, 1 kod na etykietę (DK-11202)",
+    pageWidth: 62,
+    pageHeight: 100,
+    qrSize: 50,
+    codesPerPage: 1,
+  },
+};
+
+/**
+ * Props for QRGeneratorForm component
+ */
+export interface QRGeneratorFormProps {
+  onSubmit: (quantity: number, format: LabelFormat) => Promise<void>;
+  isLoading: boolean;
+  defaultQuantity?: number;
+  maxQuantity?: number;
+}
+
+/**
+ * Props for QRGeneratorView component
+ */
+export interface QRGeneratorViewProps {
+  userId: string;
+}
