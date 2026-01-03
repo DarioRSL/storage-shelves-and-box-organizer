@@ -19,7 +19,7 @@ export function WorkspaceSelector({
   selectedWorkspaceId,
   onWorkspaceChange,
   label = "Aktualna przestrzeń robocza",
-  showOwnershipInfo = true
+  showOwnershipInfo = true,
 }: WorkspaceSelectorProps) {
   if (workspaces.length === 0) {
     return null;
@@ -47,7 +47,9 @@ export function WorkspaceSelector({
       </Select>
       {showOwnershipInfo && (
         <p className="text-xs text-muted-foreground">
-          {selectedWorkspace?.isOwner ? "Jesteś właścicielem tej przestrzeni roboczej" : "Jesteś członkiem tej przestrzeni roboczej"}
+          {selectedWorkspace?.isOwner
+            ? "Jesteś właścicielem tej przestrzeni roboczej"
+            : "Jesteś członkiem tej przestrzeni roboczej"}
         </p>
       )}
     </div>

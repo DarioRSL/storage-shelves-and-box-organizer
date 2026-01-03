@@ -22,7 +22,9 @@ export function WorkspaceManagementSection({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Przestrzenie Robocze</h3>
-          <p className="text-sm text-muted-foreground">Zarządzaj swoimi przestrzeniami roboczymi i organizuj przedmioty</p>
+          <p className="text-sm text-muted-foreground">
+            Zarządzaj swoimi przestrzeniami roboczymi i organizuj przedmioty
+          </p>
         </div>
         <Button onClick={onCreateNew} disabled={isLoading}>
           <svg
@@ -54,12 +56,7 @@ export function WorkspaceManagementSection({
           </div>
         ) : (
           workspaces.map((workspace) => (
-            <WorkspaceCard
-              key={workspace.id}
-              workspace={workspace}
-              isOwner={workspace.isOwner}
-              onEdit={onEdit}
-            />
+            <WorkspaceCard key={workspace.id} workspace={workspace} isOwner={workspace.isOwner} onEdit={onEdit} />
           ))
         )}
       </div>

@@ -5,8 +5,37 @@ import { atom } from "nanostores";
  * These manage global data that multiple components need access to.
  */
 
-/** Current workspace ID being viewed */
-export const currentWorkspaceId = atom<string | null>(null);
+const WORKSPACE_STORAGE_KEY = "currentWorkspaceId";
+
+/**
+ * Get initial workspace ID from localStorage (if available)
+ */
+function getInitialWorkspaceId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(WORKSPACE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Current workspace ID being viewed - persisted to localStorage */
+export const currentWorkspaceId = atom<string | null>(getInitialWorkspaceId());
+
+// Subscribe to changes and persist to localStorage
+if (typeof window !== "undefined") {
+  currentWorkspaceId.subscribe((value) => {
+    try {
+      if (value) {
+        localStorage.setItem(WORKSPACE_STORAGE_KEY, value);
+      } else {
+        localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  });
+}
 
 /** ID of currently selected location (null = "Unassigned") */
 export const selectedLocationId = atom<string | null>(null);
