@@ -92,9 +92,7 @@ export const QRGeneratorForm: React.FC<QRGeneratorFormProps> = ({
                 <div
                   key={option.id}
                   className={`flex items-start space-x-3 rounded-lg border p-4 transition-colors ${
-                    format === option.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                    format === option.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
                   } ${isLoading ? "opacity-50" : ""}`}
                 >
                   <RadioGroupItem value={option.id} id={option.id} className="mt-0.5" />
