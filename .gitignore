@@ -30,3 +30,4 @@ dokumentacja_development/*
 .ai_docs/api_todo.md
 .env.bak
 .ai_docs/commands/*
+rerun.sh
