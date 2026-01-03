@@ -14,3 +14,10 @@
 - Password recovery
 - implemet full logging with levels
 - Better GUI layout
+## Recent Completions (January 3, 2026):
+- ✅ Box Details View Implementation (PR #81)
+  - 9 React components + 1 Astro page
+  - Full Polish UI (100% coverage)
+  - QR code generation and printing
+  - Comprehensive error handling
+  - Dashboard integration (Szczegóły menu, Dodaj pudełko button)

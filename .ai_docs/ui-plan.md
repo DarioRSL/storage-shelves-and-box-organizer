@@ -1,8 +1,8 @@
 # UI Architecture for Storage & Box Organizer
 
-**Last Updated:** January 2, 2026
-**Implementation Status:** ✅ **75% Complete** (5/7 main views implemented)
-**Polish i18n:** 🟡 Partial (Dashboard & Settings 100%, Forms ~40%)
+**Last Updated:** January 3, 2026
+**Implementation Status:** ✅ **86% Complete** (6/7 main views implemented)
+**Polish i18n:** 🟡 Partial (Dashboard & Settings 100%, Box Details 100%, Forms ~40%)
 
 ## Implementation Status Summary
 
@@ -11,7 +11,7 @@
 | Login/Registration | `/auth` | ✅ Complete | 🟡 Partial | AuthLayout, forms working |
 | Main Dashboard | `/app` | ✅ Complete | ✅ 100% | SearchInput, LocationTree, BoxList all functional |
 | Box Form | `/app/boxes/new`, `/app/boxes/[id]/edit` | ✅ Complete | 🟡 40% | TagInput, LocationSelector implemented |
-| Box Details | `/app/boxes/[id]` | ❌ **Missing** | N/A | No dedicated details view (only edit) |
+| Box Details | `/app/boxes/[id]` | ✅ **Complete** | ✅ 100% | Full box info, QR code, breadcrumbs, actions (PR #81) |
 | QR Generator | `/app/qr-generator` | ❌ **Missing** | N/A | API ready, UI not implemented |
 | Settings | `/settings` | ✅ Complete | ✅ 100% | Theme, workspaces, export, danger zone |
 | Landing Page | `/` | ✅ Complete | ✅ 100% | Public landing page |
@@ -25,7 +25,8 @@
 - ✅ ThemeToggle (Jasny/Ciemny/Systemowy)
 - ✅ ConfirmationDialog (text verification)
 - ✅ EmptyState (multiple variants)
-- ❌ Breadcrumbs (not implemented)
+- ✅ LocationBreadcrumbs (hierarchical path with navigation)
+- ✅ ErrorAlert (reusable error display with retry)
 - ❌ SkeletonLoader (not implemented)
 - ❌ Toast/Sonner (not implemented)
 
@@ -75,18 +76,43 @@ Application state management will be handled globally (using `Nano Stores`), and
 ### Box Details View
 - **View Name**: Box Details
 - **View Path**: `/app/boxes/[id]`
+- **Implementation Status**: ✅ Fully implemented (PR #81)
 - **Main Purpose**: To display all information about a specific box.
 - **Key Information to Display**:
     - Name, description, tags.
     - Full location path in the form of breadcrumbs (e.g., `Garage > Metal Shelf > Top Shelf`).
-    - Associated QR code (if it exists).
-- **Key View Components**:
-    - `Breadcrumbs`: Breadcrumb navigation showing the location.
-    - `TagList`: A list of tags.
-    - Action buttons: "Edit" (navigates to the form view) and "Delete".
+    - Associated QR code with print functionality.
+    - Creation and modification dates with relative time display.
+- **Key View Components** (9 React components + 1 Astro page):
+    - `BoxDetailsContent.tsx`: Main container with state management, API calls, error handling
+    - `BoxHeader.tsx`: Box name with formatted dates and relative time (e.g., "2 dni temu")
+    - `LocationBreadcrumbs.tsx`: Hierarchical breadcrumb navigation parsing ltree path
+    - `DescriptionSection.tsx`: Description display with whitespace preservation
+    - `TagsDisplay.tsx`: Tags rendered as Badge components
+    - `QrCodeDisplay.tsx`: Dynamic QR code generation with secure print functionality
+    - `ActionButtonsSection.tsx`: Edit and Delete action buttons
+    - `DeleteConfirmationDialog.tsx`: Confirmation modal for safe deletion
+    - `ErrorAlert.tsx`: Shared error display component with retry functionality
+    - `src/pages/app/boxes/[id]/index.astro`: SSR page with UUID validation and auth
+- **Features Implemented**:
+    - ✅ Complete box information display (name, description, tags, location, QR code)
+    - ✅ Interactive location breadcrumbs with dashboard navigation
+    - ✅ Dynamic QR code SVG generation using `qrcode` library
+    - ✅ Print QR code functionality using secure DOM methods (createElement, appendChild)
+    - ✅ Formatted dates with Polish relative time ("przed chwilą", "X dni temu")
+    - ✅ Comprehensive error handling (404, 403, auth, network errors)
+    - ✅ Loading states with shared LoadingSpinner
+    - ✅ Delete with confirmation dialog and QR code release
+    - ✅ Back navigation to dashboard
+    - ✅ Redirect to dashboard after successful deletion
+- **Dashboard Integration**:
+    - ✅ "Szczegóły" menu option in BoxListItem context menu
+    - ✅ "Dodaj pudełko" button in dashboard header for quick box creation
+    - ✅ Fixed empty state logic to show when workspace has no boxes
 - **UX, Accessibility, and Security Considerations**:
-    - **UX**: Clear presentation of all data. The "Delete" button should trigger a `ConfirmationDialog` to prevent accidental data loss.
-    - **Accessibility**: All information presented as text to be accessible to screen readers. All action buttons should have clear labels.
+    - **UX**: Clear presentation of all data with Polish language UI. Delete button triggers confirmation dialog. Print functionality for QR codes. Relative time display for dates.
+    - **Accessibility**: Semantic HTML, ARIA labels, keyboard navigation support. All information accessible to screen readers.
+    - **Security**: UUID validation, authentication checks, RLS enforcement. Secure DOM manipulation for print functionality.
 
 ### Box Form View (Create/Edit)
 - **View Name**: Box Form
