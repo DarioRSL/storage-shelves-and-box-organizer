@@ -1,13 +1,21 @@
 import WorkspaceSelector from "./WorkspaceSelector";
 import UserMenu from "./UserMenu";
 import { Button } from "@/components/ui/button";
+import { useDashboard } from "@/contexts/DashboardContext";
+import { Plus } from "lucide-react";
 
 /**
  * Header component with workspace selector and user menu
  */
 export default function DashboardHeader() {
+  const { actions } = useDashboard();
+
   const handleNavigateToQRGenerator = () => {
     globalThis.location.href = "/app/qr-generator";
+  };
+
+  const handleAddBox = () => {
+    actions.openBoxEditor("create");
   };
 
   return (
@@ -23,6 +31,10 @@ export default function DashboardHeader() {
 
         {/* Right side: Actions, workspace selector and user menu */}
         <div className="flex items-center gap-4">
+          <Button size="sm" onClick={handleAddBox} className="gap-2" aria-label="Dodaj nowe pudełko">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Dodaj pudełko
+          </Button>
           <Button
             variant="outline"
             size="sm"
