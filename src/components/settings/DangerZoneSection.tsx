@@ -35,7 +35,8 @@ export function DangerZoneSection({
           <div className="space-y-1">
             <h4 className="font-medium">Usuń Przestrzeń Roboczą</h4>
             <p className="text-sm text-muted-foreground">
-              Wybierz przestrzeń roboczą, którą chcesz usunąć. Wszystkie dane włącznie z pudełkami, lokalizacjami i kodami QR zostaną trwale usunięte. Ta operacja jest nieodwracalna.
+              Wybierz przestrzeń roboczą, którą chcesz usunąć. Wszystkie dane włącznie z pudełkami, lokalizacjami i
+              kodami QR zostaną trwale usunięte. Ta operacja jest nieodwracalna.
             </p>
           </div>
 
@@ -82,9 +83,7 @@ export function DangerZoneSection({
             )}
 
             {!currentWorkspace && workspaces.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Wybierz przestrzeń roboczą z listy powyżej.
-              </p>
+              <p className="text-sm text-muted-foreground">Wybierz przestrzeń roboczą z listy powyżej.</p>
             )}
           </div>
         </div>
@@ -94,7 +93,8 @@ export function DangerZoneSection({
           <div className="space-y-1">
             <h4 className="font-medium">Usuń Konto</h4>
             <p className="text-sm text-muted-foreground">
-              Trwale usuń swoje konto i wszystkie powiązane dane. Wszystkie przestrzenie robocze, których jesteś właścicielem, zostaną usunięte. Ta operacja jest nieodwracalna.
+              Trwale usuń swoje konto i wszystkie powiązane dane. Wszystkie przestrzenie robocze, których jesteś
+              właścicielem, zostaną usunięte. Ta operacja jest nieodwracalna.
             </p>
           </div>
           <Button variant="destructive" onClick={onDeleteAccount} className="ml-4 shrink-0" aria-label="Usuń konto">
