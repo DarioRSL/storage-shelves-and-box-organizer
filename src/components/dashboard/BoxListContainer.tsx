@@ -9,13 +9,20 @@ import { Loader } from "lucide-react";
 export default function BoxListContainer() {
   const { state, actions } = useDashboard();
 
+  // Show empty state when there are no boxes and not searching
   const showEmptyState =
     !state.isLoadingBoxes &&
     state.boxes.length === 0 &&
-    (state.userWorkspaces.length === 0 || !state.currentWorkspaceId);
+    !state.isSearchActive &&
+    state.userWorkspaces.length > 0 &&
+    state.currentWorkspaceId;
 
+  // Show "no results" when searching but found nothing
   const showNoResults =
     !state.isLoadingBoxes && state.boxes.length === 0 && state.isSearchActive && state.userWorkspaces.length > 0;
+
+  // Show "no workspace" message when user has no workspaces
+  const showNoWorkspace = !state.isLoadingBoxes && (state.userWorkspaces.length === 0 || !state.currentWorkspaceId);
 
   const showBoxList = state.boxes.length > 0 && state.userWorkspaces.length > 0;
 
@@ -60,6 +67,10 @@ export default function BoxListContainer() {
             onAddLocation={() => actions.openLocationEditor("create")}
             onAddBox={() => actions.openBoxEditor("create")}
           />
+        ) : showNoWorkspace ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 py-12" role="status">
+            <p className="text-sm text-muted-foreground">Wybierz workspace, aby zobaczyć pudełka</p>
+          </div>
         ) : showBoxList ? (
           <BoxList />
         ) : null}

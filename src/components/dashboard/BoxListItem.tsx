@@ -1,4 +1,3 @@
-import React from "react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import {
   DropdownMenu,
@@ -20,7 +19,10 @@ interface BoxListItemProps {
  */
 export default function BoxListItem({ box }: BoxListItemProps) {
   const { actions } = useDashboard();
-  const [isHovered, setIsHovered] = React.useState(false);
+
+  const handleViewDetails = () => {
+    window.location.href = `/app/boxes/${box.id}`;
+  };
 
   const handleEdit = () => {
     actions.openBoxEditor("edit", box.id);
@@ -36,11 +38,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
     box.tags && box.tags.length > 0 ? box.tags.slice(0, 2).join(", ") + (box.tags.length > 2 ? `...` : "") : null;
 
   return (
-    <article
-      className="group flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <article className="group flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg">
       {/* Box info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
@@ -85,7 +83,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem className="cursor-pointer gap-2">
+          <DropdownMenuItem onClick={handleViewDetails} className="cursor-pointer gap-2">
             <Eye className="h-4 w-4" aria-hidden="true" />
             <span>Szczegóły</span>
           </DropdownMenuItem>
