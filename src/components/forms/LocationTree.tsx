@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import type { LocationDto } from "@/types";
@@ -13,7 +13,7 @@ export interface LocationTreeNode extends LocationDto {
 export interface LocationTreeProps {
   workspaceId: string;
   selectedId?: string | null;
-  onSelect: (locationId: string) => void;
+  onSelect: (locationId: string, locationName: string) => void;
   onLoadComplete?: () => void;
 }
 
@@ -161,7 +161,7 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
           {/* Location name */}
           <button
             type="button"
-            onClick={() => onSelect(node.id)}
+            onClick={() => onSelect(node.id, node.name)}
             className={`flex-1 text-left text-sm font-medium transition-colors ${
               isSelected
                 ? "text-blue-700 dark:text-blue-300"
@@ -190,7 +190,7 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading locations...</span>
+        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Ładowanie lokacji...</span>
       </div>
     );
   }
@@ -199,13 +199,13 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
   if (error) {
     return (
       <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-md">
-        <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        <p className="text-sm text-red-700 dark:text-red-400">Nie udało się załadować lokacji</p>
         <button
           type="button"
           onClick={loadRootLocations}
           className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
         >
-          Try again
+          Spróbuj ponownie
         </button>
       </div>
     );
@@ -215,7 +215,7 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
   if (nodes.length === 0) {
     return (
       <div className="p-4 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">No locations available. Create a location first.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Brak dostępnych lokacji. Utwórz najpierw lokację.</p>
       </div>
     );
   }

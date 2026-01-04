@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export interface ModalProps {
@@ -32,7 +32,6 @@ export const Modal: React.FC<ModalProps> = ({
   isDismissible = true,
   className = "",
 }) => {
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Handle ESC key
   useEffect(() => {
@@ -65,18 +64,6 @@ export const Modal: React.FC<ModalProps> = ({
         {title && (
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            {isDismissible && (
-              <button
-                ref={closeButtonRef}
-                onClick={onClose}
-                className="absolute right-4 top-4 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                aria-label="Close modal"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
           </DialogHeader>
         )}
 
