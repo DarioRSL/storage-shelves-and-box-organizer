@@ -7,7 +7,10 @@ import { QRCodeSelector } from "./QRCodeSelector";
 import { FormActions } from "./FormActions";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
+import { DuplicateNameWarning } from "./DuplicateNameWarning";
 import { useBoxForm } from "@/components/hooks/useBoxForm";
+import { apiFetch } from "@/lib/api-client";
+import type { CheckDuplicateBoxResponse } from "@/types";
 
 export interface BoxFormProps {
   mode: "create" | "edit";
@@ -26,6 +29,8 @@ export interface BoxFormProps {
 export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess, onCancel }: BoxFormProps) {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<CheckDuplicateBoxResponse | null>(null);
+  const [isDuplicateConfirmed, setIsDuplicateConfirmed] = useState(false);
 
   // Initialize form hook
   const {
@@ -47,11 +52,49 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
     }
   }, [initialLocationId, formState.location_id, setFormField]);
 
+  // Check for duplicate box names before submission
+  const checkDuplicateName = useCallback(async (): Promise<boolean> => {
+    // Skip if name is empty (will be caught by validation)
+    if (!formState.name.trim()) {
+      return true;
+    }
+
+    try {
+      const response = await apiFetch<CheckDuplicateBoxResponse>("/api/boxes/check-duplicate", {
+        method: "POST",
+        body: JSON.stringify({
+          workspace_id: currentWorkspaceId,
+          name: formState.name,
+          exclude_box_id: mode === "edit" ? boxId : undefined,
+        }),
+      });
+
+      if (response.isDuplicate) {
+        setDuplicateWarning(response);
+        return false; // Don't proceed with submit
+      }
+
+      return true; // OK to submit
+    } catch (error) {
+      // Gracefully fail - don't block user if duplicate check fails
+      console.error("Failed to check duplicate names:", error);
+      return true; // Allow submit anyway
+    }
+  }, [formState.name, currentWorkspaceId, mode, boxId]);
+
   // Handle form submission
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitError(null);
+
+      // Check for duplicates first (unless user already confirmed)
+      if (!isDuplicateConfirmed) {
+        const canProceed = await checkDuplicateName();
+        if (!canProceed) {
+          return; // Show warning, wait for user action
+        }
+      }
 
       try {
         await submitForm();
@@ -67,7 +110,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
         setSubmitError(errorMessage);
       }
     },
-    [submitForm, onSuccess, formState.currentBox?.id]
+    [submitForm, onSuccess, formState.currentBox?.id, isDuplicateConfirmed, checkDuplicateName]
   );
 
   // Handle delete button click
@@ -105,6 +148,26 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
   const handleReset = useCallback(() => {
     resetForm();
   }, [resetForm]);
+
+  // Handle duplicate warning dismiss (user wants to change name)
+  const handleDuplicateDismiss = useCallback(() => {
+    setDuplicateWarning(null);
+    setIsDuplicateConfirmed(false);
+  }, []);
+
+  // Handle duplicate warning proceed (user confirms duplicate is OK)
+  const handleDuplicateProceed = useCallback(() => {
+    setIsDuplicateConfirmed(true);
+    setDuplicateWarning(null);
+    // Re-trigger form submission by calling handleSubmit programmatically
+    // We'll use a small timeout to ensure state updates
+    setTimeout(() => {
+      const form = document.querySelector("form");
+      if (form) {
+        form.requestSubmit();
+      }
+    }, 0);
+  }, []);
 
   // Show loading spinner while data loads
   if (formState.isLoading) {
@@ -149,6 +212,15 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
           >
             <p className="text-sm text-red-700 dark:text-red-400">{formState.errors.general}</p>
           </div>
+        )}
+
+        {/* Duplicate Name Warning */}
+        {duplicateWarning && duplicateWarning.isDuplicate && (
+          <DuplicateNameWarning
+            count={duplicateWarning.count}
+            onDismiss={handleDuplicateDismiss}
+            onProceed={handleDuplicateProceed}
+          />
         )}
 
         {/* Form Fields */}
