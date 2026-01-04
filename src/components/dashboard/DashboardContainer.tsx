@@ -13,8 +13,8 @@ import {
 } from "@/stores/dashboard";
 import { DashboardContext, type DashboardContextType, type DashboardState } from "@/contexts/DashboardContext";
 import { useWorkspaces } from "@/components/hooks/useWorkspaces";
-import { useLocations, type LocationTreeNode } from "@/components/hooks/useLocations";
-import { useBoxes, type BoxListItem } from "@/components/hooks/useBoxes";
+import { useLocations } from "@/components/hooks/useLocations";
+import { useBoxes } from "@/components/hooks/useBoxes";
 import type { CreateLocationRequest, CreateBoxRequest, UpdateBoxRequest } from "@/types";
 import { apiFetch, getUserFriendlyErrorMessage, logError, shouldRedirectToLogin } from "@/lib/api-client";
 
@@ -35,7 +35,6 @@ export default function DashboardContainer() {
   const $searchQuery = useStore(searchQuery);
   const $expandedLocationIds = useStore(expandedLocationIds);
   const $userWorkspaces = useStore(userWorkspaces);
-  const $userProfile = useStore(userProfile);
 
   // API hooks
   const { workspaces, isLoading: isLoadingWorkspaces, error: workspacesError } = useWorkspaces();
@@ -175,7 +174,7 @@ export default function DashboardContainer() {
       setModalData({ mode: "create" });
     },
 
-    openDeleteConfirm: (type: "location" | "box", itemId: string, itemName?: string) => {
+    openDeleteConfirm: (type: "location" | "box", itemId: string) => {
       setModalData({ mode: "create", itemType: type, itemId });
       setActiveModal("delete-confirm");
     },
@@ -263,12 +262,21 @@ export default function DashboardContainer() {
     },
 
     switchWorkspace: async (workspaceId: string) => {
-      currentWorkspaceId.set(workspaceId);
-      selectedLocationId.set(null);
-      searchQuery.set("");
-      expandedLocationIds.set(new Set());
-      await refetchLocations();
-      await refetchBoxes();
+      try {
+        // First update the workspace ID
+        currentWorkspaceId.set(workspaceId);
+        // Reset all workspace-specific state
+        selectedLocationId.set(null);
+        searchQuery.set("");
+        expandedLocationIds.set(new Set());
+
+        // Refetch both in parallel to avoid sequential delays
+        await Promise.all([refetchLocations(), refetchBoxes()]);
+      } catch (err) {
+        console.error("[DashboardContainer] switchWorkspace error:", err);
+        // Ensure boxes refetch even if locations fail
+        await refetchBoxes().catch(console.error);
+      }
     },
 
     refetchLocations,

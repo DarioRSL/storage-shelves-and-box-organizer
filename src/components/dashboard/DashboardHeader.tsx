@@ -14,8 +14,13 @@ export default function DashboardHeader() {
     globalThis.location.href = "/app/qr-generator";
   };
 
-  const handleAddBox = () => {
+  const handleQuickAdd = () => {
+    // Kreator - w przyszłości przeprowadzi przez lokalizację, pudełko, opis
     actions.openBoxEditor("create");
+  };
+
+  const handleAddBox = () => {
+    globalThis.location.href = "/app/boxes/new";
   };
 
   return (
@@ -34,6 +39,16 @@ export default function DashboardHeader() {
           <Button size="sm" onClick={handleAddBox} className="gap-2" aria-label="Dodaj nowe pudełko">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Dodaj pudełko
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleQuickAdd}
+            className="gap-2"
+            aria-label="Szybkie dodanie (kreator)"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Szybkie dodanie
           </Button>
           <Button
             variant="outline"
