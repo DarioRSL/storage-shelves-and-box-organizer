@@ -98,6 +98,61 @@ export async function getQrCodeByShortId(
 }
 
 /**
+ * Retrieves all QR codes for a workspace, optionally filtered by status.
+ *
+ * Business logic:
+ * 1. Query qr_codes table by workspace_id
+ * 2. Optionally filter by status (generated, assigned, printed)
+ * 3. RLS automatically enforces workspace membership
+ * 4. Return array of QR codes
+ *
+ * @param supabase - Supabase client instance
+ * @param workspaceId - UUID of the workspace
+ * @param status - Optional status filter
+ * @returns Promise<QrCodeDetailDto[]> - Array of QR codes
+ */
+export async function getQrCodesForWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  status?: string
+): Promise<QrCodeDetailDto[]> {
+  try {
+    let query = supabase
+      .from("qr_codes")
+      .select("id, short_id, box_id, status, workspace_id")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false });
+
+    // Add status filter if provided
+    if (status) {
+      query = query.eq("status", status as "generated" | "assigned" | "printed");
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[getQrCodesForWorkspace] Database error:", {
+        workspace_id: workspaceId,
+        status,
+        error: error.message,
+      });
+      throw new Error("Nie udało się pobrać kodów QR");
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("[getQrCodesForWorkspace] Unexpected error:", {
+      workspace_id: workspaceId,
+      status,
+      error,
+    });
+
+    // Return empty array on error to not break UI
+    return [];
+  }
+}
+
+/**
  * Verifies that the authenticated user is a member of the specified workspace.
  *
  * Business logic:
