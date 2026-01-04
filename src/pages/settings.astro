@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SettingsContainer from "@/components/settings/SettingsContainer";
+import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
+
+// Check if user is authenticated via middleware (from sb_session cookie)
+const user = Astro.locals.user;
+if (!user) {
+  // User is not authenticated
+  return Astro.redirect("/auth");
+}
+
+// Fetch user profile for theme preference
+const supabase = Astro.locals.supabase;
+let themePreference = "system";
+try {
+  const profile = await getAuthenticatedUserProfile(supabase, user.id);
+  themePreference = profile.theme_preference || "system";
+} catch (error) {
+  console.error("Failed to load user theme preference:", error);
+}
+---
+
+<Layout title="Settings - Storage Organizer" themePreference={themePreference}>
+  <main role="main">
+    <SettingsContainer client:load userId={user.id} />
+  </main>
+</Layout>

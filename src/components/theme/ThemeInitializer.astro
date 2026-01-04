@@ -1,0 +1,71 @@
+---
+/**
+ * Theme Initializer Script
+ * Prevents flash of unstyled content (FOUC) by applying theme before page render.
+ * This runs inline in <head> before any React components load.
+ *
+ * Priority:
+ * 1. User's database preference (passed as prop from server)
+ * 2. localStorage (for fast repeat visits)
+ * 3. System preference (default)
+ */
+
+interface Props {
+  themePreference?: string;
+}
+
+const { themePreference } = Astro.props;
+---
+
+<script is:inline define:vars={{ themePreference }}>
+  (function () {
+    // Helper to apply theme immediately
+    function applyTheme(theme) {
+      const html = document.documentElement;
+
+      if (theme === "dark") {
+        html.classList.add("dark");
+      } else if (theme === "light") {
+        html.classList.remove("dark");
+      } else {
+        // System theme
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (prefersDark) {
+          html.classList.add("dark");
+        } else {
+          html.classList.remove("dark");
+        }
+      }
+    }
+
+    // Determine which theme to use
+    let theme = "system"; // default
+
+    // Priority 1: Server-side user preference from database
+    if (
+      themePreference &&
+      (themePreference === "light" || themePreference === "dark" || themePreference === "system")
+    ) {
+      theme = themePreference;
+      // Sync to localStorage for next visit
+      try {
+        localStorage.setItem("theme", theme);
+      } catch (e) {
+        console.warn("localStorage not available");
+      }
+    } else {
+      // Priority 2: localStorage
+      try {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark" || stored === "system") {
+          theme = stored;
+        }
+      } catch (e) {
+        console.warn("localStorage not available, using system theme");
+      }
+    }
+
+    // Apply theme immediately
+    applyTheme(theme);
+  })();
+</script>
