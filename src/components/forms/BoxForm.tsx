@@ -30,6 +30,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
   // Initialize form hook
   const {
     formState,
+    currentWorkspaceId,
     setFormField,
     resetForm,
     submitForm,
@@ -54,19 +55,19 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
 
       try {
         await submitForm();
-        // Success - call callback or redirect
+        // Success - call callback or redirect to dashboard
         if (onSuccess && formState.currentBox?.id) {
           onSuccess(formState.currentBox.id);
-        } else if (onCancel) {
-          // For new boxes, we'd need to get the ID from response
-          onCancel();
+        } else {
+          // Redirect to dashboard after successful creation/update
+          window.location.href = "/app";
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to submit form";
+        const errorMessage = error instanceof Error ? error.message : "Nie udało się zapisać pudełka";
         setSubmitError(errorMessage);
       }
     },
-    [submitForm, onSuccess, onCancel, formState.currentBox?.id]
+    [submitForm, onSuccess, formState.currentBox?.id]
   );
 
   // Handle delete button click
@@ -91,14 +92,19 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
     }
   }, [deleteBox, onSuccess, onCancel, formState.currentBox?.id]);
 
-  // Handle cancel
+  // Handle cancel - redirect to dashboard
   const handleCancel = useCallback(() => {
     if (onCancel) {
       onCancel();
     } else {
-      resetForm();
+      window.location.href = "/app";
     }
-  }, [onCancel, resetForm]);
+  }, [onCancel]);
+
+  // Handle reset - clear form fields
+  const handleReset = useCallback(() => {
+    resetForm();
+  }, [resetForm]);
 
   // Show loading spinner while data loads
   if (formState.isLoading) {
@@ -118,10 +124,10 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
         {/* Form Header */}
         <div className="border-b border-gray-200 dark:border-gray-800 pb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {mode === "create" ? "Create New Box" : "Edit Box"}
+            {mode === "create" ? "Utwórz nowe pudełko" : "Edytuj pudełko"}
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {mode === "create" ? "Add a new box to your workspace" : `Update box details and properties`}
+            {mode === "create" ? "Dodaj nowe pudełko do swojego workspace" : "Zaktualizuj szczegóły pudełka"}
           </p>
         </div>
 
@@ -180,7 +186,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
             onChange={(locationId) => setFormField("location_id", locationId)}
             error={formState.errors.location_id}
             disabled={formState.isSaving}
-            workspaceId={workspaceId || ""}
+            workspaceId={currentWorkspaceId || ""}
           />
 
           {/* QR Code Field */}
@@ -189,7 +195,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
             onChange={(qrCodeId) => setFormField("qr_code_id", qrCodeId)}
             error={formState.errors.qr_code_id}
             disabled={formState.isSaving}
-            workspaceId={workspaceId || ""}
+            workspaceId={currentWorkspaceId || ""}
             isLoading={formState.isLoading}
             isEditing={mode === "edit"}
             currentQRCode={formState.currentBox?.qr_code?.short_id}
@@ -200,8 +206,8 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
 
         {/* Form Actions */}
         <FormActions
-          onSubmit={handleSubmit}
           onCancel={handleCancel}
+          onReset={mode === "create" ? handleReset : undefined}
           onDelete={mode === "edit" ? handleDeleteClick : undefined}
           isSaving={formState.isSaving}
           isDeleting={formState.isDeleting}
@@ -215,9 +221,9 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
       {mode === "edit" && (
         <ConfirmationDialog
           isOpen={showDeleteConfirmation}
-          title="Delete Box?"
-          description={`This action is irreversible. The box "${formState.name || "Untitled"}" and all its data will be permanently deleted.`}
-          confirmText="DELETE"
+          title="Usuń pudełko?"
+          description={`Ta operacja jest nieodwracalna. Pudełko "${formState.name || "Bez nazwy"}" i wszystkie jego dane zostaną trwale usunięte.`}
+          confirmText="USUŃ"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteConfirmation(false)}
           isDangerous={true}

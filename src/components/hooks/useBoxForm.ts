@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { apiFetch, ApiError, extractValidationErrors } from "@/lib/api-client";
 import { createBoxSchema, updateBoxSchema } from "@/lib/validation/box";
 import { extractZodErrors } from "@/lib/validation/schemas";
 import type { BoxDto, LocationDto, QrCodeDetailDto } from "@/types";
-import { workspaceStore } from "@/lib/stores/workspace.store";
+import { currentWorkspaceId as currentWorkspaceIdStore } from "@/stores/dashboard";
 
 export interface BoxFormState {
   // Form fields
@@ -29,6 +30,7 @@ export interface BoxFormState {
 export interface UseBoxFormReturn {
   // State
   formState: BoxFormState;
+  currentWorkspaceId: string | null;
 
   // Field setters
   setFormField: (
@@ -89,7 +91,8 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   const [initialState, setInitialState] = useState<BoxFormState>(initialFormState);
 
   // Get workspace ID from prop or store
-  const currentWorkspaceId = workspaceId || workspaceStore.get().currentWorkspaceId;
+  const storeWorkspaceId = useStore(currentWorkspaceIdStore);
+  const currentWorkspaceId = workspaceId || storeWorkspaceId;
 
   // Load initial data on mount or when workspace becomes available
   useEffect(() => {
@@ -271,7 +274,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
 
       const method = mode === "create" ? "POST" : "PATCH";
 
-      const response = await apiFetch(endpoint, {
+      await apiFetch(endpoint, {
         method,
         body: JSON.stringify(validationResult.data),
       });
@@ -286,8 +289,6 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
 
       // Update initial state after successful save
       setInitialState(formState);
-
-      return response;
     } catch (error) {
       console.error("Form submission error:", error);
 
@@ -372,6 +373,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
 
   return {
     formState,
+    currentWorkspaceId,
     setFormField,
     setErrors,
     resetForm,

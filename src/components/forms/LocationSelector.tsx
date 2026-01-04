@@ -29,8 +29,9 @@ export function LocationSelector({
   const [selectedLocationName, setSelectedLocationName] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleLocationSelect = (locationId: string) => {
+  const handleLocationSelect = (locationId: string, locationName: string) => {
     onChange(locationId);
+    setSelectedLocationName(locationName);
     setIsOpen(false);
   };
 
