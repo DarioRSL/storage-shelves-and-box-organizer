@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { CreateLocationRequest, LocationDto, UpdateLocationRequest, UpdateLocationResponse } from "@/types";
+import { sanitizeForLtree } from "@/lib/utils/transliterate";
 
 /**
  * Custom error classes for location service operations
@@ -69,12 +70,8 @@ export class ForbiddenError extends Error {
  * normalizeLocationName("Box #123") // returns "box_123"
  */
 export function normalizeLocationName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9_]/g, "_") // Replace non-alphanumeric (except _) with _
-    .replace(/_+/g, "_") // Collapse multiple underscores
-    .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
+  // Use sanitizeForLtree which handles Polish character transliteration
+  return sanitizeForLtree(name);
 }
 
 /**

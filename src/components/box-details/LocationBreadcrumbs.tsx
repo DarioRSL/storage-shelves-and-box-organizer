@@ -12,18 +12,44 @@ interface BreadcrumbItem {
 }
 
 /**
+ * Capitalizes first letter of each word for better display
+ */
+function capitalize(text: string): string {
+  return text
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
  * Parse ltree path string into breadcrumb items
  * Path format: "root.basement.shelf_a" -> ["root", "basement", "shelf_a"]
+ *
+ * Note: This displays transliterated names from ltree path.
+ * For full Polish character support, the location name should be fetched from database.
  */
-function parsePath(path: string | undefined): BreadcrumbItem[] {
+function parsePath(path: string | undefined, locationName?: string): BreadcrumbItem[] {
   if (!path) return [];
 
   const segments = path.split(".");
-  return segments.map((segment, index) => ({
-    name: segment.replace(/_/g, " "), // Replace underscores with spaces for display
-    level: index,
-    isLast: index === segments.length - 1,
-  }));
+  return segments.map((segment, index) => {
+    const isLast = index === segments.length - 1;
+
+    // For the last segment, use the actual location name if available
+    let displayName = segment.replace(/_/g, " ");
+    if (isLast && locationName) {
+      displayName = locationName;
+    } else {
+      // Capitalize for better display
+      displayName = capitalize(displayName);
+    }
+
+    return {
+      name: displayName,
+      level: index,
+      isLast,
+    };
+  });
 }
 
 export function LocationBreadcrumbs({ location }: LocationBreadcrumbsProps) {
@@ -59,7 +85,7 @@ export function LocationBreadcrumbs({ location }: LocationBreadcrumbsProps) {
     );
   }
 
-  const breadcrumbs = parsePath(location.path);
+  const breadcrumbs = parsePath(location.path, location.name);
 
   // If no path but location exists, show just the name
   if (breadcrumbs.length === 0 && location.name) {
