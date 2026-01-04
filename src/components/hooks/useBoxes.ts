@@ -36,11 +36,20 @@ export function useBoxes(
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   const fetchBoxes = React.useCallback(async () => {
-    if (!workspaceId) return;
+    // Reset state if no workspace selected
+    if (!workspaceId) {
+      setBoxes([]);
+      setTotalCount(0);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
 
     // Don't fetch if search query is too short
     if (debouncedQuery && debouncedQuery.length < 3) {
       setBoxes([]);
+      setTotalCount(0);
+      setIsLoading(false);
       return;
     }
 

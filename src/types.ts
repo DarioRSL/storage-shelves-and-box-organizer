@@ -244,6 +244,35 @@ export interface GetBoxesQuery {
   offset?: number; // Pagination offset
 }
 
+/**
+ * Request to check if box name already exists in workspace.
+ * Used for duplicate name warning before creating/editing boxes.
+ */
+export interface CheckDuplicateBoxRequest {
+  workspace_id: string;
+  name: string;
+  /**
+   * Optional box ID to exclude from duplicate check (for edit mode).
+   * Prevents flagging current box as duplicate when editing.
+   */
+  exclude_box_id?: string;
+}
+
+/**
+ * Response from duplicate box name check.
+ * Non-blocking validation helper for user warnings.
+ */
+export interface CheckDuplicateBoxResponse {
+  /**
+   * True if one or more boxes with this name exist in workspace.
+   */
+  isDuplicate: boolean;
+  /**
+   * Number of boxes found with this name (excluding current box if specified).
+   */
+  count: number;
+}
+
 // --- 5. QR Codes ---
 
 /**

@@ -123,7 +123,7 @@ export type UpdateBoxParamsInput = z.infer<typeof UpdateBoxParamsSchema>;
 
 /**
  * Validation schema for PATCH /api/boxes/:id request body.
- * Validates partial box updates (name, description, tags, location_id).
+ * Validates partial box updates (name, description, tags, location_id, qr_code_id).
  * At least one field must be provided.
  */
 export const UpdateBoxSchema = z
@@ -144,6 +144,7 @@ export const UpdateBoxSchema = z
       .nullable()
       .optional(),
     location_id: z.string().uuid("Nieprawidłowy format ID lokalizacji").nullable().optional(),
+    qr_code_id: z.string().uuid("Nieprawidłowy format ID kodu QR").nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Przynajmniej jedno pole musi zostać zaktualizowane",
@@ -153,3 +154,23 @@ export const UpdateBoxSchema = z
  * Type inference for update box request body validation
  */
 export type UpdateBoxInput = z.infer<typeof UpdateBoxSchema>;
+
+/**
+ * Validation schema for POST /api/boxes/check-duplicate request body.
+ * Validates duplicate name check parameters.
+ * Used to warn users before creating/editing boxes with duplicate names.
+ */
+export const CheckDuplicateBoxSchema = z.object({
+  workspace_id: z.string().uuid("Nieprawidłowy format ID obszaru roboczego"),
+  name: z
+    .string()
+    .min(1, "Nazwa pudełka jest wymagana")
+    .max(100, "Nazwa pudełka nie może przekraczać 100 znaków")
+    .trim(),
+  exclude_box_id: z.string().uuid("Nieprawidłowy format ID pudełka").optional(),
+});
+
+/**
+ * Type inference for check duplicate box request validation
+ */
+export type CheckDuplicateBoxInput = z.infer<typeof CheckDuplicateBoxSchema>;

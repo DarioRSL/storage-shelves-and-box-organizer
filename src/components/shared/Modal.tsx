@@ -32,7 +32,6 @@ export const Modal: React.FC<ModalProps> = ({
   isDismissible = true,
   className = "",
 }) => {
-
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;

@@ -6,6 +6,7 @@ import type {
   BoxDto,
   UpdateBoxRequest,
   UpdateBoxResponse,
+  CheckDuplicateBoxResponse,
 } from "@/types";
 
 /**
@@ -568,15 +569,93 @@ export async function updateBox(
       }
     }
 
-    // Step 2: Execute UPDATE query
+    // Step 2: If qr_code_id provided and not null, validate QR code
+    if (updates.qr_code_id !== undefined && updates.qr_code_id !== null) {
+      const { data: qrCode, error: qrError } = await supabase
+        .from("qr_codes")
+        .select("id, workspace_id, box_id")
+        .eq("id", updates.qr_code_id)
+        .single();
+
+      if (qrError || !qrCode) {
+        console.error("[box.service] QR code not found", {
+          user_id: userId,
+          qr_code_id: updates.qr_code_id,
+          error: qrError?.message,
+        });
+        throw new QrCodeNotFoundError();
+      }
+
+      // Get box to verify workspace match
+      const { data: box, error: boxError } = await supabase
+        .from("boxes")
+        .select("id, workspace_id")
+        .eq("id", boxId)
+        .single();
+
+      if (boxError || !box) {
+        console.error("[box.service] Box not found during QR code validation", {
+          user_id: userId,
+          box_id: boxId,
+          error: boxError?.message,
+        });
+        throw new BoxNotFoundError();
+      }
+
+      // Verify QR code belongs to same workspace as box
+      if (qrCode.workspace_id !== box.workspace_id) {
+        console.error("[box.service] QR code workspace mismatch", {
+          user_id: userId,
+          box_workspace: box.workspace_id,
+          qr_workspace: qrCode.workspace_id,
+        });
+        throw new WorkspaceMismatchError("qr_code");
+      }
+
+      // Verify QR code is not already assigned to another box
+      if (qrCode.box_id !== null && qrCode.box_id !== boxId) {
+        console.error("[box.service] QR code already assigned", {
+          user_id: userId,
+          qr_code_id: updates.qr_code_id,
+          assigned_to_box: qrCode.box_id,
+          current_box: boxId,
+        });
+        throw new QrCodeAlreadyAssignedError();
+      }
+    }
+
+    // Step 3: Execute UPDATE query
     // RLS automatically verifies workspace membership
     // Database triggers automatically update updated_at and search_vector
-    const { data, error: updateError } = await supabase
-      .from("boxes")
-      .update(updates)
-      .eq("id", boxId)
-      .select("id, name, updated_at")
-      .single();
+    // Note: qr_code_id is not a column in boxes table - it's handled separately in Step 4
+    const boxUpdates = { ...updates };
+    delete boxUpdates.qr_code_id; // Remove qr_code_id as it's not a column in boxes table
+
+    // Skip box update if no fields to update (only qr_code_id was provided)
+    let data;
+    let updateError;
+
+    if (Object.keys(boxUpdates).length > 0) {
+      const result = await supabase
+        .from("boxes")
+        .update(boxUpdates)
+        .eq("id", boxId)
+        .select("id, name, updated_at")
+        .single();
+
+      data = result.data;
+      updateError = result.error;
+    } else {
+      // No box fields to update, just fetch current box data
+      const result = await supabase
+        .from("boxes")
+        .select("id, name, updated_at")
+        .eq("id", boxId)
+        .single();
+
+      data = result.data;
+      updateError = result.error;
+    }
 
     // Check for database errors
     if (updateError) {
@@ -604,12 +683,36 @@ export async function updateBox(
       throw new BoxNotFoundError();
     }
 
+    // Step 4: If qr_code_id was updated, link QR code to this box
+    if (updates.qr_code_id !== undefined && updates.qr_code_id !== null) {
+      const { error: qrUpdateError } = await supabase
+        .from("qr_codes")
+        .update({
+          box_id: boxId,
+          status: "assigned",
+        })
+        .eq("id", updates.qr_code_id);
+
+      if (qrUpdateError) {
+        console.error("[box.service] Error updating QR code assignment", {
+          user_id: userId,
+          box_id: boxId,
+          qr_code_id: updates.qr_code_id,
+          error: qrUpdateError.message,
+        });
+        // Note: Box update succeeded, but QR code link failed
+        // This is a partial failure - we should warn but not throw
+        console.warn("[box.service] QR code update failed after successful box update");
+      }
+    }
+
     // Log successful update
     console.log("[box.service] Box updated successfully", {
       user_id: userId,
       box_id: boxId,
       fields_updated: Object.keys(updates),
       location_changed: updates.location_id !== undefined,
+      qr_code_changed: updates.qr_code_id !== undefined,
     });
 
     return {
@@ -640,5 +743,77 @@ export async function updateBox(
     }
 
     throw new Error("Nie udało się zaktualizować pudełka");
+  }
+}
+
+/**
+ * Check if a box with the given name already exists in the workspace.
+ * Used for duplicate name warnings in box creation/editing forms.
+ *
+ * **Business Logic:**
+ * 1. Query boxes table for matching workspace_id and name (case-sensitive)
+ * 2. Exclude current box if exclude_box_id provided (for edit mode)
+ * 3. Count matching boxes
+ * 4. Gracefully fail on errors (return false to not block user)
+ *
+ * **Error Handling:**
+ * - Database errors are logged and gracefully handled (returns isDuplicate: false)
+ * - This is a non-critical helper function that shouldn't block box creation
+ *
+ * @param supabase - Authenticated Supabase client with JWT context
+ * @param workspaceId - Workspace UUID to search within
+ * @param name - Box name to check for duplicates (case-sensitive match)
+ * @param excludeBoxId - Optional box ID to exclude from results (for edit mode)
+ * @returns Object with isDuplicate boolean and count of matching boxes
+ */
+export async function checkDuplicateBoxName(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  name: string,
+  excludeBoxId?: string
+): Promise<CheckDuplicateBoxResponse> {
+  try {
+    // Build query: find boxes with same name in workspace
+    let query = supabase
+      .from("boxes")
+      .select("id", { count: "exact", head: false })
+      .eq("workspace_id", workspaceId)
+      .eq("name", name); // Case-sensitive match
+
+    // Exclude current box (for edit mode - don't flag current box as duplicate)
+    if (excludeBoxId) {
+      query = query.neq("id", excludeBoxId);
+    }
+
+    // Execute query
+    const { count, error } = await query;
+
+    if (error) {
+      console.error("[checkDuplicateBoxName] Database error:", {
+        workspace_id: workspaceId,
+        name,
+        exclude_box_id: excludeBoxId,
+        error,
+      });
+      // Gracefully fail - return false to not block user
+      return { isDuplicate: false, count: 0 };
+    }
+
+    // Return result
+    return {
+      isDuplicate: (count ?? 0) > 0,
+      count: count ?? 0,
+    };
+  } catch (error) {
+    // Log unexpected errors
+    console.error("[checkDuplicateBoxName] Unexpected error:", {
+      workspace_id: workspaceId,
+      name,
+      exclude_box_id: excludeBoxId,
+      error,
+    });
+
+    // Gracefully fail - this is a non-critical helper function
+    return { isDuplicate: false, count: 0 };
   }
 }

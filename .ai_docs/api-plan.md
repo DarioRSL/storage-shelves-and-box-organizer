@@ -1,7 +1,7 @@
 # REST API Plan
 
-**Last Updated:** January 2, 2026
-**Implementation Status:** ✅ **100% Complete** (24/24 endpoints implemented)
+**Last Updated:** January 4, 2026
+**Implementation Status:** ✅ **100% Complete** (26/26 endpoints implemented)
 
 This document outlines the REST API structure for the Storage & Box Organizer application. Given the architecture uses Supabase (PostgreSQL + PostgREST), many endpoints map directly to database operations secured by Row Level Security (RLS). Custom business logic is handled via RPC functions or Edge Functions.
 
@@ -13,11 +13,11 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 | **Profiles** | 2 | ✅ Complete | Includes theme preference endpoint |
 | **Workspaces** | 6 | ✅ Complete | Full CRUD + member management |
 | **Locations** | 4 | ✅ Complete | Hierarchical structure with soft delete |
-| **Boxes** | 5 | ✅ Complete | Full CRUD with search & pagination |
-| **QR Codes** | 2 | ✅ Complete | Batch generation + lookup |
+| **Boxes** | 6 | ✅ Complete | Full CRUD + search & pagination + duplicate check |
+| **QR Codes** | 3 | ✅ Complete | Batch generation + lookup + workspace listing |
 | **Export** | 1 | ✅ Complete | CSV/JSON inventory export |
 | **Account Management** | 1 | ✅ Complete | Account deletion with cascade |
-| **TOTAL** | **24** | ✅ **100%** | All endpoints production-ready |
+| **TOTAL** | **26** | ✅ **100%** | All endpoints production-ready |
 
 **Architecture Highlights:**
 - ✅ Consistent Zod validation on all inputs
@@ -537,6 +537,59 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ### 2.3 Boxes
 
+#### POST /api/boxes/check-duplicate
+
+- **Description**: Checks if a box with the given name already exists in the workspace. Returns a count of duplicates for non-blocking warning UI. Used before creating or editing boxes to warn users about potential duplicate names.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/boxes/check-duplicate.ts`
+- **Service Layer**: `src/lib/services/box.service.ts::checkDuplicateBoxName()`
+- **Query Parameters**: None
+- **Request JSON**:
+
+```json
+{
+  "workspace_id": "uuid",
+  "name": "Pudełko Kasi",
+  "exclude_box_id": "uuid" // Optional, for edit mode
+}
+```
+
+- **Response JSON** (200 OK):
+
+```json
+{
+  "isDuplicate": true,
+  "count": 2
+}
+```
+
+- **Validation**:
+  - `workspace_id`: Required, UUID format
+  - `name`: Required, 1-100 characters, trimmed
+  - `exclude_box_id`: Optional, UUID format (excludes current box in edit mode)
+
+- **Authorization**:
+  - User must be workspace member (RLS enforcement)
+  - Query automatically scoped to accessible boxes
+
+- **Errors**:
+  - `400 Bad Request`: Invalid input (missing name, invalid UUID)
+  - `401 Unauthorized`: User not authenticated
+  - `500 Internal Server Error`: Database error (gracefully returns `{ isDuplicate: false, count: 0 }`)
+
+- **Performance**:
+  - Query time: ~3-6ms (uses existing `boxes_workspace_id_idx` index)
+  - Safe for 100+ concurrent users
+  - Case-sensitive matching for simplicity
+
+- **Design Rationale**:
+  - Box names are NOT unique (QR codes provide unique identification)
+  - Non-blocking warning (user can proceed anyway)
+  - Graceful failure on errors (doesn't block user)
+  - MVP uses before-submit checking (future: on-blur or real-time)
+
+- **Documentation**: See [.ai_docs/implemented/boxes-check-duplicate-post-implementation-plan.md](.ai_docs/implemented/boxes-check-duplicate-post-implementation-plan.md)
+
 #### GET /boxes
 
 - **Description**: Searches and lists boxes based on criteria with full-text search, filtering, and pagination.
@@ -701,6 +754,51 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   - `401 Unauthorized`: Permission denied.
 
 ### 2.4 QR Codes
+
+#### GET /api/qr-codes
+
+- **Description**: Retrieves all QR codes for a workspace, optionally filtered by status. Used by Box Form to load available QR codes for assignment.
+- **Implementation Status**: ✅ Implemented
+- **Implementation File**: `src/pages/api/qr-codes/index.ts`
+- **Service Layer**: `src/lib/services/qr-code.service.ts::getQrCodesForWorkspace()`
+- **Query Parameters**:
+  - `workspace_id` (UUID, required): Workspace to retrieve QR codes from
+  - `status` (string, optional): Filter by status - 'generated', 'assigned', or 'printed'
+- **Request JSON**: None
+- **Response JSON**:
+
+```json
+[
+  {
+    "id": "uuid-1",
+    "short_id": "QR-A1B2C3",
+    "box_id": null,
+    "status": "generated",
+    "workspace_id": "uuid"
+  },
+  {
+    "id": "uuid-2",
+    "short_id": "QR-X7Y8Z9",
+    "box_id": "box-uuid",
+    "status": "assigned",
+    "workspace_id": "uuid"
+  }
+]
+```
+
+- **Use Cases**:
+  - Box Form: Fetch unassigned QR codes (`status=generated`) for dropdown selector
+  - QR Management: List all QR codes for workspace
+  - Statistics: Count QR codes by status
+- **Authorization**:
+  - User must be member of the workspace
+  - Verified via `isWorkspaceMember()` before query execution
+- **Errors**:
+  - `400 Bad Request`: Missing workspace_id or invalid status value
+  - `401 Unauthorized`: User not authenticated
+  - `403 Forbidden`: User is not workspace member
+  - `500 Internal Server Error`: Database error (returns empty array gracefully)
+- **Documentation**: `.ai_docs/implemented/qr-codes-get-implementation-plan.md`
 
 #### POST /qr-codes/batch
 

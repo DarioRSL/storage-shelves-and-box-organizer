@@ -252,12 +252,27 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
               location_id: formState.location_id,
               qr_code_id: formState.qr_code_id,
             }
-          : {
-              name: formState.name !== initialState.name ? formState.name : undefined,
-              description: formState.description !== initialState.description ? formState.description : undefined,
-              tags: JSON.stringify(formState.tags) !== JSON.stringify(initialState.tags) ? formState.tags : undefined,
-              location_id: formState.location_id !== initialState.location_id ? formState.location_id : undefined,
-            };
+          : (() => {
+              const updates: Record<string, unknown> = {};
+
+              if (formState.name !== initialState.name) {
+                updates.name = formState.name;
+              }
+              if (formState.description !== initialState.description) {
+                updates.description = formState.description;
+              }
+              if (JSON.stringify(formState.tags) !== JSON.stringify(initialState.tags)) {
+                updates.tags = formState.tags;
+              }
+              if (formState.location_id !== initialState.location_id) {
+                updates.location_id = formState.location_id;
+              }
+              if (formState.qr_code_id !== initialState.qr_code_id) {
+                updates.qr_code_id = formState.qr_code_id;
+              }
+
+              return updates;
+            })();
 
       // Validate with appropriate schema
       const schema = mode === "create" ? createBoxSchema : updateBoxSchema;
