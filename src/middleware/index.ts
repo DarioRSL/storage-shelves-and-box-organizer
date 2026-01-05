@@ -1,21 +1,16 @@
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
 import { createServerClient } from "@supabase/ssr";
 import { parse } from "cookie";
 import type { Database } from "../db/database.types.ts";
+import { loggerMiddleware } from "@/lib/services/logger.middleware";
 
-export const onRequest = defineMiddleware(async (context, next) => {
+const authMiddleware = defineMiddleware(async (context, next) => {
   // Parse cookies from request headers using proper cookie parser
   const cookieString = context.request.headers.get("cookie") || "";
   const cookies = parse(cookieString);
 
   // Check for sb_session HttpOnly cookie (set by /api/auth/session)
   const sessionToken = cookies.sb_session;
-
-  // Debug: Log session status
-  if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-    console.log(`[Middleware] Path: ${context.url.pathname}`);
-    console.log(`[Middleware] Session token present:`, !!sessionToken);
-  }
 
   // Store cookies to set in response later
   const cookiesToSet: { name: string; value: string; options?: any }[] = [];
@@ -46,9 +41,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { data, error } = await supabase.auth.getUser();
     if (!error && data?.user) {
       user = data.user;
-      if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-        console.log(`[Middleware] User found from cookies: ${data.user.email}`);
-      }
     } else if (sessionToken) {
       // If no user from cookies, try to extract from sb_session token
       // Decode JWT without verification (we trust tokens from our own client)
@@ -92,24 +84,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
             access_token: sessionToken,
             refresh_token: "",
           });
-
-          if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-            console.log(`[Middleware] User found from session token: ${payload.email}`);
-          }
         }
       } catch (err) {
-        if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-          console.log(`[Middleware] Failed to decode session token:`, err instanceof Error ? err.message : String(err));
-        }
+        // Failed to decode session token, continue without user
       }
-    } else if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] No user - error: ${error?.message || "no session"}`);
     }
   } catch (err) {
     // User not authenticated or session invalid, continue without user
-    if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] Exception: ${err instanceof Error ? err.message : String(err)}`);
-    }
   }
 
   // Make user available to routes via context.locals
@@ -130,3 +111,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   return response;
 });
+
+export const onRequest = sequence(
+  loggerMiddleware, // Run first to capture all requests
+  authMiddleware // Then authenticate
+);

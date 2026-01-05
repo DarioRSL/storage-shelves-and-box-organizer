@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/box.service";
 import { CreateBoxSchema, GetBoxesQuerySchema } from "@/lib/validators/box.validators";
 import type { CreateBoxRequest, CreateBoxResponse, GetBoxesQuery, BoxDto, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -137,7 +138,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       // Handle generic errors from service layer
-      console.error("Service error in POST /api/boxes:", error);
+      log.error("Service layer error", {
+        endpoint: "POST /api/boxes",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się utworzyć pudełka",
@@ -150,7 +154,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors
-    console.error("Unexpected error in POST /api/boxes:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "POST /api/boxes",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",
@@ -238,7 +245,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     } catch (error) {
       // Handle errors from service layer
-      console.error("Service error in GET /api/boxes:", error);
+      log.error("Service layer error", {
+        endpoint: "GET /api/boxes",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek",
@@ -251,7 +261,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors
-    console.error("Unexpected error in GET /api/boxes:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "GET /api/boxes",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",

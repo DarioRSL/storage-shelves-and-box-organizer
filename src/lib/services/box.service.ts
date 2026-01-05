@@ -8,6 +8,7 @@ import type {
   UpdateBoxResponse,
   CheckDuplicateBoxResponse,
 } from "@/types";
+import { log } from "./logger";
 
 /**
  * Custom error for QR code already assigned to another box.
@@ -141,7 +142,12 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
       .single();
 
     if (boxError) {
-      console.error("Error creating box:", boxError);
+      log.error("Failed to create box", {
+        error: boxError.message,
+        code: boxError.code,
+        workspaceId: request.workspace_id,
+        qrCodeId: request.qr_code_id,
+      });
 
       // Check for RLS policy violation (user not workspace member)
       if (boxError.code === "42501" || boxError.code === "PGRST301") {
@@ -166,7 +172,13 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
         .eq("id", request.qr_code_id);
 
       if (updateError) {
-        console.error("Error updating QR code:", updateError);
+        log.error("Failed to update QR code during box creation", {
+          error: updateError.message,
+          code: updateError.code,
+          boxId: box.id,
+          qrCodeId: request.qr_code_id,
+          workspaceId: request.workspace_id,
+        });
         // Note: Box was created but QR assignment failed
         // This is a partial failure - consider implementing transaction rollback
         throw new Error("Nie udało się przypisać kodu QR do pudełka");
@@ -174,11 +186,10 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     }
 
     // Log successful creation
-    console.log("Box created successfully:", {
-      box_id: box.id,
-      short_id: box.short_id,
-      workspace_id: box.workspace_id,
-      qr_assigned: !!request.qr_code_id,
+    log.info("Box created successfully", {
+      boxId: box.id,
+      workspaceId: box.workspace_id,
+      qrAssigned: !!request.qr_code_id,
     });
 
     return {
@@ -200,7 +211,10 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in createBox:", error);
+    log.error("Unexpected error in createBox", {
+      error: error instanceof Error ? error.message : String(error),
+      workspaceId: request.workspace_id,
+    });
 
     // Re-throw or wrap unknown errors
     if (error instanceof Error) {
@@ -284,24 +298,28 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
     const { data, error } = await dbQuery;
 
     if (error) {
-      console.error("Error fetching boxes:", error);
+      log.error("Failed to fetch boxes", {
+        error: error.message,
+        code: error.code,
+        workspaceId: query.workspace_id,
+      });
       throw new Error("Nie udało się pobrać pudełek");
     }
 
     // Log successful query
-    console.log("Boxes fetched successfully:", {
-      workspace_id: query.workspace_id,
+    log.debug("Boxes fetched successfully", {
+      workspaceId: query.workspace_id,
       count: data?.length ?? 0,
-      filters_applied: {
-        search: !!query.q,
-        location: !!query.location_id,
-        is_assigned: query.is_assigned,
-      },
+      hasSearch: !!query.q,
+      hasLocationFilter: !!query.location_id,
     });
 
     return data as BoxDto[];
   } catch (error) {
-    console.error("Unexpected error in getBoxes:", error);
+    log.error("Unexpected error in getBoxes", {
+      error: error instanceof Error ? error.message : String(error),
+      workspaceId: query.workspace_id,
+    });
 
     if (error instanceof Error) {
       throw error;
@@ -358,7 +376,7 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
 
     // Handle Supabase errors
     if (error) {
-      console.error("Error fetching box:", {
+      log.error("Failed to fetch box by ID", {
         boxId,
         userId,
         error: error.message,
@@ -375,17 +393,15 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.log("Box not found:", { boxId, userId });
+      log.warn("Box not found", { boxId, userId });
       throw new BoxNotFoundError();
     }
 
     // Log successful retrieval
-    console.log("Box fetched successfully:", {
+    log.debug("Box fetched successfully", {
       boxId: data.id,
       userId,
-      workspace_id: data.workspace_id,
-      has_location: !!data.location,
-      has_qr_code: !!data.qr_code,
+      workspaceId: data.workspace_id,
     });
 
     return data as BoxDto;
@@ -396,10 +412,10 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in getBoxById:", {
+    log.error("Unexpected error in getBoxById", {
       boxId,
       userId,
-      error,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -427,10 +443,7 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
  */
 export async function deleteBox(supabase: SupabaseClient, boxId: string, userId: string): Promise<void> {
   try {
-    console.log("[box.service] Deleting box", {
-      user_id: userId,
-      box_id: boxId,
-    });
+    log.info("Deleting box", { userId, boxId });
 
     // Execute DELETE query
     // RLS automatically verifies workspace membership
@@ -439,9 +452,9 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
 
     // Check for database errors
     if (error) {
-      console.error("[box.service] Database error deleting box", {
-        user_id: userId,
-        box_id: boxId,
+      log.error("Database error deleting box", {
+        userId,
+        boxId,
         error: error.message,
         code: error.code,
       });
@@ -450,18 +463,12 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
 
     // Check if box was actually deleted (RLS might have blocked it)
     if (count === 0) {
-      console.warn("[box.service] Box not found or access denied", {
-        user_id: userId,
-        box_id: boxId,
-      });
+      log.warn("Box not found or access denied", { userId, boxId });
       throw new BoxNotFoundError();
     }
 
     // Log successful deletion
-    console.log("[box.service] Box deleted successfully", {
-      user_id: userId,
-      box_id: boxId,
-    });
+    log.info("Box deleted successfully", { userId, boxId });
   } catch (error) {
     // Re-throw BoxNotFoundError as-is
     if (error instanceof BoxNotFoundError) {
@@ -469,10 +476,10 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
     }
 
     // Log unexpected errors
-    console.error("[box.service] Unexpected error in deleteBox", {
-      box_id: boxId,
-      user_id: userId,
-      error,
+    log.error("Unexpected error in deleteBox", {
+      boxId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -510,11 +517,7 @@ export async function updateBox(
   updates: UpdateBoxRequest
 ): Promise<UpdateBoxResponse> {
   try {
-    console.log("[box.service] Updating box", {
-      user_id: userId,
-      box_id: boxId,
-      fields_to_update: Object.keys(updates),
-    });
+    log.info("Updating box", { userId, boxId, fieldsToUpdate: Object.keys(updates) });
 
     // Step 1: If location_id provided and not null, validate location
     if (updates.location_id !== undefined && updates.location_id !== null) {
@@ -525,9 +528,9 @@ export async function updateBox(
         .single();
 
       if (locationError || !location) {
-        console.error("[box.service] Location not found", {
-          user_id: userId,
-          location_id: updates.location_id,
+        log.error("Location not found during box update", {
+          userId,
+          locationId: updates.location_id,
           error: locationError?.message,
         });
         throw new LocationNotFoundError();
@@ -535,10 +538,7 @@ export async function updateBox(
 
       // Verify location is not soft-deleted
       if (location.is_deleted) {
-        console.error("[box.service] Location is deleted", {
-          user_id: userId,
-          location_id: updates.location_id,
-        });
+        log.error("Location is soft-deleted", { userId, locationId: updates.location_id });
         throw new LocationNotFoundError();
       }
 
@@ -550,20 +550,16 @@ export async function updateBox(
         .single();
 
       if (boxError || !box) {
-        console.error("[box.service] Box not found during location validation", {
-          user_id: userId,
-          box_id: boxId,
-          error: boxError?.message,
-        });
+        log.error("Box not found during location validation", { userId, boxId, error: boxError?.message });
         throw new BoxNotFoundError();
       }
 
       // Verify location belongs to same workspace as box
       if (location.workspace_id !== box.workspace_id) {
-        console.error("[box.service] Workspace mismatch", {
-          user_id: userId,
-          box_workspace: box.workspace_id,
-          location_workspace: location.workspace_id,
+        log.error("Workspace mismatch between box and location", {
+          userId,
+          boxWorkspace: box.workspace_id,
+          locationWorkspace: location.workspace_id,
         });
         throw new WorkspaceMismatchError("location");
       }
@@ -578,9 +574,9 @@ export async function updateBox(
         .single();
 
       if (qrError || !qrCode) {
-        console.error("[box.service] QR code not found", {
-          user_id: userId,
-          qr_code_id: updates.qr_code_id,
+        log.error("QR code not found during box update", {
+          userId,
+          qrCodeId: updates.qr_code_id,
           error: qrError?.message,
         });
         throw new QrCodeNotFoundError();
@@ -594,31 +590,27 @@ export async function updateBox(
         .single();
 
       if (boxError || !box) {
-        console.error("[box.service] Box not found during QR code validation", {
-          user_id: userId,
-          box_id: boxId,
-          error: boxError?.message,
-        });
+        log.error("Box not found during QR code validation", { userId, boxId, error: boxError?.message });
         throw new BoxNotFoundError();
       }
 
       // Verify QR code belongs to same workspace as box
       if (qrCode.workspace_id !== box.workspace_id) {
-        console.error("[box.service] QR code workspace mismatch", {
-          user_id: userId,
-          box_workspace: box.workspace_id,
-          qr_workspace: qrCode.workspace_id,
+        log.error("Workspace mismatch between box and QR code", {
+          userId,
+          boxWorkspace: box.workspace_id,
+          qrWorkspace: qrCode.workspace_id,
         });
         throw new WorkspaceMismatchError("qr_code");
       }
 
       // Verify QR code is not already assigned to another box
       if (qrCode.box_id !== null && qrCode.box_id !== boxId) {
-        console.error("[box.service] QR code already assigned", {
-          user_id: userId,
-          qr_code_id: updates.qr_code_id,
-          assigned_to_box: qrCode.box_id,
-          current_box: boxId,
+        log.error("QR code already assigned to another box", {
+          userId,
+          qrCodeId: updates.qr_code_id,
+          assignedToBox: qrCode.box_id,
+          currentBox: boxId,
         });
         throw new QrCodeAlreadyAssignedError();
       }
@@ -647,11 +639,7 @@ export async function updateBox(
       updateError = result.error;
     } else {
       // No box fields to update, just fetch current box data
-      const result = await supabase
-        .from("boxes")
-        .select("id, name, updated_at")
-        .eq("id", boxId)
-        .single();
+      const result = await supabase.from("boxes").select("id, name, updated_at").eq("id", boxId).single();
 
       data = result.data;
       updateError = result.error;
@@ -659,12 +647,7 @@ export async function updateBox(
 
     // Check for database errors
     if (updateError) {
-      console.error("[box.service] Database error updating box", {
-        user_id: userId,
-        box_id: boxId,
-        error: updateError.message,
-        code: updateError.code,
-      });
+      log.error("Database error updating box", { userId, boxId, error: updateError.message, code: updateError.code });
 
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
       if (updateError.code === "PGRST116") {
@@ -676,10 +659,7 @@ export async function updateBox(
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.warn("[box.service] Box not found or access denied", {
-        user_id: userId,
-        box_id: boxId,
-      });
+      log.warn("Box not found or access denied during update", { userId, boxId });
       throw new BoxNotFoundError();
     }
 
@@ -694,26 +674,20 @@ export async function updateBox(
         .eq("id", updates.qr_code_id);
 
       if (qrUpdateError) {
-        console.error("[box.service] Error updating QR code assignment", {
-          user_id: userId,
-          box_id: boxId,
-          qr_code_id: updates.qr_code_id,
+        log.error("Failed to update QR code assignment", {
+          userId,
+          boxId,
+          qrCodeId: updates.qr_code_id,
           error: qrUpdateError.message,
         });
         // Note: Box update succeeded, but QR code link failed
         // This is a partial failure - we should warn but not throw
-        console.warn("[box.service] QR code update failed after successful box update");
+        log.warn("QR code update failed after successful box update", { userId, boxId });
       }
     }
 
     // Log successful update
-    console.log("[box.service] Box updated successfully", {
-      user_id: userId,
-      box_id: boxId,
-      fields_updated: Object.keys(updates),
-      location_changed: updates.location_id !== undefined,
-      qr_code_changed: updates.qr_code_id !== undefined,
-    });
+    log.info("Box updated successfully", { userId, boxId, fieldsUpdated: Object.keys(updates) });
 
     return {
       id: data.id,
@@ -731,10 +705,10 @@ export async function updateBox(
     }
 
     // Log unexpected errors
-    console.error("[box.service] Unexpected error in updateBox", {
-      box_id: boxId,
-      user_id: userId,
-      error,
+    log.error("Unexpected error in updateBox", {
+      boxId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -789,11 +763,11 @@ export async function checkDuplicateBoxName(
     const { count, error } = await query;
 
     if (error) {
-      console.error("[checkDuplicateBoxName] Database error:", {
-        workspace_id: workspaceId,
+      log.error("Database error in checkDuplicateBoxName", {
+        workspaceId,
         name,
-        exclude_box_id: excludeBoxId,
-        error,
+        excludeBoxId,
+        error: error instanceof Error ? error.message : String(error),
       });
       // Gracefully fail - return false to not block user
       return { isDuplicate: false, count: 0 };
@@ -806,11 +780,11 @@ export async function checkDuplicateBoxName(
     };
   } catch (error) {
     // Log unexpected errors
-    console.error("[checkDuplicateBoxName] Unexpected error:", {
-      workspace_id: workspaceId,
+    log.error("Unexpected error in checkDuplicateBoxName", {
+      workspaceId,
       name,
-      exclude_box_id: excludeBoxId,
-      error,
+      excludeBoxId,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Gracefully fail - this is a non-critical helper function

@@ -14,25 +14,25 @@
 export function transliteratePolish(text: string): string {
   const polishMap: Record<string, string> = {
     // Lowercase
-    'ą': 'a',
-    'ć': 'c',
-    'ę': 'e',
-    'ł': 'l',
-    'ń': 'n',
-    'ó': 'o',
-    'ś': 's',
-    'ź': 'z',
-    'ż': 'z',
+    ą: "a",
+    ć: "c",
+    ę: "e",
+    ł: "l",
+    ń: "n",
+    ó: "o",
+    ś: "s",
+    ź: "z",
+    ż: "z",
     // Uppercase
-    'Ą': 'A',
-    'Ć': 'C',
-    'Ę': 'E',
-    'Ł': 'L',
-    'Ń': 'N',
-    'Ó': 'O',
-    'Ś': 'S',
-    'Ź': 'Z',
-    'Ż': 'Z',
+    Ą: "A",
+    Ć: "C",
+    Ę: "E",
+    Ł: "L",
+    Ń: "N",
+    Ó: "O",
+    Ś: "S",
+    Ź: "Z",
+    Ż: "Z",
   };
 
   return text.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (char) => polishMap[char] || char);
@@ -57,13 +57,13 @@ export function sanitizeForLtree(text: string): string {
   sanitized = sanitized.toLowerCase();
 
   // Step 3: Replace spaces and special characters with underscores
-  sanitized = sanitized.replace(/[^a-z0-9_]/g, '_');
+  sanitized = sanitized.replace(/[^a-z0-9_]/g, "_");
 
   // Step 4: Remove consecutive underscores
-  sanitized = sanitized.replace(/_+/g, '_');
+  sanitized = sanitized.replace(/_+/g, "_");
 
   // Step 5: Trim underscores from start and end
-  sanitized = sanitized.replace(/^_+|_+$/g, '');
+  sanitized = sanitized.replace(/^_+|_+$/g, "");
 
   return sanitized;
 }

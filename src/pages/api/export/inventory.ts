@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 import { exportInventory } from "@/lib/services/exportService";
 import { ExportInventoryQuerySchema } from "@/lib/validators/export.validators";
 import type { ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -119,11 +120,12 @@ export async function GET(context: APIContext) {
     const result = await exportInventory(supabase, workspace_id, format as "csv" | "json");
 
     // --- Step 6: Log successful export (for monitoring) ---
-    console.info("[GET /api/export/inventory] Success", {
+    log.info("Inventory export successful", {
+      endpoint: "GET /api/export/inventory",
       userId: user?.id,
       workspaceId: workspace_id,
       format,
-      recordCount: result.content.split("\n").length - 1, // Approximate for monitoring
+      recordCount: result.content.split("\n").length - 1,
     });
 
     // --- Step 7: Return File Response ---
@@ -142,7 +144,8 @@ export async function GET(context: APIContext) {
     // --- Error Handling ---
     // Log error for debugging (without sensitive data)
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error("[GET /api/export/inventory] Error", {
+    log.error("Inventory export failed", {
+      endpoint: "GET /api/export/inventory",
       workspaceId: context.url.searchParams.get("workspace_id"),
       error: errorMessage,
     });

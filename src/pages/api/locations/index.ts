@@ -10,6 +10,7 @@ import {
 } from "@/lib/services/location.service";
 import { CreateLocationSchema, GetLocationsQuerySchema } from "@/lib/validators/location.validators";
 import type { ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -124,7 +125,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Handle generic errors
-    console.error("Unexpected error in POST /api/locations:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "POST /api/locations",
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     return new Response(
       JSON.stringify({
@@ -235,7 +239,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Handle generic errors
-    console.error("Unexpected error in GET /api/locations:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "GET /api/locations",
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     return new Response(
       JSON.stringify({

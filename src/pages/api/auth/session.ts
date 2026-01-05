@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { log } from "../../../lib/services/logger";
 
 export const prerender = false;
 
@@ -24,10 +25,10 @@ export const POST: APIRoute = async ({ request }) => {
     const { token } = body as { token?: string };
 
     if (!token || typeof token !== "string") {
-      console.error("[POST /api/auth/session] Token missing or invalid:", {
+      log.warn("Session creation failed: invalid token", {
+        endpoint: "POST /api/auth/session",
         hasToken: !!body.token,
         tokenType: typeof body.token,
-        bodyKeys: Object.keys(body),
       });
       return new Response(JSON.stringify({ error: "Token required" }), {
         status: 400,
@@ -35,12 +36,18 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    console.log("[POST /api/auth/session] Token received, length:", token.length);
+    log.debug("Token received for session creation", {
+      endpoint: "POST /api/auth/session",
+      tokenLength: token.length,
+    });
 
     // 2. Validate JWT format
     const parts = token.split(".");
     if (parts.length !== 3) {
-      console.error("[POST /api/auth/session] Invalid JWT format, parts:", parts.length);
+      log.warn("Session creation failed: invalid JWT format", {
+        endpoint: "POST /api/auth/session",
+        partsCount: parts.length,
+      });
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -60,7 +67,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 4. Validate required claims
     if (!payload.sub || !payload.email) {
-      console.error("[POST /api/auth/session] Invalid token claims:", {
+      log.warn("Session creation failed: invalid token claims", {
+        endpoint: "POST /api/auth/session",
         hasSub: !!payload.sub,
         hasEmail: !!payload.email,
       });
@@ -70,7 +78,10 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    console.log("[POST /api/auth/session] Valid token for user:", payload.email);
+    log.debug("Valid token verified for session creation", {
+      endpoint: "POST /api/auth/session",
+      userId: payload.sub,
+    });
 
     // 5. Set HttpOnly secure cookie
     // Security flags:
@@ -84,7 +95,12 @@ export const POST: APIRoute = async ({ request }) => {
     const isProduction = import.meta.env.PROD;
     const secureCookie = isProduction ? `${cookieValue}; Secure` : cookieValue;
 
-    console.log("[POST /api/auth/session] Setting HttpOnly cookie for", payload.email);
+    log.info("Session created successfully", {
+      endpoint: "POST /api/auth/session",
+      userId: payload.sub,
+      isProduction,
+      cookieMaxAge: 3600,
+    });
 
     const response = new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -94,10 +110,12 @@ export const POST: APIRoute = async ({ request }) => {
       },
     });
 
-    console.log("[POST /api/auth/session] Response sent with status 200");
     return response;
   } catch (error) {
-    console.error("[POST /api/auth/session] Unexpected error:", error);
+    log.error("Session creation failed with unexpected error", {
+      endpoint: "POST /api/auth/session",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -111,6 +129,10 @@ export const POST: APIRoute = async ({ request }) => {
  */
 export const DELETE: APIRoute = async () => {
   try {
+    log.info("Session deleted (user logged out)", {
+      endpoint: "DELETE /api/auth/session",
+    });
+
     // Clear cookie by setting Max-Age=0
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -120,7 +142,10 @@ export const DELETE: APIRoute = async () => {
       },
     });
   } catch (error) {
-    console.error("[DELETE /api/auth/session] Unexpected error:", error);
+    log.error("Session deletion failed with unexpected error", {
+      endpoint: "DELETE /api/auth/session",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

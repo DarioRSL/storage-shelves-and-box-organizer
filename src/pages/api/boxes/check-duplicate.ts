@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { checkDuplicateBoxName } from "@/lib/services/box.service";
 import { CheckDuplicateBoxSchema } from "@/lib/validators/box.validators";
 import type { CheckDuplicateBoxRequest, CheckDuplicateBoxResponse, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -87,7 +88,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     // Log unexpected errors
-    console.error("[POST /api/boxes/check-duplicate] Unexpected error:", error);
+    log.error("[POST /api/boxes/check-duplicate] Unexpected error:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Return generic error (500 Internal Server Error)
     return new Response(

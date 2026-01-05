@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
 import type { ProfileDto, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -46,7 +47,9 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in GET /api/profiles/me:", error);
+    log.error("Error in GET /api/profiles/me:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Handle specific error cases
     if (error instanceof Error && error.message === "User profile not found") {
