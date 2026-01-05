@@ -71,13 +71,21 @@ export function LocationSelector({
               <span className="flex items-center gap-2">
                 {selectedLocationName}
                 {value && (
-                  <button
-                    type="button"
+                  <span
+                    role="button"
+                    tabIndex={0}
                     onClick={handleClear}
-                    className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleClear(e as unknown as React.MouseEvent);
+                      }
+                    }}
+                    className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer"
+                    aria-label="Clear location selection"
                   >
                     Clear
-                  </button>
+                  </span>
                 )}
               </span>
             ) : (
