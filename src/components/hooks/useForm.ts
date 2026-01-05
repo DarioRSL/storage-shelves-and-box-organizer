@@ -121,8 +121,8 @@ export function useForm<T extends Record<string, FormFieldValue>>({
           }));
         } else {
           setErrorsState((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors[field];
+            // Remove error using destructuring (safer than delete)
+            const { [field]: _, ...newErrors } = prev;
             return newErrors;
           });
         }
@@ -143,13 +143,13 @@ export function useForm<T extends Record<string, FormFieldValue>>({
    */
   const setFieldError = useCallback((field: keyof T, error: string | null) => {
     setErrorsState((prev) => {
-      const newErrors = { ...prev };
       if (error) {
-        newErrors[field] = error;
+        return { ...prev, [field]: error };
       } else {
-        delete newErrors[field];
+        // Remove error using destructuring (safer than delete)
+        const { [field]: _, ...newErrors } = prev;
+        return newErrors;
       }
-      return newErrors;
     });
   }, []);
 

@@ -197,8 +197,8 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   // Public function to set form field
   const setFormField = useCallback((field: string, value: unknown) => {
     setFormState((prev) => {
-      const newErrors = { ...prev.errors };
-      delete newErrors[field];
+      // Remove error for this field using destructuring (safer than delete)
+      const { [field]: _, ...newErrors } = prev.errors;
       return {
         ...prev,
         [field]: value,
