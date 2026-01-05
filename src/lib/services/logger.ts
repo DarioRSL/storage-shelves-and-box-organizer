@@ -1,20 +1,20 @@
-import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
+import winston from "winston";
+import DailyRotateFile from "winston-daily-rotate-file";
 
 // Environment-specific configuration
-const LOG_LEVEL = import.meta.env.LOG_LEVEL || (import.meta.env.PROD ? 'info' : 'debug');
+const LOG_LEVEL = import.meta.env.LOG_LEVEL || (import.meta.env.PROD ? "info" : "debug");
 const IS_DEV = !import.meta.env.PROD;
 
 // JSON format for production
 const jsonFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.errors({ stack: true }),
   winston.format.json()
 );
 
 // Pretty format for development
 const devFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.colorize(),
   winston.format.errors({ stack: true }),
   winston.format.printf(({ level, message, timestamp, ...metadata }) => {
@@ -41,21 +41,21 @@ if (IS_DEV) {
 // File transports (all environments)
 transports.push(
   new DailyRotateFile({
-    filename: 'logs/combined-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    maxSize: '20m',
-    maxFiles: '14d',
+    filename: "logs/combined-%DATE%.log",
+    datePattern: "YYYY-MM-DD",
+    maxSize: "20m",
+    maxFiles: "14d",
     format: jsonFormat,
   })
 );
 
 transports.push(
   new DailyRotateFile({
-    filename: 'logs/error-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    maxSize: '20m',
-    maxFiles: '14d',
-    level: 'error',
+    filename: "logs/error-%DATE%.log",
+    datePattern: "YYYY-MM-DD",
+    maxSize: "20m",
+    maxFiles: "14d",
+    level: "error",
     format: jsonFormat,
   })
 );
@@ -87,12 +87,12 @@ function sanitizeMetadata(meta?: LogMetadata): LogMetadata | undefined {
   if (!meta) return undefined;
 
   const sanitized = { ...meta };
-  const keysToMask = ['password', 'token', 'api_key', 'apiKey', 'secret', 'jwt', 'access_token', 'refresh_token'];
+  const keysToMask = ["password", "token", "api_key", "apiKey", "secret", "jwt", "access_token", "refresh_token"];
 
   for (const key of Object.keys(sanitized)) {
     const lowerKey = key.toLowerCase();
     if (keysToMask.some((k) => lowerKey.includes(k))) {
-      sanitized[key] = '[REDACTED]';
+      sanitized[key] = "[REDACTED]";
     }
   }
 
@@ -125,8 +125,8 @@ export function createContextLogger(context: LogMetadata) {
  * Masks JWT tokens (show only header + first 10 chars of payload)
  */
 export function maskJWT(token: string): string {
-  if (!token || token.length < 20) return '[REDACTED]';
-  const parts = token.split('.');
-  if (parts.length !== 3) return '[REDACTED]';
+  if (!token || token.length < 20) return "[REDACTED]";
+  const parts = token.split(".");
+  if (parts.length !== 3) return "[REDACTED]";
   return `${parts[0]}.${parts[1].substring(0, 10)}...[REDACTED]`;
 }

@@ -127,7 +127,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Handle generic errors
     log.error("Unexpected error in API endpoint", {
       endpoint: "POST /api/locations",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(
@@ -241,7 +241,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Handle generic errors
     log.error("Unexpected error in API endpoint", {
       endpoint: "GET /api/locations",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(

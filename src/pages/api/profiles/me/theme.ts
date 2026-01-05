@@ -76,7 +76,7 @@ export const PATCH: APIRoute = async ({ locals, request }) => {
         endpoint: "PATCH /api/profiles/me/theme",
         userId: user.id,
         error: updateError.message,
-        code: updateError.code
+        code: updateError.code,
       });
       return new Response(
         JSON.stringify({
@@ -102,7 +102,7 @@ export const PATCH: APIRoute = async ({ locals, request }) => {
     );
   } catch (error) {
     log.error("Error in PATCH /api/profiles/me/theme:", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Generic server error

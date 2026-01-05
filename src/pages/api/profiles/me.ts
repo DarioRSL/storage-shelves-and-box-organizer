@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ locals }) => {
     });
   } catch (error) {
     log.error("Error in GET /api/profiles/me:", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Handle specific error cases

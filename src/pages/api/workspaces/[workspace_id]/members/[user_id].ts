@@ -138,7 +138,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       endpoint: "PATCH /api/workspaces/:workspace_id/members/:user_id",
       workspaceId: params.workspace_id,
       targetUserId: params.user_id,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(
@@ -267,7 +267,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       endpoint: "DELETE /api/workspaces/:workspace_id/members/:user_id",
       workspaceId: params.workspace_id,
       targetUserId: params.user_id,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(

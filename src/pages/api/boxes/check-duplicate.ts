@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     // Log unexpected errors
     log.error("[POST /api/boxes/check-duplicate] Unexpected error:", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Return generic error (500 Internal Server Error)

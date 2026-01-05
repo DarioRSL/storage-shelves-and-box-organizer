@@ -219,7 +219,12 @@ export async function createLocation(
     .maybeSingle();
 
   if (membershipError) {
-    log.error("Failed to check workspace membership", { workspaceId: workspace_id, userId, error: membershipError.message, code: membershipError.code });
+    log.error("Failed to check workspace membership", {
+      workspaceId: workspace_id,
+      userId,
+      error: membershipError.message,
+      code: membershipError.code,
+    });
     throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
   }
 
@@ -238,7 +243,12 @@ export async function createLocation(
       .maybeSingle();
 
     if (parentError) {
-      log.error("Failed to fetch parent location", { parentId: parent_id, workspaceId: workspace_id, error: parentError.message, code: parentError.code });
+      log.error("Failed to fetch parent location", {
+        parentId: parent_id,
+        workspaceId: workspace_id,
+        error: parentError.message,
+        code: parentError.code,
+      });
       throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
     }
 
@@ -278,7 +288,12 @@ export async function createLocation(
     .maybeSingle();
 
   if (conflictError) {
-    log.error("Failed to check for sibling name conflicts", { workspaceId: workspace_id, targetPath, error: conflictError.message, code: conflictError.code });
+    log.error("Failed to check for sibling name conflicts", {
+      workspaceId: workspace_id,
+      targetPath,
+      error: conflictError.message,
+      code: conflictError.code,
+    });
     throw new Error("Nie udało się sprawdzić unikalności nazwy lokalizacji");
   }
 
@@ -299,7 +314,12 @@ export async function createLocation(
     .single();
 
   if (insertError) {
-    log.error("Failed to insert location", { workspaceId: workspace_id, name, error: insertError.message, code: insertError.code });
+    log.error("Failed to insert location", {
+      workspaceId: workspace_id,
+      name,
+      error: insertError.message,
+      code: insertError.code,
+    });
     throw new Error("Nie udało się utworzyć lokalizacji");
   }
 
@@ -355,7 +375,12 @@ export async function getLocations(
     .maybeSingle();
 
   if (membershipError) {
-    log.error("Failed to check workspace membership", { workspaceId: workspace_id, userId, error: membershipError.message, code: membershipError.code });
+    log.error("Failed to check workspace membership", {
+      workspaceId: workspace_id,
+      userId,
+      error: membershipError.message,
+      code: membershipError.code,
+    });
     throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
   }
 
@@ -383,7 +408,12 @@ export async function getLocations(
       .maybeSingle();
 
     if (parentError) {
-      log.error("Failed to fetch parent location", { parentId: parent_id, workspaceId: workspace_id, error: parentError.message, code: parentError.code });
+      log.error("Failed to fetch parent location", {
+        parentId: parent_id,
+        workspaceId: workspace_id,
+        error: parentError.message,
+        code: parentError.code,
+      });
       throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
     }
 
@@ -453,7 +483,11 @@ export async function getLocations(
       .in("path", Array.from(parentPathsToFetch));
 
     if (parentQueryError) {
-      log.error("Failed to fetch parent location information", { workspaceId, error: parentQueryError.message, code: parentQueryError.code });
+      log.error("Failed to fetch parent location information", {
+        workspaceId,
+        error: parentQueryError.message,
+        code: parentQueryError.code,
+      });
       throw new Error("Nie udało się pobrać informacji o lokalizacjach nadrzędnych");
     }
 
@@ -629,7 +663,12 @@ export async function deleteLocation(supabase: SupabaseClient, locationId: strin
     .eq("location_id", locationId);
 
   if (unassignError) {
-    log.error("Failed to unassign boxes from location", { locationId, userId, error: unassignError.message, code: unassignError.code });
+    log.error("Failed to unassign boxes from location", {
+      locationId,
+      userId,
+      error: unassignError.message,
+      code: unassignError.code,
+    });
     throw new Error("Nie udało się usunąć lokalizacji");
   }
 
@@ -637,7 +676,12 @@ export async function deleteLocation(supabase: SupabaseClient, locationId: strin
   const { error: deleteError } = await supabase.from("locations").update({ is_deleted: true }).eq("id", locationId);
 
   if (deleteError) {
-    log.error("Failed to mark location as deleted", { locationId, userId, error: deleteError.message, code: deleteError.code });
+    log.error("Failed to mark location as deleted", {
+      locationId,
+      userId,
+      error: deleteError.message,
+      code: deleteError.code,
+    });
     throw new Error("Nie udało się usunąć lokalizacji");
   }
 

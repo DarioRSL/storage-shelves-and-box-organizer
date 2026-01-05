@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       log.warn("Unauthorized workspace access attempt", {
         endpoint: "POST /api/qr-codes/batch",
         userId: user.id,
-        workspaceId: validatedRequest.workspace_id
+        workspaceId: validatedRequest.workspace_id,
       });
 
       return new Response(
@@ -98,12 +98,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const response = await batchGenerateQrCodes(supabase, validatedRequest);
 
       // 7. Log success
-      log.debug("[POST /api/qr-codes/batch] Success:", { data: {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
-        quantity: validatedRequest.quantity,
-        generated_count: response.data.length,
-      } });
+      log.debug("[POST /api/qr-codes/batch] Success:", {
+        data: {
+          user_id: user.id,
+          workspace_id: validatedRequest.workspace_id,
+          quantity: validatedRequest.quantity,
+          generated_count: response.data.length,
+        },
+      });
 
       return new Response(JSON.stringify(response), {
         status: 201,
@@ -115,7 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         endpoint: "POST /api/qr-codes/batch",
         userId: user.id,
         workspaceId: validatedRequest.workspace_id,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return new Response(
@@ -132,7 +134,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Unexpected errors
     log.error("Unexpected error in API endpoint", {
       endpoint: "POST /api/qr-codes/batch",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(

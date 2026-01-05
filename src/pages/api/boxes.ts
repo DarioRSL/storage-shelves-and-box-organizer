@@ -139,9 +139,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       // Handle generic errors from service layer
       log.error("Service layer error", {
-      endpoint: "POST /api/boxes",
-      error: error instanceof Error ? error.message : String(error)
-    });
+        endpoint: "POST /api/boxes",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się utworzyć pudełka",
@@ -156,7 +156,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Handle unexpected errors
     log.error("Unexpected error in API endpoint", {
       endpoint: "POST /api/boxes",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({
@@ -246,9 +246,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     } catch (error) {
       // Handle errors from service layer
       log.error("Service layer error", {
-      endpoint: "GET /api/boxes",
-      error: error instanceof Error ? error.message : String(error)
-    });
+        endpoint: "GET /api/boxes",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się pobrać pudełek",
@@ -263,7 +263,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Handle unexpected errors
     log.error("Unexpected error in API endpoint", {
       endpoint: "GET /api/boxes",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({

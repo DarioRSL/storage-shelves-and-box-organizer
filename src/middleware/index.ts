@@ -113,6 +113,6 @@ const authMiddleware = defineMiddleware(async (context, next) => {
 });
 
 export const onRequest = sequence(
-  loggerMiddleware,  // Run first to capture all requests
-  authMiddleware     // Then authenticate
+  loggerMiddleware, // Run first to capture all requests
+  authMiddleware // Then authenticate
 );

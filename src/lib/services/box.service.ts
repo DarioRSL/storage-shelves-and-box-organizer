@@ -146,7 +146,7 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
         error: boxError.message,
         code: boxError.code,
         workspaceId: request.workspace_id,
-        qrCodeId: request.qr_code_id
+        qrCodeId: request.qr_code_id,
       });
 
       // Check for RLS policy violation (user not workspace member)
@@ -177,7 +177,7 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
           code: updateError.code,
           boxId: box.id,
           qrCodeId: request.qr_code_id,
-          workspaceId: request.workspace_id
+          workspaceId: request.workspace_id,
         });
         // Note: Box was created but QR assignment failed
         // This is a partial failure - consider implementing transaction rollback
@@ -189,7 +189,7 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     log.info("Box created successfully", {
       boxId: box.id,
       workspaceId: box.workspace_id,
-      qrAssigned: !!request.qr_code_id
+      qrAssigned: !!request.qr_code_id,
     });
 
     return {
@@ -213,7 +213,7 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
     // Log unexpected errors
     log.error("Unexpected error in createBox", {
       error: error instanceof Error ? error.message : String(error),
-      workspaceId: request.workspace_id
+      workspaceId: request.workspace_id,
     });
 
     // Re-throw or wrap unknown errors
@@ -301,7 +301,7 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
       log.error("Failed to fetch boxes", {
         error: error.message,
         code: error.code,
-        workspaceId: query.workspace_id
+        workspaceId: query.workspace_id,
       });
       throw new Error("Nie udało się pobrać pudełek");
     }
@@ -311,14 +311,14 @@ export async function getBoxes(supabase: SupabaseClient, query: GetBoxesQuery): 
       workspaceId: query.workspace_id,
       count: data?.length ?? 0,
       hasSearch: !!query.q,
-      hasLocationFilter: !!query.location_id
+      hasLocationFilter: !!query.location_id,
     });
 
     return data as BoxDto[];
   } catch (error) {
     log.error("Unexpected error in getBoxes", {
       error: error instanceof Error ? error.message : String(error),
-      workspaceId: query.workspace_id
+      workspaceId: query.workspace_id,
     });
 
     if (error instanceof Error) {
@@ -380,7 +380,7 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
         boxId,
         userId,
         error: error.message,
-        code: error.code
+        code: error.code,
       });
 
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
@@ -401,7 +401,7 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
     log.debug("Box fetched successfully", {
       boxId: data.id,
       userId,
-      workspaceId: data.workspace_id
+      workspaceId: data.workspace_id,
     });
 
     return data as BoxDto;
@@ -415,7 +415,7 @@ export async function getBoxById(supabase: SupabaseClient, boxId: string, userId
     log.error("Unexpected error in getBoxById", {
       boxId,
       userId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -456,7 +456,7 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
         userId,
         boxId,
         error: error.message,
-        code: error.code
+        code: error.code,
       });
       throw new Error("Database error occurred while deleting box");
     }
@@ -479,7 +479,7 @@ export async function deleteBox(supabase: SupabaseClient, boxId: string, userId:
     log.error("Unexpected error in deleteBox", {
       boxId,
       userId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -528,7 +528,11 @@ export async function updateBox(
         .single();
 
       if (locationError || !location) {
-        log.error("Location not found during box update", { userId, locationId: updates.location_id, error: locationError?.message });
+        log.error("Location not found during box update", {
+          userId,
+          locationId: updates.location_id,
+          error: locationError?.message,
+        });
         throw new LocationNotFoundError();
       }
 
@@ -552,7 +556,11 @@ export async function updateBox(
 
       // Verify location belongs to same workspace as box
       if (location.workspace_id !== box.workspace_id) {
-        log.error("Workspace mismatch between box and location", { userId, boxWorkspace: box.workspace_id, locationWorkspace: location.workspace_id });
+        log.error("Workspace mismatch between box and location", {
+          userId,
+          boxWorkspace: box.workspace_id,
+          locationWorkspace: location.workspace_id,
+        });
         throw new WorkspaceMismatchError("location");
       }
     }
@@ -566,7 +574,11 @@ export async function updateBox(
         .single();
 
       if (qrError || !qrCode) {
-        log.error("QR code not found during box update", { userId, qrCodeId: updates.qr_code_id, error: qrError?.message });
+        log.error("QR code not found during box update", {
+          userId,
+          qrCodeId: updates.qr_code_id,
+          error: qrError?.message,
+        });
         throw new QrCodeNotFoundError();
       }
 
@@ -584,13 +596,22 @@ export async function updateBox(
 
       // Verify QR code belongs to same workspace as box
       if (qrCode.workspace_id !== box.workspace_id) {
-        log.error("Workspace mismatch between box and QR code", { userId, boxWorkspace: box.workspace_id, qrWorkspace: qrCode.workspace_id });
+        log.error("Workspace mismatch between box and QR code", {
+          userId,
+          boxWorkspace: box.workspace_id,
+          qrWorkspace: qrCode.workspace_id,
+        });
         throw new WorkspaceMismatchError("qr_code");
       }
 
       // Verify QR code is not already assigned to another box
       if (qrCode.box_id !== null && qrCode.box_id !== boxId) {
-        log.error("QR code already assigned to another box", { userId, qrCodeId: updates.qr_code_id, assignedToBox: qrCode.box_id, currentBox: boxId });
+        log.error("QR code already assigned to another box", {
+          userId,
+          qrCodeId: updates.qr_code_id,
+          assignedToBox: qrCode.box_id,
+          currentBox: boxId,
+        });
         throw new QrCodeAlreadyAssignedError();
       }
     }
@@ -618,11 +639,7 @@ export async function updateBox(
       updateError = result.error;
     } else {
       // No box fields to update, just fetch current box data
-      const result = await supabase
-        .from("boxes")
-        .select("id, name, updated_at")
-        .eq("id", boxId)
-        .single();
+      const result = await supabase.from("boxes").select("id, name, updated_at").eq("id", boxId).single();
 
       data = result.data;
       updateError = result.error;
@@ -657,7 +674,12 @@ export async function updateBox(
         .eq("id", updates.qr_code_id);
 
       if (qrUpdateError) {
-        log.error("Failed to update QR code assignment", { userId, boxId, qrCodeId: updates.qr_code_id, error: qrUpdateError.message });
+        log.error("Failed to update QR code assignment", {
+          userId,
+          boxId,
+          qrCodeId: updates.qr_code_id,
+          error: qrUpdateError.message,
+        });
         // Note: Box update succeeded, but QR code link failed
         // This is a partial failure - we should warn but not throw
         log.warn("QR code update failed after successful box update", { userId, boxId });
@@ -683,7 +705,11 @@ export async function updateBox(
     }
 
     // Log unexpected errors
-    log.error("Unexpected error in updateBox", { boxId, userId, error: error instanceof Error ? error.message : String(error) });
+    log.error("Unexpected error in updateBox", {
+      boxId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {
@@ -737,7 +763,12 @@ export async function checkDuplicateBoxName(
     const { count, error } = await query;
 
     if (error) {
-      log.error("Database error in checkDuplicateBoxName", { workspaceId, name, excludeBoxId, error: error instanceof Error ? error.message : String(error) });
+      log.error("Database error in checkDuplicateBoxName", {
+        workspaceId,
+        name,
+        excludeBoxId,
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Gracefully fail - return false to not block user
       return { isDuplicate: false, count: 0 };
     }
@@ -749,7 +780,12 @@ export async function checkDuplicateBoxName(
     };
   } catch (error) {
     // Log unexpected errors
-    log.error("Unexpected error in checkDuplicateBoxName", { workspaceId, name, excludeBoxId, error: error instanceof Error ? error.message : String(error) });
+    log.error("Unexpected error in checkDuplicateBoxName", {
+      workspaceId,
+      name,
+      excludeBoxId,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Gracefully fail - this is a non-critical helper function
     return { isDuplicate: false, count: 0 };

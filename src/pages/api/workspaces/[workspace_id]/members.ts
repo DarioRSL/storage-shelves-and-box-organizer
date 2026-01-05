@@ -105,7 +105,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     log.error("Unexpected error in API endpoint", {
       endpoint: "GET /api/workspaces/:workspace_id/members",
       workspaceId: params.workspace_id,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(
@@ -227,7 +227,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     log.error("Unexpected error in API endpoint", {
       endpoint: "POST /api/workspaces/:workspace_id/members",
       workspaceId: params.workspace_id,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(

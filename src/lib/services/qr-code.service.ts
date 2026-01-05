@@ -59,7 +59,12 @@ export async function getQrCodeByShortId(
     }
 
     // Log successful retrieval
-    log.debug("QR code fetched successfully", { qrCodeId: data.id, shortId: data.short_id, userId, workspaceId: data.workspace_id });
+    log.debug("QR code fetched successfully", {
+      qrCodeId: data.id,
+      shortId: data.short_id,
+      userId,
+      workspaceId: data.workspace_id,
+    });
 
     return data;
   } catch (error) {
@@ -69,7 +74,11 @@ export async function getQrCodeByShortId(
     }
 
     // Log unexpected errors
-    log.error("Unexpected error in getQrCodeByShortId", { shortId, userId, error: error instanceof Error ? error.message : String(error) });
+    log.error("Unexpected error in getQrCodeByShortId", {
+      shortId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Re-throw or wrap errors
     if (error instanceof Error) {
@@ -120,7 +129,11 @@ export async function getQrCodesForWorkspace(
 
     return data || [];
   } catch (error) {
-    log.error("Unexpected error in getQrCodesForWorkspace", { workspaceId, status, error: error instanceof Error ? error.message : String(error) });
+    log.error("Unexpected error in getQrCodesForWorkspace", {
+      workspaceId,
+      status,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Return empty array on error to not break UI
     return [];
@@ -199,12 +212,21 @@ export async function batchGenerateQrCodes(
       .select("id, short_id, status, workspace_id, created_at");
 
     if (error) {
-      log.error("Failed to batch generate QR codes", { workspaceId: workspace_id, quantity, error: error.message, code: error.code });
+      log.error("Failed to batch generate QR codes", {
+        workspaceId: workspace_id,
+        quantity,
+        error: error.message,
+        code: error.code,
+      });
       throw new Error("Nie udało się wygenerować kodów QR");
     }
 
     if (!data || data.length !== quantity) {
-      log.error("Generated QR codes count mismatch", { workspaceId: workspace_id, expected: quantity, actual: data?.length || 0 });
+      log.error("Generated QR codes count mismatch", {
+        workspaceId: workspace_id,
+        expected: quantity,
+        actual: data?.length || 0,
+      });
       throw new Error("Nie udało się wygenerować wszystkich kodów QR");
     }
 
@@ -224,7 +246,11 @@ export async function batchGenerateQrCodes(
     }
 
     // Log unexpected errors
-    log.error("Unexpected error in batchGenerateQrCodes", { workspaceId: workspace_id, quantity, error: error instanceof Error ? error.message : String(error) });
+    log.error("Unexpected error in batchGenerateQrCodes", {
+      workspaceId: workspace_id,
+      quantity,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     throw new Error("Nie udało się wygenerować kodów QR");
   }

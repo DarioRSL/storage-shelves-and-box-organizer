@@ -143,9 +143,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
       // Handle generic service errors (500)
       log.error("Service layer error", {
-      endpoint: "PATCH /api/workspaces/:workspace_id",
-      error: error instanceof Error ? error.message : String(error)
-    });
+        endpoint: "PATCH /api/workspaces/:workspace_id",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: "Nie udało się zaktualizować workspace'u",
@@ -160,7 +160,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     // Handle unexpected errors (500)
     log.error("Unexpected error in API endpoint", {
       endpoint: "PATCH /api/workspaces/:workspace_id",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({
@@ -279,9 +279,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
       // Handle generic service errors (500)
       log.error("Service layer error", {
-      endpoint: "DELETE /api/workspaces/:workspace_id",
-      error: error instanceof Error ? error.message : String(error)
-    });
+        endpoint: "DELETE /api/workspaces/:workspace_id",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: "Internal Server Error",
@@ -297,7 +297,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     // Handle unexpected errors (500)
     log.error("Unexpected error in API endpoint", {
       endpoint: "DELETE /api/workspaces/:workspace_id",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({

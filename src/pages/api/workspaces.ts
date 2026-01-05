@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (serviceError || !workspace) {
       log.error("Service layer error", {
         endpoint: "POST /api/workspaces",
-        error: serviceError
+        error: serviceError,
       });
       return new Response(
         JSON.stringify({
@@ -100,7 +100,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     log.error("Unexpected error in API endpoint", {
       endpoint: "POST /api/workspaces",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({
@@ -150,7 +150,7 @@ export const GET: APIRoute = async ({ locals }) => {
   } catch (error) {
     log.error("Unexpected error in API endpoint", {
       endpoint: "GET /api/workspaces",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({

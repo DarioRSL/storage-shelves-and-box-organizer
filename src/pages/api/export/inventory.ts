@@ -125,7 +125,7 @@ export async function GET(context: APIContext) {
       userId: user?.id,
       workspaceId: workspace_id,
       format,
-      recordCount: result.content.split("\n").length - 1
+      recordCount: result.content.split("\n").length - 1,
     });
 
     // --- Step 7: Return File Response ---
@@ -147,7 +147,7 @@ export async function GET(context: APIContext) {
     log.error("Inventory export failed", {
       endpoint: "GET /api/export/inventory",
       workspaceId: context.url.searchParams.get("workspace_id"),
-      error: errorMessage
+      error: errorMessage,
     });
 
     // Return generic error to client (don't expose implementation details)

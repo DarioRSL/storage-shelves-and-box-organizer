@@ -22,7 +22,7 @@ export async function getAuthenticatedUserProfile(supabase: SupabaseClient, user
       log.error("Failed to fetch user profile", {
         userId,
         error: error.message,
-        code: error.code
+        code: error.code,
       });
       throw new Error("Failed to retrieve profile");
     }
@@ -36,7 +36,7 @@ export async function getAuthenticatedUserProfile(supabase: SupabaseClient, user
   } catch (error) {
     log.error("Unexpected error in getAuthenticatedUserProfile", {
       userId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Failed to retrieve profile");
   }

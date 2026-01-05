@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
       log.warn("Session creation failed: invalid token", {
         endpoint: "POST /api/auth/session",
         hasToken: !!body.token,
-        tokenType: typeof body.token
+        tokenType: typeof body.token,
       });
       return new Response(JSON.stringify({ error: "Token required" }), {
         status: 400,
@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     log.debug("Token received for session creation", {
       endpoint: "POST /api/auth/session",
-      tokenLength: token.length
+      tokenLength: token.length,
     });
 
     // 2. Validate JWT format
@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (parts.length !== 3) {
       log.warn("Session creation failed: invalid JWT format", {
         endpoint: "POST /api/auth/session",
-        partsCount: parts.length
+        partsCount: parts.length,
       });
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 400,
@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
       log.warn("Session creation failed: invalid token claims", {
         endpoint: "POST /api/auth/session",
         hasSub: !!payload.sub,
-        hasEmail: !!payload.email
+        hasEmail: !!payload.email,
       });
       return new Response(JSON.stringify({ error: "Invalid token claims" }), {
         status: 400,
@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     log.debug("Valid token verified for session creation", {
       endpoint: "POST /api/auth/session",
-      userId: payload.sub
+      userId: payload.sub,
     });
 
     // 5. Set HttpOnly secure cookie
@@ -99,7 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
       endpoint: "POST /api/auth/session",
       userId: payload.sub,
       isProduction,
-      cookieMaxAge: 3600
+      cookieMaxAge: 3600,
     });
 
     const response = new Response(JSON.stringify({ success: true }), {
@@ -114,7 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     log.error("Session creation failed with unexpected error", {
       endpoint: "POST /api/auth/session",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
@@ -130,7 +130,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const DELETE: APIRoute = async () => {
   try {
     log.info("Session deleted (user logged out)", {
-      endpoint: "DELETE /api/auth/session"
+      endpoint: "DELETE /api/auth/session",
     });
 
     // Clear cookie by setting Max-Age=0
@@ -144,7 +144,7 @@ export const DELETE: APIRoute = async () => {
   } catch (error) {
     log.error("Session deletion failed with unexpected error", {
       endpoint: "DELETE /api/auth/session",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,

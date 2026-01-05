@@ -98,7 +98,7 @@ export const DELETE: APIRoute = async ({ locals }) => {
       log.error("Account deletion failed with service error", {
         endpoint: "DELETE /api/auth/delete-account",
         userId: user.id,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return new Response(
         JSON.stringify({
@@ -114,7 +114,7 @@ export const DELETE: APIRoute = async ({ locals }) => {
     // Handle unexpected errors (500)
     log.error("Account deletion failed with unexpected error", {
       endpoint: "DELETE /api/auth/delete-account",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({

@@ -159,7 +159,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     // Log unexpected errors
     log.error("Error updating location:", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Return generic error to client
@@ -268,7 +268,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     log.error("Unexpected error in API endpoint", {
       endpoint: "DELETE /api/locations/:id",
       locationId: params.id,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Return generic error to client

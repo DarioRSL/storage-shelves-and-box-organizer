@@ -78,9 +78,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
       // Handle generic service errors (500)
       log.error("Service layer error", {
-      endpoint: "GET /api/qr-codes/:short_id",
-      error: error instanceof Error ? error.message : String(error)
-    });
+        endpoint: "GET /api/qr-codes/:short_id",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : "Nie udało się pobrać kodu QR",
@@ -95,7 +95,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     // Handle unexpected errors (500)
     log.error("Unexpected error in API endpoint", {
       endpoint: "GET /api/qr-codes/:short_id",
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return new Response(
       JSON.stringify({

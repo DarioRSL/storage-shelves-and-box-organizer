@@ -1,6 +1,6 @@
-import { defineMiddleware } from 'astro:middleware';
-import { log, createContextLogger } from './logger';
-import { randomUUID } from 'node:crypto';
+import { defineMiddleware } from "astro:middleware";
+import { log, createContextLogger } from "./logger";
+import { randomUUID } from "node:crypto";
 
 /**
  * Request/Response logging middleware
@@ -12,12 +12,12 @@ export const loggerMiddleware = defineMiddleware(async (context, next) => {
 
   const method = context.request.method;
   const path = context.url.pathname;
-  const userAgent = context.request.headers.get('user-agent') || 'unknown';
+  const userAgent = context.request.headers.get("user-agent") || "unknown";
 
   const requestLogger = createContextLogger({ requestId });
 
   // Log incoming request
-  requestLogger.info('Incoming request', {
+  requestLogger.info("Incoming request", {
     method,
     path,
     userAgent,
@@ -30,9 +30,9 @@ export const loggerMiddleware = defineMiddleware(async (context, next) => {
     const statusCode = response.status;
 
     // Log level based on status code
-    const logLevel = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
+    const logLevel = statusCode >= 500 ? "error" : statusCode >= 400 ? "warn" : "info";
 
-    requestLogger[logLevel]('Request completed', {
+    requestLogger[logLevel]("Request completed", {
       method,
       path,
       statusCode,
@@ -41,13 +41,13 @@ export const loggerMiddleware = defineMiddleware(async (context, next) => {
     });
 
     // Inject request ID for debugging
-    response.headers.set('X-Request-ID', requestId);
+    response.headers.set("X-Request-ID", requestId);
 
     return response;
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    requestLogger.error('Request failed with exception', {
+    requestLogger.error("Request failed with exception", {
       method,
       path,
       duration,

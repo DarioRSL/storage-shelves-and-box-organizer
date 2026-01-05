@@ -104,7 +104,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     log.error("[GET /api/qr-codes] Unexpected error:", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return new Response(
