@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ThemeMode, UpdateThemeRequest } from "../../types";
 import { apiFetch } from "../../lib/api-client";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Custom hook for managing theme selection with database and localStorage sync.

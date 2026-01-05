@@ -1,5 +1,5 @@
 import { atom } from "nanostores";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Global theme state for managing light/dark/system mode preference.

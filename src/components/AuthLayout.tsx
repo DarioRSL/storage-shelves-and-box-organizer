@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { AuthCard } from "@/components/AuthCard";
 import type { AuthSuccessResponse } from "@/components/hooks/useAuthForm";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface AuthLayoutProps {
   initialMode?: "login" | "register";

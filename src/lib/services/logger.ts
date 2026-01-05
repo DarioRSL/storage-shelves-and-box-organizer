@@ -1,3 +1,8 @@
+/**
+ * Server-side logger using Winston
+ * DO NOT import this file in client-side React components!
+ * Use logger.client.ts instead for browser-side logging
+ */
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 
@@ -100,7 +105,7 @@ function sanitizeMetadata(meta?: LogMetadata): LogMetadata | undefined {
 }
 
 /**
- * Type-safe logger methods
+ * Type-safe logger methods (server-side only)
  */
 export const log = {
   error: (message: string, meta?: LogMetadata) => logger.error(message, sanitizeMetadata(meta)),

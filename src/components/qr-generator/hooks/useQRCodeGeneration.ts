@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { apiFetch, ApiError, getUserFriendlyErrorMessage, shouldRedirectToLogin } from "@/lib/api-client";
 import { usePDFGeneration } from "./usePDFGeneration";
 import type { BatchGenerateQrCodesResponse, QrCodeGeneratedItem, LabelFormat } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 interface UseQRCodeGenerationReturn {
   isLoading: boolean;

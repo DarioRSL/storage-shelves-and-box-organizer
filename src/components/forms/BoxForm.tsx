@@ -11,7 +11,7 @@ import { DuplicateNameWarning } from "./DuplicateNameWarning";
 import { useBoxForm } from "@/components/hooks/useBoxForm";
 import { apiFetch } from "@/lib/api-client";
 import type { CheckDuplicateBoxResponse } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface BoxFormProps {
   mode: "create" | "edit";

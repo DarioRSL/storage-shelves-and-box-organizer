@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { z } from "zod";
 import type { FormFieldValue } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface UseFormOptions<T extends Record<string, FormFieldValue>> {
   initialValues: T;

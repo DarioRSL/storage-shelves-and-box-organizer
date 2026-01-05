@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { BoxQrCodeSummary } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 interface QrCodeDisplayProps {
   qrCode?: BoxQrCodeSummary | null;

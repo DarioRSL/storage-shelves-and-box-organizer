@@ -3,7 +3,7 @@
  * Follows shared error handling best practices
  */
 
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface ApiErrorResponse {
   error?: string;

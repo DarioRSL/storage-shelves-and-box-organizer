@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { CreateBoxRequest, UpdateBoxRequest } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 interface BoxEditorModalProps {
   isOpen: boolean;

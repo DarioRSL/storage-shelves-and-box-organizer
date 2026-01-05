@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import type { ProfileDto, WorkspaceDto } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Global authentication state.

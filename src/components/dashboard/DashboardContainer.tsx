@@ -17,7 +17,7 @@ import { useLocations } from "@/components/hooks/useLocations";
 import { useBoxes } from "@/components/hooks/useBoxes";
 import type { CreateLocationRequest, CreateBoxRequest, UpdateBoxRequest } from "@/types";
 import { apiFetch, getUserFriendlyErrorMessage, logError, shouldRedirectToLogin } from "@/lib/api-client";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 import DashboardHeader from "./DashboardHeader";
 import DashboardContent from "./DashboardContent";

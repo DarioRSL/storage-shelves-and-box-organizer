@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import type { LocationDto } from "@/types";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface LocationTreeNode extends LocationDto {
   children?: LocationTreeNode[];

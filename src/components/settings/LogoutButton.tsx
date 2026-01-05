@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "../ui/button";
 import { apiFetch } from "../../lib/api-client";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 interface LogoutButtonProps {
   onLogout?: () => Promise<void>;

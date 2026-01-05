@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings, User } from "lucide-react";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * User menu with profile options and logout

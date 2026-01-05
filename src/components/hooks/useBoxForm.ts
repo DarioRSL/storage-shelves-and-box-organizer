@@ -5,7 +5,7 @@ import { createBoxSchema, updateBoxSchema } from "@/lib/validation/box";
 import { extractZodErrors } from "@/lib/validation/schemas";
 import type { BoxDto, LocationDto, QrCodeDetailDto } from "@/types";
 import { currentWorkspaceId as currentWorkspaceIdStore } from "@/stores/dashboard";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 export interface BoxFormState {
   // Form fields
@@ -129,13 +129,14 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   }, [currentWorkspaceId]);
 
   // Internal function to load box data (edit mode)
-  const loadBoxDataInternal = useCallback(
-    async (id: string) => {
-      try {
-        const boxData = await apiFetch<BoxDto>(`/api/boxes/${id}`);
+  const loadBoxDataInternal = useCallback(async (id: string) => {
+    try {
+      const boxData = await apiFetch<BoxDto>(`/api/boxes/${id}`);
 
+      // Create new state using functional update to avoid dependency on formState
+      setFormState((prev) => {
         const newState: BoxFormState = {
-          ...formState,
+          ...prev,
           name: boxData.name,
           description: boxData.description || null,
           tags: boxData.tags || [],
@@ -144,21 +145,22 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
           currentBox: boxData,
         };
 
-        setFormState(newState);
+        // Also update initial state
         setInitialState(newState);
-      } catch (error) {
-        log.error("Failed to load box data", { error, boxId: id });
-        if (error instanceof ApiError && error.status === 401) {
-          window.location.href = "/auth";
-        }
-        setFormState((prev) => ({
-          ...prev,
-          errors: { ...prev.errors, general: "Failed to load box data" },
-        }));
+
+        return newState;
+      });
+    } catch (error) {
+      log.error("Failed to load box data", { error, boxId: id });
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.href = "/auth";
       }
-    },
-    [formState]
-  );
+      setFormState((prev) => ({
+        ...prev,
+        errors: { ...prev.errors, general: "Failed to load box data" },
+      }));
+    }
+  }, []); // Empty dependency array - no dependencies needed
 
   // Load initial data on mount or when workspace becomes available
   useEffect(() => {

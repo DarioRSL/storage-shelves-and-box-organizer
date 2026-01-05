@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { log } from "@/lib/services/logger";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Safe localStorage access hook with type safety and fallback for private browsing.
