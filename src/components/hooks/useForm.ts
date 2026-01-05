@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { z } from "zod";
 import type { FormFieldValue } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export interface UseFormOptions<T extends Record<string, FormFieldValue>> {
   initialValues: T;
@@ -176,7 +177,7 @@ export function useForm<T extends Record<string, FormFieldValue>>({
         reset();
       } catch (error) {
         // Error handling should be done in onSubmit callback
-        console.error("Form submission error:", error);
+        log.error("useForm submission error", { error });
       } finally {
         setIsSubmitting(false);
       }

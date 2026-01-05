@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { CreateBoxRequest, UpdateBoxRequest } from "@/types";
+import { log } from "@/lib/services/logger";
 
 interface BoxEditorModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ export default function BoxEditorModal({
 
       await onSubmit(data);
     } catch (err) {
-      console.error("[BoxEditorModal] Error:", err);
+      log.error("BoxEditorModal submission error", { error: err, workspaceId, mode });
     }
   };
 

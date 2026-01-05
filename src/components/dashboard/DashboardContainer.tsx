@@ -17,6 +17,7 @@ import { useLocations } from "@/components/hooks/useLocations";
 import { useBoxes } from "@/components/hooks/useBoxes";
 import type { CreateLocationRequest, CreateBoxRequest, UpdateBoxRequest } from "@/types";
 import { apiFetch, getUserFriendlyErrorMessage, logError, shouldRedirectToLogin } from "@/lib/api-client";
+import { log } from "@/lib/services/logger";
 
 import DashboardHeader from "./DashboardHeader";
 import DashboardContent from "./DashboardContent";
@@ -94,7 +95,7 @@ export default function DashboardContainer() {
         const profile = await res.json();
         userProfile.set(profile);
       } catch (err) {
-        console.error("[DashboardContainer] Błąd pobierania profilu:", err);
+        log.error("DashboardContainer profile fetch error", { error: err });
       }
     }
     fetchProfile();
@@ -273,9 +274,9 @@ export default function DashboardContainer() {
         // Refetch both in parallel to avoid sequential delays
         await Promise.all([refetchLocations(), refetchBoxes()]);
       } catch (err) {
-        console.error("[DashboardContainer] switchWorkspace error:", err);
+        log.error("DashboardContainer switchWorkspace error", { error: err, workspaceId });
         // Ensure boxes refetch even if locations fail
-        await refetchBoxes().catch(console.error);
+        await refetchBoxes().catch((boxErr) => log.error("DashboardContainer refetchBoxes error", { error: boxErr }));
       }
     },
 

@@ -3,6 +3,8 @@
  * Follows shared error handling best practices
  */
 
+import { log } from "@/lib/services/logger";
+
 export interface ApiErrorResponse {
   error?: string;
   message?: string;
@@ -144,13 +146,10 @@ export function shouldRedirectToLogin(error: unknown): boolean {
  */
 export function logError(context: string, error: unknown): void {
   if (error instanceof ApiError) {
-    console.error(`[${context}] API Error ${error.status}:`, error.message);
-    if (error.code) {
-      console.error(`Code: ${error.code}`);
-    }
+    log.error(`${context} API Error`, { status: error.status, message: error.message, code: error.code });
   } else if (error instanceof Error) {
-    console.error(`[${context}] Error:`, error.message);
+    log.error(`${context} Error`, { message: error.message, error });
   } else {
-    console.error(`[${context}] Unknown error:`, error);
+    log.error(`${context} Unknown error`, { error });
   }
 }

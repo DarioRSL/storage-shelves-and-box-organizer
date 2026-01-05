@@ -5,6 +5,7 @@ import { createBoxSchema, updateBoxSchema } from "@/lib/validation/box";
 import { extractZodErrors } from "@/lib/validation/schemas";
 import type { BoxDto, LocationDto, QrCodeDetailDto } from "@/types";
 import { currentWorkspaceId as currentWorkspaceIdStore } from "@/stores/dashboard";
+import { log } from "@/lib/services/logger";
 
 export interface BoxFormState {
   // Form fields
@@ -138,7 +139,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
         availableLocations: data || [],
       }));
     } catch (error) {
-      console.error("Failed to load locations:", error);
+      log.error("Failed to load locations", { error, workspaceId: currentWorkspaceId });
       setFormState((prev) => ({
         ...prev,
         errors: { ...prev.errors, locations: "Failed to load locations" },
@@ -157,7 +158,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
         availableQRCodes: data || [],
       }));
     } catch (error) {
-      console.error("Failed to load QR codes:", error);
+      log.error("Failed to load QR codes", { error, workspaceId: currentWorkspaceId });
       // Non-critical error, don't show to user
     }
   }, [currentWorkspaceId]);
@@ -181,7 +182,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
         setFormState(newState);
         setInitialState(newState);
       } catch (error) {
-        console.error("Failed to load box data:", error);
+        log.error("Failed to load box data", { error, boxId: id });
         if (error instanceof ApiError && error.status === 401) {
           window.location.href = "/auth";
         }
@@ -306,7 +307,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
       // Update initial state after successful save
       setInitialState(formState);
     } catch (error) {
-      console.error("Form submission error:", error);
+      log.error("Form submission error", { error, mode, boxId, workspaceId: currentWorkspaceId });
 
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -354,7 +355,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
 
       setFormState((prev) => ({ ...prev, isDeleting: false, errors: {} }));
     } catch (error) {
-      console.error("Delete error:", error);
+      log.error("Delete error", { error, boxId });
 
       if (error instanceof ApiError) {
         if (error.status === 401) {

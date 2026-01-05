@@ -1,5 +1,6 @@
 import { atom } from "nanostores";
 import type { ProfileDto, WorkspaceDto } from "@/types";
+import { log } from "@/lib/services/logger";
 
 /**
  * Global authentication state.
@@ -88,7 +89,7 @@ export function restoreSessionFromStorage(): void {
       authStore.set(session);
     }
   } catch (error) {
-    console.error("[Auth Store] Failed to restore session:", error);
+    log.error("Auth Store failed to restore session", { error });
     clearAuth();
   }
 }
@@ -105,6 +106,6 @@ export function persistAuthState(): void {
       localStorage.setItem("authSession", JSON.stringify(state));
     }
   } catch (error) {
-    console.error("[Auth Store] Failed to persist session:", error);
+    log.error("Auth Store failed to persist session", { error });
   }
 }

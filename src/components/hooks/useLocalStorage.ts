@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { log } from "@/lib/services/logger";
 
 /**
  * Safe localStorage access hook with type safety and fallback for private browsing.
@@ -69,7 +70,7 @@ export function useLocalStorage<T>(
       }
       return initialValue;
     } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
+      log.error("useLocalStorage read error", { error, key });
       return initialValue;
     }
   });
@@ -92,7 +93,7 @@ export function useLocalStorage<T>(
           fallbackStorage.current.set(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
-        console.error(`Error setting localStorage key "${key}":`, error);
+        log.error("useLocalStorage write error", { error, key });
       }
     },
     [key, storedValue, options, hasLocalStorage]
@@ -107,7 +108,7 @@ export function useLocalStorage<T>(
           setStoredValue(newValue);
           options?.onChange?.(newValue);
         } catch (error) {
-          console.error(`Error parsing storage event for key "${key}":`, error);
+          log.error("useLocalStorage storage event parse error", { error, key });
         }
       }
     };

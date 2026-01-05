@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "../ui/button";
 import { apiFetch } from "../../lib/api-client";
+import { log } from "@/lib/services/logger";
 
 interface LogoutButtonProps {
   onLogout?: () => Promise<void>;
@@ -20,7 +21,7 @@ export function LogoutButton({ onLogout, isLoading = false }: LogoutButtonProps)
         window.location.href = "/auth";
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      log.error("LogoutButton error", { error });
       window.location.href = "/auth";
     }
   }, [onLogout]);

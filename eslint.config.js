@@ -70,5 +70,9 @@ export default tseslint.config(
     rules: {
       "prettier/prettier": "off",
     },
+  },
+  {
+    // Specifically ignore ThemeInitializer.astro due to define:vars syntax incompatibility
+    ignores: ["**/theme/ThemeInitializer.astro"],
   }
 );

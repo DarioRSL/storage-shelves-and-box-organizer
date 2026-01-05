@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { BoxQrCodeSummary } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { log } from "@/lib/services/logger";
 
 interface QrCodeDisplayProps {
   qrCode?: BoxQrCodeSummary | null;
@@ -31,7 +32,7 @@ export function QrCodeDisplay({ qrCode }: QrCodeDisplayProps) {
         });
         setQrDataUrl(dataUrl);
       } catch (error) {
-        console.error("Failed to generate QR code:", error);
+        log.error("Failed to generate QR code", { error, qrCodeId: qrCode.short_id });
         setQrDataUrl(null);
       } finally {
         setIsGenerating(false);

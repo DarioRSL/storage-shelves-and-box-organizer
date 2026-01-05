@@ -10,7 +10,7 @@
  * 3. System preference (default)
  *
  * NOTE: Prettier has parsing issues with Astro's define:vars syntax.
- * The inline script below is disabled from prettier/eslint checks.
+ * The inline script below is ignored by ESLint (see eslint.config.js).
  */
 
 interface Props {
@@ -54,6 +54,7 @@ const { themePreference } = Astro.props;
       try {
         localStorage.setItem("theme", theme);
       } catch {
+        // eslint-disable-next-line no-console
         console.warn("localStorage not available");
       }
     } else {
@@ -64,6 +65,7 @@ const { themePreference } = Astro.props;
           theme = stored;
         }
       } catch {
+        // eslint-disable-next-line no-console
         console.warn("localStorage not available, using system theme");
       }
     }

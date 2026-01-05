@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import BoxDetailsContent from "@/components/box-details/BoxDetailsContent";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -27,7 +28,7 @@ try {
   const profile = await getAuthenticatedUserProfile(supabase, user.id);
   themePreference = profile.theme_preference || "system";
 } catch (error) {
-  console.error("Failed to load user theme preference:", error);
+  log.error("Failed to load user theme preference", { userId: user.id, boxId: id, error });
 }
 ---
 
