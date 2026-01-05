@@ -198,7 +198,8 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   const setFormField = useCallback((field: string, value: unknown) => {
     setFormState((prev) => {
       // Remove error for this field using destructuring (safer than delete)
-      const { [field]: _, ...newErrors } = prev.errors;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [field]: _removed, ...newErrors } = prev.errors;
       return {
         ...prev,
         [field]: value,

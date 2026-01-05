@@ -1,11 +1,5 @@
 import React from "react";
-import type {
-  WorkspaceDto,
-  BoxDto,
-  CreateLocationRequest,
-  CreateBoxRequest,
-  UpdateBoxRequest,
-} from "@/types";
+import type { WorkspaceDto, BoxDto, CreateLocationRequest, CreateBoxRequest, UpdateBoxRequest } from "@/types";
 import type { LocationTreeNode } from "@/components/hooks/useLocations";
 
 /**

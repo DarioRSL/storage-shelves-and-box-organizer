@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
  * Safe localStorage access hook with type safety and fallback for private browsing.
@@ -45,8 +45,8 @@ export function useLocalStorage<T>(
     }
   };
 
-  // In-memory fallback for when localStorage is unavailable
-  const fallbackStorage = new Map<string, string>();
+  // In-memory fallback for when localStorage is unavailable (use useRef to avoid React compiler warning)
+  const fallbackStorage = useRef(new Map<string, string>());
   const hasLocalStorage = isLocalStorageAvailable();
 
   // Initialize state with value from localStorage or initial value
@@ -62,7 +62,7 @@ export function useLocalStorage<T>(
           return JSON.parse(item) as T;
         }
       } else {
-        const item = fallbackStorage.get(key);
+        const item = fallbackStorage.current.get(key);
         if (item) {
           return JSON.parse(item) as T;
         }
@@ -89,7 +89,7 @@ export function useLocalStorage<T>(
         if (hasLocalStorage) {
           window.localStorage.setItem(key, JSON.stringify(valueToStore));
         } else {
-          fallbackStorage.set(key, JSON.stringify(valueToStore));
+          fallbackStorage.current.set(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
         console.error(`Error setting localStorage key "${key}":`, error);

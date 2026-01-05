@@ -122,7 +122,8 @@ export function useForm<T extends Record<string, FormFieldValue>>({
         } else {
           setErrorsState((prev) => {
             // Remove error using destructuring (safer than delete)
-            const { [field]: _, ...newErrors } = prev;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [field]: _removed, ...newErrors } = prev;
             return newErrors;
           });
         }
@@ -147,7 +148,8 @@ export function useForm<T extends Record<string, FormFieldValue>>({
         return { ...prev, [field]: error };
       } else {
         // Remove error using destructuring (safer than delete)
-        const { [field]: _, ...newErrors } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _removed, ...newErrors } = prev;
         return newErrors;
       }
     });

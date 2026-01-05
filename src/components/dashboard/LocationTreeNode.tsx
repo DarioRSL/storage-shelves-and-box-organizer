@@ -150,9 +150,9 @@ export default function LocationTreeNode({ location, level, onSelect, onAddChild
       </div>
 
       {/* Nested children */}
-      {isExpanded && hasChildren && (
+      {isExpanded && hasChildren && location.children && (
         <div id={`location-children-${location.id}`} role="group">
-          {location.children!.map((child) => (
+          {location.children.map((child) => (
             <LocationTreeNode
               key={child.id}
               location={child}
