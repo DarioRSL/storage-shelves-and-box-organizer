@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { deleteUserAccount } from "@/lib/services/auth.service";
 import { UserAccountNotFoundError, AccountDeletionError, AuthRevocationError } from "@/lib/services/errors";
 import type { DeleteAccountResponse, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -94,7 +95,11 @@ export const DELETE: APIRoute = async ({ locals }) => {
       }
 
       // Handle generic service errors (500)
-      console.error("Service error in DELETE /api/auth/delete-account:", error);
+      log.error("Account deletion failed with service error", {
+        endpoint: "DELETE /api/auth/delete-account",
+        userId: user.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return new Response(
         JSON.stringify({
           error: "Nie udało się usunąć konta",
@@ -107,7 +112,10 @@ export const DELETE: APIRoute = async ({ locals }) => {
     }
   } catch (error) {
     // Handle unexpected errors (500)
-    console.error("Unexpected error in DELETE /api/auth/delete-account:", error);
+    log.error("Account deletion failed with unexpected error", {
+      endpoint: "DELETE /api/auth/delete-account",
+      error: error instanceof Error ? error.message : String(error)
+    });
     return new Response(
       JSON.stringify({
         error: "Wewnętrzny błąd serwera",

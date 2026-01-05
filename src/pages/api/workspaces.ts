@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createWorkspace, getUserWorkspaces } from "@/lib/services/workspace.service";
 import type { CreateWorkspaceRequest, WorkspaceDto, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -76,7 +77,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { data: workspace, error: serviceError } = await createWorkspace(supabase, user.id, validatedData);
 
     if (serviceError || !workspace) {
-      console.error("Service error:", serviceError);
+      log.error("Service layer error", {
+        endpoint: "POST /api/workspaces",
+        error: serviceError
+      });
       return new Response(
         JSON.stringify({
           error: "Wystąpił błąd podczas tworzenia workspace'a",
@@ -94,7 +98,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Unexpected error in POST /api/workspaces:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "POST /api/workspaces",
+      error: error instanceof Error ? error.message : String(error)
+    });
     return new Response(
       JSON.stringify({
         error: "Wystąpił nieoczekiwany błąd",
@@ -141,7 +148,10 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Unexpected error in GET /api/workspaces:", error);
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "GET /api/workspaces",
+      error: error instanceof Error ? error.message : String(error)
+    });
     return new Response(
       JSON.stringify({
         error: "Wystąpił błąd wewnętrzny serwera",

@@ -8,6 +8,7 @@ import {
 } from "@/lib/services/workspace.service";
 import { NotFoundError } from "@/lib/services/location.service";
 import type { ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -101,11 +102,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
 
     // Handle unexpected errors
-    console.error("GET /api/workspaces/:workspace_id/members - Błąd:", {
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "GET /api/workspaces/:workspace_id/members",
       workspaceId: params.workspace_id,
-      userId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error)
     });
 
     return new Response(
@@ -224,11 +224,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle unexpected errors
-    console.error("POST /api/workspaces/:workspace_id/members - Błąd:", {
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "POST /api/workspaces/:workspace_id/members",
       workspaceId: params.workspace_id,
-      userId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error)
     });
 
     return new Response(

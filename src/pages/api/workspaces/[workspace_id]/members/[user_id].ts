@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/workspace.service";
 import { NotFoundError } from "@/lib/services/location.service";
 import type { ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -133,12 +134,11 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Handle unexpected errors
-    console.error("PATCH /api/workspaces/:workspace_id/members/:user_id - Błąd:", {
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "PATCH /api/workspaces/:workspace_id/members/:user_id",
       workspaceId: params.workspace_id,
       targetUserId: params.user_id,
-      currentUserId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error)
     });
 
     return new Response(
@@ -263,12 +263,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     }
 
     // Handle unexpected errors
-    console.error("DELETE /api/workspaces/:workspace_id/members/:user_id - Błąd:", {
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "DELETE /api/workspaces/:workspace_id/members/:user_id",
       workspaceId: params.workspace_id,
       targetUserId: params.user_id,
-      currentUserId: locals.supabase ? "authenticated" : "unknown",
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error)
     });
 
     return new Response(

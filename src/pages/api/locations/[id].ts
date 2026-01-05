@@ -8,6 +8,7 @@ import {
   ForbiddenError,
 } from "@/lib/services/location.service";
 import type { ErrorResponse, SuccessResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -157,7 +158,9 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Log unexpected errors
-    console.error("Error updating location:", error);
+    log.error("Error updating location:", {
+      error: error instanceof Error ? error.message : String(error)
+    });
 
     // Return generic error to client
     return new Response(
@@ -262,9 +265,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     }
 
     // Log unexpected errors
-    console.error("DELETE /api/locations/:id - Błąd serwera:", {
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "DELETE /api/locations/:id",
       locationId: params.id,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : String(error)
     });
 
     // Return generic error to client

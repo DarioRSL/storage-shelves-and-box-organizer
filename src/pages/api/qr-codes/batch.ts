@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { batchGenerateQrCodes, isWorkspaceMember } from "@/lib/services/qr-code.service";
 import { BatchGenerateQrCodesRequestSchema } from "@/lib/validators/qr-code.validators";
 import type { ErrorResponse, BatchGenerateQrCodesRequest } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -75,9 +76,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const isMember = await isWorkspaceMember(supabase, validatedRequest.workspace_id, user.id);
 
     if (!isMember) {
-      console.warn("[POST /api/qr-codes/batch] Unauthorized workspace access:", {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
+      log.warn("Unauthorized workspace access attempt", {
+        endpoint: "POST /api/qr-codes/batch",
+        userId: user.id,
+        workspaceId: validatedRequest.workspace_id
       });
 
       return new Response(
@@ -96,12 +98,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const response = await batchGenerateQrCodes(supabase, validatedRequest);
 
       // 7. Log success
-      console.log("[POST /api/qr-codes/batch] Success:", {
+      log.debug("[POST /api/qr-codes/batch] Success:", { data: {
         user_id: user.id,
         workspace_id: validatedRequest.workspace_id,
         quantity: validatedRequest.quantity,
         generated_count: response.data.length,
-      });
+      } });
 
       return new Response(JSON.stringify(response), {
         status: 201,
@@ -109,10 +111,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     } catch (error) {
       // Handle service layer errors
-      console.error("[POST /api/qr-codes/batch] Service error:", {
-        user_id: user.id,
-        workspace_id: validatedRequest.workspace_id,
-        error: error instanceof Error ? error.message : "Unknown error",
+      log.error("Service layer error", {
+        endpoint: "POST /api/qr-codes/batch",
+        userId: user.id,
+        workspaceId: validatedRequest.workspace_id,
+        error: error instanceof Error ? error.message : String(error)
       });
 
       return new Response(
@@ -127,8 +130,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   } catch (error) {
     // Unexpected errors
-    console.error("[POST /api/qr-codes/batch] Unexpected error:", {
-      error: error instanceof Error ? error.message : "Unknown error",
+    log.error("Unexpected error in API endpoint", {
+      endpoint: "POST /api/qr-codes/batch",
+      error: error instanceof Error ? error.message : String(error)
     });
 
     return new Response(
