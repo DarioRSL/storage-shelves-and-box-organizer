@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import { UserAccountNotFoundError, AccountDeletionError, AuthRevocationError } from "./errors";
+import { log } from "./logger";
 
 /**
  * Permanently deletes a user's account and all associated data.
@@ -39,7 +40,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       .single();
 
     if (profileError || !userProfile) {
-      console.error("Error verifying user profile:", profileError);
+      log.error("Failed to verify user profile", {
+        userId,
+        error: profileError?.message,
+        code: profileError?.code
+      });
       throw new UserAccountNotFoundError();
     }
 
@@ -50,16 +55,18 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       .eq("owner_id", userId);
 
     if (workspacesError) {
-      console.error("Error fetching user workspaces:", workspacesError);
+      log.error("Failed to fetch user workspaces", {
+        userId,
+        error: workspacesError.message,
+        code: workspacesError.code
+      });
       throw new AccountDeletionError("Nie udało się pobrać workspaces użytkownika");
     }
 
     const workspaceIds = userWorkspaces?.map((w) => w.id) || [];
-    console.info("Deleting account for user:", {
+    log.info("Initiating account deletion", {
       userId,
-      userEmail: userProfile.email,
-      workspaceCount: workspaceIds.length,
-      timestamp: new Date().toISOString(),
+      workspaceCount: workspaceIds.length
     });
 
     // Step 3a: Delete boxes in all user's workspaces
@@ -68,7 +75,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       const { error: deleteBoxesError } = await supabase.from("boxes").delete().in("workspace_id", workspaceIds);
 
       if (deleteBoxesError) {
-        console.error("Error deleting boxes during account deletion:", deleteBoxesError);
+        log.error("Failed to delete boxes during account deletion", {
+          userId,
+          error: deleteBoxesError.message,
+          code: deleteBoxesError.code
+        });
         throw new AccountDeletionError("Nie udało się usunąć pudełek");
       }
     }
@@ -83,7 +94,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .eq("status", "assigned");
 
       if (resetQrError) {
-        console.error("Error resetting QR codes during account deletion:", resetQrError);
+        log.error("Failed to reset QR codes during account deletion", {
+          userId,
+          error: resetQrError.message,
+          code: resetQrError.code
+        });
         throw new AccountDeletionError("Nie udało się zresetować kodów QR");
       }
     }
@@ -96,7 +111,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .in("workspace_id", workspaceIds);
 
       if (deleteLocationsError) {
-        console.error("Error deleting locations during account deletion:", deleteLocationsError);
+        log.error("Failed to delete locations during account deletion", {
+          userId,
+          error: deleteLocationsError.message,
+          code: deleteLocationsError.code
+        });
         throw new AccountDeletionError("Nie udało się usunąć lokalizacji");
       }
     }
@@ -110,7 +129,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
         .in("workspace_id", workspaceIds);
 
       if (deleteMembersError) {
-        console.error("Error deleting workspace members during account deletion:", deleteMembersError);
+        log.error("Failed to delete workspace members during account deletion", {
+          userId,
+          error: deleteMembersError.message,
+          code: deleteMembersError.code
+        });
         throw new AccountDeletionError("Nie udało się usunąć członkostwa w workspaces");
       }
     }
@@ -120,7 +143,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
       const { error: deleteWorkspacesError } = await supabase.from("workspaces").delete().eq("owner_id", userId);
 
       if (deleteWorkspacesError) {
-        console.error("Error deleting workspaces during account deletion:", deleteWorkspacesError);
+        log.error("Failed to delete workspaces during account deletion", {
+          userId,
+          error: deleteWorkspacesError.message,
+          code: deleteWorkspacesError.code
+        });
         throw new AccountDeletionError("Nie udało się usunąć workspaces");
       }
     }
@@ -129,7 +156,11 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
     const { error: deleteProfileError } = await supabase.from("profiles").delete().eq("id", userId);
 
     if (deleteProfileError) {
-      console.error("Error deleting profile during account deletion:", deleteProfileError);
+      log.error("Failed to delete profile during account deletion", {
+        userId,
+        error: deleteProfileError.message,
+        code: deleteProfileError.code
+      });
       throw new AccountDeletionError("Nie udało się usunąć profilu użytkownika");
     }
 
@@ -138,15 +169,13 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
     // The auth.users record will remain but the profile deletion above effectively
     // marks the user as deleted in the application layer.
     // TODO: Implement auth user deletion via service role key when available.
-    console.info("Auth user deletion deferred - requires service role privileges", {
-      userId: userId,
-      timestamp: new Date().toISOString(),
+    log.info("Auth user deletion deferred - requires service role privileges", {
+      userId
     });
 
     // Step 4: Log successful deletion (anonymized)
-    console.info("DELETE /api/auth/delete-account - Sukces:", {
-      userId: userId,
-      timestamp: new Date().toISOString(),
+    log.info("Account deletion completed successfully", {
+      userId
     });
 
     // Step 5: Return success with deleted user_id
@@ -162,10 +191,9 @@ export async function deleteUserAccount(supabase: SupabaseClient, userId: string
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in deleteUserAccount:", {
-      userId: userId,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+    log.error("Unexpected error in deleteUserAccount", {
+      userId,
+      error: error instanceof Error ? error.message : "Nieznany błąd"
     });
     throw error instanceof Error ? error : new AccountDeletionError();
   }

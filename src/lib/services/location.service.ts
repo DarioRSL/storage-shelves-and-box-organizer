@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { CreateLocationRequest, LocationDto, UpdateLocationRequest, UpdateLocationResponse } from "@/types";
 import { sanitizeForLtree } from "@/lib/utils/transliterate";
+import { log } from "./logger";
 
 /**
  * Custom error classes for location service operations
@@ -218,7 +219,7 @@ export async function createLocation(
     .maybeSingle();
 
   if (membershipError) {
-    console.error("Error checking workspace membership:", membershipError);
+    log.error("Failed to check workspace membership", { workspaceId: workspace_id, userId, error: membershipError.message, code: membershipError.code });
     throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
   }
 
@@ -237,7 +238,7 @@ export async function createLocation(
       .maybeSingle();
 
     if (parentError) {
-      console.error("Error fetching parent location:", parentError);
+      log.error("Failed to fetch parent location", { parentId: parent_id, workspaceId: workspace_id, error: parentError.message, code: parentError.code });
       throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
     }
 
@@ -277,7 +278,7 @@ export async function createLocation(
     .maybeSingle();
 
   if (conflictError) {
-    console.error("Error checking for sibling conflicts:", conflictError);
+    log.error("Failed to check for sibling name conflicts", { workspaceId: workspace_id, targetPath, error: conflictError.message, code: conflictError.code });
     throw new Error("Nie udało się sprawdzić unikalności nazwy lokalizacji");
   }
 
@@ -298,7 +299,7 @@ export async function createLocation(
     .single();
 
   if (insertError) {
-    console.error("Error inserting location:", insertError);
+    log.error("Failed to insert location", { workspaceId: workspace_id, name, error: insertError.message, code: insertError.code });
     throw new Error("Nie udało się utworzyć lokalizacji");
   }
 
@@ -354,7 +355,7 @@ export async function getLocations(
     .maybeSingle();
 
   if (membershipError) {
-    console.error("Error checking workspace membership:", membershipError);
+    log.error("Failed to check workspace membership", { workspaceId: workspace_id, userId, error: membershipError.message, code: membershipError.code });
     throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
   }
 
@@ -382,7 +383,7 @@ export async function getLocations(
       .maybeSingle();
 
     if (parentError) {
-      console.error("Error fetching parent location:", parentError);
+      log.error("Failed to fetch parent location", { parentId: parent_id, workspaceId: workspace_id, error: parentError.message, code: parentError.code });
       throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
     }
 
@@ -397,7 +398,7 @@ export async function getLocations(
   const { data, error } = await query;
 
   if (error) {
-    console.error("Database error fetching locations:", error);
+    log.error("Failed to fetch locations", { workspaceId, error: error.message, code: error.code });
     throw new Error("Nie udało się pobrać lokalizacji");
   }
 
@@ -452,7 +453,7 @@ export async function getLocations(
       .in("path", Array.from(parentPathsToFetch));
 
     if (parentQueryError) {
-      console.error("Error fetching parent locations:", parentQueryError);
+      log.error("Failed to fetch parent location information", { workspaceId, error: parentQueryError.message, code: parentQueryError.code });
       throw new Error("Nie udało się pobrać informacji o lokalizacjach nadrzędnych");
     }
 
@@ -570,7 +571,7 @@ export async function updateLocation(
       throw new NotFoundError("Location not found");
     }
 
-    console.error("Database error updating location:", updateError);
+    log.error("Failed to update location", { locationId, error: updateError.message, code: updateError.code });
     throw new Error("Failed to update location");
   }
 
@@ -610,20 +611,13 @@ export async function deleteLocation(supabase: SupabaseClient, locationId: strin
 
   // Handle fetch errors or missing location
   if (fetchError || !location) {
-    console.error("Location service - Lokalizacja nie znaleziona:", {
-      locationId,
-      userId,
-      error: fetchError?.message,
-    });
+    log.error("Location not found for deletion", { locationId, userId, error: fetchError?.message });
     throw new NotFoundError("Lokalizacja nie została znaleziona");
   }
 
   // Check if already soft-deleted
   if (location.is_deleted) {
-    console.error("Location service - Lokalizacja już usunięta:", {
-      locationId,
-      userId,
-    });
+    log.warn("Location already deleted", { locationId, userId });
     throw new NotFoundError("Lokalizacja nie została znaleziona");
   }
 
@@ -635,11 +629,7 @@ export async function deleteLocation(supabase: SupabaseClient, locationId: strin
     .eq("location_id", locationId);
 
   if (unassignError) {
-    console.error("Location service - Nie udało się odłączyć pudełek:", {
-      locationId,
-      userId,
-      error: unassignError.message,
-    });
+    log.error("Failed to unassign boxes from location", { locationId, userId, error: unassignError.message, code: unassignError.code });
     throw new Error("Nie udało się usunąć lokalizacji");
   }
 
@@ -647,18 +637,10 @@ export async function deleteLocation(supabase: SupabaseClient, locationId: strin
   const { error: deleteError } = await supabase.from("locations").update({ is_deleted: true }).eq("id", locationId);
 
   if (deleteError) {
-    console.error("Location service - Nie udało się oznaczyć lokalizacji jako usuniętej:", {
-      locationId,
-      userId,
-      error: deleteError.message,
-    });
+    log.error("Failed to mark location as deleted", { locationId, userId, error: deleteError.message, code: deleteError.code });
     throw new Error("Nie udało się usunąć lokalizacji");
   }
 
   // Success - log for audit trail
-  console.log("Location service - Lokalizacja usunięta:", {
-    locationId,
-    userId,
-    workspaceId: location.workspace_id,
-  });
+  log.info("Location deleted successfully", { locationId, userId, workspaceId: location.workspace_id });
 }

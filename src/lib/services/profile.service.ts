@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { ProfileDto } from "@/types";
+import { log } from "./logger";
 
 /**
  * Retrieves the profile of the currently authenticated user.
@@ -18,18 +19,25 @@ export async function getAuthenticatedUserProfile(supabase: SupabaseClient, user
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
 
     if (error) {
-      console.error("Error fetching user profile:", error);
+      log.error("Failed to fetch user profile", {
+        userId,
+        error: error.message,
+        code: error.code
+      });
       throw new Error("Failed to retrieve profile");
     }
 
     if (!data) {
-      console.warn(`Profile not found for user: ${userId}`);
+      log.warn("Profile not found for user", { userId });
       throw new Error("User profile not found");
     }
 
     return data;
   } catch (error) {
-    console.error("Unexpected error in getAuthenticatedUserProfile:", error);
+    log.error("Unexpected error in getAuthenticatedUserProfile", {
+      userId,
+      error: error instanceof Error ? error.message : String(error)
+    });
     throw error instanceof Error ? error : new Error("Failed to retrieve profile");
   }
 }
