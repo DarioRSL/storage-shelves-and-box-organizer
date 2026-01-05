@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { AuthCard } from "@/components/AuthCard";
 import type { AuthSuccessResponse } from "@/components/hooks/useAuthForm";
+import { log } from "@/lib/services/logger.client";
 
 export interface AuthLayoutProps {
   initialMode?: "login" | "register";
@@ -26,11 +27,11 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
   }, []);
 
   const handleAuthSuccess = useCallback((data: AuthSuccessResponse) => {
-    console.log("[AuthLayout] Auth success, token length:", data.token?.length);
+    log.info("AuthLayout auth success", { tokenLength: data.token?.length });
 
     // Send token to backend to establish HttpOnly session cookie
     if (typeof window !== "undefined") {
-      console.log("[AuthLayout] Sending token to /api/auth/session");
+      log.info("AuthLayout sending token to session endpoint");
 
       fetch("/api/auth/session", {
         method: "POST",
@@ -39,19 +40,19 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
         body: JSON.stringify({ token: data.token }),
       })
         .then(async (res) => {
-          console.log("[AuthLayout] Response status:", res.status);
+          log.info("AuthLayout session response received", { status: res.status });
           const responseData = await res.json();
 
           if (res.ok) {
-            console.log("[AuthLayout] Session established, redirecting to /app");
+            log.info("AuthLayout session established, redirecting to /app");
             window.location.href = "/app";
           } else {
-            console.error("[AuthLayout] Failed to establish session:", responseData);
+            log.error("AuthLayout failed to establish session", { status: res.status, response: responseData });
             setGlobalError("Nie udało się ustanowić sesji");
           }
         })
         .catch((err) => {
-          console.error("[AuthLayout] Fetch error:", err);
+          log.error("AuthLayout fetch error", { error: err });
           setGlobalError("Błąd połączenia: " + (err instanceof Error ? err.message : String(err)));
         });
     }

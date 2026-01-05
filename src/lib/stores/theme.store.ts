@@ -1,4 +1,5 @@
 import { atom } from "nanostores";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Global theme state for managing light/dark/system mode preference.
@@ -68,7 +69,7 @@ export function initializeTheme(): void {
       mediaQuery.addEventListener("change", handleChange);
     }
   } catch (error) {
-    console.error("[Theme Store] Failed to initialize theme:", error);
+    log.error("Theme Store failed to initialize theme", { error });
     themeStore.set({
       mode: "system",
       effectiveMode: "light",
@@ -107,7 +108,7 @@ export function setTheme(mode: ThemeMode): void {
     // Apply theme to document
     applyTheme(effectiveMode);
   } catch (error) {
-    console.error("[Theme Store] Failed to set theme:", error);
+    log.error("Theme Store failed to set theme", { error, mode });
   }
 }
 

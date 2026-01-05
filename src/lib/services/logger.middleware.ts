@@ -1,5 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
-import { log, createContextLogger } from "./logger";
+import { createContextLogger } from "./logger";
 import { randomUUID } from "node:crypto";
 
 /**

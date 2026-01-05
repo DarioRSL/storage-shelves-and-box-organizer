@@ -1,20 +1,22 @@
-import { useState, useCallback, useReducer } from "react";
+import { useState, useCallback } from "react";
 import { z } from "zod";
+import type { FormFieldValue } from "@/types";
+import { log } from "@/lib/services/logger.client";
 
-export interface UseFormOptions<T extends Record<string, any>> {
+export interface UseFormOptions<T extends Record<string, FormFieldValue>> {
   initialValues: T;
   validationSchema?: z.ZodSchema;
   onSubmit: (values: T) => Promise<void>;
 }
 
-export interface UseFormReturn<T extends Record<string, any>> {
+export interface UseFormReturn<T extends Record<string, FormFieldValue>> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
   isDirty: boolean;
   isSubmitting: boolean;
 
-  setFieldValue: (field: keyof T, value: any) => void;
+  setFieldValue: (field: keyof T, value: FormFieldValue) => void;
   setFieldTouched: (field: keyof T, value: boolean) => void;
   setErrors: (errors: Partial<Record<keyof T, string>>) => void;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
@@ -42,7 +44,7 @@ export interface UseFormReturn<T extends Record<string, any>> {
  * });
  * ```
  */
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, FormFieldValue>>({
   initialValues,
   validationSchema,
   onSubmit,
@@ -93,7 +95,7 @@ export function useForm<T extends Record<string, any>>({
   /**
    * Set value for a single field
    */
-  const setFieldValue = useCallback((field: keyof T, value: any) => {
+  const setFieldValue = useCallback((field: keyof T, value: FormFieldValue) => {
     setValues((prev) => ({
       ...prev,
       [field]: value,
@@ -120,8 +122,9 @@ export function useForm<T extends Record<string, any>>({
           }));
         } else {
           setErrorsState((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors[field];
+            // Remove error using destructuring (safer than delete)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [field]: _removed, ...newErrors } = prev;
             return newErrors;
           });
         }
@@ -142,15 +145,26 @@ export function useForm<T extends Record<string, any>>({
    */
   const setFieldError = useCallback((field: keyof T, error: string | null) => {
     setErrorsState((prev) => {
-      const newErrors = { ...prev };
       if (error) {
-        newErrors[field] = error;
+        return { ...prev, [field]: error };
       } else {
-        delete newErrors[field];
+        // Remove error using destructuring (safer than delete)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _removed, ...newErrors } = prev;
+        return newErrors;
       }
-      return newErrors;
     });
   }, []);
+
+  /**
+   * Reset form to initial values
+   */
+  const reset = useCallback(() => {
+    setValues(initialValuesRef);
+    setErrorsState({});
+    setTouched({});
+    setIsSubmitting(false);
+  }, [initialValuesRef]);
 
   /**
    * Handle form submission
@@ -173,23 +187,13 @@ export function useForm<T extends Record<string, any>>({
         reset();
       } catch (error) {
         // Error handling should be done in onSubmit callback
-        console.error("Form submission error:", error);
+        log.error("useForm submission error", { error });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [values, validateField, onSubmit]
+    [values, validateField, onSubmit, reset]
   );
-
-  /**
-   * Reset form to initial values
-   */
-  const reset = useCallback(() => {
-    setValues(initialValuesRef);
-    setErrorsState({});
-    setTouched({});
-    setIsSubmitting(false);
-  }, [initialValuesRef]);
 
   return {
     values,

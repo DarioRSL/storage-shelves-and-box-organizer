@@ -4,7 +4,6 @@ import { useTheme } from "../hooks/useTheme";
 import { SettingsHeader } from "./SettingsHeader";
 import { ProfileHeader } from "./ProfileHeader";
 import { WorkspaceManagementSection } from "./WorkspaceManagementSection";
-import { WorkspaceSelector } from "./WorkspaceSelector";
 import { ThemeToggle } from "./ThemeToggle";
 import { DangerZoneSection } from "./DangerZoneSection";
 import { ExportDataButton } from "./ExportDataButton";

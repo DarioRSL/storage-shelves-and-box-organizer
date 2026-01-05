@@ -11,6 +11,7 @@ import { DuplicateNameWarning } from "./DuplicateNameWarning";
 import { useBoxForm } from "@/components/hooks/useBoxForm";
 import { apiFetch } from "@/lib/api-client";
 import type { CheckDuplicateBoxResponse } from "@/types";
+import { log } from "@/lib/services/logger.client";
 
 export interface BoxFormProps {
   mode: "create" | "edit";
@@ -40,7 +41,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
     resetForm,
     submitForm,
     deleteBox,
-    loadAvailableQRCodes,
+    generateQRCodeBatch,
     isFormValid,
     suggestedTags,
   } = useBoxForm(mode, boxId, workspaceId);
@@ -77,7 +78,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
       return true; // OK to submit
     } catch (error) {
       // Gracefully fail - don't block user if duplicate check fails
-      console.error("Failed to check duplicate names:", error);
+      log.error("BoxForm duplicate check failed", { error, workspaceId: currentWorkspaceId, name: formState.name });
       return true; // Allow submit anyway
     }
   }, [formState.name, currentWorkspaceId, mode, boxId]);
@@ -131,7 +132,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
       }
     } catch (error) {
       // Error is handled in the hook and stored in formState.errors
-      console.error("Delete failed:", error);
+      log.error("BoxForm delete failed", { error, boxId: formState.currentBox?.id });
     }
   }, [deleteBox, onSuccess, onCancel, formState.currentBox?.id]);
 
@@ -272,7 +273,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
             isEditing={mode === "edit"}
             currentQRCode={formState.currentBox?.qr_code?.short_id}
             availableQRCodes={formState.availableQRCodes}
-            onGenerateBatch={loadAvailableQRCodes}
+            onGenerateBatch={() => generateQRCodeBatch(10)}
           />
         </fieldset>
 

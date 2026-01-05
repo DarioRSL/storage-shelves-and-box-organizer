@@ -1,5 +1,5 @@
 import React from "react";
-import type { LocationDto, GetLocationsQuery } from "@/types";
+import type { LocationDto } from "@/types";
 import { apiFetch, getUserFriendlyErrorMessage, logError } from "@/lib/api-client";
 
 /**

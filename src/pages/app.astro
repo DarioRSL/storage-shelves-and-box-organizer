@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import DashboardContainer from "@/components/dashboard/DashboardContainer";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
+import { log } from "@/lib/services/logger";
 
 // Check if user is authenticated via middleware (from sb_session cookie)
 const user = Astro.locals.user;
@@ -17,12 +18,12 @@ try {
   const profile = await getAuthenticatedUserProfile(supabase, user.id);
   themePreference = profile.theme_preference || "system";
 } catch (error) {
-  console.error("Failed to load user theme preference:", error);
+  log.error("Failed to load user theme preference", { error, userId: user.id });
 }
 ---
 
 <Layout title="Dashboard" themePreference={themePreference}>
   <main role="main">
-    <DashboardContainer client:load />
+    <DashboardContainer client:only="react" />
   </main>
 </Layout>

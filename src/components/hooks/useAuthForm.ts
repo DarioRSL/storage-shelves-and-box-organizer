@@ -74,12 +74,12 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         });
 
         if (authError) {
+          let errorMsg = "Błąd logowania. Spróbuj ponownie.";
           if (authError.message.includes("Invalid")) {
-            setError("Nieprawidłowy email lub hasło");
-          } else {
-            setError("Błąd logowania. Spróbuj ponownie.");
+            errorMsg = "Nieprawidłowy email lub hasło";
           }
-          options?.onError?.(error || "Błąd logowania");
+          setError(errorMsg);
+          options?.onError?.(errorMsg);
           return;
         }
 
@@ -162,14 +162,14 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         });
 
         if (authError) {
+          let errorMsg = "Błąd rejestracji. Spróbuj ponownie.";
           if (authError.message.includes("already exists")) {
-            setError("Email jest już zarejestrowany");
+            errorMsg = "Email jest już zarejestrowany";
           } else if (authError.message.includes("weak")) {
-            setError("Hasło jest zbyt słabe");
-          } else {
-            setError("Błąd rejestracji. Spróbuj ponownie.");
+            errorMsg = "Hasło jest zbyt słabe";
           }
-          options?.onError?.(error || "Błąd rejestracji");
+          setError(errorMsg);
+          options?.onError?.(errorMsg);
           return;
         }
 

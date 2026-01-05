@@ -10,6 +10,7 @@ import { ValidationRules, LABEL_FORMATS, type QRGeneratorFormProps, type LabelFo
  * Form component for specifying QR code quantity, format and triggering generation.
  * Handles input validation and loading state.
  */
+/* eslint-disable react/prop-types */
 export const QRGeneratorForm: React.FC<QRGeneratorFormProps> = ({
   onSubmit,
   isLoading,

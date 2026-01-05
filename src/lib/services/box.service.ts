@@ -7,6 +7,7 @@ import type {
   UpdateBoxRequest,
   UpdateBoxResponse,
   CheckDuplicateBoxResponse,
+  TablesInsert,
 } from "@/types";
 import { log } from "./logger";
 
@@ -137,7 +138,7 @@ export async function createBox(supabase: SupabaseClient, request: CreateBoxRequ
         description: request.description || null,
         tags: request.tags || null,
         location_id: request.location_id || null,
-      } as any)
+      } as TablesInsert<"boxes">)
       .select("id, short_id, name, workspace_id, created_at")
       .single();
 

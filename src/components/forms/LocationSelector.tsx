@@ -60,7 +60,6 @@ export function LocationSelector({
               ? "border-red-500 bg-red-50 dark:bg-red-950"
               : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"
           } text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-          aria-invalid={!!error}
           aria-describedby={error ? "box-location-error" : undefined}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
@@ -72,13 +71,21 @@ export function LocationSelector({
               <span className="flex items-center gap-2">
                 {selectedLocationName}
                 {value && (
-                  <button
-                    type="button"
+                  <span
+                    role="button"
+                    tabIndex={0}
                     onClick={handleClear}
-                    className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleClear(e as unknown as React.MouseEvent);
+                      }
+                    }}
+                    className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 cursor-pointer"
+                    aria-label="Clear location selection"
                   >
                     Clear
-                  </button>
+                  </span>
                 )}
               </span>
             ) : (
