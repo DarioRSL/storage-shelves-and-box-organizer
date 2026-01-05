@@ -30,7 +30,7 @@ export function WorkspaceSelector({
   return (
     <div className="space-y-2">
       <Label htmlFor="workspace-select">{label}</Label>
-      <Select value={selectedWorkspaceId || undefined} onValueChange={onWorkspaceChange}>
+      <Select value={selectedWorkspaceId ?? ""} onValueChange={onWorkspaceChange}>
         <SelectTrigger id="workspace-select" className="w-full">
           <SelectValue placeholder="Wybierz przestrzeń">{selectedWorkspace?.name || "Wybierz przestrzeń"}</SelectValue>
         </SelectTrigger>
