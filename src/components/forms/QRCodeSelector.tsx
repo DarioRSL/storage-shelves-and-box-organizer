@@ -97,11 +97,37 @@ export function QRCodeSelector({
             ))}
           </select>
 
-          {value && (
-            <p className="text-xs text-blue-600 dark:text-blue-400">
-              Selected: {availableQRCodes.find((qr) => qr.id === value)?.short_id}
-            </p>
-          )}
+          <div className="flex items-center justify-between gap-2">
+            {value && (
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Selected: {availableQRCodes.find((qr) => qr.id === value)?.short_id}
+              </p>
+            )}
+            <Button
+              type="button"
+              onClick={handleGenerateBatch}
+              disabled={isGenerating || !onGenerateBatch}
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Generate More
+                </>
+              )}
+            </Button>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {availableQRCodes.length} QR code{availableQRCodes.length !== 1 ? "s" : ""} available
+          </p>
         </div>
       ) : (
         <div className="space-y-3 p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800">
