@@ -157,6 +157,16 @@ export function useForm<T extends Record<string, FormFieldValue>>({
   }, []);
 
   /**
+   * Reset form to initial values
+   */
+  const reset = useCallback(() => {
+    setValues(initialValuesRef);
+    setErrorsState({});
+    setTouched({});
+    setIsSubmitting(false);
+  }, [initialValuesRef]);
+
+  /**
    * Handle form submission
    */
   const handleSubmit = useCallback(
@@ -182,18 +192,8 @@ export function useForm<T extends Record<string, FormFieldValue>>({
         setIsSubmitting(false);
       }
     },
-    [values, validateField, onSubmit]
+    [values, validateField, onSubmit, reset]
   );
-
-  /**
-   * Reset form to initial values
-   */
-  const reset = useCallback(() => {
-    setValues(initialValuesRef);
-    setErrorsState({});
-    setTouched({});
-    setIsSubmitting(false);
-  }, [initialValuesRef]);
 
   return {
     values,

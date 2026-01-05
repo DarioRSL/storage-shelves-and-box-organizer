@@ -95,41 +95,6 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   const storeWorkspaceId = useStore(currentWorkspaceIdStore);
   const currentWorkspaceId = workspaceId || storeWorkspaceId;
 
-  // Load initial data on mount or when workspace becomes available
-  useEffect(() => {
-    // Wait until we have a workspace ID
-    if (!currentWorkspaceId) {
-      return;
-    }
-
-    const loadInitialData = async () => {
-      setFormState((prev) => ({ ...prev, isLoading: true }));
-
-      try {
-        // Load locations for all modes
-        await loadLocationsInternal();
-
-        // Load available QR codes
-        await loadQRCodesInternal();
-
-        // In edit mode, load box data
-        if (mode === "edit" && boxId) {
-          await loadBoxDataInternal(boxId);
-        }
-      } finally {
-        setFormState((prev) => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    loadInitialData();
-  }, [mode, boxId, currentWorkspaceId]);
-
-  // Track if form is dirty
-  useEffect(() => {
-    const isDirty = JSON.stringify(formState) !== JSON.stringify(initialState);
-    setFormState((prev) => ({ ...prev, isDirty }));
-  }, [formState.name, formState.description, formState.tags, formState.location_id, formState.qr_code_id]);
-
   // Internal function to load locations
   const loadLocationsInternal = useCallback(async () => {
     try {
@@ -194,6 +159,61 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     },
     [formState]
   );
+
+  // Load initial data on mount or when workspace becomes available
+  useEffect(() => {
+    // Wait until we have a workspace ID
+    if (!currentWorkspaceId) {
+      return;
+    }
+
+    const loadInitialData = async () => {
+      setFormState((prev) => ({ ...prev, isLoading: true }));
+
+      try {
+        // Load locations for all modes
+        await loadLocationsInternal();
+
+        // Load available QR codes
+        await loadQRCodesInternal();
+
+        // In edit mode, load box data
+        if (mode === "edit" && boxId) {
+          await loadBoxDataInternal(boxId);
+        }
+      } finally {
+        setFormState((prev) => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    loadInitialData();
+  }, [mode, boxId, currentWorkspaceId, loadLocationsInternal, loadQRCodesInternal, loadBoxDataInternal]);
+
+  // Track if form is dirty
+  useEffect(() => {
+    const isDirty =
+      formState.name !== initialState.name ||
+      formState.description !== initialState.description ||
+      JSON.stringify(formState.tags) !== JSON.stringify(initialState.tags) ||
+      formState.location_id !== initialState.location_id ||
+      formState.qr_code_id !== initialState.qr_code_id;
+
+    if (formState.isDirty !== isDirty) {
+      setFormState((prev) => ({ ...prev, isDirty }));
+    }
+  }, [
+    formState.name,
+    formState.description,
+    formState.tags,
+    formState.location_id,
+    formState.qr_code_id,
+    formState.isDirty,
+    initialState.name,
+    initialState.description,
+    initialState.tags,
+    initialState.location_id,
+    initialState.qr_code_id,
+  ]);
 
   // Public function to set form field
   const setFormField = useCallback((field: string, value: unknown) => {

@@ -28,11 +28,6 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load root locations on mount
-  useEffect(() => {
-    loadRootLocations();
-  }, [workspaceId]);
-
   // Load root locations (no parent_id)
   const loadRootLocations = useCallback(async () => {
     setIsLoading(true);
@@ -110,6 +105,11 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
     },
     [workspaceId]
   );
+
+  // Load root locations on mount
+  useEffect(() => {
+    loadRootLocations();
+  }, [workspaceId, loadRootLocations]);
 
   // Toggle node expansion
   const handleToggle = useCallback(
