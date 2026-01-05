@@ -52,7 +52,7 @@ export default function DeleteConfirmationDialog({
 
         {type === "location" && (
           <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-700 border border-yellow-200" role="note">
-            Wszystkie pudełka w tej lokalizacji będą przeniesione do sekcji "Bez lokalizacji"
+            Wszystkie pudełka w tej lokalizacji będą przeniesione do sekcji &quot;Bez lokalizacji&quot;
           </div>
         )}
 

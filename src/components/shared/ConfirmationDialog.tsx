@@ -89,7 +89,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             />
             {inputValue && inputValue !== confirmText && (
               <p id="confirmation-description" className="text-xs text-yellow-600 dark:text-yellow-400">
-                Text doesn't match. Please try again.
+                Text doesn&apos;t match. Please try again.
               </p>
             )}
           </div>
