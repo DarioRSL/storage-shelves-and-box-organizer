@@ -1,8 +1,6 @@
 import React from "react";
 import type {
   WorkspaceDto,
-  LocationDto,
-  BoxDto,
   CreateLocationRequest,
   CreateBoxRequest,
   UpdateBoxRequest,

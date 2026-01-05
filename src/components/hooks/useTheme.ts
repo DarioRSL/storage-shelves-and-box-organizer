@@ -59,7 +59,7 @@ function getThemeFromStorage(): ThemeMode {
     if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }
-  } catch (e) {
+  } catch {
     console.warn("localStorage not available, using system theme");
   }
   return "system";
@@ -68,7 +68,7 @@ function getThemeFromStorage(): ThemeMode {
 function saveThemeToStorage(theme: ThemeMode): void {
   try {
     localStorage.setItem("theme", theme);
-  } catch (e) {
+  } catch {
     console.warn("localStorage not available, theme preference not saved");
   }
 }

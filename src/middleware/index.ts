@@ -85,11 +85,11 @@ const authMiddleware = defineMiddleware(async (context, next) => {
             refresh_token: "",
           });
         }
-      } catch (err) {
+      } catch {
         // Failed to decode session token, continue without user
       }
     }
-  } catch (err) {
+  } catch {
     // User not authenticated or session invalid, continue without user
   }
 

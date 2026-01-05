@@ -50,7 +50,7 @@ const { themePreference } = Astro.props;
       // Sync to localStorage for next visit
       try {
         localStorage.setItem("theme", theme);
-      } catch (e) {
+      } catch {
         console.warn("localStorage not available");
       }
     } else {
@@ -60,7 +60,7 @@ const { themePreference } = Astro.props;
         if (stored === "light" || stored === "dark" || stored === "system") {
           theme = stored;
         }
-      } catch (e) {
+      } catch {
         console.warn("localStorage not available, using system theme");
       }
     }

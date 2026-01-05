@@ -15,7 +15,6 @@ export function DangerZoneSection({
   workspaces,
   selectedWorkspaceId,
   onWorkspaceChange,
-  currentUserId,
   onDeleteWorkspace,
   onDeleteAccount,
 }: DangerZoneSectionProps) {

@@ -10,7 +10,6 @@ import { CommonValidation } from "./schemas";
 // ============= LOCATION HIERARCHY LIMITS =============
 
 const MAX_LOCATION_DEPTH = 5;
-const MAX_LOCATIONS_PER_LEVEL = 100;
 
 // ============= LOCATION CREATION & UPDATE =============
 
