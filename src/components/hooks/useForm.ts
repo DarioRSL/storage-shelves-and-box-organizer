@@ -1,20 +1,21 @@
 import { useState, useCallback } from "react";
 import { z } from "zod";
+import type { FormFieldValue } from "@/types";
 
-export interface UseFormOptions<T extends Record<string, any>> {
+export interface UseFormOptions<T extends Record<string, FormFieldValue>> {
   initialValues: T;
   validationSchema?: z.ZodSchema;
   onSubmit: (values: T) => Promise<void>;
 }
 
-export interface UseFormReturn<T extends Record<string, any>> {
+export interface UseFormReturn<T extends Record<string, FormFieldValue>> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
   isDirty: boolean;
   isSubmitting: boolean;
 
-  setFieldValue: (field: keyof T, value: any) => void;
+  setFieldValue: (field: keyof T, value: FormFieldValue) => void;
   setFieldTouched: (field: keyof T, value: boolean) => void;
   setErrors: (errors: Partial<Record<keyof T, string>>) => void;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
@@ -42,7 +43,7 @@ export interface UseFormReturn<T extends Record<string, any>> {
  * });
  * ```
  */
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, FormFieldValue>>({
   initialValues,
   validationSchema,
   onSubmit,
@@ -93,7 +94,7 @@ export function useForm<T extends Record<string, any>>({
   /**
    * Set value for a single field
    */
-  const setFieldValue = useCallback((field: keyof T, value: any) => {
+  const setFieldValue = useCallback((field: keyof T, value: FormFieldValue) => {
     setValues((prev) => ({
       ...prev,
       [field]: value,

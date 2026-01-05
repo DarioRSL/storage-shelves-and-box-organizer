@@ -658,3 +658,17 @@ export interface QRGeneratorFormProps {
 export interface QRGeneratorViewProps {
   userId: string;
 }
+
+// ============= FORM & UTILITY TYPES =============
+
+/**
+ * Represents a form field value (string, number, boolean, null, arrays, or objects)
+ * Used instead of `any` for type-safe form handling
+ */
+export type FormFieldValue = string | number | boolean | null | string[] | Record<string, unknown>;
+
+/**
+ * Generic record type with unknown values (safer than `any`)
+ * Use this for objects where the shape is not known at compile time
+ */
+export type UnknownRecord = Record<string, unknown>;

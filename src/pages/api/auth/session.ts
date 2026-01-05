@@ -12,7 +12,7 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
     // 1. Parse request body
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
     } catch {
@@ -25,10 +25,11 @@ export const POST: APIRoute = async ({ request }) => {
     const { token } = body as { token?: string };
 
     if (!token || typeof token !== "string") {
+      const bodyObj = body as { token?: unknown };
       log.warn("Session creation failed: invalid token", {
         endpoint: "POST /api/auth/session",
-        hasToken: !!body.token,
-        tokenType: typeof body.token,
+        hasToken: !!bodyObj.token,
+        tokenType: typeof bodyObj.token,
       });
       return new Response(JSON.stringify({ error: "Token required" }), {
         status: 400,
@@ -55,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // 3. Decode JWT payload (no signature verification - trusted source)
-    let payload: any;
+    let payload: unknown;
     try {
       payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
     } catch {
@@ -65,12 +66,19 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 4. Validate required claims
-    if (!payload.sub || !payload.email) {
+    // 4. Validate required claims and narrow type
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("sub" in payload) ||
+      !("email" in payload) ||
+      typeof payload.sub !== "string" ||
+      typeof payload.email !== "string"
+    ) {
       log.warn("Session creation failed: invalid token claims", {
         endpoint: "POST /api/auth/session",
-        hasSub: !!payload.sub,
-        hasEmail: !!payload.email,
+        hasSub: !!(payload && typeof payload === "object" && "sub" in payload),
+        hasEmail: !!(payload && typeof payload === "object" && "email" in payload),
       });
       return new Response(JSON.stringify({ error: "Invalid token claims" }), {
         status: 400,
@@ -80,7 +88,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     log.debug("Valid token verified for session creation", {
       endpoint: "POST /api/auth/session",
-      userId: payload.sub,
+      userId: payload.sub as string,
     });
 
     // 5. Set HttpOnly secure cookie
@@ -97,7 +105,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     log.info("Session created successfully", {
       endpoint: "POST /api/auth/session",
-      userId: payload.sub,
+      userId: payload.sub as string,
       isProduction,
       cookieMaxAge: 3600,
     });

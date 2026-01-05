@@ -45,7 +45,7 @@ export interface UseBoxFormReturn {
       | "availableQRCodes"
       | "currentBox"
     >,
-    value: any
+    value: unknown
   ) => void;
   setErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
@@ -195,7 +195,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   );
 
   // Public function to set form field
-  const setFormField = useCallback((field: string, value: any) => {
+  const setFormField = useCallback((field: string, value: unknown) => {
     setFormState((prev) => {
       const newErrors = { ...prev.errors };
       delete newErrors[field];

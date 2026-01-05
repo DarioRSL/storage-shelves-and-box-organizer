@@ -13,7 +13,7 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   const sessionToken = cookies.sb_session;
 
   // Store cookies to set in response later
-  const cookiesToSet: { name: string; value: string; options?: any }[] = [];
+  const cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[] = [];
 
   // Create Supabase client using @supabase/ssr
   // This handles cookie-based session management automatically
@@ -76,7 +76,7 @@ const authMiddleware = defineMiddleware(async (context, next) => {
             phone_confirmed_at: null,
             confirmed_at: new Date().toISOString(),
             is_anonymous: false,
-          } as any;
+          };
 
           // Set JWT in Supabase client so RLS policies can check auth.uid()
           // Manually set the session with the JWT token and empty refresh token

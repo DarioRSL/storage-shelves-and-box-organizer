@@ -1,10 +1,12 @@
 import React from "react";
 import type {
   WorkspaceDto,
+  BoxDto,
   CreateLocationRequest,
   CreateBoxRequest,
   UpdateBoxRequest,
 } from "@/types";
+import type { LocationTreeNode } from "@/components/hooks/useLocations";
 
 /**
  * Represents the state of the dashboard
@@ -16,16 +18,16 @@ export interface DashboardState {
 
   // Location selection and hierarchy
   selectedLocationId: string | null; // null = "Unassigned"
-  locations: any[]; // LocationTreeNode[]
+  locations: LocationTreeNode[];
   expandedLocationIds: Set<string>;
 
   // Search state
   searchQuery: string;
-  searchResults: any[]; // BoxDto[]
+  searchResults: BoxDto[];
   isSearchActive: boolean;
 
   // Boxes data
-  boxes: any[]; // BoxDto[]
+  boxes: BoxDto[];
   totalBoxesCount: number;
 
   // Loading states
