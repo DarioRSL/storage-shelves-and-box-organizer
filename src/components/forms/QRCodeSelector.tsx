@@ -51,7 +51,7 @@ export function QRCodeSelector({
   if (isEditing && currentQRCode) {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-900 dark:text-gray-100">QR Code</label>
+        <div className="block text-sm font-medium text-gray-900 dark:text-gray-100">QR Code</div>
         <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
           <span className="font-mono">{currentQRCode}</span>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

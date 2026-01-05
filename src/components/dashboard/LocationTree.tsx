@@ -52,8 +52,8 @@ export default function LocationTree() {
         }`}
         role="button"
         tabIndex={0}
-        aria-selected={isUnassignedSelected}
         aria-label="Pudełka bez przypisanej lokalizacji"
+        aria-pressed={isUnassignedSelected}
       >
         <Folder className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
         <span className="flex-1 text-sm font-medium">Bez lokalizacji</span>

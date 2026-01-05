@@ -68,7 +68,6 @@ export function WorkspaceCreateModal({ isOpen, onClose, onCreate, isLoading = fa
               disabled={isLoading}
               maxLength={255}
               className={error ? "border-destructive" : ""}
-              autoFocus
               aria-describedby={error ? "workspace-name-error" : undefined}
             />
             {error && (
