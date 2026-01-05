@@ -41,7 +41,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
     resetForm,
     submitForm,
     deleteBox,
-    loadAvailableQRCodes,
+    generateQRCodeBatch,
     isFormValid,
     suggestedTags,
   } = useBoxForm(mode, boxId, workspaceId);
@@ -273,7 +273,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
             isEditing={mode === "edit"}
             currentQRCode={formState.currentBox?.qr_code?.short_id}
             availableQRCodes={formState.availableQRCodes}
-            onGenerateBatch={loadAvailableQRCodes}
+            onGenerateBatch={() => generateQRCodeBatch(10)}
           />
         </fieldset>
 

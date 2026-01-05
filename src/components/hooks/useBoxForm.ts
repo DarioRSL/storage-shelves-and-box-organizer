@@ -57,6 +57,7 @@ export interface UseBoxFormReturn {
   loadBoxData: (boxId: string) => Promise<void>;
   loadLocations: () => Promise<void>;
   loadAvailableQRCodes: () => Promise<void>;
+  generateQRCodeBatch: (quantity: number) => Promise<void>;
 
   // Computed
   isFormValid: boolean;
@@ -402,6 +403,38 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     }
   }, [boxId]);
 
+  // Generate QR code batch
+  const generateQRCodeBatch = useCallback(
+    async (quantity = 10) => {
+      if (!currentWorkspaceId) {
+        log.error("Cannot generate QR codes without workspace ID");
+        return;
+      }
+
+      try {
+        // Call API to generate batch
+        await apiFetch("/api/qr-codes/batch", {
+          method: "POST",
+          body: JSON.stringify({
+            workspace_id: currentWorkspaceId,
+            quantity,
+          }),
+        });
+
+        // Reload available QR codes after generation
+        await loadQRCodesInternal();
+      } catch (error) {
+        log.error("Failed to generate QR code batch", { error, workspaceId: currentWorkspaceId, quantity });
+        setFormState((prev) => ({
+          ...prev,
+          errors: { ...prev.errors, qr_code_id: "Failed to generate QR codes" },
+        }));
+        throw error;
+      }
+    },
+    [currentWorkspaceId, loadQRCodesInternal]
+  );
+
   // Compute suggested tags from all available tags
   const suggestedTags = Array.from(new Set(formState.availableLocations.map((loc) => loc.name))).filter(
     (tag) => !formState.tags.includes(tag)
@@ -421,6 +454,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     loadBoxData,
     loadLocations,
     loadAvailableQRCodes,
+    generateQRCodeBatch,
     isFormValid,
     suggestedTags,
   };
