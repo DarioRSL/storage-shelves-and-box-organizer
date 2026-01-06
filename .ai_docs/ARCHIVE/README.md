@@ -4,10 +4,10 @@ This directory contains historical project documentation from the MVP developmen
 
 ## Directory Structure
 
-- **implemented/** - Implementation plans for 26 API endpoints and core features (33 files)
-- **review/** - Historical status reports and review documents (25 files)
-- **testing/** - Manual testing scripts and guides (8 files)
-- **old-roadmaps/** - Superseded roadmap versions (5 files: IMPLEMENTATION_ROADMAP, NEXT_PHASE_IMPLEMENTATION_PLAN, project-TO-DO, MVP_EN, MVP_PL)
+- **implemented/** - Implementation plans for 26 API endpoints and core features (45 files)
+- **review/** - Historical status reports and review documents (26 files)
+- **testing/** - Manual testing scripts and guides (16 files)
+- **old-roadmaps/** - Superseded roadmap versions (3 files: project-TO-DO, MVP_EN, MVP_PL)
 
 ## Current Documentation
 
