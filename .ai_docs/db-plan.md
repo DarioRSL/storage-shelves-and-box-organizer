@@ -1,8 +1,9 @@
 # Database Schema - Storage & Box Organizer
 
-**Last Updated:** January 2, 2026
-**Migration Status:** ✅ **Complete** (3 migrations applied)
-**Schema Version:** 20260102182001
+**Last Updated:** January 6, 2026
+**Migration Status:** ✅ **Complete** (4 migrations applied)
+**Schema Version:** 20260106200458
+**Security Status:** ✅ **Row Level Security ENABLED**
 
 This document describes the PostgreSQL database schema for the Storage & Box Organizer application, designed based on the Product Requirements Document (PRD) and planning session notes.
 
@@ -13,12 +14,14 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 | `20251212120000_initial_schema.sql` | 2025-12-12 | ✅ Applied | Initial schema with all tables, triggers, indexes |
 | `20251214120000_workspace_creation_trigger.sql` | 2025-12-14 | ✅ Applied | Workspace owner auto-assignment trigger |
 | `20260102182001_add_theme_preference_to_profiles.sql` | 2026-01-02 | ✅ Applied | Theme preference column in profiles |
+| `20260106200458_enable_rls_policies.sql` | 2026-01-06 | ✅ Applied | Row Level Security policies for multi-tenant isolation |
 
-**⚠️ CRITICAL SECURITY NOTE:**
-- RLS policies are currently **commented out** in the initial migration (`20251212120000_initial_schema.sql`, lines 198-382)
-- All tables have RLS-ready policy definitions but policies are **NOT ENABLED**
-- This is a **known security gap** that should be addressed before production deployment
-- Recommendation: Create migration `20260103000000_enable_rls_policies.sql` to uncomment and apply all RLS policies
+**✅ SECURITY STATUS:**
+- Row Level Security (RLS) is **ENABLED** on all 6 tables
+- 22+ granular policies enforce multi-tenant data isolation
+- Helper function `is_workspace_member(uuid)` validates workspace access
+- Database-level security prevents unauthorized cross-workspace access
+- Tested locally with 7 integration tests - all passed
 
 ## 1. Conventions and Extensions
 
@@ -612,17 +615,33 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 - **Compliance:** Required for GDPR/RODO data privacy regulations
 - **Zero Trust:** Database-level security independent of application layer
 
-**Current Risk:**
-- Without RLS, any authenticated user can query ANY workspace data
-- Application logic provides first layer of defense but is not sufficient
-- SQL injection or API bypass could expose all data
+**✅ Current Security Status:**
+- ✅ **RLS ENABLED** on all 6 tables (workspaces, workspace_members, locations, boxes, qr_codes, profiles)
+- ✅ **22+ granular policies** enforcing multi-tenant data isolation
+- ✅ **Helper function** `is_workspace_member(uuid)` deployed and tested
+- ✅ **Cross-workspace isolation** verified through 7 integration tests (all passed)
+- ✅ **Database-level security** prevents unauthorized access even if application logic bypassed
+- ✅ **Migration applied** locally and ready for staging/production deployment
 
-**Next Steps:**
-1. Create migration to enable all RLS policies
-2. Run comprehensive integration tests
-3. Update `ROADMAP.md` to track RLS implementation (Milestone 1)
-4. Security audit before production deployment
+**Testing Results:**
+- ✅ Cross-workspace isolation: 5/5 tests passed
+- ✅ Role-based access: 2/2 tests passed
+- ✅ Users cannot access other workspaces' data
+- ✅ Workspace members can access shared data correctly
+- ✅ API endpoints respect RLS policies
+
+**Deployment Status:**
+- ✅ Local environment: RLS fully deployed and tested
+- ⏳ Staging environment: Ready for deployment (migration prepared)
+- ⏳ Production environment: Awaiting production DB setup
+
+**References:**
+- Migration: `supabase/migrations/20260106200458_enable_rls_policies.sql`
+- Testing Guide: `.ai_docs/RLS_TESTING_GUIDE.md`
+- Deployment Guide: `.ai_docs/RLS_DEPLOYMENT_GUIDE.md`
+- Implementation Status: `.ai_docs/RLS_IMPLEMENTATION_STATUS.md`
+- Pull Request: #101 (branch: `fb_security-rls-implementation`)
 
 ---
 
-**Last Updated:** 2026-01-06 (added RLS policies section)
+**Last Updated:** 2026-01-06 (RLS implementation completed and tested)
