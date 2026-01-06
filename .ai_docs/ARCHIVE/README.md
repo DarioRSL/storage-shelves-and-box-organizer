@@ -8,6 +8,7 @@ This directory contains historical project documentation from the MVP developmen
 - **review/** - Historical status reports and review documents (26 files)
 - **testing/** - Manual testing scripts and guides (16 files)
 - **old-roadmaps/** - Superseded roadmap versions (3 files: project-TO-DO, MVP_EN, MVP_PL)
+- **ui-planning/** - UI planning session documents (1 file)
 
 ## Current Documentation
 
