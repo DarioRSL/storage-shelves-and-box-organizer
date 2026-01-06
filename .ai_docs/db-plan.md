@@ -347,3 +347,282 @@ This ensures all workspace-scoped data is accessible only to workspace members.
 1. RLS policy enablement (all policies defined but commented out in migration)
 
 **Schema Matches Documentation:** 100% (except RLS enablement)
+
+---
+
+## 10. Row Level Security (RLS) Policies
+
+**Status:** ❌ **NOT IMPLEMENTED** (as of 2026-01-06)  
+**Planned Migration:** `supabase/migrations/20260106120000_enable_rls_policies.sql`  
+**Priority:** **CRITICAL** - Security vulnerability for multi-tenant system  
+
+### 10.1. Overview
+
+All tables require Row Level Security to enforce multi-tenant data isolation. **Currently, there are ZERO RLS policies enabled**, meaning users can theoretically query data from ANY workspace. This must be fixed before production deployment.
+
+### 10.2. Helper Function
+
+```sql
+CREATE OR REPLACE FUNCTION is_workspace_member(workspace_id_param UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_members.workspace_id = workspace_id_param
+    AND workspace_members.user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+### 10.3. RLS Policies by Table
+
+#### 10.3.1. workspaces
+
+```sql
+ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view workspaces they are members of
+CREATE POLICY "Users can view their workspaces"
+ON workspaces FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_members.workspace_id = workspaces.id
+    AND workspace_members.user_id = auth.uid()
+  )
+);
+
+-- INSERT: Any authenticated user can create workspace (trigger auto-adds as owner)
+CREATE POLICY "Users can create workspaces"
+ON workspaces FOR INSERT
+WITH CHECK (true);
+
+-- UPDATE: Only workspace owners/admins can update
+CREATE POLICY "Workspace owners can update"
+ON workspaces FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_members.workspace_id = workspaces.id
+    AND workspace_members.user_id = auth.uid()
+    AND workspace_members.role IN ('owner', 'admin')
+  )
+);
+
+-- DELETE: Only workspace owners can delete
+CREATE POLICY "Workspace owners can delete"
+ON workspaces FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_members.workspace_id = workspaces.id
+    AND workspace_members.user_id = auth.uid()
+    AND workspace_members.role = 'owner'
+  )
+);
+```
+
+#### 10.3.2. workspace_members
+
+```sql
+ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view members of their workspaces
+CREATE POLICY "Users can view workspace members"
+ON workspace_members FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members wm
+    WHERE wm.workspace_id = workspace_members.workspace_id
+    AND wm.user_id = auth.uid()
+  )
+);
+
+-- INSERT: Only workspace owners/admins can add members
+CREATE POLICY "Workspace owners can add members"
+ON workspace_members FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM workspace_members wm
+    WHERE wm.workspace_id = workspace_members.workspace_id
+    AND wm.user_id = auth.uid()
+    AND wm.role IN ('owner', 'admin')
+  )
+);
+
+-- UPDATE: Only workspace owners/admins can update member roles
+CREATE POLICY "Workspace owners can update members"
+ON workspace_members FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members wm
+    WHERE wm.workspace_id = workspace_members.workspace_id
+    AND wm.user_id = auth.uid()
+    AND wm.role IN ('owner', 'admin')
+  )
+);
+
+-- DELETE: Only workspace owners/admins can remove members
+CREATE POLICY "Workspace owners can remove members"
+ON workspace_members FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members wm
+    WHERE wm.workspace_id = workspace_members.workspace_id
+    AND wm.user_id = auth.uid()
+    AND wm.role IN ('owner', 'admin')
+  )
+);
+```
+
+#### 10.3.3. locations
+
+```sql
+ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view locations in their workspaces
+CREATE POLICY "Users can view workspace locations"
+ON locations FOR SELECT
+USING (is_workspace_member(workspace_id));
+
+-- INSERT: Workspace members can create locations
+CREATE POLICY "Workspace members can create locations"
+ON locations FOR INSERT
+WITH CHECK (is_workspace_member(workspace_id));
+
+-- UPDATE: Workspace members can update locations
+CREATE POLICY "Workspace members can update locations"
+ON locations FOR UPDATE
+USING (is_workspace_member(workspace_id));
+
+-- DELETE: Workspace members can soft-delete locations
+CREATE POLICY "Workspace members can delete locations"
+ON locations FOR DELETE
+USING (is_workspace_member(workspace_id));
+```
+
+#### 10.3.4. boxes
+
+```sql
+ALTER TABLE boxes ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view boxes in their workspaces
+CREATE POLICY "Users can view workspace boxes"
+ON boxes FOR SELECT
+USING (is_workspace_member(workspace_id));
+
+-- INSERT: Workspace members can create boxes
+CREATE POLICY "Workspace members can create boxes"
+ON boxes FOR INSERT
+WITH CHECK (is_workspace_member(workspace_id));
+
+-- UPDATE: Workspace members can update boxes
+CREATE POLICY "Workspace members can update boxes"
+ON boxes FOR UPDATE
+USING (is_workspace_member(workspace_id));
+
+-- DELETE: Workspace members can delete boxes
+CREATE POLICY "Workspace members can delete boxes"
+ON boxes FOR DELETE
+USING (is_workspace_member(workspace_id));
+```
+
+#### 10.3.5. qr_codes
+
+```sql
+ALTER TABLE qr_codes ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view QR codes in their workspaces
+CREATE POLICY "Users can view workspace QR codes"
+ON qr_codes FOR SELECT
+USING (is_workspace_member(workspace_id));
+
+-- INSERT: System-generated via batch generation endpoint (workspace members)
+CREATE POLICY "Workspace members can generate QR codes"
+ON qr_codes FOR INSERT
+WITH CHECK (is_workspace_member(workspace_id));
+
+-- UPDATE: Automatic updates via triggers (e.g., when box assigned/deleted)
+CREATE POLICY "Workspace members can update QR codes"
+ON qr_codes FOR UPDATE
+USING (is_workspace_member(workspace_id));
+
+-- DELETE: Only workspace owners can delete QR codes (cascade with workspace)
+CREATE POLICY "Workspace owners can delete QR codes"
+ON qr_codes FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_members.workspace_id = qr_codes.workspace_id
+    AND workspace_members.user_id = auth.uid()
+    AND workspace_members.role = 'owner'
+  )
+);
+```
+
+#### 10.3.6. profiles
+
+```sql
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view own profile only
+CREATE POLICY "Users can view own profile"
+ON profiles FOR SELECT
+USING (auth.uid() = id);
+
+-- UPDATE: Users can update own profile only
+CREATE POLICY "Users can update own profile"
+ON profiles FOR UPDATE
+USING (auth.uid() = id);
+
+-- INSERT/DELETE handled by Supabase Auth triggers
+```
+
+### 10.4. Testing RLS Policies
+
+See GitHub Issue #[TBD] for comprehensive RLS testing procedures.
+
+**Quick Test:**
+```sql
+-- As User A, try to access User B's workspace
+SELECT * FROM boxes WHERE workspace_id = '<user-b-workspace-id>';
+-- Should return 0 rows (blocked by RLS)
+
+-- As User A, try to access own workspace
+SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
+-- Should return all User A's boxes
+```
+
+**Integration Test Scenarios:**
+1. Create 2 test users (userA@test.com, userB@test.com)
+2. Each user creates 1 workspace
+3. Each user creates locations, boxes, QR codes
+4. Verify User A **CANNOT** SELECT/UPDATE/DELETE User B's data
+5. Verify API endpoints respect RLS (GET /api/boxes returns only user's boxes)
+6. Verify workspace members can access shared workspace data
+7. Verify non-members cannot access workspace data
+
+### 10.5. Security Considerations
+
+**Why RLS is Critical:**
+- **Data Isolation:** Ensures users can only access their own workspace data
+- **Multi-Tenant Security:** Prevents cross-workspace data leakage
+- **Defense in Depth:** Even if application logic fails, database enforces isolation
+- **Compliance:** Required for GDPR/RODO data privacy regulations
+- **Zero Trust:** Database-level security independent of application layer
+
+**Current Risk:**
+- Without RLS, any authenticated user can query ANY workspace data
+- Application logic provides first layer of defense but is not sufficient
+- SQL injection or API bypass could expose all data
+
+**Next Steps:**
+1. Create migration to enable all RLS policies
+2. Run comprehensive integration tests
+3. Update `ROADMAP.md` to track RLS implementation (Milestone 1)
+4. Security audit before production deployment
+
+---
+
+**Last Updated:** 2026-01-06 (added RLS policies section)

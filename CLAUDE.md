@@ -281,7 +281,15 @@ See `.ai_docs/AUTHENTICATION_ARCHITECTURE.md` section 13 for complete implementa
 
 ## Important References
 
-- **Database Schema:** `.ai_docs/db-plan.md`
+- **Project Roadmap:** `.ai_docs/ROADMAP.md` ← **SINGLE SOURCE OF TRUTH**
+- **Database Schema:** `.ai_docs/db-plan.md` (includes RLS policies)
 - **API Specification:** `.ai_docs/api-plan.md`
 - **Product Requirements:** `.ai_docs/prd.md`
 - **Tech Stack Details:** `.ai_docs/tech-stack.md`
+- **Contribution Guidelines:** `.ai_docs/CONTRIBUTING.md`
+
+### Documentation Organization
+
+Active documentation is in `.ai_docs/` (15 files). Historical documentation (71 files from MVP phase) is archived in `.ai_docs/ARCHIVE/` for reference.
+
+**For current project status, milestones, and feature backlog, always refer to `.ai_docs/ROADMAP.md`.**
