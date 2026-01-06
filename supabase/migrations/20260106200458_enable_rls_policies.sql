@@ -25,6 +25,9 @@
 -- Security: SECURITY DEFINER allows function to check workspace_members table
 -- ============================================================================
 
+-- Drop existing function if it exists (may have different parameter name)
+drop function if exists is_workspace_member(uuid);
+
 create or replace function is_workspace_member(workspace_id_param uuid)
 returns boolean as $$
 begin
