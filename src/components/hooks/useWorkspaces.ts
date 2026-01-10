@@ -20,8 +20,12 @@ export function useWorkspaces() {
         setError(null);
         const data = await apiFetch<WorkspaceDto[]>("/api/workspaces");
         setWorkspaces(data);
-        // Auto-select first workspace if none selected
-        if (data.length > 0 && !currentWorkspaceId.get()) {
+
+        // Auto-select first workspace if none selected OR if stored workspace doesn't exist
+        const storedWorkspaceId = currentWorkspaceId.get();
+        const workspaceExists = storedWorkspaceId && data.some((ws) => ws.id === storedWorkspaceId);
+
+        if (data.length > 0 && !workspaceExists) {
           currentWorkspaceId.set(data[0].id);
         }
       } catch (err) {

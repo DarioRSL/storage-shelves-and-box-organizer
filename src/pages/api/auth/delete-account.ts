@@ -44,14 +44,18 @@ export const DELETE: APIRoute = async ({ locals }) => {
     try {
       await deleteUserAccount(supabase, user.id);
 
-      // 4. Return success response (200 OK)
+      // 4. Return success response (200 OK) and clear JWT cookie
       return new Response(
         JSON.stringify({
           message: "Account successfully deleted",
         } as DeleteAccountResponse),
         {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            // Clear the JWT cookie by setting Max-Age=0
+            "Set-Cookie": "sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+          },
         }
       );
     } catch (error) {

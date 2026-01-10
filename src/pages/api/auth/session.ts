@@ -25,37 +25,22 @@ export const POST: APIRoute = async ({ request }) => {
     const { token } = body as { token?: string };
 
     if (!token || typeof token !== "string") {
-      const bodyObj = body as { token?: unknown };
-      log.warn("Session creation failed: invalid token", {
-        endpoint: "POST /api/auth/session",
-        hasToken: !!bodyObj.token,
-        tokenType: typeof bodyObj.token,
-      });
       return new Response(JSON.stringify({ error: "Token required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    log.debug("Token received for session creation", {
-      endpoint: "POST /api/auth/session",
-      tokenLength: token.length,
-    });
-
     // 2. Validate JWT format
     const parts = token.split(".");
     if (parts.length !== 3) {
-      log.warn("Session creation failed: invalid JWT format", {
-        endpoint: "POST /api/auth/session",
-        partsCount: parts.length,
-      });
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // 3. Decode JWT payload (no signature verification - trusted source)
+    // 3. Decode JWT payload to validate
     let payload: unknown;
     try {
       payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
@@ -66,62 +51,41 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 4. Validate required claims and narrow type
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      !("sub" in payload) ||
-      !("email" in payload) ||
-      typeof payload.sub !== "string" ||
-      typeof payload.email !== "string"
-    ) {
-      log.warn("Session creation failed: invalid token claims", {
-        endpoint: "POST /api/auth/session",
-        hasSub: !!(payload && typeof payload === "object" && "sub" in payload),
-        hasEmail: !!(payload && typeof payload === "object" && "email" in payload),
-      });
+    if (!payload || typeof payload !== "object" || !("sub" in payload)) {
       return new Response(JSON.stringify({ error: "Invalid token claims" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    log.debug("Valid token verified for session creation", {
-      endpoint: "POST /api/auth/session",
-      userId: payload.sub as string,
-    });
-
-    // 5. Set HttpOnly secure cookie
-    // Security flags:
-    // - HttpOnly: JavaScript cannot access (XSS protection)
-    // - Secure: Only HTTPS (production)
-    // - SameSite=Strict: Only same-origin requests (CSRF protection)
-    // - Max-Age=3600: 1 hour expiry
-    const cookieValue = `sb_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`;
-
-    // In production, add Secure flag
+    // 4. Set HttpOnly cookie with JWT
     const isProduction = import.meta.env.PROD;
-    const secureCookie = isProduction ? `${cookieValue}; Secure` : cookieValue;
+    const cookieParts = [
+      `sb_session=${token}`, // Store raw JWT
+      "Path=/",
+      "HttpOnly",
+      "SameSite=Strict",
+      "Max-Age=3600",
+    ];
+
+    if (isProduction) {
+      cookieParts.push("Secure");
+    }
 
     log.info("Session created successfully", {
       endpoint: "POST /api/auth/session",
       userId: payload.sub as string,
-      isProduction,
-      cookieMaxAge: 3600,
     });
 
-    const response = new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": secureCookie,
+        "Set-Cookie": cookieParts.join("; "),
       },
     });
-
-    return response;
   } catch (error) {
-    log.error("Session creation failed with unexpected error", {
-      endpoint: "POST /api/auth/session",
+    log.error("Session creation failed", {
       error: error instanceof Error ? error.message : String(error),
     });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
@@ -136,27 +100,11 @@ export const POST: APIRoute = async ({ request }) => {
  * Clears the session cookie (logout)
  */
 export const DELETE: APIRoute = async () => {
-  try {
-    log.info("Session deleted (user logged out)", {
-      endpoint: "DELETE /api/auth/session",
-    });
-
-    // Clear cookie by setting Max-Age=0
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Set-Cookie": `sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
-      },
-    });
-  } catch (error) {
-    log.error("Session deletion failed with unexpected error", {
-      endpoint: "DELETE /api/auth/session",
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": "sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+    },
+  });
 };
