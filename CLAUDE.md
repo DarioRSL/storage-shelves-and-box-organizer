@@ -230,6 +230,18 @@ Authentication uses secure HttpOnly cookies for XSS and CSRF protection:
 **For Detailed Documentation:**
 See `.ai_docs/AUTHENTICATION_ARCHITECTURE.md` section 13 for complete implementation details.
 
+**Important Session Hygiene:**
+
+When users authenticate (login or signup), always clear any persisted workspace state to prevent 403 errors:
+```typescript
+// Clear workspace ID from localStorage on successful auth
+localStorage.removeItem("currentWorkspaceId");
+```
+
+This pattern is implemented in:
+- `src/components/AuthLayout.tsx:36-42` - Clears on successful login/signup
+- `src/components/hooks/useWorkspaces.ts:24-30` - Validates workspace exists for user
+
 ## React Component Patterns
 
 - **Static content:** Use `.astro` components
