@@ -33,3 +33,4 @@ dokumentacja_development/*
 .ai_docs/commands/*
 rerun.sh
 
+supabase/scripts/*
