@@ -190,25 +190,31 @@ export function useAuthForm(options?: UseAuthFormOptions) {
           return;
         }
 
-        // Create default workspace
+        // Fetch the user's workspace (created automatically by database trigger)
+        // The handle_new_user() trigger creates "My Workspace" automatically
         const { data: workspaceData, error: workspaceError } = await supabase
-          .from("workspaces")
-          .insert({
-            name: "Mój Workspace",
-            owner_id: authData.user.id,
-          })
-          .select()
+          .from("workspace_members")
+          .select("workspaces!inner(*)")
+          .eq("user_id", authData.user.id)
+          .limit(1)
           .single();
 
-        if (workspaceError) {
+        if (workspaceError || !workspaceData) {
           setError("Błąd inicjalizacji konta. Spróbuj ponownie.");
+          return;
+        }
+
+        const workspace = workspaceData.workspaces as unknown as WorkspaceDto;
+
+        if (!workspace) {
+          setError("Nie znaleziono workspace dla użytkownika");
           return;
         }
 
         // Success
         options?.onSuccess?.({
           user: profileData,
-          workspace: workspaceData,
+          workspace,
           token: authData.session.access_token,
         });
       } catch (err) {
