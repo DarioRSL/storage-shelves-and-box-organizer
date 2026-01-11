@@ -207,6 +207,7 @@ Jeśli włączyłeś maintenance mode, wyłącz go teraz.
 ### Pierwsze 30 minut
 
 Monitoruj:
+
 - **Error rate w aplikacji:** Czy użytkownicy zgłaszają błędy 403 Forbidden?
 - **API response times:** Czy RLS spowolnił zapytania?
 - **User login success rate:** Czy użytkownicy mogą się zalogować?
@@ -235,6 +236,7 @@ ALTER TABLE locations DISABLE ROW LEVEL SECURITY;
 ```
 
 **Długoterminowe rozwiązanie:**
+
 1. Zidentyfikuj błędną policy
 2. Popraw policy
 3. Przetestuj na staging
@@ -288,6 +290,7 @@ DROP FUNCTION IF EXISTS is_workspace_member(uuid);
 ```
 
 **Po rollback:**
+
 1. Zidentyfikuj przyczynę problemu
 2. Napraw migrację
 3. Przetestuj na staging ponownie
@@ -300,6 +303,7 @@ DROP FUNCTION IF EXISTS is_workspace_member(uuid);
 **Przyczyna:** Brak uprawnień EXECUTE dla authenticated users
 
 **Rozwiązanie:**
+
 ```sql
 GRANT EXECUTE ON FUNCTION is_workspace_member(uuid) TO authenticated;
 ```
@@ -309,6 +313,7 @@ GRANT EXECUTE ON FUNCTION is_workspace_member(uuid) TO authenticated;
 **Przyczyna:** RLS policies wymagają dodatkowych JOIN'ów
 
 **Rozwiązanie:**
+
 1. Sprawdź czy istnieją indeksy na `workspace_id` (powinny być)
 2. Rozważ użycie materialized views dla często używanych zapytań
 3. Monitor query performance z `EXPLAIN ANALYZE`
@@ -348,6 +353,7 @@ Wykonaj wszystkie 13 testów z `RLS_TESTING_GUIDE.md`
 ## Timeline wdrożenia
 
 **Szacowany czas:**
+
 - Backup: 5 minut
 - Migracja: 2-3 minuty
 - Weryfikacja: 5 minut
@@ -355,6 +361,7 @@ Wykonaj wszystkie 13 testów z `RLS_TESTING_GUIDE.md`
 - **Total:** ~25 minut (including buffer)
 
 **Zalecane okno maintenance:**
+
 - 30 minut w godzinach najmniejszego ruchu (np. 2:00 AM - 2:30 AM lokalnego czasu)
 
 ## Support & Escalation
@@ -369,9 +376,10 @@ Wykonaj wszystkie 13 testów z `RLS_TESTING_GUIDE.md`
 ## Kontakt
 
 **W razie pytań lub problemów:**
+
 - GitHub Issue: #93 (Integration Tests for RLS Policies)
 - Documentation: `.ai_docs/RLS_TESTING_GUIDE.md`
-- Supabase Docs: https://supabase.com/docs/guides/auth/row-level-security
+- Supabase Docs: <https://supabase.com/docs/guides/auth/row-level-security>
 
 ---
 

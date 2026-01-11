@@ -8,6 +8,7 @@
 **Issue**: Cookie-based authentication with `setSession()` doesn't properly set `auth.uid()` context for RLS policies in all scenarios.
 
 **Why it happens**:
+
 - `setSession()` with access_token + refresh_token (both same JWT) may not fully activate Supabase Auth session
 - Authorization header in `global.headers` works for PostgREST queries but doesn't set `auth.uid()` for RLS
 - RLS policies that check `auth.uid()` directly may fail even when user is authenticated
@@ -15,6 +16,7 @@
 ## Current Status
 
 ### ✅ Working Operations (Confirmed)
+
 - **SELECT queries**: All working (profiles, workspaces, workspace_members, etc.)
 - **Workspace creation**: Fixed via SECURITY DEFINER function `create_workspace_for_user()`
 
@@ -23,6 +25,7 @@
 All operations that use `auth.uid()` directly in RLS policies:
 
 #### 1. **workspace_members INSERT** (High Risk)
+
 ```sql
 -- Policy requires existing owner/admin - chicken-and-egg problem for first member
 with check (
@@ -33,11 +36,13 @@ with check (
   )
 )
 ```
+
 **Used by**: Inviting members to workspace
 **Risk**: May fail when inviting first member
 **Status**: Mitigated by workspace creation trigger, but manual invites may fail
 
 #### 2. **workspaces UPDATE** (Medium Risk)
+
 ```sql
 -- Policy requires auth.uid() to verify owner/admin
 using (
@@ -48,10 +53,12 @@ using (
   )
 )
 ```
+
 **Used by**: Updating workspace name/settings
 **Risk**: May fail to update workspace
 
 #### 3. **workspaces DELETE** (Medium Risk)
+
 ```sql
 -- Policy requires auth.uid() to verify owner
 using (
@@ -62,14 +69,17 @@ using (
   )
 )
 ```
+
 **Used by**: Deleting workspace
 **Risk**: May fail to delete workspace
 
 #### 4. **profiles SELECT/UPDATE** (Low Risk)
+
 ```sql
 -- Policy requires auth.uid() = profile id
 using (auth.uid() = id)  -- ⚠️ Requires auth.uid()
 ```
+
 **Used by**: Viewing/updating own profile
 **Status**: Currently working (seen in logs), so `auth.uid()` works for SELECT
 
@@ -92,6 +102,7 @@ $$ language plpgsql security definer;
 ```
 
 **Tables using this**:
+
 - ✅ **locations** (all operations): `is_workspace_member(workspace_id)`
 - ✅ **boxes** (all operations): `is_workspace_member(workspace_id)`
 - ✅ **qr_codes** (all operations): `is_workspace_member(workspace_id)`
@@ -112,38 +123,46 @@ Test critical operations to identify failures:
 ### Phase 2: Fix Strategy (Choose One)
 
 #### Option A: Fix Auth Context Globally (Recommended)
+
 **Goal**: Make `auth.uid()` work properly in middleware
 
 **Approach**:
+
 ```typescript
 // Store JWT in Supabase auth.session via custom implementation
 // Instead of relying on setSession(), directly set auth context
 ```
 
 **Pros**:
+
 - Fixes all RLS policies at once
 - No need for multiple SECURITY DEFINER functions
 - Proper auth flow
 
 **Cons**:
+
 - More complex to implement
 - May require changes to Supabase client initialization
 
 #### Option B: SECURITY DEFINER Functions (Current Approach)
+
 **Goal**: Create SECURITY DEFINER functions for failing operations
 
 **Functions needed**:
+
 1. ✅ `create_workspace_for_user()` - Done
 2. `update_workspace_for_user(workspace_id, user_id, name)`
 3. `delete_workspace_for_user(workspace_id, user_id)`
 4. `invite_workspace_member(workspace_id, inviter_id, invitee_id, role)`
 
 **Pros**:
+
 - Surgical fixes, only where needed
 - Works with current auth implementation
 - Easy to test and verify
 
 **Cons**:
+
 - Requires creating multiple functions
 - More boilerplate code
 - Need to update TypeScript service layer for each
@@ -184,10 +203,12 @@ Test critical operations to identify failures:
 ## Test Results
 
 ### ✅ Update Workspace Name
+
 - **Status**: Works correctly
 - **Conclusion**: RLS policies for workspace UPDATE work properly
 
 ### ✅ Delete Account
+
 - **Status**: Fixed - now works correctly
 - **Previous Problem**:
   1. Database deletion succeeded but JWT cookie wasn't cleared
@@ -201,6 +222,7 @@ Test critical operations to identify failures:
   - This is documented in auth.service.ts and doesn't affect functionality
 
 ### ✅ User Signup (Registration)
+
 - **Status**: Fixed - now works correctly (2026-01-10)
 - **Previous Problem**:
   1. Frontend called `create_workspace_for_user()` RPC, creating "Mój Workspace"
@@ -214,6 +236,7 @@ Test critical operations to identify failures:
   - `src/components/hooks/useAuthForm.ts:193-212` - Changed from RPC create to workspace fetch
 
 ### ✅ Dashboard 403 Errors on Fresh Login
+
 - **Status**: Fixed - now works correctly (2026-01-10)
 - **Previous Problem**:
   1. Old workspace ID stored in localStorage from previous user session
