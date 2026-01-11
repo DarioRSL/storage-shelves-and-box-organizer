@@ -24,6 +24,7 @@ export interface AuthSuccessResponse {
   user: ProfileDto;
   workspace: WorkspaceDto;
   token: string;
+  refreshToken: string;
 }
 
 /**
@@ -120,11 +121,12 @@ export function useAuthForm(options?: UseAuthFormOptions) {
           return;
         }
 
-        // Success
+        // Success - send both access_token and refresh_token for proper session
         options?.onSuccess?.({
           user: profileData,
           workspace,
           token: authData.session.access_token,
+          refreshToken: authData.session.refresh_token,
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";
@@ -211,11 +213,12 @@ export function useAuthForm(options?: UseAuthFormOptions) {
           return;
         }
 
-        // Success
+        // Success - send both access_token and refresh_token for proper session
         options?.onSuccess?.({
           user: profileData,
           workspace,
           token: authData.session.access_token,
+          refreshToken: authData.session.refresh_token,
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";

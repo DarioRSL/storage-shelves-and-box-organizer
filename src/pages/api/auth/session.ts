@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const { token } = body as { token?: string };
+    const { token, refreshToken } = body as { token?: string; refreshToken?: string };
 
     if (!token || typeof token !== "string") {
       return new Response(JSON.stringify({ error: "Token required" }), {
@@ -31,7 +31,14 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 2. Validate JWT format
+    if (!refreshToken || typeof refreshToken !== "string") {
+      return new Response(JSON.stringify({ error: "Refresh token required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Validate JWT format (access token)
     const parts = token.split(".");
     if (parts.length !== 3) {
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
@@ -58,10 +65,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 4. Set HttpOnly cookie with JWT
+    // 4. Create session object with both tokens
+    const sessionData = JSON.stringify({ access_token: token, refresh_token: refreshToken });
+
+    // 5. Set HttpOnly cookie with session data
     const isProduction = import.meta.env.PROD;
     const cookieParts = [
-      `sb_session=${token}`, // Store raw JWT
+      `sb_session=${encodeURIComponent(sessionData)}`, // Store both tokens as JSON
       "Path=/",
       "HttpOnly",
       "SameSite=Strict",

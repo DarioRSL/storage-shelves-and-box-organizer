@@ -45,7 +45,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ token: data.token }),
+        body: JSON.stringify({
+          token: data.token,
+          refreshToken: data.refreshToken
+        }),
       })
         .then(async (res) => {
           log.info("AuthLayout session response received", { status: res.status });

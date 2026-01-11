@@ -9,8 +9,17 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   const cookieString = context.request.headers.get("cookie") || "";
   const cookies = parse(cookieString);
 
-  // Get JWT from custom session cookie
-  const sessionToken = cookies.sb_session;
+  // Get session data from custom session cookie
+  const sessionCookie = cookies.sb_session;
+  let sessionData: { access_token: string; refresh_token: string } | null = null;
+
+  if (sessionCookie) {
+    try {
+      sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+    } catch {
+      // Invalid session data, continue without auth
+    }
+  }
 
   // Store cookies to set in response later
   const cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[] = [];
@@ -37,12 +46,12 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   // Get authenticated user and set session for RLS policies
   let user = null;
 
-  if (sessionToken) {
+  if (sessionData) {
     try {
-      // Set session with JWT token - this enables auth.uid() in RLS policies
+      // Set session with both access and refresh tokens - this enables auth.uid() in RLS policies
       await supabase.auth.setSession({
-        access_token: sessionToken,
-        refresh_token: sessionToken, // Use same token as fallback
+        access_token: sessionData.access_token,
+        refresh_token: sessionData.refresh_token,
       });
 
       // Verify session by getting user
