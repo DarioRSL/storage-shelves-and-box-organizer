@@ -34,3 +34,16 @@ dokumentacja_development/*
 rerun.sh
 
 supabase/scripts/*
+
+# test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# test results
+test-results/
+playwright-report/
+*.test-results/
+
+# playwright
+.playwright/
