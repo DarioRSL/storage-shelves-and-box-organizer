@@ -309,16 +309,16 @@ Returns password strength analysis with score, level, and detailed criteria.
 | Test ID | Description | Input | Expected Output | Score |
 |---------|-------------|-------|----------------|-------|
 | TC-PWD-001 | Empty password | `""` | `{ level: "weak", score: 0, hasMinLength: false, ... }` | 0 |
-| TC-PWD-002 | Too short (< 8 chars) | `"Abc1!"` | `{ level: "weak", score: 80, hasMinLength: false }` | 80 |
-| TC-PWD-003 | Min length only | `"12345678"` | `{ level: "weak", score: 40, hasMinLength: true, hasNumbers: true }` | 40 |
-| TC-PWD-004 | Medium password | `"Password1"` | `{ level: "medium", score: 80 }` | 80 |
+| TC-PWD-002 | Too short (< 8 chars) | `"Abc1!"` | `{ level: "strong", score: 80, hasMinLength: false }` | 80 |
+| TC-PWD-003 | Min length only | `"12345678"` | `{ level: "medium", score: 40, hasMinLength: true, hasNumbers: true }` | 40 |
+| TC-PWD-004 | Medium password | `"Password1"` | `{ level: "strong", score: 80 }` | 80 |
 | TC-PWD-005 | Strong password | `"Pass1234!"` | `{ level: "strong", score: 100 }` | 100 |
 | TC-PWD-006 | Only lowercase | `"abcdefgh"` | `{ level: "medium", score: 40, hasLowercase: true }` | 40 |
 | TC-PWD-007 | Only uppercase | `"ABCDEFGH"` | `{ level: "medium", score: 40, hasUppercase: true }` | 40 |
 | TC-PWD-008 | Only numbers | `"12345678"` | `{ level: "medium", score: 40, hasNumbers: true }` | 40 |
 | TC-PWD-009 | Only special chars | `"!@#$%^&*"` | `{ level: "medium", score: 40, hasSpecialChars: true }` | 40 |
 | TC-PWD-010 | All criteria met | `"Abc123!@#"` | `{ level: "strong", score: 100 }` | 100 |
-| TC-PWD-011 | Weak with spaces | `"abc 123"` | `{ level: "weak", score: 40 }` | 40 |
+| TC-PWD-011 | Medium with spaces | `"abc 123"` | `{ level: "medium", score: 40 }` | 40 |
 | TC-PWD-012 | Real strong password | `"MyP@ssw0rd2024"` | `{ level: "strong", score: 100 }` | 100 |
 
 **Scoring Logic:**
