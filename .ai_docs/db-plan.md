@@ -17,6 +17,7 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 | `20260106200458_enable_rls_policies.sql` | 2026-01-06 | ✅ Applied | Row Level Security policies for multi-tenant isolation |
 
 **✅ SECURITY STATUS:**
+
 - Row Level Security (RLS) is **ENABLED** on all 6 tables
 - 22+ granular policies enforce multi-tenant data isolation
 - Helper function `is_workspace_member(uuid)` validates workspace access
@@ -69,6 +70,7 @@ Stores public user data, linked 1:1 with the `auth.users` table.
 - updated_at: TIMESTAMPTZ NOT NULL DEFAULT now()
 
 **Theme Preference Column:**
+
 - **Purpose**: Stores user's preferred theme mode (light, dark, or system)
 - **Default**: 'system' (follows OS theme preference)
 - **Validation**: CHECK constraint ensures only valid values ('light', 'dark', 'system')
@@ -196,7 +198,7 @@ All tables must have RLS enabled.
 - **Box Short ID Generation:** `BEFORE INSERT` on `boxes`. Generates random 10 char alphanumeric string.
 - **QR Short ID Generation:** `BEFORE INSERT` on `qr_codes`. Generates unique short_id with format `QR-XXXXXX` (6 chars).
 - **Updated At:** `moddatetime` extension trigger on `profiles`, `workspaces`, `locations`, `boxes`.
-- **New User Handling:** `AFTER INSERT` on `auth.users`. Creates `profile` and default `workspace`.
+- **New User Handling:** `AFTER INSERT` on `auth.users`. Creates `profile` and default `workspace` with name "My Workspace". This trigger is the **ONLY** mechanism for creating workspaces on signup - frontend code should NOT create workspaces directly.
 - **Workspace Owner Assignment:** `AFTER INSERT` on `workspaces`. Automatically adds the workspace owner to `workspace_members` with role 'owner'. Ensures atomicity and data integrity.
 - **Box Deletion Handler:** `BEFORE DELETE` on `boxes`. Resets linked QR code: sets `box_id` to NULL and `status` to 'generated' for reuse.
 - **Search Vector Update:** Generated column on `boxes`. Automatically updates `search_vector` from name, tags, description.
@@ -225,12 +227,14 @@ All tables must have RLS enabled.
    - Comprehensive error handling with Polish user-friendly messages
 
 **Why HttpOnly Cookies Instead of Authorization Header?**
+
 - ✅ XSS Protection: JavaScript cannot access HttpOnly cookies
 - ✅ CSRF Protection: SameSite=Strict prevents cross-site cookie transmission
 - ✅ Automatic Transmission: Cookies sent by browser without explicit header
 - ❌ Authorization Header: Tokens visible to JavaScript (XSS risk)
 
 **Why JWT Fallback in Middleware?**
+
 - Provides resilience if Supabase auth temporarily fails
 - JWT decoded without verification (we trust our own tokens from session endpoint)
 - Graceful degradation: All 14 API endpoints still authenticate successfully
@@ -239,11 +243,13 @@ All tables must have RLS enabled.
 ### 6.2 Location Hierarchy (ltree) Optimization
 
 **Original Issue:**
+
 - PostgREST API doesn't support PostgreSQL's ltree operators (~, @>, <@, etc.)
 - Attempt to use ltree operators in queries resulted in: `operator does not exist: ltree ~~ unknown`
 - Blocked entire location feature implementation
 
 **Solution Implemented:**
+
 - Fetch all locations in single efficient query without ltree operators
 - In-memory filtering using JavaScript to derive hierarchical structure
 - Two key functions in `src/lib/services/location.service.ts`:
@@ -251,11 +257,13 @@ All tables must have RLS enabled.
   - `getAllLocationChildren()`: Filters children by comparing path segments
 
 **Performance Impact:**
+
 - ✅ Faster: Single query + JS filtering faster than complex SQL operators
 - ✅ Simpler: No dependency on PostgREST ltree operator support
 - ✅ Maintainable: JavaScript filtering is easier to debug than SQL operators
 
 **Example Query Pattern:**
+
 ```sql
 -- Instead of:
 SELECT * FROM locations WHERE path ~ 'root.garage.*'
@@ -295,11 +303,13 @@ const children = locations.filter(loc =>
 ### 6.4 Migration Strategy & Version Control
 
 **Current Migration Files:**
+
 - `20251212120000_initial_schema.sql` - Initial database setup with all tables, enums, RLS policies
 - `20251214120000_workspace_creation_trigger.sql` - Workspace owner auto-assignment
 - `20260102182001_add_theme_preference_to_profiles.sql` - Added theme_preference column to profiles table
 
 **Future Migration Guidelines:**
+
 - Use UTC timestamps in naming: `YYYYMMDDHHmmss_description.sql`
 - Include comments explaining purpose and impact
 - Test migrations locally before deploying to production
@@ -321,6 +331,7 @@ const children = locations.filter(loc =>
 | qr_codes | All | `is_workspace_member(workspace_id)` |
 
 **Helper Function:**
+
 ```sql
 CREATE FUNCTION is_workspace_member(_workspace_id uuid)
 RETURNS boolean AS $$
@@ -337,6 +348,7 @@ This ensures all workspace-scoped data is accessible only to workspace members.
 ### 6.6 Schema Implementation Completeness
 
 **✅ Fully Implemented Features:**
+
 1. All 6 core tables (profiles, workspaces, workspace_members, locations, boxes, qr_codes)
 2. All PostgreSQL extensions (uuid-ossp, ltree, moddatetime, pg_trgm, unaccent)
 3. All enums (user_role, qr_status)
@@ -347,6 +359,7 @@ This ensures all workspace-scoped data is accessible only to workspace members.
 8. Workspace owner auto-assignment (added 2025-12-14)
 
 **⚠️ Pending Implementation:**
+
 1. RLS policy enablement (all policies defined but commented out in migration)
 
 **Schema Matches Documentation:** 100% (except RLS enablement)
@@ -587,6 +600,7 @@ USING (auth.uid() = id);
 See GitHub Issue #[TBD] for comprehensive RLS testing procedures.
 
 **Quick Test:**
+
 ```sql
 -- As User A, try to access User B's workspace
 SELECT * FROM boxes WHERE workspace_id = '<user-b-workspace-id>';
@@ -598,7 +612,8 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 ```
 
 **Integration Test Scenarios:**
-1. Create 2 test users (userA@test.com, userB@test.com)
+
+1. Create 2 test users (<userA@test.com>, <userB@test.com>)
 2. Each user creates 1 workspace
 3. Each user creates locations, boxes, QR codes
 4. Verify User A **CANNOT** SELECT/UPDATE/DELETE User B's data
@@ -609,6 +624,7 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 ### 10.5. Security Considerations
 
 **Why RLS is Critical:**
+
 - **Data Isolation:** Ensures users can only access their own workspace data
 - **Multi-Tenant Security:** Prevents cross-workspace data leakage
 - **Defense in Depth:** Even if application logic fails, database enforces isolation
@@ -616,6 +632,7 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 - **Zero Trust:** Database-level security independent of application layer
 
 **✅ Current Security Status:**
+
 - ✅ **RLS ENABLED** on all 6 tables (workspaces, workspace_members, locations, boxes, qr_codes, profiles)
 - ✅ **22+ granular policies** enforcing multi-tenant data isolation
 - ✅ **Helper function** `is_workspace_member(uuid)` deployed and tested
@@ -624,6 +641,7 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 - ✅ **Migration applied** locally and ready for staging/production deployment
 
 **Testing Results:**
+
 - ✅ Cross-workspace isolation: 5/5 tests passed
 - ✅ Role-based access: 2/2 tests passed
 - ✅ Users cannot access other workspaces' data
@@ -631,11 +649,13 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 - ✅ API endpoints respect RLS policies
 
 **Deployment Status:**
+
 - ✅ Local environment: RLS fully deployed and tested
 - ⏳ Staging environment: Ready for deployment (migration prepared)
 - ⏳ Production environment: Awaiting production DB setup
 
 **References:**
+
 - Migration: `supabase/migrations/20260106200458_enable_rls_policies.sql`
 - Testing Guide: `.ai_docs/RLS_TESTING_GUIDE.md`
 - Deployment Guide: `.ai_docs/RLS_DEPLOYMENT_GUIDE.md`

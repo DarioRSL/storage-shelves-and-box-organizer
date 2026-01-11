@@ -89,29 +89,43 @@ export async function createWorkspace(
   data: CreateWorkspaceRequest
 ): Promise<{ data: WorkspaceDto | null; error: Error | null }> {
   try {
-    // Insert workspace
-    // The database trigger will automatically add the user to workspace_members
-    const { data: workspace, error: workspaceError } = await supabase
-      .from("workspaces")
-      .insert({
-        owner_id: userId,
-        name: data.name,
-      })
-      .select()
-      .single();
+    // Call database function with SECURITY DEFINER to bypass RLS policies
+    // This function will create the workspace and the trigger will add the owner to workspace_members
+    const { data: workspaceId, error: functionError } = await supabase.rpc("create_workspace_for_user", {
+      p_user_id: userId,
+      p_workspace_name: data.name,
+    });
 
-    if (workspaceError) {
-      log.error("Failed to create workspace", { error: workspaceError.message, code: workspaceError.code });
+    if (functionError) {
+      log.error("Failed to create workspace via function", {
+        error: functionError.message,
+        code: functionError.code,
+      });
       return {
         data: null,
         error: new Error("Failed to create workspace"),
       };
     }
 
-    if (!workspace) {
+    if (!workspaceId) {
       return {
         data: null,
-        error: new Error("Workspace creation returned no data"),
+        error: new Error("Workspace creation returned no ID"),
+      };
+    }
+
+    // Fetch the created workspace to return full data
+    const { data: workspace, error: fetchError } = await supabase
+      .from("workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .single();
+
+    if (fetchError || !workspace) {
+      log.error("Failed to fetch created workspace", { workspaceId, error: fetchError?.message });
+      return {
+        data: null,
+        error: new Error("Failed to retrieve created workspace"),
       };
     }
 

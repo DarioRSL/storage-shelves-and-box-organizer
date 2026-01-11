@@ -5,101 +5,75 @@ import type { Database } from "../db/database.types.ts";
 import { loggerMiddleware } from "@/lib/services/logger.middleware";
 
 const authMiddleware = defineMiddleware(async (context, next) => {
-  // Parse cookies from request headers using proper cookie parser
+  // Parse cookies from request headers
   const cookieString = context.request.headers.get("cookie") || "";
   const cookies = parse(cookieString);
 
-  // Check for sb_session HttpOnly cookie (set by /api/auth/session)
-  const sessionToken = cookies.sb_session;
+  // Get session data from custom session cookie
+  const sessionCookie = cookies.sb_session;
+  let sessionData: { access_token: string; refresh_token: string } | null = null;
+
+  if (sessionCookie) {
+    try {
+      sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+    } catch {
+      // Invalid session data, continue without auth
+    }
+  }
 
   // Store cookies to set in response later
   const cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[] = [];
 
-  // Create Supabase client using @supabase/ssr
-  // This handles cookie-based session management automatically
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        return Object.entries(cookies).map(([name, value]) => ({
-          name,
-          value: value ? decodeURIComponent(value) : "",
-        }));
+  // Create Supabase client
+  const supabase = createServerClient<Database>(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return Object.entries(cookies).map(([name, value]) => ({
+            name,
+            value: value || "",
+          }));
+        },
+        setAll(cookiesToSet_) {
+          cookiesToSet.push(...cookiesToSet_);
+        },
       },
-      setAll(cookiesToSet_) {
-        // Store cookies to be set after response
-        cookiesToSet.push(...cookiesToSet_);
-      },
-    },
-  });
-
-  // Make supabase client available to routes via context.locals
-  context.locals.supabase = supabase;
-
-  // Get authenticated user from session (cookies) OR from session token
-  let user = null;
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error && data?.user) {
-      user = data.user;
-    } else if (sessionToken) {
-      // If no user from cookies, try to extract from sb_session token
-      // Decode JWT without verification (we trust tokens from our own client)
-      try {
-        const parts = sessionToken.split(".");
-        if (parts.length !== 3) {
-          throw new Error("Invalid JWT format");
-        }
-
-        // Decode the payload (second part of JWT)
-        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8")) as {
-          sub?: string;
-          email?: string;
-          role?: string;
-          aud?: string;
-          user_metadata?: Record<string, unknown>;
-        };
-
-        // Create a user-like object from the JWT payload
-        if (payload.sub && payload.email) {
-          user = {
-            id: payload.sub,
-            email: payload.email,
-            user_metadata: payload.user_metadata || {},
-            aud: payload.aud || "authenticated",
-            role: payload.role,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            last_sign_in_at: new Date().toISOString(),
-            app_metadata: {},
-            phone: null,
-            email_confirmed_at: null,
-            phone_confirmed_at: null,
-            confirmed_at: new Date().toISOString(),
-            is_anonymous: false,
-          };
-
-          // Set JWT in Supabase client so RLS policies can check auth.uid()
-          // Manually set the session with the JWT token and empty refresh token
-          await supabase.auth.setSession({
-            access_token: sessionToken,
-            refresh_token: "",
-          });
-        }
-      } catch {
-        // Failed to decode session token, continue without user
-      }
     }
-  } catch {
-    // User not authenticated or session invalid, continue without user
+  );
+
+  // Get authenticated user and set session for RLS policies
+  let user = null;
+
+  if (sessionData) {
+    try {
+      // Set session with both access and refresh tokens - this enables auth.uid() in RLS policies
+      await supabase.auth.setSession({
+        access_token: sessionData.access_token,
+        refresh_token: sessionData.refresh_token,
+      });
+
+      // Verify session by getting user
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data?.user) {
+        user = data.user;
+      }
+    } catch {
+      // Continue without user
+    }
   }
 
-  // Make user available to routes via context.locals
+  // Make supabase client available to routes
+  context.locals.supabase = supabase;
+
+  // Make user available to routes
   context.locals.user = user;
 
-  // Process the request and get the response
+  // Process request
   const response = await next();
 
-  // Set any cookies that Supabase needs to set
+  // Set any cookies that Supabase needs
   cookiesToSet.forEach(({ name, value, options }) => {
     response.headers.append(
       "Set-Cookie",
@@ -112,7 +86,4 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   return response;
 });
 
-export const onRequest = sequence(
-  loggerMiddleware, // Run first to capture all requests
-  authMiddleware // Then authenticate
-);
+export const onRequest = sequence(loggerMiddleware, authMiddleware);

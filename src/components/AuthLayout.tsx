@@ -33,11 +33,22 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
     if (typeof window !== "undefined") {
       log.info("AuthLayout sending token to session endpoint");
 
+      // Clear any old workspace ID from localStorage before redirecting
+      // This ensures the new user starts with a clean slate
+      try {
+        localStorage.removeItem("currentWorkspaceId");
+      } catch {
+        // Ignore localStorage errors
+      }
+
       fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ token: data.token }),
+        body: JSON.stringify({
+          token: data.token,
+          refreshToken: data.refreshToken
+        }),
       })
         .then(async (res) => {
           log.info("AuthLayout session response received", { status: res.status });
