@@ -34,6 +34,14 @@ npm run lint             # Check for code quality issues
 npm run lint:fix         # Auto-fix linting issues
 npm run format           # Format code with Prettier
 
+# Testing
+npm run test             # Run all unit/integration tests
+npm run test:unit        # Run unit tests only
+npm run test:integration # Run integration tests only
+npm run test:e2e         # Run E2E tests with Playwright
+npm run test:watch       # Watch mode for TDD
+npm run test:coverage    # Generate coverage report
+
 # Build & Deploy
 npm run build            # Build for production to dist/
 npm run preview          # Preview production build locally
@@ -160,148 +168,254 @@ See `.ai_docs/api-plan.md` for complete API specification.
 - Auto-generated in `src/db/database.types.ts`
 - Entity types and DTOs should be defined in `src/types.ts` for frontend/backend sharing
 
-**Authentication: HttpOnly Cookie-Based System**
+## Testing
 
-Authentication uses secure HttpOnly cookies for XSS and CSRF protection:
+**Test Framework:** Vitest (unit/integration), Playwright (E2E), Supertest (API)
 
-1. **Login Flow:**
-   - User logs in via Supabase on `/auth` page
-   - `AuthLayout` component receives JWT token
-   - Token sent to `POST /api/auth/session` endpoint (body, not URL)
-   - Endpoint validates JWT and sets HttpOnly cookie `sb_session`
+**Location:** `tests/` directory
 
-2. **Session Cookie Properties:**
-   - **HttpOnly**: Prevents JavaScript access (XSS protection)
-   - **Secure**: Only HTTPS in production
-   - **SameSite=Strict**: Only same-origin requests (CSRF protection)
-   - **Max-Age=3600**: 1 hour expiration
-   - **Path=/**: Available to all routes
+**Structure:**
+- `tests/unit/` - Unit tests for services, utilities, validation logic
+- `tests/integration/` - API integration tests with Supertest
+- `tests/e2e/` - End-to-end tests with Playwright (Chromium only)
+- `tests/fixtures/` - Test data and fixtures
+- `tests/helpers/` - Test utilities and helper functions
+- `tests/setup.ts` - Global Vitest setup
 
-3. **API Requests:**
-   - Use `apiFetch()` from `src/lib/api-client.ts` which includes `credentials: 'include'`
-   - Cookies automatically sent with all requests
-   - Middleware extracts `sb_session` and authenticates user
+**Guidelines:** Follow `.claude/commands/guideline_testing.md` for:
+- Vitest: Use `vi` object for mocks/spies, factory patterns, inline snapshots
+- Playwright: Chromium only, Page Object Model, browser contexts for isolation
+- Supertest: async/await, test database setup/teardown with beforeEach/afterEach
 
-4. **Middleware Authentication (Updated Implementation):**
-   - Parses cookies from request headers using `cookie` package
-   - Extracts `sb_session` token
-   - **Primary:** Attempts Supabase auth via cookies
-   - **Fallback:** Decodes JWT directly from `sb_session` (trusted internal source)
-   - **NEW:** Sets JWT in Supabase client via `supabase.auth.setSession()` for RLS policies
-   - Makes user available via `context.locals.user`
-   - Makes authenticated Supabase client available via `context.locals.supabase`
+**Coverage Target:** 80% (lines, functions, branches, statements)
 
-5. **API Endpoint Pattern (Updated):**
-   - **All 14 API endpoints** now use pre-authenticated `context.locals.user` from middleware
-   - ❌ **Removed:** Redundant `supabase.auth.getUser()` calls in endpoints
-   - ✅ **Now uses:** Direct `const user = locals.user;` check
-   - Supabase client has JWT context (from middleware) for RLS policy authorization
-   - Service layer can use authenticated client for database queries
+See `TESTING.md` for complete testing documentation.
 
-   **Example Endpoint Pattern:**
-   ```typescript
-   export const GET: APIRoute = async ({ locals }) => {
-     const supabase = locals.supabase;  // Has JWT context from middleware
-     const user = locals.user;           // Already authenticated
+# AI Rules for {{project-name}}
 
-     if (!user) {
-       return new Response(...401);
-     }
+{{project-description}}
 
-     // Supabase client now has auth.uid() context for RLS policies
-     const result = await getWorkspaces(supabase, user.id);
-     return new Response(JSON.stringify(result), { status: 200 });
-   };
-   ```
+## FRONTEND
 
-6. **Logout:**
-   - Client calls `DELETE /api/auth/session`
-   - Endpoint clears `sb_session` cookie by setting `Max-Age=0`
+### Guidelines for ASTRO
 
-**Security Considerations:**
+#### ASTRO_CODING_STANDARDS
 
-✅ JWT tokens never exposed in URL or Authorization header
-✅ Tokens never accessible to JavaScript (HttpOnly flag)
-✅ CSRF tokens sent only to same-origin (SameSite=Strict)
-✅ API endpoints use pre-authenticated `context.locals.user` (no re-authentication)
-✅ RLS policies can enforce authorization via `auth.uid()` in Supabase client
-✅ OWASP Top 10 compliant (XSS, CSRF, session hijacking protections)
+- Use Astro components (.astro) for static content and layout
+- Implement framework components in {{framework_name}} only when interactivity is needed
+- Leverage View Transitions API for smooth page transitions
+- Use content collections with type safety for blog posts, documentation, etc.
+- Implement middleware for request/response modification
+- Use image optimization with the Astro Image integration
+- Leverage Server Endpoints for API routes
+- Implement hybrid rendering with server-side rendering where needed
+- Use Astro.cookies for server-side cookie management
+- Leverage import.meta.env for environment variables
 
-**For Detailed Documentation:**
-See `.ai_docs/AUTHENTICATION_ARCHITECTURE.md` section 13 for complete implementation details.
+#### ASTRO_ISLANDS
 
-**Important Session Hygiene:**
+- Use client:visible directive for components that should hydrate when visible in viewport
+- Implement shared state with nanostores instead of prop drilling between islands
+- Use content collections for type-safe content management of structured content
+- Leverage client:media directive for components that should only hydrate at specific breakpoints
+- Implement partial hydration strategies to minimize JavaScript sent to the client
+- Use client:only for components that should never render on the server
+- Leverage client:idle for non-critical UI elements that can wait until the browser is idle
+- Implement client:load for components that should hydrate immediately
+- Use Astro's transition:* directives for view transitions between pages
+- Leverage props for passing data from Astro to framework components
 
-When users authenticate (login or signup), always clear any persisted workspace state to prevent 403 errors:
-```typescript
-// Clear workspace ID from localStorage on successful auth
-localStorage.removeItem("currentWorkspaceId");
-```
 
-This pattern is implemented in:
-- `src/components/AuthLayout.tsx:36-42` - Clears on successful login/signup
-- `src/components/hooks/useWorkspaces.ts:24-30` - Validates workspace exists for user
+### Guidelines for STYLING
 
-## React Component Patterns
+#### TAILWIND
 
-- **Static content:** Use `.astro` components
-- **Interactive UI:** Use React components with Astro integration
-- Never use `"use client"` directive (that's Next.js specific)
-- Custom hooks go in `src/components/hooks/`
-- Use `React.memo()`, `useCallback()`, `useMemo()` for optimization
-- Leverage `useOptimistic()` for optimistic UI updates
-- Use `useId()` for accessibility IDs
+- Use the @layer directive to organize styles into components, utilities, and base layers
+- Implement Just-in-Time (JIT) mode for development efficiency and smaller CSS bundles
+- Use arbitrary values with square brackets (e.g., w-[123px]) for precise one-off designs
+- Leverage the @apply directive in component classes to reuse utility combinations
+- Implement the Tailwind configuration file for customizing theme, plugins, and variants
+- Use component extraction for repeated UI patterns instead of copying utility classes
+- Leverage the theme() function in CSS for accessing Tailwind theme values
+- Implement dark mode with the dark: variant
+- Use responsive variants (sm:, md:, lg:, etc.) for adaptive designs
+- Leverage state variants (hover:, focus:, active:, etc.) for interactive elements
 
-## Code Quality & Style
+#### STYLED_COMPONENTS
 
-**Error Handling:**
+- Use the ThemeProvider for consistent theming across components
+- Implement the css helper for sharing styles between components
+- Use props for conditional styling within template literals
+- Leverage the createGlobalStyle for global styling
+- Implement attrs method to pass HTML attributes to the underlying DOM elements
+- Use the as prop for dynamic component rendering
+- Leverage styled(Component) syntax for extending existing components
+- Implement the css prop for one-off styling needs
+- Use the & character for nesting selectors
+- Leverage the keyframes helper for animations
 
-- Handle errors and edge cases at the beginning of functions
-- Use early returns to avoid nested conditionals
-- Place happy path last for readability
-- Log errors appropriately and return user-friendly messages
 
-**Astro Specific:**
+### Guidelines for ACCESSIBILITY
 
-- Use View Transitions API for smooth page navigation
-- Use `Astro.cookies` for server-side cookie management
-- Access environment variables via `import.meta.env`
-- Prefer SSR over SSG for authenticated routes
+#### MOBILE_ACCESSIBILITY
 
-**Tailwind:**
+- Ensure touch targets are at least 44 by 44 pixels for comfortable interaction on mobile devices
+- Implement proper viewport configuration to support pinch-to-zoom and prevent scaling issues
+- Design layouts that adapt to both portrait and landscape orientations without loss of content
+- Support both touch and keyboard navigation for hybrid devices with {{input_methods}}
+- Ensure interactive elements have sufficient spacing to prevent accidental activation
+- Test with mobile screen readers like VoiceOver (iOS) and TalkBack (Android)
+- Design forms that work efficiently with on-screen keyboards and autocomplete functionality
+- Implement alternatives to complex gestures that require fine motor control
+- Ensure content is accessible when device orientation is locked for users with fixed devices
+- Provide alternatives to motion-based interactions for users with vestibular disorders
 
-- Use Tailwind 4 syntax
-- Leverage `dark:` variant for dark mode
-- Use responsive variants (`sm:`, `md:`, `lg:`)
-- Arbitrary values with square brackets for one-offs (`w-[123px]`)
+#### ACCESSIBILITY_TESTING
 
-## Accessibility
+- Test keyboard navigation to verify all interactive elements are operable without a mouse
+- Verify screen reader compatibility with NVDA, JAWS, and VoiceOver for {{critical_user_journeys}}
+- Use automated testing tools like Axe, WAVE, or Lighthouse to identify common accessibility issues
+- Check color contrast using tools like Colour Contrast Analyzer for all text and UI components
+- Test with page zoomed to 200% to ensure content remains usable and visible
+- Perform manual accessibility audits using WCAG 2.2 checklist for key user flows
+- Test with voice recognition software like Dragon NaturallySpeaking for voice navigation
+- Validate form inputs have proper labels, instructions, and error handling mechanisms
+- Conduct usability testing with disabled users representing various disability types
+- Implement accessibility unit tests for UI components to prevent regression
 
-- Use semantic HTML first, ARIA attributes when necessary
-- Implement ARIA landmarks (main, navigation, search)
-- Use `aria-label`, `aria-labelledby`, `aria-describedby` appropriately
-- Set `aria-expanded` and `aria-controls` for expandable content
-- Use `aria-live` regions for dynamic content updates
-- Avoid redundant ARIA on semantic elements
+#### ARIA
 
-## Testing & Linting
+- Use ARIA landmarks to identify regions of the page (main, navigation, search, etc.)
+- Apply appropriate ARIA roles to custom interface elements that lack semantic HTML equivalents
+- Set aria-expanded and aria-controls for expandable content like accordions and dropdowns
+- Use aria-live regions with appropriate politeness settings for dynamic content updates
+- Implement aria-hidden to hide decorative or duplicative content from screen readers
+- Apply aria-label or aria-labelledby for elements without visible text labels
+- Use aria-describedby to associate descriptive text with form inputs or complex elements
+- Implement aria-current for indicating the current item in a set, navigation, or process
+- Avoid redundant ARIA that duplicates the semantics of native HTML elements
+- Apply aria-invalid and appropriate error messaging for form validation in {{form_validation}}
 
-- Run `npm run lint` before commits (enforced by Husky pre-commit hook)
-- Lint-staged automatically fixes `.ts`, `.tsx`, `.astro` files
-- ESLint configuration in `eslint.config.js`
-- Prettier configuration in `.prettierrc.json`
+#### WCAG_UNDERSTANDABLE
 
-## Important References
+- Specify the human language of the page and any language changes using lang attributes
+- Ensure components with the same functionality have consistent identification and behavior across {{application_sections}}
+- Provide clear labels, instructions, and error messages for user inputs and {{form_elements}}
+- Implement error prevention for submissions with legal or financial consequences (confirmation, review, undo)
+- Make navigation consistent across the site with predictable patterns for menus and interactive elements
+- Ensure that receiving focus or changing settings does not automatically trigger unexpected context changes
+- Design context-sensitive help for complex interactions including validated input formats
+- Use clear language and define unusual terms, abbreviations, and jargon for {{domain_specific_content}}
+- Provide visual and programmatic indication of current location within navigation systems
 
-- **Project Roadmap:** `.ai_docs/ROADMAP.md` ← **SINGLE SOURCE OF TRUTH**
-- **Database Schema:** `.ai_docs/db-plan.md` (includes RLS policies)
-- **API Specification:** `.ai_docs/api-plan.md`
-- **Product Requirements:** `.ai_docs/prd.md`
-- **Tech Stack Details:** `.ai_docs/tech-stack.md`
-- **Contribution Guidelines:** `.ai_docs/CONTRIBUTING.md`
+#### WCAG_OPERABLE
 
-### Documentation Organization
+- Make all functionality accessible via keyboard with visible focus indicators for {{interactive_elements}}
+- Avoid keyboard traps where focus cannot move away from a component via standard navigation
+- Provide mechanisms to extend, adjust, or disable time limits if present in {{timed_interactions}}
+- Avoid content that flashes more than three times per second to prevent seizure triggers
+- Implement skip navigation links to bypass blocks of repeated content across pages
+- Use descriptive page titles, headings, and link text that indicate purpose and destination
+- Ensure focus order matches the visual and logical sequence of information presentation
+- Support multiple ways to find content (search, site map, logical navigation hierarchy)
+- Allow pointer gesture actions to be accomplished with a single pointer without path-based gestures
+- Implement pointer cancellation to prevent unintended function activation, especially for {{critical_actions}}
 
-Active documentation is in `.ai_docs/` (15 files). Historical documentation (71 files from MVP phase) is archived in `.ai_docs/ARCHIVE/` for reference.
+## CODING_PRACTICES
 
-**For current project status, milestones, and feature backlog, always refer to `.ai_docs/ROADMAP.md`.**
+### Guidelines for DOCUMENTATION
+
+#### DOC_UPDATES
+
+- Update relevant documentation in /docs when modifying features
+- Keep README.md in sync with new capabilities
+- Maintain changelog entries in CHANGELOG.md
+
+#### SWAGGER
+
+- Define comprehensive schemas for all request and response objects
+- Use semantic versioning in API paths to maintain backward compatibility
+- Implement detailed descriptions for endpoints, parameters, and {{domain_specific_concepts}}
+- Configure security schemes to document authentication and authorization requirements
+- Use tags to group related endpoints by resource or functional area
+- Implement examples for all endpoints to facilitate easier integration by consumers
+
+
+### Guidelines for STATIC_ANALYSIS
+
+#### PRETTIER
+
+- Define a consistent .prettierrc configuration across all {{project_repositories}}
+- Configure editor integration to format on save for immediate feedback
+- Use .prettierignore to exclude generated files, build artifacts, and {{specific_excluded_patterns}}
+- Set printWidth based on team preferences (80-120 characters) to improve code readability
+- Configure consistent quote style and semicolon usage to match team conventions
+- Implement CI checks to ensure all committed code adheres to the defined style
+
+#### CODECOV
+
+- Set minimum coverage thresholds for {{critical_code_paths}} to ensure adequate testing
+- Configure path-specific coverage targets based on risk assessment
+- Use coverage flags to categorize tests (unit, integration, e2e) for better reporting
+- Implement coverage checks in CI/CD pipelines to prevent coverage regression
+- Configure branch coverage in addition to line coverage for more thorough analysis
+- Set up pull request comments to highlight coverage changes during review
+
+#### ESLINT
+
+- Configure project-specific rules in eslint.config.js to enforce consistent coding standards
+- Use shareable configs like eslint-config-airbnb or eslint-config-standard as a foundation
+- Implement custom rules for {{project_specific_patterns}} to maintain codebase consistency
+- Configure integration with Prettier to avoid rule conflicts for code formatting
+- Use the --fix flag in CI/CD pipelines to automatically correct fixable issues
+- Implement staged linting with husky and lint-staged to prevent committing non-compliant code
+
+
+### Guidelines for ARCHITECTURE
+
+#### ADR
+
+- Create ADRs in /docs/adr/{name}.md for:
+- 1) Major dependency changes
+- 2) Architectural pattern changes
+- 3) New integration patterns
+- 4) Database schema changes
+
+#### CLEAN_ARCHITECTURE
+
+- Strictly separate code into layers: entities, use cases, interfaces, and frameworks
+- Ensure dependencies point inward, with inner layers having no knowledge of outer layers
+- Implement domain entities that encapsulate {{business_rules}} without framework dependencies
+- Use interfaces (ports) and implementations (adapters) to isolate external dependencies
+- Create use cases that orchestrate entity interactions for specific business operations
+- Implement mappers to transform data between layers to maintain separation of concerns
+
+#### DDD
+
+- Define bounded contexts to separate different parts of the domain with clear boundaries
+- Implement ubiquitous language within each context to align code with business terminology
+- Create rich domain models with behavior, not just data structures, for {{core_domain_entities}}
+- Use value objects for concepts with no identity but defined by their attributes
+- Implement domain events to communicate between bounded contexts
+- Use aggregates to enforce consistency boundaries and transactional integrity
+
+#### MICROSERVICES
+
+- Design services around business capabilities rather than technical functions
+- Implement API gateways to handle cross-cutting concerns for {{client_types}}
+- Use event-driven communication for asynchronous operations between services
+- Implement circuit breakers to handle failures gracefully in distributed systems
+- Design for eventual consistency in data that spans multiple services
+- Implement service discovery and health checks for robust system operation
+
+
+### Guidelines for VERSION_CONTROL
+
+#### GITHUB
+
+- Use pull request templates to standardize information provided for code reviews
+- Implement branch protection rules for {{protected_branches}} to enforce quality checks
+- Configure required status checks to prevent merging code that fails tests or linting
+- Use GitHub Actions for CI/CD workflows to automate testing and deployment
+- Implement CODEOWNERS files to automatically assign reviewers based on code paths
+- Use GitHub Projects for tracking work items and connecting them to code changes

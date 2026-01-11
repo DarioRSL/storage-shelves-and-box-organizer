@@ -1,6 +1,6 @@
 # Tech Stack - Storage & Box Organizer
 
-**Last Updated:** January 2, 2026
+**Last Updated:** January 11, 2026
 **Status:** ✅ **Production-Ready**
 **Node Version:** 22.14.0 (LTS)
 **Package Manager:** npm
@@ -19,6 +19,10 @@
 | **Database** | PostgreSQL | 15.x | ✅ RLS ready |
 | **Validation** | Zod | Latest | ✅ Type-safe |
 | **Package Manager** | npm | 10.x | ✅ Lock file |
+| **Unit Testing** | Vitest | 1.x | 🔄 Planned |
+| **E2E Testing** | Playwright | 1.x | 🔄 Planned |
+| **API Testing** | Supertest | Latest | 🔄 Planned |
+| **Coverage** | Codecov | Latest | 🔄 Planned |
 
 ## Frontend Framework
 
@@ -145,6 +149,105 @@
   - App Platform for Astro deployment
   - PostgreSQL managed database
   - Automatic SSL certificates
+
+## Testing & Quality Assurance
+
+### Testing Frameworks
+
+- **Vitest 1.x** - Unit & Integration Testing
+  - Native Vite integration for fast execution
+  - TypeScript support out of the box
+  - Snapshot testing and mocking capabilities
+  - Coverage reporting with c8 or istanbul
+  - Use cases: Service layer, utilities, validation logic
+  - Target: 80% code coverage
+
+- **Playwright 1.x** - End-to-End Testing
+  - Cross-browser support (Chrome, Firefox, Safari, Edge)
+  - Mobile device emulation
+  - Network throttling and offline testing
+  - Parallel test execution
+  - Auto-waiting and video/screenshot capture
+  - Use cases: Critical user workflows, visual regression
+
+- **Supertest** - API Testing
+  - Express-style API endpoint testing
+  - Integrates seamlessly with Vitest
+  - Chainable assertions for HTTP requests
+  - Cookie and session handling
+  - Use cases: REST endpoint validation
+
+### Testing Tools & Coverage
+
+- **c8 / Istanbul** - Code coverage tools
+  - Integrated with Vitest
+  - HTML and LCOV report generation
+  - Coverage thresholds enforcement
+
+- **Codecov** - Coverage reporting
+  - Tracks coverage trends over time
+  - PR integration for coverage diffs
+  - Team dashboards
+
+### Security Testing
+
+- **OWASP ZAP** - Automated vulnerability scanning
+  - OWASP Top 10 coverage
+  - CI/CD integration support
+  - Free and open source
+
+- **Burp Suite Community Edition** - Manual security testing
+  - Proxy interception for request inspection
+  - Request tampering for security validation
+  - Penetration testing workflows
+
+### Performance Testing
+
+- **Artillery 2.x** - Load testing
+  - Scenario-based API load testing
+  - Real-time metrics and reporting
+  - Support for complex user flows
+
+- **Lighthouse** - Frontend performance auditing
+  - Core Web Vitals measurement (FCP, LCP, CLS, TTI)
+  - Progressive Web App validation
+  - Built into Chrome DevTools
+
+- **k6 (Grafana)** - Advanced load testing
+  - JavaScript-based test scripting
+  - Real-time dashboards
+  - Scalability testing
+
+### Accessibility Testing
+
+- **axe DevTools** - Automated WCAG checks
+  - Browser extension for real-time audits
+  - WCAG 2.1 Level AA compliance validation
+  - Detailed remediation guidance
+
+- **WAVE** - Visual accessibility audit
+  - Color contrast analyzer
+  - Structural markup review
+  - Browser extension
+
+- **Screen Readers**
+  - NVDA (Windows) - Free, JAWS-compatible
+  - VoiceOver (macOS) - Built-in system tool
+
+### Database Testing
+
+- **Supabase CLI** - Local development
+  - Local PostgreSQL instance with Docker
+  - Migration testing and validation
+  - RLS policy testing in isolation
+
+- **pgTAP** - Database unit testing
+  - Unit tests for PostgreSQL functions
+  - Trigger and constraint validation
+
+- **pg_prove** - TAP test runner
+  - Executes pgTAP test suites
+  - CI/CD integration
 
 ## Development Tools
 
@@ -326,3 +429,4 @@
 - **Location System:** See LOCATION_SERVICE_OPTIMIZATION.md for hierarchy implementation
 - **API Specification:** See api-plan.md for all endpoints
 - **Database Schema:** See db-plan.md for tables and relationships
+- **Testing Strategy:** See tests/TEST_PLAN.md for comprehensive test plan
