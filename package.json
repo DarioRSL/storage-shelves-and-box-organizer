@@ -20,7 +20,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e"
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:verify": "dotenv -e .env.test -- npx tsx tests/verify-test-setup.ts",
+    "test:verify-phase1": "dotenv -e .env.test -- npx tsx tests/verify-phase1.ts"
   },
   "dependencies": {
     "@astrojs/node": "^9.4.3",
@@ -69,6 +71,7 @@
     "@typescript-eslint/parser": "8.28.0",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
+    "dotenv-cli": "^11.0.0",
     "eslint": "9.23.0",
     "eslint-config-prettier": "10.1.1",
     "eslint-import-resolver-typescript": "4.2.5",
