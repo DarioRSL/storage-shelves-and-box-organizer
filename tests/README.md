@@ -2,6 +2,36 @@
 
 This directory contains all tests for the Storage & Box Organizer application.
 
+## Phase 0: Integration Test Setup ✅
+
+**Status**: Complete and ready for verification
+
+The test infrastructure has been set up with:
+- **Test Supabase Configuration**: `supabase/config.test.toml` (ports 54421-54422)
+- **Environment Variables**: `.env.test` with test database credentials
+- **Test Helpers** (4 critical files created):
+  - `tests/helpers/supabase-test-client.ts` - Supabase client management
+  - `tests/helpers/db-setup.ts` - Database cleanup and seeding
+  - `tests/helpers/auth-helper.ts` - User authentication helpers
+  - `tests/helpers/factory.ts` - Test data factories
+
+### Running Phase 0 Verification
+
+```bash
+# Start test Supabase instance (different ports than dev)
+supabase start --config supabase/config.test.toml
+
+# Run verification script
+npm run test:verify
+```
+
+The verification script checks:
+- ✓ Environment variables loaded correctly
+- ✓ Database connection works
+- ✓ All required tables exist (profiles, workspaces, locations, boxes, qr_codes)
+- ✓ Helper functions work correctly (create user, workspace, location, box)
+- ✓ RLS policies are enabled
+
 ## Directory Structure
 
 ```
