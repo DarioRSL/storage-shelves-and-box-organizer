@@ -94,7 +94,6 @@ export function createRootLocationFixture(
     workspace_id: workspaceId,
     name: locationName,
     description: `Root level location`,
-    parent_id: null,
     path: `root.${slug}`,
   };
 }

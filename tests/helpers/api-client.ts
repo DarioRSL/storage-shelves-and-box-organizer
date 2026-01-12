@@ -5,7 +5,7 @@
  * Simplifies integration testing of REST API endpoints.
  */
 
-import request, { Response, SuperTest, Test } from 'supertest';
+import request from 'supertest';
 
 /**
  * Base API URL for tests
@@ -22,9 +22,9 @@ const API_BASE_URL = process.env.APP_URL || 'http://localhost:4321';
  * const response = await api.get('/api/workspaces');
  * ```
  *
- * @returns SuperTest agent
+ * @returns Supertest agent
  */
-export function createAPIClient(): SuperTest<Test> {
+export function createAPIClient() {
   return request(API_BASE_URL);
 }
 
@@ -41,7 +41,7 @@ export function createAPIClient(): SuperTest<Test> {
  * @param token - JWT access token
  * @returns Promise<Response>
  */
-export async function authenticatedGet(path: string, token: string): Promise<Response> {
+export async function authenticatedGet(path: string, token: string) {
   return createAPIClient().get(path).set('Authorization', `Bearer ${token}`);
 }
 
@@ -64,7 +64,7 @@ export async function authenticatedPost(
   path: string,
   token: string,
   body: Record<string, unknown>
-): Promise<Response> {
+) {
   return createAPIClient()
     .post(path)
     .set('Authorization', `Bearer ${token}`)
@@ -90,7 +90,7 @@ export async function authenticatedPatch(
   path: string,
   token: string,
   body: Record<string, unknown>
-): Promise<Response> {
+) {
   return createAPIClient()
     .patch(path)
     .set('Authorization', `Bearer ${token}`)
@@ -110,7 +110,7 @@ export async function authenticatedPatch(
  * @param token - JWT access token
  * @returns Promise<Response>
  */
-export async function authenticatedDelete(path: string, token: string): Promise<Response> {
+export async function authenticatedDelete(path: string, token: string) {
   return createAPIClient().delete(path).set('Authorization', `Bearer ${token}`);
 }
 
@@ -120,7 +120,7 @@ export async function authenticatedDelete(path: string, token: string): Promise<
  * @param path - API endpoint path
  * @returns Promise<Response>
  */
-export async function unauthenticatedGet(path: string): Promise<Response> {
+export async function unauthenticatedGet(path: string) {
   return createAPIClient().get(path);
 }
 
@@ -134,7 +134,7 @@ export async function unauthenticatedGet(path: string): Promise<Response> {
 export async function unauthenticatedPost(
   path: string,
   body: Record<string, unknown>
-): Promise<Response> {
+) {
   return createAPIClient().post(path).send(body);
 }
 
@@ -150,7 +150,7 @@ export async function unauthenticatedPost(
  * @param response - Supertest response
  * @throws Error if response status is not 2xx
  */
-export function assertSuccess(response: Response): void {
+export function assertSuccess(response: any): void {
   if (response.status < 200 || response.status >= 300) {
     throw new Error(
       `Expected successful response (2xx), got ${response.status}: ${JSON.stringify(response.body)}`
@@ -173,7 +173,7 @@ export function assertSuccess(response: Response): void {
  * @throws Error if response doesn't match expectations
  */
 export function assertError(
-  response: Response,
+  response: any,
   expectedStatus: number,
   expectedMessage?: string
 ): void {
@@ -203,7 +203,7 @@ export function assertError(
  * @param expectedData - Partial object to match against response body
  * @throws Error if response doesn't contain expected data
  */
-export function assertData(response: Response, expectedData: Record<string, unknown>): void {
+export function assertData(response: any, expectedData: Record<string, unknown>): void {
   assertSuccess(response);
 
   for (const [key, value] of Object.entries(expectedData)) {
@@ -222,7 +222,7 @@ export function assertData(response: Response, expectedData: Record<string, unkn
  * @param expectedMinItems - Minimum number of items expected
  * @throws Error if response is not properly paginated
  */
-export function assertPaginated(response: Response, expectedMinItems = 0): void {
+export function assertPaginated(response: any, expectedMinItems = 0): void {
   assertSuccess(response);
 
   if (!Array.isArray(response.body)) {
@@ -249,7 +249,7 @@ export function assertPaginated(response: Response, expectedMinItems = 0): void 
  * @returns The created resource ID
  * @throws Error if ID cannot be extracted
  */
-export function extractId(response: Response): string {
+export function extractId(response: any): string {
   assertSuccess(response);
 
   const id = response.body?.id;

@@ -13,7 +13,7 @@
  */
 
 import { createAuthenticatedUser, type TestUser } from '../helpers/auth-helper';
-import { seedTable, clearAllTestData } from '../helpers/db-setup';
+import { seedTable, seedTableWithUpsert, clearAllTestData } from '../helpers/db-setup';
 import {
   createWorkspaceFixture,
   createLocationFixture,
@@ -146,8 +146,8 @@ export async function seedInitialDataset(): Promise<InitialDataset> {
     }),
   ]);
 
-  // 3. Add workspace members
-  await seedTable('workspace_members', [
+  // 3. Add workspace members (use upsert to handle conflicts)
+  await seedTableWithUpsert('workspace_members', [
     // Primary workspace members
     createWorkspaceMemberFixture(primaryWorkspace.id, adminUser.id, 'owner'),
     createWorkspaceMemberFixture(primaryWorkspace.id, memberUser.id, 'member'),

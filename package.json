@@ -21,7 +21,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
-    "test:verify": "dotenv -e .env.test -- npx tsx tests/verify-test-setup.ts"
+    "test:verify": "dotenv -e .env.test -- npx tsx tests/verify-test-setup.ts",
+    "test:verify-phase1": "dotenv -e .env.test -- npx tsx tests/verify-phase1.ts"
   },
   "dependencies": {
     "@astrojs/node": "^9.4.3",

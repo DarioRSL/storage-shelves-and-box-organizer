@@ -200,6 +200,44 @@ export async function seedTable<T>(
 }
 
 /**
+ * Seed table with upsert (handles conflicts)
+ *
+ * Use this for tables with composite primary keys or when you need to handle conflicts.
+ *
+ * @param table - Table name to seed
+ * @param data - Array of records to upsert
+ * @param onConflict - Conflict resolution column(s)
+ * @returns Promise<T[]> - Upserted records with generated fields
+ */
+export async function seedTableWithUpsert<T>(
+  table: string,
+  data: Partial<T>[],
+  onConflict?: string
+): Promise<T[]> {
+  const client = getAdminSupabaseClient();
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  try {
+    const { data: upserted, error } = await client
+      .from(table)
+      .upsert(data, { onConflict })
+      .select();
+
+    if (error) {
+      throw new Error(`Failed to upsert table "${table}": ${error.message}`);
+    }
+
+    return (upserted || []) as T[];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to upsert table "${table}": ${message}`);
+  }
+}
+
+/**
  * Clear a specific table
  *
  * WARNING: This deletes all rows in the table. Use with caution.
