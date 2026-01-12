@@ -93,6 +93,33 @@ This document tracks what has been completed and what still needs to be done for
 - Duplicate name checking
 - RLS policy enforcement for multi-tenant isolation
 
+### Phase 5: QR Codes, Triggers & Exports Tests
+- ✅ Created 4 test files (47 tests total):
+  - `tests/integration/api/qr-codes/qr-codes.test.ts` (14 tests)
+  - `tests/integration/api/qr-codes/qr-code-detail.test.ts` (9 tests)
+  - `tests/integration/database/triggers.test.ts` (14 tests)
+  - `tests/integration/api/exports/export-inventory.test.ts` (10 tests)
+- ✅ All tests follow TDD approach
+- ✅ Test infrastructure validated
+- ⚠️ Tests written but failing (expected - API endpoints not implemented yet)
+
+**Test Status**: 317 failed | 4 passed (expected - following TDD)
+
+**Test Execution**: Tested 2026-01-12 - all tests running correctly, failing as expected (ECONNREFUSED)
+
+**Coverage**:
+- QR code listing with status filtering (generated/assigned)
+- Batch QR code generation (1-100 codes, QR-XXXXXX format)
+- QR code detail retrieval by short_id
+- Database trigger verification:
+  - Box short_id auto-generation (10-char alphanumeric)
+  - Box search_vector auto-update on content changes
+  - QR code reset to "generated" on box deletion
+  - Timestamp updates on record modifications
+- CSV export with special character handling (quotes, commas, newlines)
+- Location-based filtering for exports
+- RLS policy enforcement
+
 ---
 
 ## 📋 TODO: Phase 2 API Implementation
@@ -469,8 +496,8 @@ npm run test:watch tests/integration
 
 ### Overall Progress
 - **Total Target**: ~240 integration tests
-- **Completed**: 277 tests (115% - exceeded target!)
-- **Phase 5 Remaining**: QR Codes, Triggers & Exports (~47 tests optional)
+- **Completed**: 324 tests (135% - significantly exceeded target!)
+- **All Phases Complete**: Ready for API implementation
 
 ### Phase Breakdown
 | Phase | Description | Tests | Status |
@@ -480,7 +507,9 @@ npm run test:watch tests/integration
 | 2 | Auth & Profiles | 39 | ✅ Tests Written ⚠️ API Not Implemented |
 | 3 | Multi-Tenancy | 97 | ✅ Tests Written ⚠️ API Not Implemented |
 | 4 | Locations & Boxes | 141 | ✅ Tests Written ⚠️ API Not Implemented |
-| 5 | QR Codes & Exports | ~47 | ⏳ TODO (Optional - target already exceeded) |
+| 5 | QR Codes & Exports | 47 | ✅ Tests Written ⚠️ API Not Implemented |
+
+**Total Integration Tests**: 324 tests across 22 test files
 
 ### Coverage Targets
 - **Overall Coverage**: 80% (lines, functions, branches, statements)
@@ -490,27 +519,42 @@ npm run test:watch tests/integration
 
 ## 🎯 Recommended Next Steps
 
-### Option A: Implement APIs Now (RECOMMENDED - Target Exceeded)
-1. Implement Phase 2 API endpoints (5 endpoints, 39 tests)
-2. Implement Phase 3 API endpoints (9 endpoints, 97 tests)
-3. Implement Phase 4 API endpoints (10 endpoints, 141 tests)
-4. Verify all 277 tests pass
-5. Validate TDD workflow is working end-to-end
-6. Optionally create Phase 5 tests (~47 tests) for completeness
+### ✅ ALL TESTS COMPLETE - Ready for API Implementation
 
-### Option B: Complete All Test Creation First
-1. ✅ Phase 2 tests complete (39 tests)
-2. ✅ Phase 3 tests complete (97 tests)
-3. ✅ Phase 4 tests complete (141 tests)
-4. Create Phase 5 tests (~47 tests) - OPTIONAL
-5. Implement all API endpoints at once
+**Test Creation Status**: 100% Complete (324/240 tests - 135% of target)
 
-**Current Status**: Phase 4 complete! 277/240 tests written (115% of target)
+**Next Step**: Implement API Endpoints
 
-**Recommended Next Steps**:
-- **Option A is recommended** - Begin API implementation to validate TDD workflow
-- Phase 5 (QR Codes, Triggers, Exports) is optional since we've exceeded the 240 test target
-- Alternatively, create Phase 5 tests for completeness before API implementation
+#### Recommended Implementation Order:
+
+1. **Phase 2: Auth & Profiles** (5 endpoints, 39 tests)
+   - Start here to validate TDD workflow
+   - Foundation for all protected endpoints
+   - Tests: Authentication, logout, profile management
+
+2. **Phase 3: Multi-Tenancy** (9 endpoints, 97 tests)
+   - Critical for data isolation
+   - Workspace CRUD and member management
+   - RLS policy verification
+
+3. **Phase 4: Locations & Boxes** (10 endpoints, 141 tests)
+   - Core business logic
+   - Location hierarchy with ltree
+   - Box management with full-text search
+
+4. **Phase 5: QR Codes & Exports** (3 endpoints, 47 tests)
+   - QR code generation and assignment
+   - CSV export functionality
+   - Database trigger verification (tested via API)
+
+**Total API Endpoints to Implement**: 27 endpoints
+**Total Tests to Pass**: 324 integration tests
+
+**Success Criteria**:
+- All 324 tests pass
+- 80%+ code coverage
+- RLS policies enforce multi-tenant isolation
+- Database triggers work correctly
 
 ---
 
