@@ -41,7 +41,30 @@ This document tracks what has been completed and what still needs to be done for
 - ✅ Test infrastructure verified working
 - ⚠️ Tests written but failing (expected - API endpoints not implemented yet)
 
-**Test Status**: 40 failed | 4 passed (expected - following TDD)
+**Test Status**: 39 failed | 4 passed (expected - following TDD)
+
+**Test Execution**: Tested 2026-01-12 - all tests running correctly, failing as expected (ECONNREFUSED)
+
+### Phase 3: Multi-Tenancy Core Tests
+- ✅ Created 4 test files (97 tests total):
+  - `tests/integration/api/workspaces/workspaces.test.ts` (19 tests)
+  - `tests/integration/api/workspaces/workspace-detail.test.ts` (26 tests)
+  - `tests/integration/api/workspaces/workspace-members.test.ts` (26 tests)
+  - `tests/integration/database/rls-policies.test.ts` (25 tests)
+- ✅ All tests follow TDD approach
+- ✅ Test infrastructure validated
+- ⚠️ Tests written but failing (expected - API endpoints not implemented yet)
+
+**Test Status**: 97 failed | 4 passed (expected - following TDD)
+
+**Test Execution**: Tested 2026-01-12 - all tests running correctly, failing as expected (ECONNREFUSED)
+
+**Coverage**:
+- Workspace CRUD operations
+- Workspace member management (add/update/remove)
+- Multi-tenant isolation (RLS policies)
+- Role-based access control (owner/member/read_only)
+- Database-level security verification
 
 ---
 
@@ -176,70 +199,175 @@ npm run test:watch tests/integration
 
 ---
 
-## 🚀 TODO: Phase 3 - Multi-Tenancy Core (~75 tests)
+## 📋 TODO: Phase 3 API Implementation
 
-### Files to Create:
+### ⚠️ REQUIRED: Implement API Endpoints to Make Phase 3 Tests Pass
 
-#### 3.1 Workspace Management Tests
-**File**: `tests/integration/api/workspaces/workspaces.test.ts` (~15 tests)
+Phase 3 tests are complete. These API endpoints need implementation:
 
-**Endpoints to test**:
-- `GET /api/workspaces` - List user workspaces
-- `POST /api/workspaces` - Create workspace
+#### 1. GET /api/workspaces - PRIORITY: HIGH
+**Location**: `src/pages/api/workspaces/index.ts`
 
-**Test cases**:
-- ✅ Success: List workspaces, empty array if none, create workspace
-- ❌ 400: Validation errors (empty name, name too long)
-- ❌ 401: Authentication required
-- ❌ 403: Non-member cannot access workspace
+**Requirements**:
+- Require authentication
+- Query `workspaces` table with RLS: User sees only workspaces they're members of
+- Return array of workspaces with metadata
+- Return empty array if user has no workspaces
+- Return 401 if not authenticated
 
-#### 3.2 Workspace Detail Tests
-**File**: `tests/integration/api/workspaces/workspace-detail.test.ts` (~20 tests)
+**Tests covered**: 8 tests in `workspaces.test.ts`
 
-**Endpoints to test**:
-- `GET /api/workspaces/:id` - Get workspace details
-- `PATCH /api/workspaces/:id` - Update workspace
-- `DELETE /api/workspaces/:id` - Delete workspace
+#### 2. POST /api/workspaces - PRIORITY: HIGH
+**Location**: `src/pages/api/workspaces/index.ts`
 
-**Test cases**:
-- ✅ Success: Get details, update name/description, delete workspace
-- ❌ 400: Validation errors
-- ❌ 401: Authentication required
-- ❌ 403: Non-owner cannot update/delete
-- ❌ 404: Workspace not found
+**Requirements**:
+- Require authentication
+- Validate input with Zod:
+  ```typescript
+  const createWorkspaceSchema = z.object({
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional()
+  });
+  ```
+- Create workspace with `owner_id = authenticated_user_id`
+- Automatically create workspace_members entry with role='owner'
+- Return created workspace (201)
+- Return 400 for validation errors
+- Return 401 if not authenticated
 
-#### 3.3 Workspace Members Tests
-**File**: `tests/integration/api/workspaces/workspace-members.test.ts` (~15 tests)
+**Tests covered**: 11 tests in `workspaces.test.ts`
 
-**Endpoints to test**:
-- `GET /api/workspaces/:id/members` - List members
-- `POST /api/workspaces/:id/members` - Add member
-- `PATCH /api/workspaces/:id/members/:user_id` - Update member role
-- `DELETE /api/workspaces/:id/members/:user_id` - Remove member
+#### 3. GET /api/workspaces/:id - PRIORITY: HIGH
+**Location**: `src/pages/api/workspaces/[id].ts`
 
-**Test cases**:
-- ✅ Success: List members, add member, update role, remove member
-- ❌ 400: Invalid user/role
-- ❌ 403: Non-owner cannot manage members, cannot remove owner
-- ❌ 404: User not found
-- ❌ 409: Duplicate member
+**Requirements**:
+- Require authentication
+- Query workspace by ID with RLS enforcement
+- Return workspace details
+- Return 401 if not authenticated
+- Return 403 if user not a member
+- Return 404 if workspace doesn't exist
 
-#### 3.4 RLS Policy Tests
-**File**: `tests/integration/database/rls-policies.test.ts` (~25 tests)
+**Tests covered**: 6 tests in `workspace-detail.test.ts`
 
-**Policies to test**:
-- Workspace isolation (5 tests)
-- Location isolation (6 tests)
-- Box isolation (6 tests)
-- QR code isolation (4 tests)
-- Profile access (2 tests)
-- Workspace member management (2 tests)
+#### 4. PATCH /api/workspaces/:id - PRIORITY: HIGH
+**Location**: `src/pages/api/workspaces/[id].ts`
 
-**Test approach**:
-- Create User A with Workspace A
-- Create User B with Workspace B
-- User A attempts to access Workspace B data → expect 403 or empty results
-- Test via API and direct Supabase queries
+**Requirements**:
+- Require authentication + owner role
+- Validate input (name, description)
+- Update workspace
+- Return updated workspace
+- Return 400 for validation errors
+- Return 401 if not authenticated
+- Return 403 if not owner
+- Return 404 if workspace doesn't exist
+
+**Tests covered**: 9 tests in `workspace-detail.test.ts`
+
+#### 5. DELETE /api/workspaces/:id - PRIORITY: MEDIUM
+**Location**: `src/pages/api/workspaces/[id].ts`
+
+**Requirements**:
+- Require authentication + owner role
+- Delete workspace (cascade deletes locations, boxes, QR codes via FK)
+- Return 204 No Content
+- Return 401 if not authenticated
+- Return 403 if not owner
+- Return 404 if workspace doesn't exist
+
+**Tests covered**: 11 tests in `workspace-detail.test.ts`
+
+#### 6. GET /api/workspaces/:id/members - PRIORITY: MEDIUM
+**Location**: `src/pages/api/workspaces/[id]/members.ts`
+
+**Requirements**:
+- Require authentication + workspace membership
+- Query workspace_members with user details
+- Return array of members with roles
+- Return 401 if not authenticated
+- Return 403 if not a member
+
+**Tests covered**: 4 tests in `workspace-members.test.ts`
+
+#### 7. POST /api/workspaces/:id/members - PRIORITY: MEDIUM
+**Location**: `src/pages/api/workspaces/[id]/members.ts`
+
+**Requirements**:
+- Require authentication + owner role
+- Validate input:
+  ```typescript
+  const addMemberSchema = z.object({
+    user_id: z.string().uuid(),
+    role: z.enum(['owner', 'member', 'read_only'])
+  });
+  ```
+- Insert workspace_members entry
+- Return created member entry (201)
+- Return 400 for validation errors
+- Return 401 if not authenticated
+- Return 403 if not owner
+- Return 404 if user doesn't exist
+- Return 409 if member already exists
+
+**Tests covered**: 10 tests in `workspace-members.test.ts`
+
+#### 8. PATCH /api/workspaces/:id/members/:user_id - PRIORITY: MEDIUM
+**Location**: `src/pages/api/workspaces/[id]/members/[user_id].ts`
+
+**Requirements**:
+- Require authentication + owner role
+- Validate role with Zod
+- Update member role
+- Prevent demoting last owner
+- Return updated member
+- Return 400 for validation errors
+- Return 401 if not authenticated
+- Return 403 if not owner or attempting to demote last owner
+- Return 404 if member doesn't exist
+
+**Tests covered**: 5 tests in `workspace-members.test.ts`
+
+#### 9. DELETE /api/workspaces/:id/members/:user_id - PRIORITY: MEDIUM
+**Location**: `src/pages/api/workspaces/[id]/members/[user_id].ts`
+
+**Requirements**:
+- Require authentication + owner role OR self-removal
+- Delete workspace_members entry
+- Allow member to remove themselves
+- Prevent owner from removing themselves if last owner
+- Return 204 No Content
+- Return 401 if not authenticated
+- Return 403 if not authorized or last owner
+- Return 404 if member doesn't exist
+
+**Tests covered**: 7 tests in `workspace-members.test.ts`
+
+### Implementation Notes:
+
+**RLS Policy Enforcement**:
+- All queries automatically filtered by `is_workspace_member(workspace_id)` function
+- Test RLS policies directly with database queries (see `rls-policies.test.ts`)
+- RLS tests verify multi-tenant isolation at database level
+
+**Role Checking**:
+- Create helper function: `isWorkspaceOwner(supabase, workspaceId, userId): Promise<boolean>`
+- Query `workspace_members` table for role='owner'
+
+**Testing the Implementation**:
+```bash
+# Run Phase 3 tests
+npm run test tests/integration/api/workspaces/
+npm run test tests/integration/database/rls-policies.test.ts
+
+# Watch mode for TDD
+npm run test:watch tests/integration
+```
+
+**Success Criteria**:
+- All 97 Phase 3 tests should pass
+- Current status: 97 failed | 4 passed
+- Expected after implementation: 0 failed | 101 passed
 
 ---
 
@@ -314,8 +442,8 @@ npm run test:watch tests/integration
 
 ### Overall Progress
 - **Total Target**: ~240 integration tests
-- **Completed**: 39 tests (16%)
-- **Remaining**: ~201 tests (84%)
+- **Completed**: 136 tests (57%)
+- **Remaining**: ~104 tests (43%)
 
 ### Phase Breakdown
 | Phase | Description | Tests | Status |
@@ -323,8 +451,8 @@ npm run test:watch tests/integration
 | 0 | Test Infrastructure | 10 | ✅ Complete |
 | 1 | Helpers & Fixtures | 10 | ✅ Complete |
 | 2 | Auth & Profiles | 39 | ✅ Tests Written ⚠️ API Not Implemented |
-| 3 | Multi-Tenancy | ~75 | ⏳ TODO |
-| 4 | Locations & Boxes | ~85 | ⏳ TODO |
+| 3 | Multi-Tenancy | 97 | ✅ Tests Written ⚠️ API Not Implemented |
+| 4 | Locations & Boxes | ~85 | ⏳ IN PROGRESS |
 | 5 | QR Codes & Exports | ~47 | ⏳ TODO |
 
 ### Coverage Targets
@@ -335,19 +463,20 @@ npm run test:watch tests/integration
 
 ## 🎯 Recommended Next Steps
 
-### Option A: Complete TDD Cycle (Recommended for validation)
-1. Implement Phase 2 API endpoints (5 endpoints)
-2. Verify all 39 Phase 2 tests pass
-3. Validate TDD workflow is working
-4. Continue to Phase 3
+### Option A: Implement APIs Now (Recommended for validation)
+1. Implement Phase 2 API endpoints (5 endpoints, 39 tests)
+2. Implement Phase 3 API endpoints (9 endpoints, 97 tests)
+3. Verify all 136 tests pass
+4. Validate TDD workflow is working end-to-end
+5. Continue with Phase 4 test creation
 
 ### Option B: Continue Test Creation (Current approach)
-1. Create Phase 3 tests (~75 tests)
-2. Create Phase 4 tests (~85 tests)
+1. ✅ Phase 3 tests complete (~97 tests)
+2. Create Phase 4 tests (~85 tests) - IN PROGRESS
 3. Create Phase 5 tests (~47 tests)
 4. Implement all API endpoints at once
 
-**Current Decision**: Proceeding with Option B (Phase 3 test creation)
+**Current Decision**: Proceeding with Option B (Phase 4 test creation)
 
 ---
 
