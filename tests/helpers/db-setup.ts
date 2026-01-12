@@ -122,19 +122,16 @@ export async function clearAllTestData(client?: SupabaseClient): Promise<void> {
     // 5. Clear workspaces (has FK to users/profiles)
     await adminClient.from('workspaces').delete().neq('id', IMPOSSIBLE_UUID);
 
-    // 6. Clear profiles (has FK to auth.users)
+    // 6. Clear profiles explicitly (don't rely on CASCADE from auth user deletion)
     await adminClient.from('profiles').delete().neq('id', IMPOSSIBLE_UUID);
 
     // 7. Delete auth users (via Supabase Admin API)
-    // Note: In test environment, we might want to keep test users
-    // and just clear their data. Uncomment if full user deletion needed:
-    //
-    // const { data: users } = await adminClient.auth.admin.listUsers();
-    // if (users?.users) {
-    //   for (const user of users.users) {
-    //     await adminClient.auth.admin.deleteUser(user.id);
-    //   }
-    // }
+    const { data: authResponse } = await adminClient.auth.admin.listUsers();
+    if (authResponse?.users) {
+      for (const user of authResponse.users) {
+        await adminClient.auth.admin.deleteUser(user.id);
+      }
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to clear test data: ${message}`);

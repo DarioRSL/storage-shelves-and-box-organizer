@@ -35,14 +35,13 @@ function uniqueId(): string {
  * @returns Workspace data for insertion
  */
 export function createWorkspaceFixture(
-  overrides?: Partial<CreateWorkspaceRequest & { owner_id: string; description?: string }>
-): CreateWorkspaceRequest & { owner_id: string; description?: string } {
+  overrides?: Partial<CreateWorkspaceRequest & { owner_id: string }>
+): CreateWorkspaceRequest & { owner_id: string } {
   const id = uniqueId();
 
   return {
     name: `Test Workspace ${id}`,
     owner_id: overrides?.owner_id || '',
-    description: overrides?.description,
     ...overrides,
   };
 }
@@ -51,7 +50,7 @@ export function createWorkspaceFixture(
  * Create location fixture with ltree path
  *
  * Supports hierarchical structure up to 5 levels deep.
- * If parent_id is provided, you must handle path generation in your test.
+ * The path must be provided as locations use ltree for hierarchy.
  *
  * @param workspaceId - Workspace ID
  * @param overrides - Optional field overrides
@@ -62,18 +61,18 @@ export function createLocationFixture(
   overrides?: Partial<{
     name: string;
     description: string | null;
-    parent_id: string | null;
     path: string;
   }>
-): CreateLocationRequest & { path?: string } {
+): Omit<CreateLocationRequest, 'parent_id'> & { path: string } {
   const id = uniqueId();
+  const name = overrides?.name || `Location ${id}`;
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
   return {
     workspace_id: workspaceId,
-    name: overrides?.name || `Location ${id}`,
+    name,
     description: overrides?.description !== undefined ? overrides.description : `Test location ${id}`,
-    parent_id: overrides?.parent_id !== undefined ? overrides.parent_id : null,
-    ...(overrides?.path && { path: overrides.path }),
+    path: overrides?.path || `root.${slug}`,
   };
 }
 
@@ -125,7 +124,10 @@ export function createChildLocationFixture(
 }
 
 /**
- * Create box fixture with optional QR assignment
+ * Create box fixture
+ *
+ * Note: QR codes reference boxes, not the other way around.
+ * To assign a QR code to a box, update the QR code record after creating the box.
  *
  * @param workspaceId - Workspace ID
  * @param locationId - Location ID (optional)
@@ -135,8 +137,8 @@ export function createChildLocationFixture(
 export function createBoxFixture(
   workspaceId: string,
   locationId?: string | null,
-  overrides?: Partial<CreateBoxRequest>
-): CreateBoxRequest {
+  overrides?: Partial<Omit<CreateBoxRequest, 'qr_code_id'>>
+): Omit<CreateBoxRequest, 'qr_code_id'> {
   const id = uniqueId();
 
   return {
@@ -147,7 +149,6 @@ export function createBoxFixture(
       : `Test box description ${id}`,
     tags: overrides?.tags || ['test', 'fixture'],
     location_id: overrides?.location_id !== undefined ? overrides.location_id : locationId || null,
-    qr_code_id: overrides?.qr_code_id !== undefined ? overrides.qr_code_id : null,
   };
 }
 

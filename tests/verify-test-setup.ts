@@ -86,12 +86,27 @@ async function verifyHelperFunctions() {
       throw new Error(`Table "${table}" not empty after cleanup (${count} records)`);
     }
   }
+
+  // Also check auth users
+  const { data: authUsers } = await client.auth.admin.listUsers();
+  const authUserCount = authUsers?.users?.length || 0;
+  if (authUserCount > 0) {
+    console.log(`  ⚠  Warning: ${authUserCount} auth users still exist after cleanup`);
+    // Try to delete them
+    if (authUsers?.users) {
+      for (const user of authUsers.users) {
+        await client.auth.admin.deleteUser(user.id);
+      }
+    }
+  }
+
   console.log('  ✓ clearAllTestData() works correctly');
 
-  // Test user creation
+  // Test user creation with unique email to avoid conflicts
   console.log('  • Testing createAuthenticatedUser()...');
+  const uniqueEmail = `verify-test-${Date.now()}@test.com`;
   const testUser = await createAuthenticatedUser({
-    email: 'verify-test@test.com',
+    email: uniqueEmail,
     password: 'TestPass123!',
     full_name: 'Verification Test User',
   });
@@ -114,14 +129,20 @@ async function verifyHelperFunctions() {
   }
   console.log(`  ✓ Workspace created: ${workspace.name} (ID: ${workspace.id.substring(0, 8)}...)`);
 
-  // Add user as workspace member
-  await seedTable('workspace_members', [
-    {
-      workspace_id: workspace.id,
-      user_id: testUser.id,
-      role: 'owner',
-    },
-  ]);
+  // Add user as workspace member (use upsert to handle any existing memberships)
+  const { error: memberError } = await client
+    .from('workspace_members')
+    .upsert([
+      {
+        workspace_id: workspace.id,
+        user_id: testUser.id,
+        role: 'owner',
+      },
+    ]);
+
+  if (memberError) {
+    throw new Error(`Failed to add workspace member: ${memberError.message}`);
+  }
   console.log('  ✓ Workspace member added');
 
   // Test location creation

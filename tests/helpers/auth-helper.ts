@@ -86,16 +86,26 @@ export async function createAuthenticatedUser(
       throw new Error(`Failed to create auth user: ${authError?.message || 'Unknown error'}`);
     }
 
-    // Create profile record
-    await seedTable('profiles', [
-      {
-        id: authData.user.id,
-        email: authData.user.email,
-        full_name,
-        avatar_url: userData?.avatar_url || null,
-        theme_preference: 'system',
-      },
-    ]);
+    // Delete any existing profile with this ID (shouldn't happen, but local Supabase might have stale data)
+    await adminClient.from('profiles').delete().eq('id', authData.user.id);
+
+    // Create profile record using upsert to handle any race conditions
+    const { data: profiles, error: profileError } = await adminClient
+      .from('profiles')
+      .upsert([
+        {
+          id: authData.user.id,
+          email: authData.user.email,
+          full_name,
+          avatar_url: userData?.avatar_url || null,
+          theme_preference: 'system',
+        },
+      ])
+      .select();
+
+    if (profileError || !profiles || profiles.length === 0) {
+      throw new Error(`Failed to create profile: ${profileError?.message || 'Unknown error'}`);
+    }
 
     // Sign in to get session and tokens
     const client = getTestSupabaseClient();
