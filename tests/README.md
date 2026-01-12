@@ -17,13 +17,36 @@ The test infrastructure has been set up with:
 
 ### Running Phase 0 Verification
 
-```bash
-# Start test Supabase instance (different ports than dev)
-supabase start --config supabase/config.test.toml
+**First-time setup:**
 
-# Run verification script
+```bash
+# 1. Copy the environment template
+cp .env.test.example .env.test
+
+# 2. Start your local Supabase instance
+supabase start
+
+# 3. Get your local credentials
+supabase status
+
+# 4. Edit .env.test and fill in the credentials from step 3
+#    Look for: anon key and service_role key
+
+# 5. Run verification script
 npm run test:verify
 ```
+
+**Subsequent runs:**
+
+```bash
+# Just run the verification (assuming Supabase is running)
+npm run test:verify
+```
+
+**Important Security Notes:**
+- Never commit `.env.test` - it contains sensitive tokens
+- Use `.env.test.example` as a template for new developers
+- Get credentials from `supabase status` when running locally
 
 The verification script checks:
 - ✓ Environment variables loaded correctly
