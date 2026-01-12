@@ -88,11 +88,11 @@ export interface LogMetadata {
 /**
  * Sanitizes metadata to remove/mask sensitive information
  */
-function sanitizeMetadata(meta?: LogMetadata): LogMetadata | undefined {
+export function sanitizeMetadata(meta?: LogMetadata): LogMetadata | undefined {
   if (!meta) return undefined;
 
   const sanitized = { ...meta };
-  const keysToMask = ["password", "token", "api_key", "apiKey", "secret", "jwt", "access_token", "refresh_token"];
+  const keysToMask = ["password", "token", "api_key", "apikey", "secret", "jwt", "access_token", "refresh_token"];
 
   for (const key of Object.keys(sanitized)) {
     const lowerKey = key.toLowerCase();

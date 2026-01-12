@@ -20,7 +20,7 @@ const MIN_LENGTH = 8;
  * Evaluate password strength based on character variety and length.
  * Returns detailed strength analysis.
  */
-function evaluatePasswordStrength(password: string): PasswordStrengthResult {
+export function evaluatePasswordStrength(password: string): PasswordStrengthResult {
   const hasMinLength = password.length >= MIN_LENGTH;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
