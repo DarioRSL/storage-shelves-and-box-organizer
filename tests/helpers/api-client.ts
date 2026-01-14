@@ -9,9 +9,9 @@ import request from 'supertest';
 
 /**
  * Base API URL for tests
- * Uses the test environment APP_URL or defaults to localhost:4321
+ * Priority: TEST_API_URL (set by global setup) > APP_URL > default localhost:3000
  */
-const API_BASE_URL = process.env.APP_URL || 'http://localhost:4321';
+const API_BASE_URL = process.env.TEST_API_URL || process.env.APP_URL || 'http://localhost:3000';
 
 /**
  * Create a Supertest agent for making API requests

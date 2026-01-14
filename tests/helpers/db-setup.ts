@@ -8,8 +8,8 @@
  * - Setting up and tearing down test database state
  */
 
-import { getAdminSupabaseClient } from './supabase-test-client';
-import type { SupabaseClient } from '@/db/supabase.client';
+import { getAdminSupabaseClient } from "./supabase-test-client";
+import type { SupabaseClient } from "@/db/supabase.client";
 
 /**
  * Test Database interface
@@ -102,36 +102,30 @@ export async function clearAllTestData(client?: SupabaseClient): Promise<void> {
   try {
     // Order matters! Delete children before parents
     // Using neq with impossible UUID to delete all rows (workaround for delete all)
-    const IMPOSSIBLE_UUID = '00000000-0000-0000-0000-000000000000';
+    const IMPOSSIBLE_UUID = "00000000-0000-0000-0000-000000000000";
 
     // 1. Clear boxes (has FK to qr_codes, locations, workspaces)
-    await adminClient.from('boxes').delete().neq('id', IMPOSSIBLE_UUID);
+    await adminClient.from("boxes").delete().neq("id", IMPOSSIBLE_UUID);
 
     // 2. Clear qr_codes (has FK to workspaces, boxes)
-    await adminClient.from('qr_codes').delete().neq('id', IMPOSSIBLE_UUID);
+    await adminClient.from("qr_codes").delete().neq("id", IMPOSSIBLE_UUID);
 
     // 3. Clear locations (has FK to workspaces)
-    await adminClient.from('locations').delete().neq('id', IMPOSSIBLE_UUID);
+    await adminClient.from("locations").delete().neq("id", IMPOSSIBLE_UUID);
 
     // 4. Clear workspace_members (has FK to workspaces, users)
-    await adminClient
-      .from('workspace_members')
-      .delete()
-      .neq('workspace_id', IMPOSSIBLE_UUID);
+    await adminClient.from("workspace_members").delete().neq("workspace_id", IMPOSSIBLE_UUID);
 
     // 5. Clear workspaces (has FK to users/profiles)
-    await adminClient.from('workspaces').delete().neq('id', IMPOSSIBLE_UUID);
+    await adminClient.from("workspaces").delete().neq("id", IMPOSSIBLE_UUID);
 
-    // 6. Clear profiles explicitly (don't rely on CASCADE from auth user deletion)
-    await adminClient.from('profiles').delete().neq('id', IMPOSSIBLE_UUID);
-
-    // 7. Delete auth users (via Supabase Admin API)
-    const { data: authResponse } = await adminClient.auth.admin.listUsers();
-    if (authResponse?.users) {
-      for (const user of authResponse.users) {
-        await adminClient.auth.admin.deleteUser(user.id);
-      }
-    }
+    // NOTE: We deliberately DON'T delete profiles or auth users.
+    // The createAuthenticatedUser function is idempotent - it tries to log in first,
+    // and only creates if the user doesn't exist. Keeping users and profiles around:
+    // 1. Avoids rate limiting from constant create/delete cycles
+    // 2. Makes tests much faster (login is faster than create)
+    // 3. Still maintains isolation via workspace/location/box/qr cleanup
+    // 4. Avoids FK constraint issues (workspaces.owner_id -> profiles.id)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to clear test data: ${message}`);
@@ -166,7 +160,7 @@ export async function seedTable<T>(
   let table: string;
   let data: Partial<T>[];
 
-  if (typeof clientOrTable === 'string') {
+  if (typeof clientOrTable === "string") {
     // seedTable(table, data) - create client
     client = getAdminSupabaseClient();
     table = clientOrTable;
@@ -183,10 +177,7 @@ export async function seedTable<T>(
   }
 
   try {
-    const { data: inserted, error } = await client
-      .from(table)
-      .insert(data)
-      .select();
+    const { data: inserted, error } = await client.from(table).insert(data).select();
 
     if (error) {
       throw new Error(`Failed to seed table "${table}": ${error.message}`);
@@ -209,11 +200,7 @@ export async function seedTable<T>(
  * @param onConflict - Conflict resolution column(s)
  * @returns Promise<T[]> - Upserted records with generated fields
  */
-export async function seedTableWithUpsert<T>(
-  table: string,
-  data: Partial<T>[],
-  onConflict?: string
-): Promise<T[]> {
+export async function seedTableWithUpsert<T>(table: string, data: Partial<T>[], onConflict?: string): Promise<T[]> {
   const client = getAdminSupabaseClient();
 
   if (!data || data.length === 0) {
@@ -221,10 +208,7 @@ export async function seedTableWithUpsert<T>(
   }
 
   try {
-    const { data: upserted, error } = await client
-      .from(table)
-      .upsert(data, { onConflict })
-      .select();
+    const { data: upserted, error } = await client.from(table).upsert(data, { onConflict }).select();
 
     if (error) {
       throw new Error(`Failed to upsert table "${table}": ${error.message}`);
@@ -247,15 +231,12 @@ export async function seedTableWithUpsert<T>(
  * @param table - Table name to clear
  * @returns Promise<void>
  */
-export async function clearTable(
-  clientOrTable: SupabaseClient | string,
-  maybeTable?: string
-): Promise<void> {
+export async function clearTable(clientOrTable: SupabaseClient | string, maybeTable?: string): Promise<void> {
   // Handle both signatures: clearTable(client, table) and clearTable(table)
   let client: SupabaseClient;
   let table: string;
 
-  if (typeof clientOrTable === 'string') {
+  if (typeof clientOrTable === "string") {
     client = getAdminSupabaseClient();
     table = clientOrTable;
   } else {
@@ -264,8 +245,8 @@ export async function clearTable(
   }
 
   try {
-    const IMPOSSIBLE_UUID = '00000000-0000-0000-0000-000000000000';
-    const { error } = await client.from(table).delete().neq('id', IMPOSSIBLE_UUID);
+    const IMPOSSIBLE_UUID = "00000000-0000-0000-0000-000000000000";
+    const { error } = await client.from(table).delete().neq("id", IMPOSSIBLE_UUID);
 
     if (error) {
       throw new Error(`Failed to clear table "${table}": ${error.message}`);
@@ -289,9 +270,7 @@ export async function getTableCount(table: string, client?: SupabaseClient): Pro
   const adminClient = client || getAdminSupabaseClient();
 
   try {
-    const { count, error } = await adminClient
-      .from(table)
-      .select('*', { count: 'exact', head: true });
+    const { count, error } = await adminClient.from(table).select("*", { count: "exact", head: true });
 
     if (error) {
       throw new Error(`Failed to get count for table "${table}": ${error.message}`);
@@ -316,7 +295,7 @@ export async function getTableCount(table: string, client?: SupabaseClient): Pro
 export async function verifyTablesEmpty(client?: SupabaseClient): Promise<void> {
   const adminClient = client || getAdminSupabaseClient();
 
-  const tables = ['boxes', 'qr_codes', 'locations', 'workspace_members', 'workspaces', 'profiles'];
+  const tables = ["boxes", "qr_codes", "locations", "workspace_members", "workspaces", "profiles"];
 
   for (const table of tables) {
     const count = await getTableCount(table, adminClient);
