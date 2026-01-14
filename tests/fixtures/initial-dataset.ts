@@ -12,8 +12,9 @@
  * - 20 QR codes per workspace (10 assigned, 10 available)
  */
 
-import { createAuthenticatedUser, type TestUser } from '../helpers/auth-helper';
-import { seedTable, seedTableWithUpsert, clearAllTestData } from '../helpers/db-setup';
+import { createAuthenticatedUser, type TestUser } from "../helpers/auth-helper";
+import { seedTable, seedTableWithUpsert, clearAllTestData } from "../helpers/db-setup";
+import { getUsersFromPool, getPoolStatus } from "../helpers/user-pool";
 import {
   createWorkspaceFixture,
   createLocationFixture,
@@ -22,7 +23,7 @@ import {
   createBoxFixture,
   createQRCodeFixture,
   createWorkspaceMemberFixture,
-} from '../helpers/factory';
+} from "../helpers/factory";
 import {
   ADMIN_USER,
   MEMBER_USER,
@@ -41,7 +42,7 @@ import {
   BOOKS_BOX,
   KITCHEN_SUPPLIES,
   TOOLS_BOX,
-} from './index';
+} from "./index";
 
 /**
  * Initial dataset structure
@@ -70,12 +71,12 @@ export interface InitialDataset {
     };
   };
   boxes: {
-    primary: Array<{ id: string; name: string; short_id: string }>;
-    secondary: Array<{ id: string; name: string; short_id: string }>;
+    primary: { id: string; name: string; short_id: string }[];
+    secondary: { id: string; name: string; short_id: string }[];
   };
   qrCodes: {
-    primary: Array<{ id: string; short_id: string; status: string }>;
-    secondary: Array<{ id: string; short_id: string; status: string }>;
+    primary: { id: string; short_id: string; status: string }[];
+    secondary: { id: string; short_id: string; status: string }[];
   };
 }
 
@@ -112,34 +113,46 @@ export interface InitialDataset {
  * @returns Promise<InitialDataset> - Complete dataset with IDs and tokens
  */
 export async function seedInitialDataset(): Promise<InitialDataset> {
-  // 1. Create users
-  const [adminUser, memberUser, viewerUser] = await Promise.all([
-    createAuthenticatedUser({
-      email: ADMIN_USER.email,
-      password: ADMIN_USER.password,
-      full_name: ADMIN_USER.full_name,
-    }),
-    createAuthenticatedUser({
-      email: MEMBER_USER.email,
-      password: MEMBER_USER.password,
-      full_name: MEMBER_USER.full_name,
-    }),
-    createAuthenticatedUser({
-      email: VIEWER_USER.email,
-      password: VIEWER_USER.password,
-      full_name: VIEWER_USER.full_name,
-    }),
-  ]);
+  // 1. Create users (use pool if available, otherwise create new)
+  let adminUser: TestUser;
+  let memberUser: TestUser;
+  let viewerUser: TestUser;
+
+  const poolStatus = getPoolStatus();
+
+  if (poolStatus.initialized && poolStatus.size >= 3) {
+    // Use users from pool (much faster, avoids rate limits)
+    [adminUser, memberUser, viewerUser] = await getUsersFromPool(3);
+  } else {
+    // Fallback: create new users if pool not available
+    [adminUser, memberUser, viewerUser] = await Promise.all([
+      createAuthenticatedUser({
+        email: ADMIN_USER.email,
+        password: ADMIN_USER.password,
+        full_name: ADMIN_USER.full_name,
+      }),
+      createAuthenticatedUser({
+        email: MEMBER_USER.email,
+        password: MEMBER_USER.password,
+        full_name: MEMBER_USER.full_name,
+      }),
+      createAuthenticatedUser({
+        email: VIEWER_USER.email,
+        password: VIEWER_USER.password,
+        full_name: VIEWER_USER.full_name,
+      }),
+    ]);
+  }
 
   // 2. Create workspaces
-  const [primaryWorkspace] = await seedTable('workspaces', [
+  const [primaryWorkspace] = await seedTable("workspaces", [
     createWorkspaceFixture({
       name: PRIMARY_WORKSPACE.name,
       owner_id: adminUser.id,
     }),
   ]);
 
-  const [secondaryWorkspace] = await seedTable('workspaces', [
+  const [secondaryWorkspace] = await seedTable("workspaces", [
     createWorkspaceFixture({
       name: SECONDARY_WORKSPACE.name,
       owner_id: memberUser.id,
@@ -147,60 +160,41 @@ export async function seedInitialDataset(): Promise<InitialDataset> {
   ]);
 
   // 3. Add workspace members (use upsert to handle conflicts)
-  await seedTableWithUpsert('workspace_members', [
+  await seedTableWithUpsert("workspace_members", [
     // Primary workspace members
-    createWorkspaceMemberFixture(primaryWorkspace.id, adminUser.id, 'owner'),
-    createWorkspaceMemberFixture(primaryWorkspace.id, memberUser.id, 'member'),
-    createWorkspaceMemberFixture(primaryWorkspace.id, viewerUser.id, 'read_only'),
+    createWorkspaceMemberFixture(primaryWorkspace.id, adminUser.id, "owner"),
+    createWorkspaceMemberFixture(primaryWorkspace.id, memberUser.id, "member"),
+    createWorkspaceMemberFixture(primaryWorkspace.id, viewerUser.id, "read_only"),
     // Secondary workspace members
-    createWorkspaceMemberFixture(secondaryWorkspace.id, memberUser.id, 'owner'),
+    createWorkspaceMemberFixture(secondaryWorkspace.id, memberUser.id, "owner"),
   ]);
 
   // 4. Create locations for primary workspace (3-level hierarchy)
-  const [garageLocation] = await seedTable('locations', [
+  const [garageLocation] = await seedTable("locations", [
     createRootLocationFixture(primaryWorkspace.id, ROOT_GARAGE.name),
   ]);
 
-  const [metalRackLocation] = await seedTable('locations', [
+  const [metalRackLocation] = await seedTable("locations", [
     createChildLocationFixture(primaryWorkspace.id, garageLocation.path, METAL_RACK.name),
   ]);
 
-  const [topShelfLocation, middleShelfLocation, bottomShelfLocation] = await seedTable(
-    'locations',
-    [
-      createChildLocationFixture(
-        primaryWorkspace.id,
-        metalRackLocation.path,
-        TOP_SHELF.name
-      ),
-      createChildLocationFixture(
-        primaryWorkspace.id,
-        metalRackLocation.path,
-        MIDDLE_SHELF.name
-      ),
-      createChildLocationFixture(
-        primaryWorkspace.id,
-        metalRackLocation.path,
-        BOTTOM_SHELF.name
-      ),
-    ]
-  );
+  const [topShelfLocation, middleShelfLocation, bottomShelfLocation] = await seedTable("locations", [
+    createChildLocationFixture(primaryWorkspace.id, metalRackLocation.path, TOP_SHELF.name),
+    createChildLocationFixture(primaryWorkspace.id, metalRackLocation.path, MIDDLE_SHELF.name),
+    createChildLocationFixture(primaryWorkspace.id, metalRackLocation.path, BOTTOM_SHELF.name),
+  ]);
 
   // 5. Create locations for secondary workspace
-  const [basementLocation] = await seedTable('locations', [
+  const [basementLocation] = await seedTable("locations", [
     createRootLocationFixture(secondaryWorkspace.id, ROOT_BASEMENT.name),
   ]);
 
-  const [woodenShelvesLocation] = await seedTable('locations', [
-    createChildLocationFixture(
-      secondaryWorkspace.id,
-      basementLocation.path,
-      WOODEN_SHELVES.name
-    ),
+  const [woodenShelvesLocation] = await seedTable("locations", [
+    createChildLocationFixture(secondaryWorkspace.id, basementLocation.path, WOODEN_SHELVES.name),
   ]);
 
   // 6. Create boxes for primary workspace
-  const primaryBoxes = await seedTable('boxes', [
+  const primaryBoxes = await seedTable("boxes", [
     createBoxFixture(primaryWorkspace.id, topShelfLocation.id, {
       name: ELECTRONICS_BOX.name,
       description: ELECTRONICS_BOX.description,
@@ -223,70 +217,70 @@ export async function seedInitialDataset(): Promise<InitialDataset> {
     }),
     // Additional boxes
     createBoxFixture(primaryWorkspace.id, topShelfLocation.id, {
-      name: 'Office Supplies',
-      description: 'Pens, paper, staplers, and other office items',
-      tags: ['office', 'supplies'],
+      name: "Office Supplies",
+      description: "Pens, paper, staplers, and other office items",
+      tags: ["office", "supplies"],
     }),
     createBoxFixture(primaryWorkspace.id, null, {
-      name: 'Unsorted Items',
-      description: 'Items pending organization',
-      tags: ['temporary'],
+      name: "Unsorted Items",
+      description: "Items pending organization",
+      tags: ["temporary"],
     }),
   ]);
 
   // 7. Create boxes for secondary workspace
-  const secondaryBoxes = await seedTable('boxes', [
+  const secondaryBoxes = await seedTable("boxes", [
     createBoxFixture(secondaryWorkspace.id, woodenShelvesLocation.id, {
       name: KITCHEN_SUPPLIES.name,
       description: KITCHEN_SUPPLIES.description,
       tags: KITCHEN_SUPPLIES.tags,
     }),
     createBoxFixture(secondaryWorkspace.id, basementLocation.id, {
-      name: 'Sports Equipment',
-      description: 'Baseball gloves, tennis rackets, and soccer balls',
-      tags: ['sports', 'equipment'],
+      name: "Sports Equipment",
+      description: "Baseball gloves, tennis rackets, and soccer balls",
+      tags: ["sports", "equipment"],
     }),
     createBoxFixture(secondaryWorkspace.id, woodenShelvesLocation.id, {
-      name: 'Camping Gear',
-      description: 'Tent, sleeping bags, and camping cookware',
-      tags: ['camping', 'outdoor'],
+      name: "Camping Gear",
+      description: "Tent, sleeping bags, and camping cookware",
+      tags: ["camping", "outdoor"],
     }),
   ]);
 
   // 8. Create QR codes for primary workspace
-  const primaryQRCodes = await seedTable('qr_codes', [
+  const primaryQRCodes = await seedTable("qr_codes", [
     // Assigned QR codes (linked to boxes)
     ...primaryBoxes.slice(0, 3).map((box, index) =>
       createQRCodeFixture(primaryWorkspace.id, {
         short_id: `QR-PRI00${index + 1}`,
-        status: 'assigned',
+        status: "assigned",
         box_id: box.id,
       })
     ),
     // Available QR codes
     ...Array.from({ length: 7 }, (_, index) =>
       createQRCodeFixture(primaryWorkspace.id, {
-        short_id: `QR-PRI${String(index + 10).padStart(3, '0')}`,
-        status: 'generated',
+        short_id: `QR-PRI${String(index + 10).padStart(3, "0")}`,
+        status: "generated",
       })
     ),
   ]);
 
   // 9. Create QR codes for secondary workspace
-  const secondaryQRCodes = await seedTable('qr_codes', [
+  const secondaryQRCodes = await seedTable("qr_codes", [
     // Assigned QR codes
     ...secondaryBoxes.slice(0, 2).map((box, index) =>
       createQRCodeFixture(secondaryWorkspace.id, {
         short_id: `QR-SEC00${index + 1}`,
-        status: 'assigned',
+        status: "assigned",
         box_id: box.id,
       })
     ),
     // Available QR codes
     ...Array.from({ length: 8 }, (_, index) =>
       createQRCodeFixture(secondaryWorkspace.id, {
-        short_id: `QR-SEC${String(index + 10).padStart(3, '0')}`,
-        status: 'generated',
+        short_id: `QR-SEC${String(index + 10).padStart(3, "0")}`,
+        status: "generated",
       })
     ),
   ]);
