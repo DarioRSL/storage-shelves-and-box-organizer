@@ -1,5 +1,6 @@
 import { defineMiddleware, sequence } from "astro:middleware";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { parse } from "cookie";
 import type { Database } from "../db/database.types.ts";
 import { loggerMiddleware } from "@/lib/services/logger.middleware";
@@ -9,11 +10,21 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   const cookieString = context.request.headers.get("cookie") || "";
   const cookies = parse(cookieString);
 
-  // Get session data from custom session cookie
+  // Get session data from custom session cookie OR Authorization header
   const sessionCookie = cookies.sb_session;
+  const authHeader = context.request.headers.get("authorization");
   let sessionData: { access_token: string; refresh_token: string } | null = null;
 
-  if (sessionCookie) {
+  // Priority 1: Check Authorization header (for API clients and tests)
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
+    sessionData = {
+      access_token: token,
+      refresh_token: "", // Not needed for read-only operations
+    };
+  }
+  // Priority 2: Check session cookie (for browser clients)
+  else if (sessionCookie) {
     try {
       sessionData = JSON.parse(decodeURIComponent(sessionCookie));
     } catch {
@@ -24,43 +35,74 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   // Store cookies to set in response later
   const cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[] = [];
 
-  // Create Supabase client
-  const supabase = createServerClient<Database>(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_KEY,
-    {
-      cookies: {
-        getAll() {
-          return Object.entries(cookies).map(([name, value]) => ({
-            name,
-            value: value || "",
-          }));
-        },
-        setAll(cookiesToSet_) {
-          cookiesToSet.push(...cookiesToSet_);
-        },
-      },
-    }
-  );
-
-  // Get authenticated user and set session for RLS policies
+  // Create appropriate Supabase client based on auth method
+  let supabase;
   let user = null;
 
-  if (sessionData) {
-    try {
-      // Set session with both access and refresh tokens - this enables auth.uid() in RLS policies
-      await supabase.auth.setSession({
-        access_token: sessionData.access_token,
-        refresh_token: sessionData.refresh_token,
-      });
+  if (authHeader?.startsWith("Bearer ") && sessionData) {
+    // For Bearer token auth (API clients/tests), create a client with token in headers
+    // This ensures auth.uid() works correctly for RLS policies
+    supabase = createClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      }
+    );
 
-      // Verify session by getting user
-      const { data, error } = await supabase.auth.getUser();
+    // Validate the token and get user info
+    try {
+      const { data, error } = await supabase.auth.getUser(sessionData.access_token);
       if (!error && data?.user) {
         user = data.user;
       }
     } catch {
       // Continue without user
+    }
+  } else {
+    // For session cookie auth (browser clients), use SSR client with cookie management
+    supabase = createServerClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        cookies: {
+          getAll() {
+            return Object.entries(cookies).map(([name, value]) => ({
+              name,
+              value: value || "",
+            }));
+          },
+          setAll(cookiesToSet_) {
+            cookiesToSet.push(...cookiesToSet_);
+          },
+        },
+      }
+    );
+
+    // Get authenticated user from session cookie
+    if (sessionData) {
+      try {
+        await supabase.auth.setSession({
+          access_token: sessionData.access_token,
+          refresh_token: sessionData.refresh_token,
+        });
+
+        const { data, error } = await supabase.auth.getUser();
+        if (!error && data?.user) {
+          user = data.user;
+        }
+      } catch {
+        // Continue without user
+      }
     }
   }
 
