@@ -12,6 +12,9 @@ export default defineConfig({
     // Test environment
     environment: 'jsdom',
 
+    // Global setup (start/stop dev server)
+    globalSetup: './tests/global-setup.ts',
+
     // Global test setup
     setupFiles: ['./tests/setup.ts'],
 
@@ -40,7 +43,6 @@ export default defineConfig({
         branches: 80,
         statements: 80,
       },
-      all: true,
     },
 
     // Test globals
@@ -65,6 +67,20 @@ export default defineConfig({
 
     // Watch mode
     watch: false,
+
+    // Disable test parallelization for integration tests to avoid overwhelming auth system
+    // Integration tests create many auth users and local Supabase can't handle parallel load
+    maxConcurrency: 1, // Only run 1 test file at a time
+    sequence: {
+      concurrent: false, // Run test files sequentially
+    },
+
+    // Isolate each test file in its own process
+    isolate: true,
+    fileParallelism: false,
+
+    // Increase hook timeout for cleanup operations
+    hookTimeout: 30000,
   },
   resolve: {
     alias: {

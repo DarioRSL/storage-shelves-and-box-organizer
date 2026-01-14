@@ -11,7 +11,6 @@
 
 import type { Session, User } from '@supabase/supabase-js';
 import { getAdminSupabaseClient, getTestSupabaseClient } from './supabase-test-client';
-import { seedTable } from './db-setup';
 
 /**
  * Test User with authentication session
@@ -40,10 +39,60 @@ export interface TestUser {
 const DEFAULT_TEST_PASSWORD = 'TestPass123!';
 
 /**
+ * Delay between auth operations to avoid overwhelming local Supabase
+ * Helps prevent rate limiting and database errors
+ */
+const AUTH_OPERATION_DELAY_MS = 50;
+
+/**
+ * Sleep helper for adding delays between operations
+ */
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Retry helper with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  baseDelay = 100
+): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on certain errors
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('already been registered') || message.includes('Invalid')) {
+        throw error;
+      }
+
+      // Exponential backoff: 100ms, 200ms, 400ms
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`[retryWithBackoff] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+/**
  * Create authenticated test user with session
  *
  * Creates both auth.users record and profiles record.
  * Returns user data with access token for API requests.
+ *
+ * IDEMPOTENT: If user already exists with same credentials, logs in instead of recreating.
+ * This avoids overwhelming Supabase Auth with delete/create cycles.
  *
  * @example
  * ```typescript
@@ -65,6 +114,7 @@ export async function createAuthenticatedUser(
   }>
 ): Promise<TestUser> {
   const adminClient = getAdminSupabaseClient();
+  const client = getTestSupabaseClient();
 
   // Generate unique email if not provided
   const email = userData?.email || `test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
@@ -72,35 +122,74 @@ export async function createAuthenticatedUser(
   const full_name = userData?.full_name || `Test User ${Date.now()}`;
 
   try {
-    // Create auth user via Admin API
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+    // FIRST: Try to log in with existing credentials (idempotent approach)
+    // This avoids the expensive delete/create cycle when user already exists
+    const loginResult = await client.auth.signInWithPassword({
       email,
       password,
-      email_confirm: true, // Skip email confirmation in tests
-      user_metadata: {
-        full_name,
-      },
     });
 
-    if (authError || !authData.user) {
-      throw new Error(`Failed to create auth user: ${authError?.message || 'Unknown error'}`);
+    if (loginResult.data?.session && loginResult.data?.user) {
+      // User exists and credentials match - reuse this user
+      // Ensure profile exists (might have been deleted in cleanup)
+      await adminClient
+        .from('profiles')
+        .upsert({
+          id: loginResult.data.user.id,
+          email: email, // Use the email we passed in, not the user object
+          full_name,
+          avatar_url: userData?.avatar_url || null,
+          theme_preference: 'system',
+        })
+        .select();
+
+      return {
+        id: loginResult.data.user.id,
+        email,
+        password,
+        token: loginResult.data.session.access_token,
+        refreshToken: loginResult.data.session.refresh_token,
+        session: loginResult.data.session,
+        user: loginResult.data.user,
+      };
     }
 
-    // Delete any existing profile with this ID (shouldn't happen, but local Supabase might have stale data)
-    await adminClient.from('profiles').delete().eq('id', authData.user.id);
+    // User doesn't exist or credentials don't match - create new user
+    await sleep(AUTH_OPERATION_DELAY_MS);
+
+    // Create auth user via Admin API with retry logic
+    const createUserResult = await retryWithBackoff(async () => {
+      return await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // Skip email confirmation in tests
+        user_metadata: {
+          full_name,
+        },
+      });
+    });
+
+    const authData = createUserResult.data;
+    const authError = createUserResult.error;
+
+    if (authError || !authData?.user) {
+      // If user already exists but login failed (wrong password), throw clear error
+      if (authError?.message?.includes('already been registered') || authError?.message?.includes('already exists')) {
+        throw new Error(`User ${email} exists but password doesn't match. Clear test data or use correct password.`);
+      }
+      throw new Error(`Failed to create auth user: ${authError?.message || 'Unknown error'}`);
+    }
 
     // Create profile record using upsert to handle any race conditions
     const { data: profiles, error: profileError } = await adminClient
       .from('profiles')
-      .upsert([
-        {
-          id: authData.user.id,
-          email: authData.user.email,
-          full_name,
-          avatar_url: userData?.avatar_url || null,
-          theme_preference: 'system',
-        },
-      ])
+      .upsert({
+        id: authData.user.id,
+        email: email, // Use the email we passed in, not the user object
+        full_name,
+        avatar_url: userData?.avatar_url || null,
+        theme_preference: 'system',
+      })
       .select();
 
     if (profileError || !profiles || profiles.length === 0) {
@@ -108,23 +197,32 @@ export async function createAuthenticatedUser(
     }
 
     // Sign in to get session and tokens
-    const client = getTestSupabaseClient();
-    const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({
-      email,
-      password,
+    await sleep(AUTH_OPERATION_DELAY_MS);
+
+    const sessionResult = await retryWithBackoff(async () => {
+      const result = await client.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (result.error || !result.data.session) {
+        throw new Error(`Failed to create session: ${result.error?.message || 'Unknown error'}`);
+      }
+
+      return result.data;
     });
 
-    if (sessionError || !sessionData.session) {
-      throw new Error(`Failed to create session: ${sessionError?.message || 'Unknown error'}`);
+    if (!sessionResult.session) {
+      throw new Error('Failed to create session: No session returned');
     }
 
     return {
       id: authData.user.id,
       email,
       password,
-      token: sessionData.session.access_token,
-      refreshToken: sessionData.session.refresh_token,
-      session: sessionData.session,
+      token: sessionResult.session.access_token,
+      refreshToken: sessionResult.session.refresh_token,
+      session: sessionResult.session,
       user: authData.user,
     };
   } catch (error) {
@@ -348,3 +446,6 @@ export async function refreshUserToken(refreshToken: string): Promise<TestUser> 
     throw new Error(`Failed to refresh token: ${message}`);
   }
 }
+
+// Re-export user pool functions for convenience
+export { getUsersFromPool, initializeUserPool, destroyUserPool, getPoolStatus } from './user-pool';

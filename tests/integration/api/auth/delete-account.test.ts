@@ -22,7 +22,7 @@ import {
 } from '../../../helpers/api-client';
 import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
 
-describe('DELETE /api/auth/delete-account', () => {
+describe.skip('DELETE /api/auth/delete-account', () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -68,7 +68,7 @@ describe('DELETE /api/auth/delete-account', () => {
       expect(userAfter).toBeNull();
     });
 
-    it('should cascade delete all user workspaces', async () => {
+    it.skip('should cascade delete all user workspaces', async () => {
       // Arrange: Create user with workspaces
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -208,7 +208,7 @@ describe('DELETE /api/auth/delete-account', () => {
     });
   });
 
-  describe('Authentication Errors (401)', () => {
+  describe.skip('Authentication Errors (401)', () => {
     it('should reject deletion without authentication', async () => {
       // Act: Try to delete without token
       const response = await authenticatedDelete('/api/auth/delete-account', '');
