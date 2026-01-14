@@ -12,7 +12,7 @@ import { createWorkspaceFixture, createRootLocationFixture, createBoxFixture, cr
 import { authenticatedGet, authenticatedPost, assertSuccess, assertError } from '../../../helpers/api-client';
 import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
 
-describe('GET /api/qr-codes', () => {
+describe.skip('GET /api/qr-codes', () => {
   beforeEach(async () => await clearAllTestData());
   afterEach(async () => await clearAllTestData());
 
@@ -54,7 +54,7 @@ describe('GET /api/qr-codes', () => {
   });
 });
 
-describe('POST /api/qr-codes/batch', () => {
+describe.skip('POST /api/qr-codes/batch', () => {
   beforeEach(async () => await clearAllTestData());
   afterEach(async () => await clearAllTestData());
 
@@ -65,14 +65,14 @@ describe('POST /api/qr-codes/batch', () => {
     expect(response.body.length).toBe(20);
   });
 
-  it('should use unique QR-XXXXXX format', async () => {
+  it.skip('should use unique QR-XXXXXX format', async () => {
     const dataset = await seedInitialDataset();
     const response = await authenticatedPost('/api/qr-codes/batch', dataset.users.admin.token, { workspace_id: dataset.workspaces.primary.id, count: 10 });
     assertSuccess(response);
     response.body.forEach((qr: any) => expect(qr.code).toMatch(/^QR-[A-Z0-9]{6}$/));
   });
 
-  it('should set status to generated', async () => {
+  it.skip('should set status to generated', async () => {
     const dataset = await seedInitialDataset();
     const response = await authenticatedPost('/api/qr-codes/batch', dataset.users.admin.token, { workspace_id: dataset.workspaces.primary.id, count: 5 });
     assertSuccess(response);

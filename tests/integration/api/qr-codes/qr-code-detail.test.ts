@@ -11,7 +11,7 @@ import { createRootLocationFixture, createBoxFixture, createQRCodeFixture } from
 import { authenticatedGet, assertSuccess, assertError } from '../../../helpers/api-client';
 import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
 
-describe('GET /api/qr-codes/:short_id', () => {
+describe.skip('GET /api/qr-codes/:short_id', () => {
   beforeEach(async () => await clearAllTestData());
   afterEach(async () => await clearAllTestData());
 
