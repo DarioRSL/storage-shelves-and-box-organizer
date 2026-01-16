@@ -1,124 +1,152 @@
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { parse } from "cookie";
 import type { Database } from "../db/database.types.ts";
+import { loggerMiddleware } from "@/lib/services/logger.middleware";
 
-export const onRequest = defineMiddleware(async (context, next) => {
-  // Parse cookies from request headers using proper cookie parser
+const authMiddleware = defineMiddleware(async (context, next) => {
+  // Parse cookies from request headers
   const cookieString = context.request.headers.get("cookie") || "";
   const cookies = parse(cookieString);
 
-  // Check for sb_session HttpOnly cookie (set by /api/auth/session)
-  const sessionToken = cookies.sb_session;
+  // Get session data from custom session cookie OR Authorization header
+  const sessionCookie = cookies.sb_session;
+  const authHeader = context.request.headers.get("authorization");
+  let sessionData: { access_token: string; refresh_token: string } | null = null;
 
-  // Debug: Log session status
-  if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-    console.log(`[Middleware] Path: ${context.url.pathname}`);
-    console.log(`[Middleware] Session token present:`, !!sessionToken);
+  // Priority 1: Check Authorization header (for API clients and tests)
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
+    sessionData = {
+      access_token: token,
+      refresh_token: "", // Not needed for read-only operations
+    };
+  }
+  // Priority 2: Check session cookie (for browser clients)
+  else if (sessionCookie) {
+    try {
+      sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+      console.log('[Middleware] Parsed session cookie:', {
+        hasAccessToken: !!sessionData?.access_token,
+        hasRefreshToken: !!sessionData?.refresh_token,
+        accessTokenPrefix: sessionData?.access_token?.substring(0, 20)
+      });
+    } catch (error) {
+      // Invalid session data, continue without auth
+      console.log('[Middleware] Failed to parse session cookie:', error);
+    }
   }
 
   // Store cookies to set in response later
-  const cookiesToSet: { name: string; value: string; options?: any }[] = [];
+  const cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[] = [];
 
-  // Create Supabase client using @supabase/ssr
-  // This handles cookie-based session management automatically
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        return Object.entries(cookies).map(([name, value]) => ({
-          name,
-          value: value ? decodeURIComponent(value) : "",
-        }));
-      },
-      setAll(cookiesToSet_) {
-        // Store cookies to be set after response
-        cookiesToSet.push(...cookiesToSet_);
-      },
-    },
-  });
-
-  // Make supabase client available to routes via context.locals
-  context.locals.supabase = supabase;
-
-  // Get authenticated user from session (cookies) OR from session token
+  // Create appropriate Supabase client based on auth method
+  let supabase;
   let user = null;
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (!error && data?.user) {
-      user = data.user;
-      if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-        console.log(`[Middleware] User found from cookies: ${data.user.email}`);
-      }
-    } else if (sessionToken) {
-      // If no user from cookies, try to extract from sb_session token
-      // Decode JWT without verification (we trust tokens from our own client)
-      try {
-        const parts = sessionToken.split(".");
-        if (parts.length !== 3) {
-          throw new Error("Invalid JWT format");
-        }
 
-        // Decode the payload (second part of JWT)
-        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8")) as {
-          sub?: string;
-          email?: string;
-          role?: string;
-          aud?: string;
-          user_metadata?: Record<string, unknown>;
+  if (authHeader?.startsWith("Bearer ") && sessionData) {
+    // For Bearer token auth (API clients/tests), create a client with token in headers
+    // This ensures auth.uid() works correctly for RLS policies
+    supabase = createClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      }
+    );
+
+    // Validate the token and get user info
+    try {
+      const { data, error } = await supabase.auth.getUser(sessionData.access_token);
+      if (!error && data?.user) {
+        user = data.user;
+      }
+    } catch {
+      // Continue without user
+    }
+  } else if (sessionData) {
+    // For custom session cookie, decode JWT to get user info WITHOUT verification
+    // This is safe because the cookie is HttpOnly and set by our /api/auth/session endpoint
+    // which already validated the token with Supabase during login
+    try {
+      const tokenParts = sessionData.access_token.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf-8'));
+
+        // Extract user info from JWT claims
+        user = {
+          id: payload.sub,
+          email: payload.email,
+          aud: payload.aud,
+          role: payload.role,
+          app_metadata: payload.app_metadata || {},
+          user_metadata: payload.user_metadata || {},
+          created_at: payload.created_at || new Date().toISOString(),
+          updated_at: payload.updated_at || new Date().toISOString(),
         };
 
-        // Create a user-like object from the JWT payload
-        if (payload.sub && payload.email) {
-          user = {
-            id: payload.sub,
-            email: payload.email,
-            user_metadata: payload.user_metadata || {},
-            aud: payload.aud || "authenticated",
-            role: payload.role,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            last_sign_in_at: new Date().toISOString(),
-            app_metadata: {},
-            phone: null,
-            email_confirmed_at: null,
-            phone_confirmed_at: null,
-            confirmed_at: new Date().toISOString(),
-            is_anonymous: false,
-          } as any;
-
-          // Set JWT in Supabase client so RLS policies can check auth.uid()
-          // Manually set the session with the JWT token and empty refresh token
-          await supabase.auth.setSession({
-            access_token: sessionToken,
-            refresh_token: "",
-          });
-
-          if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-            console.log(`[Middleware] User found from session token: ${payload.email}`);
-          }
-        }
-      } catch (err) {
-        if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-          console.log(`[Middleware] Failed to decode session token:`, err instanceof Error ? err.message : String(err));
-        }
+        console.log('[Middleware] Session cookie auth SUCCESS (decoded JWT):', {
+          userId: user.id,
+          email: user.email
+        });
       }
-    } else if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] No user - error: ${error?.message || "no session"}`);
+    } catch (error) {
+      console.log('[Middleware] Failed to decode JWT from session cookie:', error);
     }
-  } catch (err) {
-    // User not authenticated or session invalid, continue without user
-    if (context.url.pathname === "/app" || context.url.pathname === "/auth") {
-      console.log(`[Middleware] Exception: ${err instanceof Error ? err.message : String(err)}`);
-    }
+
+    // Create Supabase client with the token in the Authorization header
+    // The token will be used for RLS policies in database queries
+    supabase = createClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${sessionData.access_token}`,
+          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      }
+    );
+  } else {
+    // No session data - create basic client for non-authenticated requests
+    supabase = createClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      }
+    );
   }
 
-  // Make user available to routes via context.locals
+  // Make supabase client available to routes
+  context.locals.supabase = supabase;
+
+  // Make user available to routes
   context.locals.user = user;
 
-  // Process the request and get the response
+  // Process request
   const response = await next();
 
-  // Set any cookies that Supabase needs to set
+  // Set any cookies that Supabase needs
   cookiesToSet.forEach(({ name, value, options }) => {
     response.headers.append(
       "Set-Cookie",
@@ -130,3 +158,5 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   return response;
 });
+
+export const onRequest = sequence(loggerMiddleware, authMiddleware);

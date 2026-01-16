@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { QrCodeDetailDto, BatchGenerateQrCodesRequest, BatchGenerateQrCodesResponse } from "@/types";
+import { log } from "./logger";
 
 /**
  * Custom error for QR code not found in database.
@@ -41,12 +42,7 @@ export async function getQrCodeByShortId(
 
     // Handle Supabase errors
     if (error) {
-      console.error("Error fetching QR code:", {
-        short_id: shortId,
-        user_id: userId,
-        error: error.message,
-        code: error.code,
-      });
+      log.error("Failed to fetch QR code by short ID", { shortId, userId, error: error.message, code: error.code });
 
       // PGRST116 = no rows returned (either doesn't exist or RLS denied)
       if (error.code === "PGRST116") {
@@ -58,20 +54,16 @@ export async function getQrCodeByShortId(
 
     // Additional null check (should not happen with .single())
     if (!data) {
-      console.warn("QR code not found or access denied:", {
-        short_id: shortId,
-        user_id: userId,
-      });
+      log.warn("QR code not found or access denied", { shortId, userId });
       throw new QrCodeNotFoundError();
     }
 
     // Log successful retrieval
-    console.log("QR code fetched successfully:", {
-      qr_code_id: data.id,
-      short_id: data.short_id,
-      user_id: userId,
-      workspace_id: data.workspace_id,
-      is_assigned: !!data.box_id,
+    log.debug("QR code fetched successfully", {
+      qrCodeId: data.id,
+      shortId: data.short_id,
+      userId,
+      workspaceId: data.workspace_id,
     });
 
     return data;
@@ -82,10 +74,10 @@ export async function getQrCodeByShortId(
     }
 
     // Log unexpected errors
-    console.error("Unexpected error in getQrCodeByShortId:", {
-      short_id: shortId,
-      user_id: userId,
-      error,
+    log.error("Unexpected error in getQrCodeByShortId", {
+      shortId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Re-throw or wrap errors
@@ -131,20 +123,16 @@ export async function getQrCodesForWorkspace(
     const { data, error } = await query;
 
     if (error) {
-      console.error("[getQrCodesForWorkspace] Database error:", {
-        workspace_id: workspaceId,
-        status,
-        error: error.message,
-      });
+      log.error("Failed to fetch QR codes for workspace", { workspaceId, status, error: error.message });
       throw new Error("Nie udało się pobrać kodów QR");
     }
 
     return data || [];
   } catch (error) {
-    console.error("[getQrCodesForWorkspace] Unexpected error:", {
-      workspace_id: workspaceId,
+    log.error("Unexpected error in getQrCodesForWorkspace", {
+      workspaceId,
       status,
-      error,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Return empty array on error to not break UI
@@ -224,8 +212,8 @@ export async function batchGenerateQrCodes(
       .select("id, short_id, status, workspace_id, created_at");
 
     if (error) {
-      console.error("[QRCodeService] Failed to generate QR codes:", {
-        workspace_id,
+      log.error("Failed to batch generate QR codes", {
+        workspaceId: workspace_id,
         quantity,
         error: error.message,
         code: error.code,
@@ -234,8 +222,8 @@ export async function batchGenerateQrCodes(
     }
 
     if (!data || data.length !== quantity) {
-      console.error("[QRCodeService] Generated count mismatch:", {
-        workspace_id,
+      log.error("Generated QR codes count mismatch", {
+        workspaceId: workspace_id,
         expected: quantity,
         actual: data?.length || 0,
       });
@@ -258,10 +246,10 @@ export async function batchGenerateQrCodes(
     }
 
     // Log unexpected errors
-    console.error("[QRCodeService] Unexpected error in batchGenerateQrCodes:", {
-      workspace_id,
+    log.error("Unexpected error in batchGenerateQrCodes", {
+      workspaceId: workspace_id,
       quantity,
-      error,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     throw new Error("Nie udało się wygenerować kodów QR");

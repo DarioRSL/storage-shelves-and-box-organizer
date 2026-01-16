@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { log } from "../../../lib/services/logger";
 
 export const prerender = false;
 
@@ -11,7 +12,7 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
     // 1. Parse request body
-    let body: any;
+    let body: unknown;
     try {
       body = await request.json();
     } catch {
@@ -21,34 +22,33 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const { token } = body as { token?: string };
+    const { token, refreshToken } = body as { token?: string; refreshToken?: string };
 
     if (!token || typeof token !== "string") {
-      console.error("[POST /api/auth/session] Token missing or invalid:", {
-        hasToken: !!body.token,
-        tokenType: typeof body.token,
-        bodyKeys: Object.keys(body),
-      });
       return new Response(JSON.stringify({ error: "Token required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    console.log("[POST /api/auth/session] Token received, length:", token.length);
+    if (!refreshToken || typeof refreshToken !== "string") {
+      return new Response(JSON.stringify({ error: "Refresh token required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-    // 2. Validate JWT format
+    // 2. Validate JWT format (access token)
     const parts = token.split(".");
     if (parts.length !== 3) {
-      console.error("[POST /api/auth/session] Invalid JWT format, parts:", parts.length);
       return new Response(JSON.stringify({ error: "Invalid token format" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // 3. Decode JWT payload (no signature verification - trusted source)
-    let payload: any;
+    // 3. Decode JWT payload to validate
+    let payload: unknown;
     try {
       payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
     } catch {
@@ -58,46 +58,46 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // 4. Validate required claims
-    if (!payload.sub || !payload.email) {
-      console.error("[POST /api/auth/session] Invalid token claims:", {
-        hasSub: !!payload.sub,
-        hasEmail: !!payload.email,
-      });
+    if (!payload || typeof payload !== "object" || !("sub" in payload)) {
       return new Response(JSON.stringify({ error: "Invalid token claims" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    console.log("[POST /api/auth/session] Valid token for user:", payload.email);
+    // 4. Create session object with both tokens
+    const sessionData = JSON.stringify({ access_token: token, refresh_token: refreshToken });
 
-    // 5. Set HttpOnly secure cookie
-    // Security flags:
-    // - HttpOnly: JavaScript cannot access (XSS protection)
-    // - Secure: Only HTTPS (production)
-    // - SameSite=Strict: Only same-origin requests (CSRF protection)
-    // - Max-Age=3600: 1 hour expiry
-    const cookieValue = `sb_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`;
-
-    // In production, add Secure flag
+    // 5. Set HttpOnly cookie with session data
     const isProduction = import.meta.env.PROD;
-    const secureCookie = isProduction ? `${cookieValue}; Secure` : cookieValue;
+    const cookieParts = [
+      `sb_session=${encodeURIComponent(sessionData)}`, // Store both tokens as JSON
+      "Path=/",
+      "HttpOnly",
+      "SameSite=Strict",
+      "Max-Age=3600",
+    ];
 
-    console.log("[POST /api/auth/session] Setting HttpOnly cookie for", payload.email);
+    if (isProduction) {
+      cookieParts.push("Secure");
+    }
 
-    const response = new Response(JSON.stringify({ success: true }), {
+    log.info("Session created successfully", {
+      endpoint: "POST /api/auth/session",
+      userId: payload.sub as string,
+    });
+
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": secureCookie,
+        "Set-Cookie": cookieParts.join("; "),
       },
     });
-
-    console.log("[POST /api/auth/session] Response sent with status 200");
-    return response;
   } catch (error) {
-    console.error("[POST /api/auth/session] Unexpected error:", error);
+    log.error("Session creation failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -110,20 +110,11 @@ export const POST: APIRoute = async ({ request }) => {
  * Clears the session cookie (logout)
  */
 export const DELETE: APIRoute = async () => {
-  try {
-    // Clear cookie by setting Max-Age=0
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Set-Cookie": `sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
-      },
-    });
-  } catch (error) {
-    console.error("[DELETE /api/auth/session] Unexpected error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": "sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+    },
+  });
 };

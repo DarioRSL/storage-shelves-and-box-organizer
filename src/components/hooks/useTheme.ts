@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ThemeMode, UpdateThemeRequest } from "../../types";
 import { apiFetch } from "../../lib/api-client";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * Custom hook for managing theme selection with database and localStorage sync.
@@ -43,7 +44,7 @@ export function useTheme(initialTheme?: ThemeMode) {
         body: JSON.stringify({ theme_preference: theme }),
       });
     } catch (error) {
-      console.error("Failed to save theme preference:", error);
+      log.error("useTheme save preference error", { error, theme });
       // UI remains updated even if DB save fails (localStorage is backup)
     } finally {
       setIsLoading(false);
@@ -59,8 +60,8 @@ function getThemeFromStorage(): ThemeMode {
     if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }
-  } catch (e) {
-    console.warn("localStorage not available, using system theme");
+  } catch {
+    log.warn("useTheme localStorage not available, using system theme");
   }
   return "system";
 }
@@ -68,8 +69,8 @@ function getThemeFromStorage(): ThemeMode {
 function saveThemeToStorage(theme: ThemeMode): void {
   try {
     localStorage.setItem("theme", theme);
-  } catch (e) {
-    console.warn("localStorage not available, theme preference not saved");
+  } catch {
+    log.warn("useTheme localStorage not available, theme preference not saved");
   }
 }
 

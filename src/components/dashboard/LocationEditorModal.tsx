@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { CreateLocationRequest } from "@/types";
+import { log } from "@/lib/services/logger.client";
 
 interface LocationEditorModalProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export default function LocationEditorModal({
 
       await onSubmit(data);
     } catch (err) {
-      console.error("[LocationEditorModal] Error:", err);
+      log.error("LocationEditorModal submission error", { error: err, workspaceId, mode });
     }
   };
 

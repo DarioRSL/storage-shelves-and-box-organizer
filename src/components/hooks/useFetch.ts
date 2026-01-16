@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { apiFetch, ApiError } from "@/lib/api-client";
 
-export interface UseFetchOptions<T = any> {
+export interface UseFetchOptions<T = unknown> {
   url: string;
   method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
   timeout?: number;
   onSuccess?: (data: T) => void;
@@ -13,7 +13,7 @@ export interface UseFetchOptions<T = any> {
   skip?: boolean;
 }
 
-export interface UseFetchReturn<T = any> {
+export interface UseFetchReturn<T = unknown> {
   data: T | null;
   loading: boolean;
   error: ApiError | null;
@@ -52,7 +52,7 @@ export interface UseFetchReturn<T = any> {
  * };
  * ```
  */
-export function useFetch<T = any>(options: UseFetchOptions<T>): UseFetchReturn<T> {
+export function useFetch<T = unknown>(options: UseFetchOptions<T>): UseFetchReturn<T> {
   const {
     url,
     method = "GET",

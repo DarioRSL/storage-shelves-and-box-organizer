@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { apiFetch, ApiError, getUserFriendlyErrorMessage, shouldRedirectToLogin } from "@/lib/api-client";
 import { usePDFGeneration } from "./usePDFGeneration";
 import type { BatchGenerateQrCodesResponse, QrCodeGeneratedItem, LabelFormat } from "@/types";
+import { log } from "@/lib/services/logger.client";
 
 interface UseQRCodeGenerationReturn {
   isLoading: boolean;
@@ -66,7 +67,7 @@ export function useQRCodeGeneration(workspaceId: string): UseQRCodeGenerationRet
           err instanceof ApiError ? getUserFriendlyErrorMessage(err) : "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
 
         setError(errorMessage);
-        console.error("[useQRCodeGeneration] Error:", err);
+        log.error("useQRCodeGeneration error", { error: err, workspaceId, quantity });
       } finally {
         setIsLoading(false);
       }

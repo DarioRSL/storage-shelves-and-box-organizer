@@ -36,7 +36,13 @@ export default function DashboardHeader() {
 
         {/* Right side: Actions, workspace selector and user menu */}
         <div className="flex items-center gap-4">
-          <Button size="sm" onClick={handleAddBox} className="gap-2" aria-label="Dodaj nowe pudełko">
+          <Button
+            data-testid="new-box-button"
+            size="sm"
+            onClick={handleAddBox}
+            className="gap-2"
+            aria-label="Dodaj nowe pudełko"
+          >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Dodaj pudełko
           </Button>

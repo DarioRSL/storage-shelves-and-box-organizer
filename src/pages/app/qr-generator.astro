@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import QRGeneratorView from "@/components/qr-generator/QRGeneratorView";
 import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -18,12 +19,12 @@ try {
   const profile = await getAuthenticatedUserProfile(supabase, user.id);
   themePreference = profile.theme_preference || "system";
 } catch (error) {
-  console.error("Failed to load user theme preference:", error);
+  log.error("Failed to load user theme preference", { userId: user.id, error });
 }
 ---
 
 <Layout title="Generator kodów QR - Storage Organizer" themePreference={themePreference}>
   <main role="main">
-    <QRGeneratorView client:load />
+    <QRGeneratorView client:only="react" />
   </main>
 </Layout>

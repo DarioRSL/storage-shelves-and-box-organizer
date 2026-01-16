@@ -65,7 +65,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} title={title} isDismissible={!isLoading}>
-      <div className="space-y-4">
+      <div data-testid="delete-confirmation-dialog" className="space-y-4">
         {/* Description */}
         <p className="text-sm text-gray-700 dark:text-gray-300">{description}</p>
 
@@ -89,7 +89,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             />
             {inputValue && inputValue !== confirmText && (
               <p id="confirmation-description" className="text-xs text-yellow-600 dark:text-yellow-400">
-                Text doesn't match. Please try again.
+                Text doesn&apos;t match. Please try again.
               </p>
             )}
           </div>
@@ -123,6 +123,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             Cancel
           </Button>
           <Button
+            data-testid="confirm-delete-button"
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
             className={

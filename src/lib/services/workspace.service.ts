@@ -9,6 +9,7 @@ import type {
   WorkspaceMemberWithProfileDto,
 } from "@/types";
 import { NotFoundError } from "./location.service";
+import { log } from "./logger";
 
 /**
  * Custom error for insufficient permissions when inviting members.
@@ -88,35 +89,49 @@ export async function createWorkspace(
   data: CreateWorkspaceRequest
 ): Promise<{ data: WorkspaceDto | null; error: Error | null }> {
   try {
-    // Insert workspace
-    // The database trigger will automatically add the user to workspace_members
-    const { data: workspace, error: workspaceError } = await supabase
-      .from("workspaces")
-      .insert({
-        owner_id: userId,
-        name: data.name,
-      })
-      .select()
-      .single();
+    // Call database function with SECURITY DEFINER to bypass RLS policies
+    // This function will create the workspace and the trigger will add the owner to workspace_members
+    const { data: workspaceId, error: functionError } = await supabase.rpc("create_workspace_for_user", {
+      p_user_id: userId,
+      p_workspace_name: data.name,
+    });
 
-    if (workspaceError) {
-      console.error("Error creating workspace:", workspaceError);
+    if (functionError) {
+      log.error("Failed to create workspace via function", {
+        error: functionError.message,
+        code: functionError.code,
+      });
       return {
         data: null,
         error: new Error("Failed to create workspace"),
       };
     }
 
-    if (!workspace) {
+    if (!workspaceId) {
       return {
         data: null,
-        error: new Error("Workspace creation returned no data"),
+        error: new Error("Workspace creation returned no ID"),
+      };
+    }
+
+    // Fetch the created workspace to return full data
+    const { data: workspace, error: fetchError } = await supabase
+      .from("workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .single();
+
+    if (fetchError || !workspace) {
+      log.error("Failed to fetch created workspace", { workspaceId, error: fetchError?.message });
+      return {
+        data: null,
+        error: new Error("Failed to retrieve created workspace"),
       };
     }
 
     return { data: workspace, error: null };
   } catch (error) {
-    console.error("Unexpected error in createWorkspace:", error);
+    log.error("Unexpected error in createWorkspace", { error: error instanceof Error ? error.message : String(error) });
     return {
       data: null,
       error: error instanceof Error ? error : new Error("Unknown error"),
@@ -150,7 +165,7 @@ export async function getUserWorkspaces(supabase: SupabaseClient, userId: string
       .eq("user_id", userId);
 
     if (error) {
-      console.error("Error fetching user workspaces:", error);
+      log.error("Failed to fetch user workspaces", { userId, error: error.message, code: error.code });
       throw new Error("Failed to retrieve workspaces");
     }
 
@@ -168,7 +183,10 @@ export async function getUserWorkspaces(supabase: SupabaseClient, userId: string
 
     return workspaces;
   } catch (error) {
-    console.error("Unexpected error in getUserWorkspaces:", error);
+    log.error("Unexpected error in getUserWorkspaces", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error instanceof Error ? error : new Error("Failed to retrieve workspaces");
   }
 }
@@ -211,7 +229,7 @@ export async function getWorkspaceMembers(
       .order("joined_at", { ascending: true });
 
     if (error) {
-      console.error("Error fetching workspace members:", error);
+      log.error("Failed to fetch workspace members", { workspaceId, error: error.message, code: error.code });
       throw new Error("Nie udało się pobrać członków workspace");
     }
 
@@ -246,7 +264,10 @@ export async function getWorkspaceMembers(
       throw error;
     }
 
-    console.error("Unexpected error in getWorkspaceMembers:", error);
+    log.error("Unexpected error in getWorkspaceMembers", {
+      workspaceId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error instanceof Error ? error : new Error("Nie udało się pobrać członków workspace");
   }
 }
@@ -286,7 +307,11 @@ export async function inviteWorkspaceMember(
       .single();
 
     if (roleError || !currentMember) {
-      console.error("Error checking user permissions:", roleError);
+      log.error("Failed to check user permissions for invite", {
+        workspaceId,
+        userId: currentUserId,
+        error: roleError?.message,
+      });
       throw new InsufficientPermissionsError();
     }
 
@@ -303,7 +328,7 @@ export async function inviteWorkspaceMember(
       .single();
 
     if (userError || !userProfile) {
-      console.error("User not found by email:", email, userError);
+      log.error("User not found by email during invite", { workspaceId, email, error: userError?.message });
       throw new NotFoundError("Użytkownik nie został znaleziony");
     }
 
@@ -338,7 +363,12 @@ export async function inviteWorkspaceMember(
       if (insertError.code === "23505") {
         throw new DuplicateMemberError();
       }
-      console.error("Error inserting workspace member:", insertError);
+      log.error("Failed to insert workspace member", {
+        workspaceId,
+        invitedUserId,
+        error: insertError.message,
+        code: insertError.code,
+      });
       throw new Error("Nie udało się dodać członka do workspace");
     }
 
@@ -367,17 +397,16 @@ export async function inviteWorkspaceMember(
       .single();
 
     if (fetchError || !memberWithProfile || !memberWithProfile.profile) {
-      console.error("Error fetching created member with profile:", fetchError);
+      log.error("Failed to fetch created member with profile", { workspaceId, invitedUserId, error: fetchError });
       throw new Error("Nie udało się pobrać danych nowo dodanego członka");
     }
 
     // 6. Log success
-    console.info("POST /api/workspaces/:workspace_id/members - Sukces:", {
-      workspaceId: workspaceId,
-      invitedUserId: invitedUserId,
-      role: role,
+    log.info("Workspace member invited successfully", {
+      workspaceId,
+      invitedUserId,
+      role,
       invitedByUserId: currentUserId,
-      timestamp: new Date().toISOString(),
     });
 
     // 7. Return WorkspaceMemberWithProfileDto
@@ -403,12 +432,11 @@ export async function inviteWorkspaceMember(
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in inviteWorkspaceMember:", {
-      workspaceId: workspaceId,
+    log.error("Unexpected error in inviteWorkspaceMember", {
+      workspaceId,
       inviteeEmail: email,
-      currentUserId: currentUserId,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+      currentUserId,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Nie udało się dodać członka do workspace");
   }
@@ -449,7 +477,11 @@ export async function updateWorkspaceMemberRole(
       .single();
 
     if (roleError || !currentMember) {
-      console.error("Error checking user permissions:", roleError);
+      log.error("Failed to check user permissions for invite", {
+        workspaceId,
+        userId: currentUserId,
+        error: roleError?.message,
+      });
       throw new InsufficientPermissionsError("Brak uprawnień do zmiany roli członka");
     }
 
@@ -467,7 +499,7 @@ export async function updateWorkspaceMemberRole(
       .single();
 
     if (targetError || !targetMember) {
-      console.error("Target member not found:", targetError);
+      log.error("Target member not found in workspace", { workspaceId, targetUserId, error: targetError?.message });
       throw new NotFoundError("Członek nie został znaleziony w tym workspace");
     }
 
@@ -483,7 +515,11 @@ export async function updateWorkspaceMemberRole(
         .eq("role", "owner");
 
       if (countError) {
-        console.error("Error counting owners:", countError);
+        log.error("Failed to count workspace owners", {
+          workspaceId,
+          error: countError.message,
+          code: countError.code,
+        });
         throw new Error("Nie udało się zaktualizować roli członka");
       }
 
@@ -503,7 +539,13 @@ export async function updateWorkspaceMemberRole(
       .single();
 
     if (updateError) {
-      console.error("Error updating member role:", updateError);
+      log.error("Failed to update member role", {
+        workspaceId,
+        targetUserId,
+        newRole,
+        error: updateError.message,
+        code: updateError.code,
+      });
       throw new Error("Nie udało się zaktualizować roli członka");
     }
 
@@ -512,13 +554,12 @@ export async function updateWorkspaceMemberRole(
     }
 
     // 5. Log success
-    console.info("PATCH /api/workspaces/:workspace_id/members/:user_id - Sukces:", {
-      workspaceId: workspaceId,
-      targetUserId: targetUserId,
-      oldRole: oldRole,
-      newRole: newRole,
+    log.info("Workspace member role updated successfully", {
+      workspaceId,
+      targetUserId,
+      oldRole,
+      newRole,
       changedByUserId: currentUserId,
-      timestamp: new Date().toISOString(),
     });
 
     // 6. Return updated member
@@ -534,13 +575,12 @@ export async function updateWorkspaceMemberRole(
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in updateWorkspaceMemberRole:", {
-      workspaceId: workspaceId,
-      targetUserId: targetUserId,
-      currentUserId: currentUserId,
-      newRole: newRole,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+    log.error("Unexpected error in updateWorkspaceMemberRole", {
+      workspaceId,
+      targetUserId,
+      currentUserId,
+      newRole,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Nie udało się zaktualizować roli członka");
   }
@@ -581,7 +621,11 @@ export async function removeWorkspaceMember(
       .single();
 
     if (currentMemberError || !currentMember) {
-      console.error("Current user not found in workspace:", currentMemberError);
+      log.error("Current user not found in workspace", {
+        workspaceId,
+        userId: currentUserId,
+        error: currentMemberError?.message,
+      });
       throw new NotFoundError("Workspace nie został znaleziony");
     }
 
@@ -595,7 +639,7 @@ export async function removeWorkspaceMember(
       .single();
 
     if (targetMemberError || !targetMember) {
-      console.error("Target user not found in workspace:", targetMemberError);
+      log.error("Target user not found in workspace", { workspaceId, targetUserId, error: targetMemberError?.message });
       throw new NotFoundError("Członek nie został znaleziony");
     }
 
@@ -620,17 +664,21 @@ export async function removeWorkspaceMember(
       .eq("user_id", targetUserId);
 
     if (deleteError) {
-      console.error("Error deleting workspace member:", deleteError);
+      log.error("Failed to delete workspace member", {
+        workspaceId,
+        targetUserId,
+        error: deleteError.message,
+        code: deleteError.code,
+      });
       throw new Error("Nie udało się usunąć członka");
     }
 
     // 6. Log success
-    console.info("DELETE /api/workspaces/:workspace_id/members/:user_id - Sukces:", {
-      workspaceId: workspaceId,
+    log.info("Workspace member removed successfully", {
+      workspaceId,
       removedUserId: targetUserId,
-      currentUserId: currentUserId,
-      isSelfRemoval: isSelfRemoval,
-      timestamp: new Date().toISOString(),
+      currentUserId,
+      isSelfRemoval,
     });
   } catch (error) {
     // Re-throw custom errors as-is
@@ -643,12 +691,11 @@ export async function removeWorkspaceMember(
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in removeWorkspaceMember:", {
-      workspaceId: workspaceId,
-      targetUserId: targetUserId,
-      currentUserId: currentUserId,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+    log.error("Unexpected error in removeWorkspaceMember", {
+      workspaceId,
+      targetUserId,
+      currentUserId,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Nie udało się usunąć członka");
   }
@@ -687,7 +734,7 @@ export async function updateWorkspace(
       .single();
 
     if (memberError || !memberData) {
-      console.error("Error checking workspace ownership:", memberError);
+      log.error("Failed to check workspace ownership", { workspaceId, userId, error: memberError?.message });
       throw new WorkspaceNotFoundError();
     }
 
@@ -714,7 +761,12 @@ export async function updateWorkspace(
       .single();
 
     if (updateError) {
-      console.error("Error updating workspace:", updateError);
+      log.error("Failed to update workspace", {
+        workspaceId,
+        userId,
+        error: updateError.message,
+        code: updateError.code,
+      });
       throw new Error("Nie udało się zaktualizować workspace'u");
     }
 
@@ -723,12 +775,7 @@ export async function updateWorkspace(
     }
 
     // 4. Log success
-    console.info("PATCH /api/workspaces/:workspace_id - Sukces:", {
-      workspaceId: workspaceId,
-      userId: userId,
-      fields_updated: Object.keys(updateObject),
-      timestamp: new Date().toISOString(),
-    });
+    log.info("Workspace updated successfully", { workspaceId, userId, fieldsUpdated: Object.keys(updateObject) });
 
     // 5. Return updated workspace
     return updatedWorkspace as PatchWorkspaceResponse;
@@ -739,11 +786,10 @@ export async function updateWorkspace(
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in updateWorkspace:", {
-      workspaceId: workspaceId,
-      userId: userId,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+    log.error("Unexpected error in updateWorkspace", {
+      workspaceId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Nie udało się zaktualizować workspace'u");
   }
@@ -786,7 +832,7 @@ export async function deleteWorkspace(
       .single();
 
     if (memberError || !memberData) {
-      console.error("Error checking workspace ownership:", memberError);
+      log.error("Failed to check workspace ownership", { workspaceId, userId, error: memberError?.message });
       throw new WorkspaceNotFoundError();
     }
 
@@ -806,7 +852,11 @@ export async function deleteWorkspace(
     const { error: deleteBoxesError } = await supabase.from("boxes").delete().eq("workspace_id", workspaceId);
 
     if (deleteBoxesError) {
-      console.error("Error deleting boxes:", deleteBoxesError);
+      log.error("Failed to delete boxes during workspace deletion", {
+        workspaceId,
+        error: deleteBoxesError.message,
+        code: deleteBoxesError.code,
+      });
       throw new Error("Nie udało się usunąć pudełek z workspace");
     }
 
@@ -819,7 +869,11 @@ export async function deleteWorkspace(
       .eq("status", "assigned");
 
     if (resetQrError) {
-      console.error("Error resetting QR codes:", resetQrError);
+      log.error("Failed to reset QR codes during workspace deletion", {
+        workspaceId,
+        error: resetQrError.message,
+        code: resetQrError.code,
+      });
       throw new Error("Nie udało się zresetować kodów QR");
     }
 
@@ -827,7 +881,11 @@ export async function deleteWorkspace(
     const { error: deleteLocationsError } = await supabase.from("locations").delete().eq("workspace_id", workspaceId);
 
     if (deleteLocationsError) {
-      console.error("Error deleting locations:", deleteLocationsError);
+      log.error("Failed to delete locations during workspace deletion", {
+        workspaceId,
+        error: deleteLocationsError.message,
+        code: deleteLocationsError.code,
+      });
       throw new Error("Nie udało się usunąć lokalizacji z workspace");
     }
 
@@ -838,7 +896,11 @@ export async function deleteWorkspace(
       .eq("workspace_id", workspaceId);
 
     if (deleteMembersError) {
-      console.error("Error deleting workspace members:", deleteMembersError);
+      log.error("Failed to delete workspace members during workspace deletion", {
+        workspaceId,
+        error: deleteMembersError.message,
+        code: deleteMembersError.code,
+      });
       throw new Error("Nie udało się usunąć członków workspace");
     }
 
@@ -851,7 +913,11 @@ export async function deleteWorkspace(
       .single();
 
     if (deleteWorkspaceError) {
-      console.error("Error deleting workspace:", deleteWorkspaceError);
+      log.error("Failed to delete workspace", {
+        workspaceId,
+        error: deleteWorkspaceError.message,
+        code: deleteWorkspaceError.code,
+      });
       throw new Error("Nie udało się usunąć workspace");
     }
 
@@ -860,11 +926,7 @@ export async function deleteWorkspace(
     }
 
     // 3. Log success
-    console.info("DELETE /api/workspaces/:workspace_id - Sukces:", {
-      workspaceId: workspaceId,
-      userId: userId,
-      timestamp: new Date().toISOString(),
-    });
+    log.info("Workspace deleted successfully", { workspaceId, userId });
 
     // 4. Return deleted workspace ID
     return { workspace_id: deletedWorkspace.id };
@@ -875,11 +937,10 @@ export async function deleteWorkspace(
     }
 
     // Log and throw unexpected errors
-    console.error("Unexpected error in deleteWorkspace:", {
-      workspaceId: workspaceId,
-      userId: userId,
-      error: error instanceof Error ? error.message : "Nieznany błąd",
-      timestamp: new Date().toISOString(),
+    log.error("Unexpected error in deleteWorkspace", {
+      workspaceId,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error instanceof Error ? error : new Error("Nie udało się usunąć workspace");
   }

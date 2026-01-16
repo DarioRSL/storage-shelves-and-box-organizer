@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  description?: string;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg";
   isDismissible?: boolean;
@@ -27,6 +28,7 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
+  description,
   children,
   size = "md",
   isDismissible = true,
@@ -63,6 +65,7 @@ export const Modal: React.FC<ModalProps> = ({
         {title && (
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
+            {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
         )}
 

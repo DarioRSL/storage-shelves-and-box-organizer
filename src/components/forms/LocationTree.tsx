@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import type { LocationDto } from "@/types";
+import { log } from "@/lib/services/logger.client";
 
 export interface LocationTreeNode extends LocationDto {
   children?: LocationTreeNode[];
@@ -27,11 +28,6 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load root locations on mount
-  useEffect(() => {
-    loadRootLocations();
-  }, [workspaceId]);
-
   // Load root locations (no parent_id)
   const loadRootLocations = useCallback(async () => {
     setIsLoading(true);
@@ -51,7 +47,7 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
       setNodes(treeNodes);
       onLoadComplete?.();
     } catch (err) {
-      console.error("Failed to load locations:", err);
+      log.error("Failed to load locations", { error: err, workspaceId });
       setError("Failed to load locations");
     } finally {
       setIsLoading(false);
@@ -96,7 +92,7 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
           })
         );
       } catch (err) {
-        console.error("Failed to load children:", err);
+        log.error("Failed to load children", { error: err, nodeId, workspaceId });
         setNodes((prevNodes) =>
           prevNodes.map((node) => {
             if (node.id === nodeId) {
@@ -109,6 +105,11 @@ export function LocationTree({ workspaceId, selectedId, onSelect, onLoadComplete
     },
     [workspaceId]
   );
+
+  // Load root locations on mount
+  useEffect(() => {
+    loadRootLocations();
+  }, [workspaceId, loadRootLocations]);
 
   // Toggle node expansion
   const handleToggle = useCallback(

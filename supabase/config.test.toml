@@ -1,0 +1,182 @@
+# Supabase Test Environment Configuration
+# This configuration is used for integration testing with isolated database
+# Based on main config.toml but with different ports to avoid conflicts
+
+project_id = "supabase-test"
+
+[api]
+enabled = true
+# Use different port from development (54321)
+port = 54421
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+[db]
+# Use different port from development (54322)
+port = 54422
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 15
+pooler_enabled = false
+pooler_port = 54423
+
+[db.seed]
+# If enabled, seeds the database after migrations during `supabase db reset`.
+enabled = true
+# Specifies an ordered list of seed files to load during `supabase db reset`.
+sql_paths = ["./seed.sql"]
+
+[db.pooler]
+enabled = false
+
+[realtime]
+enabled = true
+# Bind realtime via either IPv4 or IPv6. (default: IPv6)
+# ip_version = "IPv6"
+# The maximum length in bytes of HTTP request headers. (default: 4096)
+# max_header_length = 4096
+
+[studio]
+enabled = false
+# Port to use for Supabase Studio (disabled for test environment)
+# port = 54424
+
+# Email testing
+[inbucket]
+enabled = false
+
+[storage]
+enabled = true
+# Use different port from development
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
+# in emails.
+site_url = "http://localhost:3000"
+# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+additional_redirect_urls = ["http://localhost:3000"]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
+jwt_expiry = 3600
+# If disabled, the refresh token will never expire.
+enable_refresh_token_rotation = true
+# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
+# Requires enable_refresh_token_rotation = true.
+refresh_token_reuse_interval = 10
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# Allow/disallow anonymous sign-ins to your project.
+enable_anonymous_sign_ins = false
+# Allow/disallow testing manual linking of accounts
+enable_manual_linking = false
+
+[auth.email]
+# Allow/disallow new user signups via email to your project.
+enable_signup = true
+# If enabled, a user will be required to confirm any email change on both the old, and new email
+# addresses. If disabled, only the new email is required to confirm.
+double_confirm_changes = true
+# If enabled, users need to confirm their email address before signing in.
+enable_confirmations = false
+# If enabled, users will need to reauthenticate or have logged in recently to change their password.
+secure_password_change = false
+
+# Minimum password length. Defaults to 6
+[auth.email.password]
+min_length = 8
+
+[auth.sms]
+# Allow/disallow new user signups via SMS to your project.
+enable_signup = false
+enable_confirmations = false
+# Template for sending OTP to users
+template = "Your code is {{ .Code }}"
+
+# Use a production-ready SMS provider like Twilio or Vonage
+[auth.sms.twilio]
+enabled = false
+
+[auth.external.apple]
+enabled = false
+
+[auth.external.azure]
+enabled = false
+
+[auth.external.bitbucket]
+enabled = false
+
+[auth.external.discord]
+enabled = false
+
+[auth.external.facebook]
+enabled = false
+
+[auth.external.github]
+enabled = false
+
+[auth.external.gitlab]
+enabled = false
+
+[auth.external.google]
+enabled = false
+
+[auth.external.keycloak]
+enabled = false
+
+[auth.external.linkedin_oidc]
+enabled = false
+
+[auth.external.notion]
+enabled = false
+
+[auth.external.twitch]
+enabled = false
+
+[auth.external.twitter]
+enabled = false
+
+[auth.external.slack]
+enabled = false
+
+[auth.external.spotify]
+enabled = false
+
+[auth.external.workos]
+enabled = false
+
+[auth.external.zoom]
+enabled = false
+
+[auth.hook.mfa_verification_attempt]
+enabled = false
+
+[auth.hook.password_verification_attempt]
+enabled = false
+
+[auth.hook.custom_access_token]
+enabled = false
+
+[auth.hook.send_sms]
+enabled = false
+
+[auth.hook.send_email]
+enabled = false
+
+[analytics]
+enabled = false
+
+[functions]
+# Enable functions runtime in test environment
+enabled = false
+
+# Configure log level for edge functions (trace, debug, info, warn, error, fatal, panic, disabled)
+[functions.log_level]
+edge = "info"
+
+[edge_runtime]
+enabled = false

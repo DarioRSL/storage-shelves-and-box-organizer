@@ -23,6 +23,7 @@ export function NameInput({ value, onChange, onBlur, error, disabled = false }: 
       <div className="relative">
         <input
           id="box-name"
+          data-testid="box-name-input"
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}

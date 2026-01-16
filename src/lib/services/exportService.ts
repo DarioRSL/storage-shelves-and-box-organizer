@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-// @ts-ignore - csv-stringify/sync is available at runtime
+// @ts-expect-error - csv-stringify/sync is available at runtime
 import { stringify } from "csv-stringify/sync";
 
 /**

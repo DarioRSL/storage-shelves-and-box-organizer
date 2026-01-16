@@ -5,6 +5,7 @@ import { createBoxSchema, updateBoxSchema } from "@/lib/validation/box";
 import { extractZodErrors } from "@/lib/validation/schemas";
 import type { BoxDto, LocationDto, QrCodeDetailDto } from "@/types";
 import { currentWorkspaceId as currentWorkspaceIdStore } from "@/stores/dashboard";
+import { log } from "@/lib/services/logger.client";
 
 export interface BoxFormState {
   // Form fields
@@ -45,7 +46,7 @@ export interface UseBoxFormReturn {
       | "availableQRCodes"
       | "currentBox"
     >,
-    value: any
+    value: unknown
   ) => void;
   setErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
@@ -56,6 +57,7 @@ export interface UseBoxFormReturn {
   loadBoxData: (boxId: string) => Promise<void>;
   loadLocations: () => Promise<void>;
   loadAvailableQRCodes: () => Promise<void>;
+  generateQRCodeBatch: (quantity: number) => Promise<void>;
 
   // Computed
   isFormValid: boolean;
@@ -94,6 +96,73 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
   const storeWorkspaceId = useStore(currentWorkspaceIdStore);
   const currentWorkspaceId = workspaceId || storeWorkspaceId;
 
+  // Internal function to load locations
+  const loadLocationsInternal = useCallback(async () => {
+    try {
+      const data = await apiFetch<LocationDto[]>(`/api/locations?workspace_id=${currentWorkspaceId}`);
+      setFormState((prev) => ({
+        ...prev,
+        availableLocations: data || [],
+      }));
+    } catch (error) {
+      log.error("Failed to load locations", { error, workspaceId: currentWorkspaceId });
+      setFormState((prev) => ({
+        ...prev,
+        errors: { ...prev.errors, locations: "Failed to load locations" },
+      }));
+    }
+  }, [currentWorkspaceId]);
+
+  // Internal function to load QR codes
+  const loadQRCodesInternal = useCallback(async () => {
+    try {
+      const data = await apiFetch<QrCodeDetailDto[]>(
+        `/api/qr-codes?workspace_id=${currentWorkspaceId}&status=generated`
+      );
+      setFormState((prev) => ({
+        ...prev,
+        availableQRCodes: data || [],
+      }));
+    } catch (error) {
+      log.error("Failed to load QR codes", { error, workspaceId: currentWorkspaceId });
+      // Non-critical error, don't show to user
+    }
+  }, [currentWorkspaceId]);
+
+  // Internal function to load box data (edit mode)
+  const loadBoxDataInternal = useCallback(async (id: string) => {
+    try {
+      const boxData = await apiFetch<BoxDto>(`/api/boxes/${id}`);
+
+      // Create new state using functional update to avoid dependency on formState
+      setFormState((prev) => {
+        const newState: BoxFormState = {
+          ...prev,
+          name: boxData.name,
+          description: boxData.description || null,
+          tags: boxData.tags || [],
+          location_id: boxData.location?.id || null,
+          qr_code_id: boxData.qr_code?.id || null,
+          currentBox: boxData,
+        };
+
+        // Also update initial state
+        setInitialState(newState);
+
+        return newState;
+      });
+    } catch (error) {
+      log.error("Failed to load box data", { error, boxId: id });
+      if (error instanceof ApiError && error.status === 401) {
+        window.location.href = "/auth";
+      }
+      setFormState((prev) => ({
+        ...prev,
+        errors: { ...prev.errors, general: "Failed to load box data" },
+      }));
+    }
+  }, []); // Empty dependency array - no dependencies needed
+
   // Load initial data on mount or when workspace becomes available
   useEffect(() => {
     // Wait until we have a workspace ID
@@ -121,84 +190,40 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     };
 
     loadInitialData();
-  }, [mode, boxId, currentWorkspaceId]);
+  }, [mode, boxId, currentWorkspaceId, loadLocationsInternal, loadQRCodesInternal, loadBoxDataInternal]);
 
   // Track if form is dirty
   useEffect(() => {
-    const isDirty = JSON.stringify(formState) !== JSON.stringify(initialState);
-    setFormState((prev) => ({ ...prev, isDirty }));
-  }, [formState.name, formState.description, formState.tags, formState.location_id, formState.qr_code_id]);
+    const isDirty =
+      formState.name !== initialState.name ||
+      formState.description !== initialState.description ||
+      JSON.stringify(formState.tags) !== JSON.stringify(initialState.tags) ||
+      formState.location_id !== initialState.location_id ||
+      formState.qr_code_id !== initialState.qr_code_id;
 
-  // Internal function to load locations
-  const loadLocationsInternal = useCallback(async () => {
-    try {
-      const data = await apiFetch<LocationDto[]>(`/api/locations?workspace_id=${currentWorkspaceId}`);
-      setFormState((prev) => ({
-        ...prev,
-        availableLocations: data || [],
-      }));
-    } catch (error) {
-      console.error("Failed to load locations:", error);
-      setFormState((prev) => ({
-        ...prev,
-        errors: { ...prev.errors, locations: "Failed to load locations" },
-      }));
+    if (formState.isDirty !== isDirty) {
+      setFormState((prev) => ({ ...prev, isDirty }));
     }
-  }, [currentWorkspaceId]);
-
-  // Internal function to load QR codes
-  const loadQRCodesInternal = useCallback(async () => {
-    try {
-      const data = await apiFetch<QrCodeDetailDto[]>(
-        `/api/qr-codes?workspace_id=${currentWorkspaceId}&status=generated`
-      );
-      setFormState((prev) => ({
-        ...prev,
-        availableQRCodes: data || [],
-      }));
-    } catch (error) {
-      console.error("Failed to load QR codes:", error);
-      // Non-critical error, don't show to user
-    }
-  }, [currentWorkspaceId]);
-
-  // Internal function to load box data (edit mode)
-  const loadBoxDataInternal = useCallback(
-    async (id: string) => {
-      try {
-        const boxData = await apiFetch<BoxDto>(`/api/boxes/${id}`);
-
-        const newState: BoxFormState = {
-          ...formState,
-          name: boxData.name,
-          description: boxData.description || null,
-          tags: boxData.tags || [],
-          location_id: boxData.location?.id || null,
-          qr_code_id: boxData.qr_code?.id || null,
-          currentBox: boxData,
-        };
-
-        setFormState(newState);
-        setInitialState(newState);
-      } catch (error) {
-        console.error("Failed to load box data:", error);
-        if (error instanceof ApiError && error.status === 401) {
-          window.location.href = "/auth";
-        }
-        setFormState((prev) => ({
-          ...prev,
-          errors: { ...prev.errors, general: "Failed to load box data" },
-        }));
-      }
-    },
-    [formState]
-  );
+  }, [
+    formState.name,
+    formState.description,
+    formState.tags,
+    formState.location_id,
+    formState.qr_code_id,
+    formState.isDirty,
+    initialState.name,
+    initialState.description,
+    initialState.tags,
+    initialState.location_id,
+    initialState.qr_code_id,
+  ]);
 
   // Public function to set form field
-  const setFormField = useCallback((field: string, value: any) => {
+  const setFormField = useCallback((field: string, value: unknown) => {
     setFormState((prev) => {
-      const newErrors = { ...prev.errors };
-      delete newErrors[field];
+      // Remove error for this field using destructuring (safer than delete)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [field]: _removed, ...newErrors } = prev.errors;
       return {
         ...prev,
         [field]: value,
@@ -305,7 +330,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
       // Update initial state after successful save
       setInitialState(formState);
     } catch (error) {
-      console.error("Form submission error:", error);
+      log.error("Form submission error", { error, mode, boxId, workspaceId: currentWorkspaceId });
 
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -353,7 +378,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
 
       setFormState((prev) => ({ ...prev, isDeleting: false, errors: {} }));
     } catch (error) {
-      console.error("Delete error:", error);
+      log.error("Delete error", { error, boxId });
 
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -378,6 +403,38 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     }
   }, [boxId]);
 
+  // Generate QR code batch
+  const generateQRCodeBatch = useCallback(
+    async (quantity = 10) => {
+      if (!currentWorkspaceId) {
+        log.error("Cannot generate QR codes without workspace ID");
+        return;
+      }
+
+      try {
+        // Call API to generate batch
+        await apiFetch("/api/qr-codes/batch", {
+          method: "POST",
+          body: JSON.stringify({
+            workspace_id: currentWorkspaceId,
+            quantity,
+          }),
+        });
+
+        // Reload available QR codes after generation
+        await loadQRCodesInternal();
+      } catch (error) {
+        log.error("Failed to generate QR code batch", { error, workspaceId: currentWorkspaceId, quantity });
+        setFormState((prev) => ({
+          ...prev,
+          errors: { ...prev.errors, qr_code_id: "Failed to generate QR codes" },
+        }));
+        throw error;
+      }
+    },
+    [currentWorkspaceId, loadQRCodesInternal]
+  );
+
   // Compute suggested tags from all available tags
   const suggestedTags = Array.from(new Set(formState.availableLocations.map((loc) => loc.name))).filter(
     (tag) => !formState.tags.includes(tag)
@@ -397,6 +454,7 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     loadBoxData,
     loadLocations,
     loadAvailableQRCodes,
+    generateQRCodeBatch,
     isFormValid,
     suggestedTags,
   };

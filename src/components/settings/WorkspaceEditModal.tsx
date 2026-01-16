@@ -74,7 +74,6 @@ export function WorkspaceEditModal({ workspace, isOpen, onClose, onSave, isLoadi
               disabled={isLoading}
               maxLength={255}
               className={error ? "border-destructive" : ""}
-              autoFocus
               aria-describedby={error ? "edit-workspace-name-error" : undefined}
             />
             {error && (

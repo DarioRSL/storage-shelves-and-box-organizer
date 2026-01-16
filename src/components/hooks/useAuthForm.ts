@@ -24,6 +24,7 @@ export interface AuthSuccessResponse {
   user: ProfileDto;
   workspace: WorkspaceDto;
   token: string;
+  refreshToken: string;
 }
 
 /**
@@ -74,12 +75,12 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         });
 
         if (authError) {
+          let errorMsg = "Błąd logowania. Spróbuj ponownie.";
           if (authError.message.includes("Invalid")) {
-            setError("Nieprawidłowy email lub hasło");
-          } else {
-            setError("Błąd logowania. Spróbuj ponownie.");
+            errorMsg = "Nieprawidłowy email lub hasło";
           }
-          options?.onError?.(error || "Błąd logowania");
+          setError(errorMsg);
+          options?.onError?.(errorMsg);
           return;
         }
 
@@ -120,11 +121,12 @@ export function useAuthForm(options?: UseAuthFormOptions) {
           return;
         }
 
-        // Success
+        // Success - send both access_token and refresh_token for proper session
         options?.onSuccess?.({
           user: profileData,
           workspace,
           token: authData.session.access_token,
+          refreshToken: authData.session.refresh_token,
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";
@@ -162,14 +164,14 @@ export function useAuthForm(options?: UseAuthFormOptions) {
         });
 
         if (authError) {
+          let errorMsg = "Błąd rejestracji. Spróbuj ponownie.";
           if (authError.message.includes("already exists")) {
-            setError("Email jest już zarejestrowany");
+            errorMsg = "Email jest już zarejestrowany";
           } else if (authError.message.includes("weak")) {
-            setError("Hasło jest zbyt słabe");
-          } else {
-            setError("Błąd rejestracji. Spróbuj ponownie.");
+            errorMsg = "Hasło jest zbyt słabe";
           }
-          options?.onError?.(error || "Błąd rejestracji");
+          setError(errorMsg);
+          options?.onError?.(errorMsg);
           return;
         }
 
@@ -190,26 +192,33 @@ export function useAuthForm(options?: UseAuthFormOptions) {
           return;
         }
 
-        // Create default workspace
+        // Fetch the user's workspace (created automatically by database trigger)
+        // The handle_new_user() trigger creates "My Workspace" automatically
         const { data: workspaceData, error: workspaceError } = await supabase
-          .from("workspaces")
-          .insert({
-            name: "Mój Workspace",
-            owner_id: authData.user.id,
-          })
-          .select()
+          .from("workspace_members")
+          .select("workspaces!inner(*)")
+          .eq("user_id", authData.user.id)
+          .limit(1)
           .single();
 
-        if (workspaceError) {
+        if (workspaceError || !workspaceData) {
           setError("Błąd inicjalizacji konta. Spróbuj ponownie.");
           return;
         }
 
-        // Success
+        const workspace = workspaceData.workspaces as unknown as WorkspaceDto;
+
+        if (!workspace) {
+          setError("Nie znaleziono workspace dla użytkownika");
+          return;
+        }
+
+        // Success - send both access_token and refresh_token for proper session
         options?.onSuccess?.({
           user: profileData,
-          workspace: workspaceData,
+          workspace,
           token: authData.session.access_token,
+          refreshToken: authData.session.refresh_token,
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";

@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getQrCodesForWorkspace, isWorkspaceMember } from "@/lib/services/qr-code.service";
 import type { ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -102,7 +103,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("[GET /api/qr-codes] Unexpected error:", error);
+    log.error("[GET /api/qr-codes] Unexpected error:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     return new Response(
       JSON.stringify({

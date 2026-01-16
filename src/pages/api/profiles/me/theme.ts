@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import type { UpdateThemeRequest, UpdateThemeResponse, ErrorResponse } from "@/types";
+import { log } from "@/lib/services/logger";
 
 export const prerender = false;
 
@@ -71,7 +72,12 @@ export const PATCH: APIRoute = async ({ locals, request }) => {
       .single();
 
     if (updateError) {
-      console.error("Error updating theme preference:", updateError);
+      log.error("Failed to update theme preference", {
+        endpoint: "PATCH /api/profiles/me/theme",
+        userId: user.id,
+        error: updateError.message,
+        code: updateError.code,
+      });
       return new Response(
         JSON.stringify({
           error: "Błąd aktualizacji motywu",
@@ -95,7 +101,9 @@ export const PATCH: APIRoute = async ({ locals, request }) => {
       }
     );
   } catch (error) {
-    console.error("Error in PATCH /api/profiles/me/theme:", error);
+    log.error("Error in PATCH /api/profiles/me/theme:", {
+      error: error instanceof Error ? error.message : String(error),
+    });
 
     // Generic server error
     return new Response(

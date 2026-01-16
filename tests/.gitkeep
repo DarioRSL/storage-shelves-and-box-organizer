@@ -1,0 +1,8 @@
+# Test directories structure
+#
+# tests/
+# ├── unit/           - Unit tests for services, utilities, validation logic
+# ├── integration/    - Integration tests for API endpoints with Supertest
+# ├── e2e/           - End-to-end tests with Playwright
+# ├── fixtures/      - Test data and fixtures
+# └── helpers/       - Test utilities and helper functions

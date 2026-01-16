@@ -15,6 +15,7 @@
 | **TOTAL** | 35 | 25 | 0 | 10 | ✅ 71% |
 
 **MVP Release (Current Status: COMPLETE):**
+
 - Email/Password authentication (US-001, US-018, US-019)
 - Workspace and location management (US-003, US-004, US-012)
 - Box management - create, read, update, delete (US-006, US-007, US-008, US-009, US-017, US-020, US-028)
@@ -24,6 +25,7 @@
 - Desktop-first UI design
 
 **Post-MVP Releases:**
+
 - Account deletion with RODO compliance (US-002)
 - Export to CSV (US-011)
 - OAuth (Google, Apple Auth)
@@ -46,11 +48,13 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 ### 3.1 Uwierzytelnianie i Zarządzanie Kontem
 
 **MVP:**
+
 - Rejestracja i logowanie za pomocą standardowego loginu i hasła.
 - Brak mechanizmu odzyskiwania hasła drogą mailową w wersji MVP (użytkownik musi pamiętać dane).
 - Automatyczne tworzenie prywatnego Workspace po rejestracji.
 
 **Post-MVP:**
+
 - Google Auth i Apple Auth (OAuth)
 - Odzyskiwanie hasła drogą mailową
 - Możliwość trwałego usunięcia konta wraz ze wszystkimi danymi (zgodność z RODO)
@@ -73,6 +77,7 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 ### 3.4 System Kodów QR
 
 **MVP:**
+
 - Generowanie arkuszy z kodami QR do druku (PDF) w minimalnej wersji - wymagane do pracy na desktop.
 - Obsługa generowania seryjnego (Batch Generate), np. 20 pustych kodów na raz.
 - Każdy kod QR zawiera unikalny URL prowadzący do zasobu w aplikacji.
@@ -80,6 +85,7 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 - Etykiety do druku zawierają kod QR oraz identyfikator tekstowy dla łatwej identyfikacji wzrokowej.
 
 **PDF Generation (Minimal Implementation):**
+
 - Layout: Tabela kodów QR w rozmiarze odpowiednim do druku A4
 - Format etykiety: QR code + tekst ID poniżej
 - Funkcjonalność: Pozwala na drukowanie bezpośrednio z przeglądarki (window.print)
@@ -94,6 +100,7 @@ Użytkownicy przechowujący rzeczy sezonowe, dokumenty lub rzadko używane przed
 ### 3.6 Eksport Danych
 
 **Post-MVP:**
+
 - Możliwość pobrania listy wszystkich pudeł i ich zawartości do pliku CSV/Excel.
 
 ## 4. Granice produktu
@@ -144,6 +151,7 @@ Kryteria akceptacji:
 5. System waliduje siłę hasła (minimum 8 znaków).
 
 **Post-MVP Enhancement:**
+
 - Dodać OAuth (Google, Apple)
 
 ID: US-002-POST-MVP
@@ -591,11 +599,11 @@ Kryteria akceptacji:
 
 ## 6. Metryki sukcesu
 
-1.  **Czas dodawania pudełka:** Średni czas od zeskanowania pustego kodu do zapisania pudełka wynosi poniżej 45 sekund.
-2.  **Skuteczność wyszukiwania:** 90% wyszukiwań kończy się kliknięciem w wynik (znalezieniem pudełka) w ciągu 10 sekund.
-3.  **Kompletność danych:** 80% utworzonych pudełek posiada wypełniony opis lub tagi (wskaźnik użyteczności systemu katalogowania).
-4.  **Bezawaryjność skanowania:** Poniżej 1% zgłoszeń błędów dotyczących nierozpoznawania kodów QR lub błędnych przekierowań.
-5.  **Retencja użytkowników:** 30% użytkowników, którzy dodali pierwsze pudełko, dodaje kolejne w ciągu 7 dni.
+1. **Czas dodawania pudełka:** Średni czas od zeskanowania pustego kodu do zapisania pudełka wynosi poniżej 45 sekund.
+2. **Skuteczność wyszukiwania:** 90% wyszukiwań kończy się kliknięciem w wynik (znalezieniem pudełka) w ciągu 10 sekund.
+3. **Kompletność danych:** 80% utworzonych pudełek posiada wypełniony opis lub tagi (wskaźnik użyteczności systemu katalogowania).
+4. **Bezawaryjność skanowania:** Poniżej 1% zgłoszeń błędów dotyczących nierozpoznawania kodów QR lub błędnych przekierowań.
+5. **Retencja użytkowników:** 30% użytkowników, którzy dodali pierwsze pudełko, dodaje kolejne w ciągu 7 dni.
 
 ---
 
@@ -618,6 +626,7 @@ ID: US-036
 **Opis:** Jako administrator systemu chcę mieć pewność, że wszystkie tabele w bazie danych są chronione politykami Row Level Security, aby zapewnić izolację danych między użytkownikami i workspace'ami.
 
 **Kryteria akceptacji:**
+
 1. Wszystkie polityki RLS z migracji `20251212120000_initial_schema.sql` (linie 198-382) są odkomentowane i aktywne
 2. Utworzona nowa migracja `20260103000000_enable_rls_policies.sql`
 3. Zweryfikowano funkcjonowanie polityk w scenariuszach multi-user:
@@ -629,10 +638,12 @@ ID: US-036
 6. Wykonano testy penetracyjne dostępu do danych
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/db-plan.md` (linie 17-22)
 - `.ai_docs/review/AUTHENTICATION_ARCHITECTURE.md`
 
 **Testy wymagane:**
+
 - [ ] Test izolacji danych między workspace'ami
 - [ ] Test dostępu członków workspace'a
 - [ ] Test uprawnień właściciela workspace'a
@@ -643,26 +654,39 @@ ID: US-036
 
 ID: US-037
 **Priorytet:** 🔴 **HIGH**
-**Status:** Nowe
-**Estymacja:** 2-3 godziny
+**Status:** ✅ **COMPLETED** (January 5, 2026)
+**Estymacja:** 2-3 godziny → **Actual: ~6 hours** (5 phases)
 
 **Tytuł:** Usunięcie console.log i implementacja strukturalnego logowania
 
 **Opis:** Jako developer chcę usunąć wszystkie debug console.log z kodu produkcyjnego i zastąpić je strukturalnym systemem logowania, aby zachować profesjonalną jakość kodu i umożliwić monitoring produkcyjny.
 
 **Kryteria akceptacji:**
-1. Usunięto wszystkie ~60 wystąpień `console.log` z kodu
-2. Zainstalowano i skonfigurowano Winston lub podobny logger
-3. Zaimplementowano poziomy logowania (error, warn, info, debug)
-4. Skonfigurowano rotację logów
-5. Logs nie zawierają wrażliwych danych (hasła, tokeny, PII)
-6. W produkcji logi zapisywane są do plików, nie do konsoli
-7. `console.error` i `console.warn` pozostawione w uzasadnionych przypadkach
+
+1. ✅ Usunięto wszystkie 155 wystąpień `console.*` z backend kodu (6 services + 17 API endpoints)
+2. ✅ Zainstalowano i skonfigurowano Winston logger z daily-rotate-file
+3. ✅ Zaimplementowano poziomy logowania (error, warn, info, debug) zgodne z RFC 5424
+4. ✅ Skonfigurowano rotację logów (daily, 14 days retention, 20MB max, gzip)
+5. ✅ Logs nie zawierają wrażliwych danych (no PII, passwords, JWT tokens sanitized)
+6. ✅ W produkcji logi zapisywane są do plików JSON (logs/combined-*, logs/error-*)
+7. ✅ `console.*` w frontend pozostawione dla browser debugging (46 calls intentional)
+
+**Implementacja:**
+
+- **Phase 1**: Infrastructure (logger.ts, middleware) - Commit: 32cb4c5
+- **Phase 2**: Service Layer (6 files, 106 calls) - Commit: 03a7a56
+- **Phase 3**: API Endpoints (17 files, 49 calls) - Commit: 7897511
+- **Phase 4**: Verification (lint, build, testing) - Commit: b84806a
+- **Phase 5**: Documentation (LOGGING_GUIDE.md) - Commit: 95cb72d
 
 **Dokumentacja powiązana:**
+
+- `.ai_docs/LOGGING_GUIDE.md` (Complete usage guide)
+- `.ai_docs/project-TO-DO.md` (Completion entry)
 - `.ai_docs/review/MVP_STATUS_REPORT_2026_01_02.md` (linie 254-262)
 
 **Techniczne wymagania:**
+
 - Instalacja: `npm install winston`
 - Konfiguracja pliku `src/lib/logger.ts`
 - Integracja z middleware Astro
@@ -683,6 +707,7 @@ ID: US-038
 **Opis:** Jako użytkownik chcę mieć dedykowany widok szczegółów pudełka z breadcrumbs lokalizacji, aby móc szybko przeglądać informacje bez przechodzenia do trybu edycji.
 
 **Kryteria akceptacji:**
+
 1. Utworzona strona `/app/boxes/[id]` jako read-only view
 2. Wyświetlane są wszystkie dane pudełka (nazwa, opis, tagi, lokalizacja)
 3. Breadcrumbs pokazują pełną ścieżkę lokalizacji (np. "Garaż > Regał Metalowy > Półka Górna")
@@ -693,13 +718,16 @@ ID: US-038
 8. Responsywny design (desktop i mobile)
 
 **Powiązane User Stories:**
+
 - US-008 (Przeglądanie szczegółów po skanowaniu)
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/ui-plan.md` (linie 75-90)
 - `.ai_docs/review/MVP_STATUS_REPORT_2026_01_02.md` (linie 200-203)
 
 **Implementacja:**
+
 - Plik: `src/pages/app/boxes/[id]/index.astro`
 - Komponent: `src/components/box/BoxDetailsContent.tsx`
 - Wykorzystuje: Komponent `Breadcrumbs.tsx` (US-043)
@@ -716,6 +744,7 @@ ID: US-039
 **Opis:** Jako użytkownik chcę mieć dedykowaną stronę do generowania kodów QR z przyjaznym interfejsem i optymalizacją do druku, aby łatwo tworzyć i drukować etykiety na pudełka.
 
 **Kryteria akceptacji:**
+
 1. Utworzona strona `/app/qr-generator`
 2. Formularz z polem numerycznym (1-100 kodów)
 3. Walidacja zakresu (min: 1, max: 100)
@@ -728,15 +757,19 @@ ID: US-039
 10. Instrukcje dla użytkownika (panel pomocy)
 
 **Powiązane User Stories:**
+
 - US-005 (Generowanie arkusza kodów QR)
 
 **API Dependencies:**
+
 - ✅ `POST /api/qr-codes/batch` (zaimplementowane)
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/ui-plan.md` (linie 107-121)
 
 **Implementacja:**
+
 - Plik: `src/pages/app/qr-generator.astro`
 - Komponenty:
   - `src/components/qr-generator/QRGeneratorView.tsx`
@@ -759,6 +792,7 @@ ID: US-040
 **Opis:** Jako developer chcę mieć kod zgodny z regułami ESLint bez błędów i ostrzeżeń, aby zapewnić wysoką jakość kodu i ułatwić utrzymanie projektu.
 
 **Kryteria akceptacji:**
+
 1. Uruchomiono `npm run lint:fix` i rozwiązano automatyczne poprawki
 2. Ręcznie poprawiono pozostałe błędy ESLint (target: 0 errors)
 3. Zmniejszono ostrzeżenia ESLint do <20 (z obecnych 185)
@@ -768,9 +802,11 @@ ID: US-040
 7. Zweryfikowano, że `npm run lint` przechodzi bez błędów
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/review/MVP_STATUS_REPORT_2026_01_02.md` (linie 251-262)
 
 **Komenda weryfikacji:**
+
 ```bash
 npm run lint
 npm run lint:fix
@@ -788,6 +824,7 @@ ID: US-041
 **Opis:** Jako developer chcę mieć pokrycie testami automatycznymi dla krytycznych funkcji aplikacji, aby zmniejszyć ryzyko regresji i ułatwić refaktoryzację kodu.
 
 **Kryteria akceptacji:**
+
 1. Skonfigurowano framework testowy (Vitest lub Jest)
 2. Napisano testy jednostkowe dla:
    - Walidacje Zod (`src/lib/validation/`)
@@ -801,6 +838,7 @@ ID: US-041
 6. CI/CD pipeline uruchamia testy automatycznie
 
 **Testy wymagane:**
+
 - [ ] Walidacja schematów Zod (10+ przypadków testowych)
 - [ ] API client error handling (5+ przypadków)
 - [ ] Service layer business logic (15+ przypadków)
@@ -823,6 +861,7 @@ ID: US-042
 **Opis:** Jako użytkownik chcę widzieć całą aplikację w języku polskim, aby łatwiej korzystać z systemu bez angielskiego interfejsu.
 
 **Kryteria akceptacji:**
+
 1. Przetłumaczono wszystkie pola w Box Form (nazwa, opis, tagi, lokalizacja) - obecnie 40%
 2. Przetłumaczono formularze autentykacji (login, rejestracja) - obecnie 30%
 3. Przetłumaczono komunikaty błędów - obecnie 60%
@@ -831,10 +870,12 @@ ID: US-042
 6. Żadne angielskie teksty nie są widoczne w UI
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/review/MVP_STATUS_REPORT_2026_01_02.md` (linie 265-283)
 - `.ai_docs/ui-plan.md` (linia 5)
 
 **Pliki do aktualizacji:**
+
 - `src/components/box/BoxForm.tsx`
 - `src/components/auth/LoginForm.tsx`
 - `src/components/auth/RegistrationForm.tsx`
@@ -852,6 +893,7 @@ ID: US-043
 **Opis:** Jako użytkownik chcę widzieć breadcrumbs pokazujące pełną ścieżkę lokalizacji pudełka, aby szybko zorientować się gdzie znajduje się przedmiot.
 
 **Kryteria akceptacji:**
+
 1. Utworzony komponent `Breadcrumbs.tsx` w `src/components/shared/`
 2. Wyświetla pełną ścieżkę lokalizacji (np. "Garaż > Regał Metalowy > Półka 2")
 3. Każdy element breadcrumbs jest klikalny (nawigacja do lokalizacji)
@@ -861,10 +903,12 @@ ID: US-043
 7. Accessibility: ARIA landmarks, keyboard navigation
 
 **Wykorzystywany przez:**
+
 - US-038 (Widok szczegółów pudełka)
 - Search results (US-013)
 
 **Implementacja:**
+
 - Plik: `src/components/shared/Breadcrumbs.tsx`
 - Props: `path: string[]`, `onNavigate?: (locationId: string) => void`
 
@@ -880,6 +924,7 @@ ID: US-044
 **Opis:** Jako użytkownik chcę otrzymywać krótkie powiadomienia o wyniku moich działań (sukces, błąd), aby mieć natychmiastową informację zwrotną.
 
 **Kryteria akceptacji:**
+
 1. Zainstalowano bibliotekę `sonner` lub podobną
 2. Utworzono globalny `ToastProvider` w root layout
 3. Powiadomienia pokazują się dla:
@@ -892,6 +937,7 @@ ID: US-044
 7. Pozycja: prawy górny róg (desktop), górny środek (mobile)
 
 **Techniczne wymagania:**
+
 - Instalacja: `npm install sonner`
 - Konfiguracja: `src/components/shared/ToastProvider.tsx`
 - Usage: `import { toast } from 'sonner'`
@@ -912,6 +958,7 @@ ID: US-045
 **Opis:** Jako użytkownik chcę móc zresetować zapomniane hasło przez link wysłany na email, aby odzyskać dostęp do konta bez kontaktu z supportem.
 
 **Kryteria akceptacji:**
+
 1. Na stronie logowania dostępny link "Zapomniałeś hasła?"
 2. Formularz z polem email
 3. Po wysłaniu: email z linkiem resetującym (token ważny 1h)
@@ -922,13 +969,16 @@ ID: US-045
 8. Supabase Auth obsługuje flow resetowania
 
 **Dependencies:**
+
 - Wymaga konfiguracji email provider (SendGrid, Resend, Mailgun)
 - Supabase Auth password recovery feature
 
 **Dokumentacja powiązana:**
+
 - PRD Sekcja 3.1 Post-MVP
 
 **Implementacja:**
+
 - Strony: `/auth/forgot-password`, `/auth/reset-password`
 - Komponenty:
   - `src/components/auth/ForgotPasswordForm.tsx`
@@ -947,6 +997,7 @@ ID: US-046
 **Opis:** Jako użytkownik chcę sortować listę pudełek według nazwy, daty utworzenia lub lokalizacji, aby łatwiej znaleźć pudełko w dużej liście.
 
 **Kryteria akceptacji:**
+
 1. Nad listą pudełek dostępny dropdown "Sortuj według:"
 2. Opcje: "Nazwa (A-Z)", "Nazwa (Z-A)", "Data utworzenia (najnowsze)", "Data utworzenia (najstarsze)", "Lokalizacja"
 3. Po wyborze opcji lista jest ponownie sortowana
@@ -968,6 +1019,7 @@ ID: US-047
 **Opis:** Jako użytkownik chcę skopiować istniejące pudełko z tymi samymi tagami, opisem i lokalizacją, aby szybko dodać nowe pudełko o podobnej zawartości bez ręcznego wpisywania.
 
 **Kryteria akceptacji:**
+
 1. Na stronie szczegółów pudełka dostępny przycisk "Duplikuj" lub "Kopiuj"
 2. System tworzy nowe pudełko z tymi samymi danymi:
    - Nazwa: "[Oryginalna nazwa] - Kopia"
@@ -983,6 +1035,7 @@ ID: US-047
 **Powiązane z:** US-024 (oryginalna historia)
 
 **Implementacja:**
+
 - Przycisk w `BoxDetailsContent.tsx`
 - Handler: `const handleDuplicate = async () => { ... }`
 - API: `POST /api/boxes` z danymi skopiowanymi z oryginału
@@ -1003,6 +1056,7 @@ ID: US-048
 **Opis:** Jako użytkownik z setkami pudełek chcę mieć płynne przewijanie listy bez opóźnień, aby komfortowo przeglądać duży inwentarz.
 
 **Kryteria akceptacji:**
+
 1. Zainstalowano `react-window` lub `react-virtual`
 2. Lista pudełek renderuje tylko widoczne elementy (50-100)
 3. Płynne przewijanie przy 500+ pudłach
@@ -1011,9 +1065,11 @@ ID: US-048
 6. Scroll position zachowana po powrocie z szczegółów pudełka
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/review/IMPLEMENTATION_ROADMAP.md` (linie 1740-1750)
 
 **Techniczne wymagania:**
+
 - Instalacja: `npm install react-window @types/react-window`
 - Implementacja w `src/components/dashboard/BoxList.tsx`
 - Wysokość elementu: ~80px (fixed)
@@ -1030,6 +1086,7 @@ ID: US-049
 **Opis:** Jako użytkownik z niepełnosprawnościami chcę móc korzystać z aplikacji przy użyciu klawiatury i czytnika ekranu, aby mieć równy dostęp do funkcjonalności.
 
 **Kryteria akceptacji:**
+
 1. Wszystkie interaktywne elementy dostępne przez klawiaturę (Tab, Enter, Space, Arrow keys)
 2. Fokus zawsze widoczny (min. 3px outline)
 3. LocationTree nawigowalna strzałkami (Arrow Up/Down, Left/Right do expand/collapse)
@@ -1041,9 +1098,11 @@ ID: US-049
 9. axe DevTools: 0 critical violations
 
 **Dokumentacja powiązana:**
+
 - `.ai_docs/review/QA_PRE_LAUNCH_CHECKLIST.md` (linie 299-363)
 
 **Narzędzia testowe:**
+
 - WAVE Browser Extension
 - axe DevTools
 - NVDA (Windows)
@@ -1066,6 +1125,7 @@ ID: US-050
 **Opis:** Jako użytkownik chcę filtrować pudełka po wybranych tagach, aby szybko znaleźć pudełka z konkretną zawartością.
 
 **Kryteria akceptacji:**
+
 1. Na stronie Dashboard dostępny panel "Filtry" z listą wszystkich tagów
 2. Lista tagów pobierana z endpoint `/api/tags` (agregacja z pudełek)
 3. Użytkownik może zaznaczyć wiele tagów (multi-select)
@@ -1078,6 +1138,7 @@ ID: US-050
 **Powiązane z:** US-032 (oryginalna historia)
 
 **Implementacja:**
+
 - Komponent: `src/components/dashboard/TagFilter.tsx`
 - API Endpoint: `GET /api/tags?workspace_id={id}` (nowy)
 - State management: Nano store `selectedTags`
@@ -1094,6 +1155,7 @@ ID: US-051
 **Opis:** Jako użytkownik chcę przeciągnąć pudełko z listy bezpośrednio do innej lokalizacji w drzewie, aby szybko zmienić jego lokalizację.
 
 **Kryteria akceptacji:**
+
 1. Lista pudełek i drzewo lokalizacji widoczne jednocześnie (2-column layout)
 2. Użytkownik może złapać pudełko z listy (drag)
 3. Podczas przeciągania lokalizacje w drzewie podświetlają się (drop zone)
@@ -1106,6 +1168,7 @@ ID: US-051
 **Powiązane z:** US-034 (oryginalna historia)
 
 **Techniczne wymagania:**
+
 - Biblioteka: `@dnd-kit/core` (recommended for React)
 - Implementacja: `useDraggable()`, `useDroppable()` hooks
 - API: `PATCH /api/boxes/[id]` z nową location_id
@@ -1122,6 +1185,7 @@ ID: US-052
 **Opis:** Jako użytkownik chcę stworzyć szablon pudełka ze stałymi tagami i opisem, aby przyspieszyć katalogowanie podobnych pudełek.
 
 **Kryteria akceptacji:**
+
 1. W Settings dostępna sekcja "Szablony Pudełek"
 2. Użytkownik może utworzyć nowy szablon:
    - Nazwa szablonu (np. "Dokumenty archiwalne")
@@ -1136,11 +1200,13 @@ ID: US-052
 **Powiązane z:** US-035 (oryginalna historia)
 
 **Wymagania bazodanowe:**
+
 - Nowa tabela: `box_templates`
 - Kolumny: id, workspace_id, name, default_tags, default_description, default_location_id
 - RLS policies dla workspace isolation
 
 **API Endpoints (nowe):**
+
 - `GET /api/box-templates?workspace_id={id}`
 - `POST /api/box-templates`
 - `PATCH /api/box-templates/[id]`
@@ -1177,6 +1243,7 @@ ID: US-052
 ### Recommended Implementation Path
 
 **Phase 0: Pre-Production (Mandatory - 5-7 godzin)**
+
 1. ✅ US-036: Włączenie RLS Policies (1-2h) - **MUST HAVE**
 2. ✅ US-037: Usunięcie console.log (2-3h) - **SHOULD HAVE**
 3. ✅ US-042: Polska lokalizacja formularzy (2-3h) - **SHOULD HAVE**

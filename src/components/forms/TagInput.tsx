@@ -153,6 +153,14 @@ export function TagInput({
             error ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-600"
           } focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent`}
           onClick={() => inputRef.current?.focus()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              inputRef.current?.focus();
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           {/* Rendered tags */}
           {value.map((tag, index) => (
@@ -190,6 +198,7 @@ export function TagInput({
               aria-invalid={!!error}
               aria-describedby={error ? "box-tags-error" : undefined}
               aria-expanded={isOpen}
+              aria-controls="tag-suggestions-list"
               role="combobox"
               autoComplete="off"
             />
@@ -199,6 +208,7 @@ export function TagInput({
         {/* Suggestions dropdown */}
         {isOpen && filteredSuggestions.length > 0 && (
           <ul
+            id="tag-suggestions-list"
             role="listbox"
             className="absolute top-full left-0 right-0 mt-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto"
           >
@@ -212,6 +222,12 @@ export function TagInput({
                     ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
                     : "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelectSuggestion(tag);
+                  }
+                }}
                 onClick={() => addTag(tag)}
               >
                 {tag}

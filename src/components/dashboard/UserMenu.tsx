@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings, User } from "lucide-react";
+import { log } from "@/lib/services/logger.client";
 
 /**
  * User menu with profile options and logout
@@ -24,7 +25,7 @@ export default function UserMenu() {
         window.location.href = "/auth";
       }
     } catch (err) {
-      console.error("[UserMenu] Błąd wylogowania:", err);
+      log.error("UserMenu logout error", { error: err });
     }
   };
 
