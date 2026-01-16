@@ -63,6 +63,7 @@ export function DescriptionTextarea({
         <textarea
           ref={textareaRef}
           id="box-description"
+          data-testid="box-description-textarea"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}

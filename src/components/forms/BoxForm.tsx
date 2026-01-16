@@ -182,6 +182,7 @@ export function BoxForm({ mode, boxId, workspaceId, initialLocationId, onSuccess
   return (
     <>
       <form
+        data-testid="box-form"
         onSubmit={handleSubmit}
         className="space-y-6 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6"
       >

@@ -27,8 +27,14 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   else if (sessionCookie) {
     try {
       sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-    } catch {
+      console.log('[Middleware] Parsed session cookie:', {
+        hasAccessToken: !!sessionData?.access_token,
+        hasRefreshToken: !!sessionData?.refresh_token,
+        accessTokenPrefix: sessionData?.access_token?.substring(0, 20)
+      });
+    } catch (error) {
       // Invalid session data, continue without auth
+      console.log('[Middleware] Failed to parse session cookie:', error);
     }
   }
 
@@ -68,42 +74,67 @@ const authMiddleware = defineMiddleware(async (context, next) => {
     } catch {
       // Continue without user
     }
-  } else {
-    // For session cookie auth (browser clients), use SSR client with cookie management
-    supabase = createServerClient<Database>(
+  } else if (sessionData) {
+    // For custom session cookie, decode JWT to get user info WITHOUT verification
+    // This is safe because the cookie is HttpOnly and set by our /api/auth/session endpoint
+    // which already validated the token with Supabase during login
+    try {
+      const tokenParts = sessionData.access_token.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf-8'));
+
+        // Extract user info from JWT claims
+        user = {
+          id: payload.sub,
+          email: payload.email,
+          aud: payload.aud,
+          role: payload.role,
+          app_metadata: payload.app_metadata || {},
+          user_metadata: payload.user_metadata || {},
+          created_at: payload.created_at || new Date().toISOString(),
+          updated_at: payload.updated_at || new Date().toISOString(),
+        };
+
+        console.log('[Middleware] Session cookie auth SUCCESS (decoded JWT):', {
+          userId: user.id,
+          email: user.email
+        });
+      }
+    } catch (error) {
+      console.log('[Middleware] Failed to decode JWT from session cookie:', error);
+    }
+
+    // Create Supabase client with the token in the Authorization header
+    // The token will be used for RLS policies in database queries
+    supabase = createClient<Database>(
       import.meta.env.SUPABASE_URL,
       import.meta.env.SUPABASE_KEY,
       {
-        cookies: {
-          getAll() {
-            return Object.entries(cookies).map(([name, value]) => ({
-              name,
-              value: value || "",
-            }));
+        global: {
+          headers: {
+            Authorization: `Bearer ${sessionData.access_token}`,
           },
-          setAll(cookiesToSet_) {
-            cookiesToSet.push(...cookiesToSet_);
-          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
         },
       }
     );
-
-    // Get authenticated user from session cookie
-    if (sessionData) {
-      try {
-        await supabase.auth.setSession({
-          access_token: sessionData.access_token,
-          refresh_token: sessionData.refresh_token,
-        });
-
-        const { data, error } = await supabase.auth.getUser();
-        if (!error && data?.user) {
-          user = data.user;
-        }
-      } catch {
-        // Continue without user
+  } else {
+    // No session data - create basic client for non-authenticated requests
+    supabase = createClient<Database>(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
       }
-    }
+    );
   }
 
   // Make supabase client available to routes

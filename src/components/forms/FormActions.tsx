@@ -56,6 +56,7 @@ export function FormActions({
       {/* Save/Create Button - Utwórz/Zapisz */}
       <Button
         type="submit"
+        data-testid="box-form-submit-button"
         onClick={onSubmit}
         disabled={isSubmitDisabled}
         className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white disabled:bg-blue-400 dark:disabled:bg-blue-600"

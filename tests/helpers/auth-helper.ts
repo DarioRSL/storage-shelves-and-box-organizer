@@ -143,6 +143,39 @@ export async function createAuthenticatedUser(
         })
         .select();
 
+      // IMPORTANT: Ensure user has at least one workspace
+      // This handles cases where the user was created manually or workspace was deleted
+      const { data: existingWorkspaces } = await adminClient
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', loginResult.data.user.id)
+        .limit(1);
+
+      if (!existingWorkspaces || existingWorkspaces.length === 0) {
+        // No workspace exists - create default workspace
+        const { data: newWorkspace } = await adminClient
+          .from('workspaces')
+          .insert({
+            owner_id: loginResult.data.user.id,
+            name: 'My Workspace',
+          })
+          .select()
+          .single();
+
+        // Ensure workspace membership (should be created by trigger, but ensure it exists)
+        if (newWorkspace) {
+          await adminClient
+            .from('workspace_members')
+            .upsert({
+              workspace_id: newWorkspace.id,
+              user_id: loginResult.data.user.id,
+              role: 'owner',
+            }, {
+              onConflict: 'workspace_id,user_id',
+            });
+        }
+      }
+
       return {
         id: loginResult.data.user.id,
         email,
