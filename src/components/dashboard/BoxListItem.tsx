@@ -38,12 +38,12 @@ export default function BoxListItem({ box }: BoxListItemProps) {
     box.tags && box.tags.length > 0 ? box.tags.slice(0, 2).join(", ") + (box.tags.length > 2 ? `...` : "") : null;
 
   return (
-    <article className="group flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg">
+    <article className="group flex items-center gap-4 px-6 py-4 hover:bg-muted transition-colors focus-within:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset rounded-lg" data-testid={`box-item-${box.id}`}>
       {/* Box info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-foreground truncate">{box.name}</h3>
+            <h3 className="font-medium text-foreground truncate" data-testid="box-name">{box.name}</h3>
             <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
               <p aria-label={`Lokalizacja: ${location}`}>{location}</p>
               {box.description && (
@@ -78,6 +78,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
             size="sm"
             className="h-8 w-8 p-0 ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
             aria-label={`Opcje dla pudełka ${box.name}`}
+            data-testid="box-menu-button"
           >
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </Button>
@@ -91,7 +92,7 @@ export default function BoxListItem({ box }: BoxListItemProps) {
             <Edit2 className="h-4 w-4" aria-hidden="true" />
             <span>Edytuj</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete} className="cursor-pointer gap-2 text-red-600">
+          <DropdownMenuItem onClick={handleDelete} className="cursor-pointer gap-2 text-red-600" data-testid="box-delete-button">
             <Trash2 className="h-4 w-4" aria-hidden="true" />
             <span>Usuń</span>
           </DropdownMenuItem>

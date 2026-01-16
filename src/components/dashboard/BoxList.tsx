@@ -12,7 +12,7 @@ export default function BoxList() {
   // For now, render all items (fine for typical use cases)
 
   return (
-    <div className="h-full overflow-y-auto" role="list" aria-label="Lista pudełek">
+    <div className="h-full overflow-y-auto" role="list" aria-label="Lista pudełek" data-testid="box-list">
       <div className="divide-y divide-gray-200">
         {state.boxes.map((box) => (
           <div key={box.id} role="listitem">
