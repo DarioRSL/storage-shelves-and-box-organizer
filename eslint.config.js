@@ -62,5 +62,17 @@ export default tseslint.config(
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
-  eslintPluginPrettier
+  eslintPluginPrettier,
+  {
+    // Disable prettier for .astro files to avoid parsing errors with define:vars syntax
+    // This override must come AFTER eslintPluginPrettier to take effect
+    files: ["**/*.astro"],
+    rules: {
+      "prettier/prettier": "off",
+    },
+  },
+  {
+    // Specifically ignore ThemeInitializer.astro due to define:vars syntax incompatibility
+    ignores: ["**/theme/ThemeInitializer.astro"],
+  }
 );

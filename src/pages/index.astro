@@ -1,8 +1,11 @@
 ---
 import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
+
+// Public pages use light theme by default
+const themePreference = "light";
 ---
 
-<Layout>
+<Layout themePreference={themePreference}>
   <Welcome />
 </Layout>

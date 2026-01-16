@@ -8,6 +8,7 @@ dist/
 node_modules/
 
 # logs
+logs/*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -15,6 +16,10 @@ pnpm-debug.log*
 
 # environment variables
 .env
+.env.local
+.env.development
+.env.test
+.env.test_old
 .env.production
 
 # macOS-specific files
@@ -22,3 +27,27 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+supabase/.temp/*
+
+#own staff
+#Dokumantacja developmantu, czaty i inne rzeczy niepotrzebne w repozytorium
+dokumentacja_development/*
+.ai_docs/api_todo.md
+.env.bak
+.ai_docs/commands/*
+rerun.sh
+
+supabase/scripts/*
+
+# test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# test results
+test-results/
+playwright-report/
+*.test-results/
+
+# playwright
+.playwright/

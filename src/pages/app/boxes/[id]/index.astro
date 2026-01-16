@@ -1,0 +1,39 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import BoxDetailsContent from "@/components/box-details/BoxDetailsContent";
+import { getAuthenticatedUserProfile } from "@/lib/services/profile.service";
+import { log } from "@/lib/services/logger";
+
+export const prerender = false;
+
+// Ensure user is authenticated
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/auth");
+}
+
+// Get box ID from URL params
+const { id } = Astro.params;
+
+// Validate UUID format
+const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "");
+if (!id || !isValidUUID) {
+  return Astro.redirect("/app");
+}
+
+// Fetch user profile for theme preference
+const supabase = Astro.locals.supabase;
+let themePreference = "system";
+try {
+  const profile = await getAuthenticatedUserProfile(supabase, user.id);
+  themePreference = profile.theme_preference || "system";
+} catch (error) {
+  log.error("Failed to load user theme preference", { userId: user.id, boxId: id, error });
+}
+---
+
+<Layout title="Szczegóły pudełka - Storage Organizer" themePreference={themePreference}>
+  <main role="main" class="container mx-auto px-4 py-8">
+    <BoxDetailsContent client:load boxId={id} />
+  </main>
+</Layout>
