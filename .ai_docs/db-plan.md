@@ -1,8 +1,8 @@
 # Database Schema - Storage & Box Organizer
 
-**Last Updated:** January 6, 2026
-**Migration Status:** ✅ **Complete** (4 migrations applied)
-**Schema Version:** 20260106200458
+**Last Updated:** January 17, 2026
+**Migration Status:** ✅ **Complete** (6 migrations applied)
+**Schema Version:** 20260110214918
 **Security Status:** ✅ **Row Level Security ENABLED**
 
 This document describes the PostgreSQL database schema for the Storage & Box Organizer application, designed based on the Product Requirements Document (PRD) and planning session notes.
@@ -15,6 +15,8 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 | `20251214120000_workspace_creation_trigger.sql` | 2025-12-14 | ✅ Applied | Workspace owner auto-assignment trigger |
 | `20260102182001_add_theme_preference_to_profiles.sql` | 2026-01-02 | ✅ Applied | Theme preference column in profiles |
 | `20260106200458_enable_rls_policies.sql` | 2026-01-06 | ✅ Applied | Row Level Security policies for multi-tenant isolation |
+| `20260110213659_fix_workspace_creation_trigger_security.sql` | 2026-01-10 | ✅ Applied | SECURITY DEFINER for workspace creation trigger |
+| `20260110214918_create_workspace_function.sql` | 2026-01-10 | ✅ Applied | Create workspace function with RLS bypass |
 
 **✅ SECURITY STATUS:**
 
@@ -307,6 +309,9 @@ const children = locations.filter(loc =>
 - `20251212120000_initial_schema.sql` - Initial database setup with all tables, enums, RLS policies
 - `20251214120000_workspace_creation_trigger.sql` - Workspace owner auto-assignment
 - `20260102182001_add_theme_preference_to_profiles.sql` - Added theme_preference column to profiles table
+- `20260106200458_enable_rls_policies.sql` - Row Level Security policies for multi-tenant isolation
+- `20260110213659_fix_workspace_creation_trigger_security.sql` - SECURITY DEFINER for workspace creation trigger to bypass RLS
+- `20260110214918_create_workspace_function.sql` - Create workspace function with RLS bypass for cookie-based auth
 
 **Future Migration Guidelines:**
 
@@ -358,23 +363,19 @@ This ensures all workspace-scoped data is accessible only to workspace members.
 7. Theme preference column (added 2026-01-02)
 8. Workspace owner auto-assignment (added 2025-12-14)
 
-**⚠️ Pending Implementation:**
-
-1. RLS policy enablement (all policies defined but commented out in migration)
-
-**Schema Matches Documentation:** 100% (except RLS enablement)
+**Schema Matches Documentation:** 100%
 
 ---
 
 ## 10. Row Level Security (RLS) Policies
 
-**Status:** ❌ **NOT IMPLEMENTED** (as of 2026-01-06)  
-**Planned Migration:** `supabase/migrations/20260106120000_enable_rls_policies.sql`  
-**Priority:** **CRITICAL** - Security vulnerability for multi-tenant system  
+**Status:** ✅ **IMPLEMENTED** (2026-01-06)
+**Migration:** `supabase/migrations/20260106200458_enable_rls_policies.sql`
+**Security Updates:** `20260110213659` and `20260110214918` (SECURITY DEFINER fixes)
 
 ### 10.1. Overview
 
-All tables require Row Level Security to enforce multi-tenant data isolation. **Currently, there are ZERO RLS policies enabled**, meaning users can theoretically query data from ANY workspace. This must be fixed before production deployment.
+All tables have Row Level Security enabled to enforce multi-tenant data isolation. RLS policies were implemented in January 2026 and subsequently enhanced with SECURITY DEFINER functions to handle workspace creation edge cases.
 
 ### 10.2. Helper Function
 
@@ -664,4 +665,4 @@ SELECT * FROM boxes WHERE workspace_id = '<user-a-workspace-id>';
 
 ---
 
-**Last Updated:** 2026-01-06 (RLS implementation completed and tested)
+**Last Updated:** 2026-01-17 (Migration list updated, SECURITY DEFINER functions added)

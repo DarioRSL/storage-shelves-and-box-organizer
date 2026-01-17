@@ -7,7 +7,7 @@ This directory contains project documentation for the Storage & Box Organizer ap
 ### Core Planning Documents
 - **ROADMAP.md** - Unified roadmap (single source of truth for project status)
 - **prd.md** - Product Requirements Document
-- **api-plan.md** - REST API Specification (14 endpoints)
+- **api-plan.md** - REST API Specification (26 endpoints)
 - **db-plan.md** - Database Schema & PostgreSQL Features
 - **tech-stack.md** - Technology Stack & Architecture Decisions
 
@@ -64,4 +64,4 @@ See `tests/TEST_PLAN.md` for complete testing strategy.
 
 Files are archived (not deleted) to preserve project history and decision context. All archived files remain accessible in git history.
 
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-17
