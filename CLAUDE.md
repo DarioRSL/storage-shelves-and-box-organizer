@@ -189,7 +189,7 @@ See `.ai_docs/api-plan.md` for complete API specification.
 
 **Coverage Target:** 80% (lines, functions, branches, statements)
 
-See `TESTING.md` for complete testing documentation.
+See `tests/README.md` for complete testing documentation and `tests/QUICK_REFERENCE.md` for quick command reference.
 
 # AI Rules for {{project-name}}
 
