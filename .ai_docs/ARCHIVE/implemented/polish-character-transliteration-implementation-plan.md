@@ -8,17 +8,19 @@
 
 ## 1. Feature Overview
 
-Implements Polish character transliteration to support location names with Polish diacritics (ą, ć, ę, ł, ń, ó, ś, ź, ż) while maintaining compatibility with PostgreSQL's ltree extension which only supports ASCII characters (a-z, A-Z, 0-9, _).
+Implements Polish character transliteration to support location names with Polish diacritics (ą, ć, ę, ł, ń, ó, ś, ź, ż) while maintaining compatibility with PostgreSQL's ltree extension which only supports ASCII characters (a-z, A-Z, 0-9, \_).
 
 **Problem:**
 PostgreSQL ltree extension only supports ASCII alphanumeric characters and underscores. Polish characters like "Garaż", "Półka", "Łazienka" cannot be stored directly in ltree paths.
 
 **Solution:**
 Hybrid approach (Option 3):
+
 1. **Transliteration at save time:** Convert Polish characters to ASCII equivalents when storing in ltree path
 2. **Mapping at display time:** Display actual location name (with Polish characters) from database `name` field
 
 **Result:**
+
 - Users can create locations with Polish names: "Garaż", "Półka metalowa", "Lewy róg"
 - Database stores transliterated path: `root.garaz.polka_metalowa.lewy_rog`
 - UI displays: **Root > Garaz > Polka Metalowa > Lewy róg** (last segment shows actual name with Polish characters)
@@ -32,16 +34,19 @@ Hybrid approach (Option 3):
 Three options were considered:
 
 **Option 1: Transliteration at save time only**
+
 - ✅ Simple implementation
 - ✅ ltree compatible
 - ❌ Polish characters lost in breadcrumbs
 
 **Option 2: Mapping at display time only**
+
 - ✅ Preserves all Polish characters
 - ❌ Requires storing mapping table
 - ❌ More complex queries
 
 **Option 3: Hybrid (SELECTED)**
+
 - ✅ ltree compatible
 - ✅ Preserves Polish characters for last breadcrumb segment
 - ✅ Simple implementation (no mapping table)
@@ -49,6 +54,7 @@ Three options were considered:
 - ⚠️ Intermediate segments show transliterated names
 
 **Decision:** Option 3 selected because:
+
 - Best balance of simplicity and UX
 - No additional database tables required
 - Most important segment (current location) shows actual Polish name
@@ -96,16 +102,16 @@ Utility module with two functions:
 **Polish Characters → ASCII Equivalents**
 
 | Polish | ASCII | Polish (uppercase) | ASCII (uppercase) |
-|--------|-------|-------------------|-------------------|
-| ą | a | Ą | A |
-| ć | c | Ć | C |
-| ę | e | Ę | E |
-| ł | l | Ł | L |
-| ń | n | Ń | N |
-| ó | o | Ó | O |
-| ś | s | Ś | S |
-| ź | z | Ź | Z |
-| ż | z | Ż | Z |
+| ------ | ----- | ------------------ | ----------------- |
+| ą      | a     | Ą                  | A                 |
+| ć      | c     | Ć                  | C                 |
+| ę      | e     | Ę                  | E                 |
+| ł      | l     | Ł                  | L                 |
+| ń      | n     | Ń                  | N                 |
+| ó      | o     | Ó                  | O                 |
+| ś      | s     | Ś                  | S                 |
+| ź      | z     | Ź                  | Z                 |
+| ż      | z     | Ż                  | Z                 |
 
 ### Function: `transliteratePolish()`
 
@@ -128,25 +134,25 @@ Utility module with two functions:
 export function transliteratePolish(text: string): string {
   const polishMap: Record<string, string> = {
     // Lowercase
-    'ą': 'a',
-    'ć': 'c',
-    'ę': 'e',
-    'ł': 'l',
-    'ń': 'n',
-    'ó': 'o',
-    'ś': 's',
-    'ź': 'z',
-    'ż': 'z',
+    ą: "a",
+    ć: "c",
+    ę: "e",
+    ł: "l",
+    ń: "n",
+    ó: "o",
+    ś: "s",
+    ź: "z",
+    ż: "z",
     // Uppercase
-    'Ą': 'A',
-    'Ć': 'C',
-    'Ę': 'E',
-    'Ł': 'L',
-    'Ń': 'N',
-    'Ó': 'O',
-    'Ś': 'S',
-    'Ź': 'Z',
-    'Ż': 'Z',
+    Ą: "A",
+    Ć: "C",
+    Ę: "E",
+    Ł: "L",
+    Ń: "N",
+    Ó: "O",
+    Ś: "S",
+    Ź: "Z",
+    Ż: "Z",
   };
 
   return text.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (char) => polishMap[char] || char);
@@ -177,13 +183,13 @@ export function sanitizeForLtree(text: string): string {
   sanitized = sanitized.toLowerCase();
 
   // Step 3: Replace spaces and special characters with underscores
-  sanitized = sanitized.replace(/[^a-z0-9_]/g, '_');
+  sanitized = sanitized.replace(/[^a-z0-9_]/g, "_");
 
   // Step 4: Remove consecutive underscores
-  sanitized = sanitized.replace(/_+/g, '_');
+  sanitized = sanitized.replace(/_+/g, "_");
 
   // Step 5: Trim underscores from start and end
-  sanitized = sanitized.replace(/^_+|_+$/g, '');
+  sanitized = sanitized.replace(/^_+|_+$/g, "");
 
   return sanitized;
 }
@@ -279,19 +285,17 @@ export function LocationBreadcrumbs({ location }: LocationBreadcrumbsProps) {
 
 ```typescript
 // Database stores:
-location.path = "root.garaz.polka_metalowa.lewy_rog"
-location.name = "Lewy róg"
-
-// parsePath() produces:
-[
-  { name: "Root", level: 0, isLast: false },           // capitalized
-  { name: "Garaz", level: 1, isLast: false },          // capitalized transliteration
+location.path = "root.garaz.polka_metalowa.lewy_rog";
+location.name = "Lewy róg"[
+  // parsePath() produces:
+  ({ name: "Root", level: 0, isLast: false }, // capitalized
+  { name: "Garaz", level: 1, isLast: false }, // capitalized transliteration
   { name: "Polka Metalowa", level: 2, isLast: false }, // capitalized transliteration
-  { name: "Lewy róg", level: 3, isLast: true }         // actual name with Polish chars
-]
+  { name: "Lewy róg", level: 3, isLast: true }) // actual name with Polish chars
+];
 
 // Displays as:
-"Root > Garaz > Polka Metalowa > Lewy róg"
+("Root > Garaz > Polka Metalowa > Lewy róg");
 //                                   ↑
 //                      actual name from database
 ```
@@ -305,12 +309,14 @@ location.name = "Lewy róg"
 1. **User Input:** "Garaż"
 
 2. **Location Service (`createLocation()`):**
+
    ```typescript
    const normalizedName = normalizeLocationName("Garaż");
    // normalizedName = "garaz"
    ```
 
 3. **Build ltree path:**
+
    ```typescript
    const parentPath = "root";
    const newPath = `${parentPath}.${normalizedName}`;
@@ -318,6 +324,7 @@ location.name = "Lewy róg"
    ```
 
 4. **Database INSERT:**
+
    ```sql
    INSERT INTO locations (name, path, workspace_id)
    VALUES ('Garaż', 'root.garaz', 'workspace-uuid');
@@ -330,16 +337,18 @@ location.name = "Lewy róg"
 ### Displaying Location in Breadcrumb
 
 1. **Fetch location with path:**
+
    ```typescript
    const location = {
      id: "uuid",
      name: "Garaż",
      path: "root.garaz",
-     workspace_id: "uuid"
+     workspace_id: "uuid",
    };
    ```
 
 2. **Parse path for breadcrumbs:**
+
    ```typescript
    const breadcrumbs = parsePath(location.path, location.name);
    // [
@@ -354,7 +363,10 @@ location.name = "Lewy róg"
      <ol>
        <li>Root</li>
        <li>→</li>
-       <li><strong>Garaż</strong></li>  {/* Last segment uses actual name */}
+       <li>
+         <strong>Garaż</strong>
+       </li>{" "}
+       {/* Last segment uses actual name */}
      </ol>
    </nav>
    ```
@@ -368,6 +380,7 @@ location.name = "Lewy róg"
 **Input:** User creates "Garaż"
 
 **Database:**
+
 ```json
 {
   "name": "Garaż",
@@ -376,6 +389,7 @@ location.name = "Lewy róg"
 ```
 
 **Breadcrumb Display:**
+
 ```
 Root > Garaż
        ↑
@@ -385,11 +399,13 @@ Root > Garaż
 ### Example 2: Nested Locations
 
 **Input:** User creates hierarchy:
+
 1. "Garaż"
 2. "Półka metalowa" (under "Garaż")
 3. "Lewy róg" (under "Półka metalowa")
 
 **Database:**
+
 ```json
 [
   { "name": "Garaż", "path": "root.garaz" },
@@ -399,6 +415,7 @@ Root > Garaż
 ```
 
 **Breadcrumb Display (for "Lewy róg"):**
+
 ```
 Root > Garaz > Polka Metalowa > Lewy róg
                                    ↑
@@ -410,6 +427,7 @@ Root > Garaz > Polka Metalowa > Lewy róg
 **Input:** "Półka #1 (Metalowa)"
 
 **Processing:**
+
 ```
 Original:     "Półka #1 (Metalowa)"
 Transliterate: "Polka #1 (Metalowa)"
@@ -420,6 +438,7 @@ Trim:         "polka_1_metalowa"
 ```
 
 **Database:**
+
 ```json
 {
   "name": "Półka #1 (Metalowa)",
@@ -428,6 +447,7 @@ Trim:         "polka_1_metalowa"
 ```
 
 **Breadcrumb Display:**
+
 ```
 Root > Półka #1 (Metalowa)
        ↑
@@ -439,6 +459,7 @@ Root > Półka #1 (Metalowa)
 **Input:** "ŚCIANA PÓŁNOCNA"
 
 **Processing:**
+
 ```
 Original:     "ŚCIANA PÓŁNOCNA"
 Transliterate: "SCIANA POLNOCNA"
@@ -447,6 +468,7 @@ Replace:      "sciana_polnocna"
 ```
 
 **Database:**
+
 ```json
 {
   "name": "ŚCIANA PÓŁNOCNA",
@@ -455,6 +477,7 @@ Replace:      "sciana_polnocna"
 ```
 
 **Breadcrumb Display:**
+
 ```
 Root > ŚCIANA PÓŁNOCNA
        ↑
@@ -523,35 +546,35 @@ Displayed in breadcrumb:
 ### Empty/Whitespace Input
 
 ```typescript
-sanitizeForLtree("   ") // ""
-sanitizeForLtree("") // ""
+sanitizeForLtree("   "); // ""
+sanitizeForLtree(""); // ""
 ```
 
 ### Multiple Spaces
 
 ```typescript
-sanitizeForLtree("Półka    metalowa") // "polka_metalowa"
+sanitizeForLtree("Półka    metalowa"); // "polka_metalowa"
 ```
 
 ### Leading/Trailing Special Characters
 
 ```typescript
-sanitizeForLtree("___Garaż___") // "garaz"
-sanitizeForLtree("###Półka###") // "polka"
+sanitizeForLtree("___Garaż___"); // "garaz"
+sanitizeForLtree("###Półka###"); // "polka"
 ```
 
 ### Numbers and Mixed Content
 
 ```typescript
-sanitizeForLtree("Półka 1-2-3") // "polka_1_2_3"
-sanitizeForLtree("Garaż (2m²)") // "garaz_2m"
+sanitizeForLtree("Półka 1-2-3"); // "polka_1_2_3"
+sanitizeForLtree("Garaż (2m²)"); // "garaz_2m"
 ```
 
 ### Only Special Characters
 
 ```typescript
-sanitizeForLtree("###") // ""
-sanitizeForLtree("---") // ""
+sanitizeForLtree("###"); // ""
+sanitizeForLtree("---"); // ""
 ```
 
 **Note:** Empty results should be validated at form level before reaching service layer.
@@ -603,6 +626,7 @@ sanitizeForLtree("---") // ""
 ### Input Validation
 
 ✅ **Protected:**
+
 - Max length enforced at form level (100 chars)
 - Special characters sanitized
 - No SQL metacharacters in output
@@ -634,13 +658,14 @@ Fetch parent locations to show full Polish names:
 
 ```typescript
 // Current (Option 3):
-"Root > Garaz > Polka Metalowa > Lewy róg"
+"Root > Garaz > Polka Metalowa > Lewy róg";
 
 // Future (Option 3+):
-"Root > Garaż > Półka metalowa > Lewy róg"
+"Root > Garaż > Półka metalowa > Lewy róg";
 ```
 
 Implementation:
+
 ```sql
 SELECT name FROM locations
 WHERE path <@ 'root.garaz.polka_metalowa.lewy_rog'
@@ -654,14 +679,15 @@ Store both lowercase path and case-preserved path:
 ```json
 {
   "name": "Garaż",
-  "path": "root.garaz",              // ltree (lowercase)
-  "path_display": "root.Garaz"       // display (case-preserved)
+  "path": "root.garaz", // ltree (lowercase)
+  "path_display": "root.Garaz" // display (case-preserved)
 }
 ```
 
 **Enhancement 3: Alternative character mappings**
 
 Support additional Eastern European languages:
+
 - Czech: č, ď, ě, ň, ř, š, ť, ů, ž
 - Slovak: ľ, ĺ, ŕ, ô
 - Hungarian: ő, ű
@@ -699,10 +725,11 @@ Support additional Eastern European languages:
 ### Type Safety
 
 ✅ All functions are fully typed:
+
 ```typescript
-function transliteratePolish(text: string): string
-function sanitizeForLtree(text: string): string
-function normalizeLocationName(name: string): string
+function transliteratePolish(text: string): string;
+function sanitizeForLtree(text: string): string;
+function normalizeLocationName(name: string): string;
 ```
 
 ### Testing

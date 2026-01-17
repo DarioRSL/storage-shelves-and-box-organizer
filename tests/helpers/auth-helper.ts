@@ -9,8 +9,8 @@
  * - Creating multiple users for RLS testing
  */
 
-import type { Session, User } from '@supabase/supabase-js';
-import { getAdminSupabaseClient, getTestSupabaseClient } from './supabase-test-client';
+import type { Session, User } from "@supabase/supabase-js";
+import { getAdminSupabaseClient, getTestSupabaseClient } from "./supabase-test-client";
 
 /**
  * Test User with authentication session
@@ -36,7 +36,7 @@ export interface TestUser {
  * Default test password
  * Meets minimum requirements (8 characters)
  */
-const DEFAULT_TEST_PASSWORD = 'TestPass123!';
+const DEFAULT_TEST_PASSWORD = "TestPass123!";
 
 /**
  * Delay between auth operations to avoid overwhelming local Supabase
@@ -48,17 +48,13 @@ const AUTH_OPERATION_DELAY_MS = 50;
  * Sleep helper for adding delays between operations
  */
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Retry helper with exponential backoff
  */
-async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 100
-): Promise<T> {
+async function retryWithBackoff<T>(operation: () => Promise<T>, maxRetries = 3, baseDelay = 100): Promise<T> {
   let lastError: any;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -69,7 +65,7 @@ async function retryWithBackoff<T>(
 
       // Don't retry on certain errors
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('already been registered') || message.includes('Invalid')) {
+      if (message.includes("already been registered") || message.includes("Invalid")) {
         throw error;
       }
 
@@ -133,46 +129,47 @@ export async function createAuthenticatedUser(
       // User exists and credentials match - reuse this user
       // Ensure profile exists (might have been deleted in cleanup)
       await adminClient
-        .from('profiles')
+        .from("profiles")
         .upsert({
           id: loginResult.data.user.id,
           email: email, // Use the email we passed in, not the user object
           full_name,
           avatar_url: userData?.avatar_url || null,
-          theme_preference: 'system',
+          theme_preference: "system",
         })
         .select();
 
       // IMPORTANT: Ensure user has at least one workspace
       // This handles cases where the user was created manually or workspace was deleted
       const { data: existingWorkspaces } = await adminClient
-        .from('workspaces')
-        .select('id')
-        .eq('owner_id', loginResult.data.user.id)
+        .from("workspaces")
+        .select("id")
+        .eq("owner_id", loginResult.data.user.id)
         .limit(1);
 
       if (!existingWorkspaces || existingWorkspaces.length === 0) {
         // No workspace exists - create default workspace
         const { data: newWorkspace } = await adminClient
-          .from('workspaces')
+          .from("workspaces")
           .insert({
             owner_id: loginResult.data.user.id,
-            name: 'My Workspace',
+            name: "My Workspace",
           })
           .select()
           .single();
 
         // Ensure workspace membership (should be created by trigger, but ensure it exists)
         if (newWorkspace) {
-          await adminClient
-            .from('workspace_members')
-            .upsert({
+          await adminClient.from("workspace_members").upsert(
+            {
               workspace_id: newWorkspace.id,
               user_id: loginResult.data.user.id,
-              role: 'owner',
-            }, {
-              onConflict: 'workspace_id,user_id',
-            });
+              role: "owner",
+            },
+            {
+              onConflict: "workspace_id,user_id",
+            }
+          );
         }
       }
 
@@ -207,26 +204,26 @@ export async function createAuthenticatedUser(
 
     if (authError || !authData?.user) {
       // If user already exists but login failed (wrong password), throw clear error
-      if (authError?.message?.includes('already been registered') || authError?.message?.includes('already exists')) {
+      if (authError?.message?.includes("already been registered") || authError?.message?.includes("already exists")) {
         throw new Error(`User ${email} exists but password doesn't match. Clear test data or use correct password.`);
       }
-      throw new Error(`Failed to create auth user: ${authError?.message || 'Unknown error'}`);
+      throw new Error(`Failed to create auth user: ${authError?.message || "Unknown error"}`);
     }
 
     // Create profile record using upsert to handle any race conditions
     const { data: profiles, error: profileError } = await adminClient
-      .from('profiles')
+      .from("profiles")
       .upsert({
         id: authData.user.id,
         email: email, // Use the email we passed in, not the user object
         full_name,
         avatar_url: userData?.avatar_url || null,
-        theme_preference: 'system',
+        theme_preference: "system",
       })
       .select();
 
     if (profileError || !profiles || profiles.length === 0) {
-      throw new Error(`Failed to create profile: ${profileError?.message || 'Unknown error'}`);
+      throw new Error(`Failed to create profile: ${profileError?.message || "Unknown error"}`);
     }
 
     // Sign in to get session and tokens
@@ -239,14 +236,14 @@ export async function createAuthenticatedUser(
       });
 
       if (result.error || !result.data.session) {
-        throw new Error(`Failed to create session: ${result.error?.message || 'Unknown error'}`);
+        throw new Error(`Failed to create session: ${result.error?.message || "Unknown error"}`);
       }
 
       return result.data;
     });
 
     if (!sessionResult.session) {
-      throw new Error('Failed to create session: No session returned');
+      throw new Error("Failed to create session: No session returned");
     }
 
     return {
@@ -354,7 +351,7 @@ export async function loginTestUser(email: string, password: string): Promise<Te
     });
 
     if (error || !data.session || !data.user) {
-      throw new Error(`Login failed: ${error?.message || 'Unknown error'}`);
+      throw new Error(`Login failed: ${error?.message || "Unknown error"}`);
     }
 
     return {
@@ -384,7 +381,7 @@ export async function logoutTestUser(token: string): Promise<void> {
   // Set session before signing out
   const { error: sessionError } = await client.auth.setSession({
     access_token: token,
-    refresh_token: '', // Not needed for logout
+    refresh_token: "", // Not needed for logout
   });
 
   if (sessionError) {
@@ -462,13 +459,13 @@ export async function refreshUserToken(refreshToken: string): Promise<TestUser> 
     });
 
     if (error || !data.session || !data.user) {
-      throw new Error(`Token refresh failed: ${error?.message || 'Unknown error'}`);
+      throw new Error(`Token refresh failed: ${error?.message || "Unknown error"}`);
     }
 
     return {
       id: data.user.id,
       email: data.user.email!,
-      password: '', // Password not available after refresh
+      password: "", // Password not available after refresh
       token: data.session.access_token,
       refreshToken: data.session.refresh_token,
       session: data.session,
@@ -481,4 +478,4 @@ export async function refreshUserToken(refreshToken: string): Promise<TestUser> 
 }
 
 // Re-export user pool functions for convenience
-export { getUsersFromPool, initializeUserPool, destroyUserPool, getPoolStatus } from './user-pool';
+export { getUsersFromPool, initializeUserPool, destroyUserPool, getPoolStatus } from "./user-pool";

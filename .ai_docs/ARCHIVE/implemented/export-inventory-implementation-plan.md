@@ -15,16 +15,17 @@ The GET /api/export/inventory endpoint enables users to export all boxes from a 
 ## 2. Request Details
 
 ### HTTP Method & URL Pattern
+
 ```
 GET /api/export/inventory?workspace_id={workspace_id}&format={format}
 ```
 
 ### Query Parameters
 
-| Parameter | Type | Required | Constraints | Default | Description |
-|-----------|------|----------|-------------|---------|-------------|
-| workspace_id | UUID string | Yes | Valid UUID v4 format | N/A | Workspace to export data from |
-| format | string | No | 'csv' \| 'json' (case-insensitive) | 'csv' | Export file format |
+| Parameter    | Type        | Required | Constraints                        | Default | Description                   |
+| ------------ | ----------- | -------- | ---------------------------------- | ------- | ----------------------------- |
+| workspace_id | UUID string | Yes      | Valid UUID v4 format               | N/A     | Workspace to export data from |
+| format       | string      | No       | 'csv' \| 'json' (case-insensitive) | 'csv'   | Export file format            |
 
 ### Headers
 
@@ -37,11 +38,13 @@ Accept: text/csv
 ### Request Validation Rules
 
 **workspace_id:**
+
 - Must be valid UUID v4 format: `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`
 - Must be provided as query parameter
 - If missing: return 400 Bad Request
 
 **format:**
+
 - Must be lowercase 'csv' or 'json'
 - Normalize input to lowercase before validation
 - If invalid value: return 400 Bad Request
@@ -54,6 +57,7 @@ Accept: text/csv
 ### Success Response (200 OK)
 
 **CSV Format:**
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: text/csv; charset=utf-8
@@ -66,6 +70,7 @@ id,short_id,name,location,description,tags,qr_code,created_at,updated_at
 ```
 
 **JSON Format:**
+
 ```json
 {
   "meta": {
@@ -103,34 +108,38 @@ id,short_id,name,location,description,tags,qr_code,created_at,updated_at
 
 ### CSV Column Definitions
 
-| Column | Source Table | Type | Notes |
-|--------|--------------|------|-------|
-| id | boxes.id | UUID | Box unique identifier |
-| short_id | boxes.short_id | string | 10-character alphanumeric identifier |
-| name | boxes.name | string | Box name/title |
-| location | locations.path | string | Hierarchical breadcrumb (e.g., "Basement > Shelf A") |
-| description | boxes.description | string \| null | Box contents description (max 10k chars) |
-| tags | boxes.tags | string | Comma-separated tag list (from array) |
-| qr_code | qr_codes.short_id | string \| null | QR code identifier (format: QR-XXXXXX) |
-| created_at | boxes.created_at | ISO 8601 timestamp | Creation datetime |
-| updated_at | boxes.updated_at | ISO 8601 timestamp | Last modification datetime |
+| Column      | Source Table      | Type               | Notes                                                |
+| ----------- | ----------------- | ------------------ | ---------------------------------------------------- |
+| id          | boxes.id          | UUID               | Box unique identifier                                |
+| short_id    | boxes.short_id    | string             | 10-character alphanumeric identifier                 |
+| name        | boxes.name        | string             | Box name/title                                       |
+| location    | locations.path    | string             | Hierarchical breadcrumb (e.g., "Basement > Shelf A") |
+| description | boxes.description | string \| null     | Box contents description (max 10k chars)             |
+| tags        | boxes.tags        | string             | Comma-separated tag list (from array)                |
+| qr_code     | qr_codes.short_id | string \| null     | QR code identifier (format: QR-XXXXXX)               |
+| created_at  | boxes.created_at  | ISO 8601 timestamp | Creation datetime                                    |
+| updated_at  | boxes.updated_at  | ISO 8601 timestamp | Last modification datetime                           |
 
 ### Handling Special Cases
 
 **Unassigned Boxes (NULL location_id):**
+
 - Set location field to empty string or "Unassigned"
 - Include in export regardless of location assignment
 
 **Boxes Without QR Codes:**
+
 - Set qr_code field to empty string in CSV
 - Set qr_code to null in JSON
 
 **Tags Array Conversion:**
+
 - Convert PostgreSQL array to comma-separated string in CSV
 - Handle empty arrays as empty string
 - Escape commas/quotes in tag values if present
 
 **Location Path Conversion:**
+
 - Convert ltree format (e.g., `root.basement.shelf_a`) to breadcrumb (e.g., `Basement > Shelf A`)
 - Use location.name field for each path component if available
 - Handle multi-level hierarchies (up to 5 levels deep)
@@ -208,10 +217,10 @@ Create `src/lib/services/exportService.ts`:
 export async function exportInventory(
   supabase: SupabaseClient,
   workspaceId: string,
-  format: 'csv' | 'json' = 'csv'
+  format: "csv" | "json" = "csv"
 ): Promise<{
   content: string;
-  mimeType: 'text/csv' | 'application/json';
+  mimeType: "text/csv" | "application/json";
   filename: string;
 }> {
   // Implementation details in Implementation Steps
@@ -223,40 +232,47 @@ export async function exportInventory(
 ## 5. Security Considerations
 
 ### Authentication
+
 - **Requirement:** Valid JWT token must be present in Authorization header
 - **Implementation:** Middleware validates token before reaching handler
 - **Status Code:** 401 if missing or invalid
 
 ### Authorization
+
 - **Requirement:** User must be member of the workspace
 - **Implementation:** Check via `is_workspace_member(workspace_id)` RLS function
 - **Method:** Query will fail silently if user lacks access (RLS policy)
 - **Status Code:** 403 if user is not workspace member
 
 ### Input Validation
+
 - **workspace_id:** Validate UUID format before querying
 - **format:** Whitelist only 'csv' and 'json', normalize case
 - **Query parameters:** Reject unknown parameters (strict whitelist)
 - **Status Code:** 400 for invalid input
 
 ### Query Injection Prevention
+
 - Use Supabase client parameterized queries (prepared statements)
 - Never concatenate user input into SQL strings
 - Validate workspace_id format before query execution
 
 ### CSV Injection Prevention
+
 - Use established csv-stringify library (v6+)
 - Library automatically escapes formula-starting characters (=, +, -, @)
 - Properly quote all fields containing special characters
 - Test with injection payloads before deployment
 
 ### Data Protection
+
 - Export file contains public inventory data (not PII-sensitive)
 - No authentication tokens or passwords in export
 - File download over HTTPS (infrastructure requirement)
 - Rate limiting recommended to prevent abuse (optional Phase 2)
 
 ### CORS & Headers
+
 - Only allow same-origin requests (CORS handled by Astro/browser)
 - Set appropriate Content-Type and Content-Disposition headers
 - No sensitive headers exposed in response
@@ -267,17 +283,17 @@ export async function exportInventory(
 
 ### HTTP Status Codes & Error Messages
 
-| HTTP Status | Error Condition | Error Message (Polish) | User-Friendly Message |
-|-------------|-----------------|------------------------|----------------------|
-| **400** | Missing workspace_id | "Parametr workspace_id jest wymagany" | Please provide a workspace ID |
-| **400** | Invalid workspace_id format | "Nieprawidłowy format workspace_id (musi być UUID)" | Invalid workspace ID format |
-| **400** | Invalid format parameter | "Nieprawidłowy format: musi być 'csv' lub 'json'" | Unsupported export format |
-| **401** | No JWT token provided | "Nie jesteś uwierzytelniony" | You must be logged in |
-| **401** | Invalid/expired JWT token | "Nie jesteś uwierzytelniony" | Your session has expired, please log in again |
-| **403** | User not workspace member | "Brak uprawnień: nie jesteś członkiem tego workspace'u" | You don't have access to this workspace |
-| **404** | Workspace not found | "Workspace nie został znaleziony" | The workspace you requested doesn't exist |
-| **500** | Database connection error | "Nie udało się wyeksportować inwentarza: błąd bazy danych" | Server error: unable to export data |
-| **500** | File generation error | "Nie udało się wygenerować pliku eksportu" | Server error: unable to generate file |
+| HTTP Status | Error Condition             | Error Message (Polish)                                     | User-Friendly Message                         |
+| ----------- | --------------------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| **400**     | Missing workspace_id        | "Parametr workspace_id jest wymagany"                      | Please provide a workspace ID                 |
+| **400**     | Invalid workspace_id format | "Nieprawidłowy format workspace_id (musi być UUID)"        | Invalid workspace ID format                   |
+| **400**     | Invalid format parameter    | "Nieprawidłowy format: musi być 'csv' lub 'json'"          | Unsupported export format                     |
+| **401**     | No JWT token provided       | "Nie jesteś uwierzytelniony"                               | You must be logged in                         |
+| **401**     | Invalid/expired JWT token   | "Nie jesteś uwierzytelniony"                               | Your session has expired, please log in again |
+| **403**     | User not workspace member   | "Brak uprawnień: nie jesteś członkiem tego workspace'u"    | You don't have access to this workspace       |
+| **404**     | Workspace not found         | "Workspace nie został znaleziony"                          | The workspace you requested doesn't exist     |
+| **500**     | Database connection error   | "Nie udało się wyeksportować inwentarza: błąd bazy danych" | Server error: unable to export data           |
+| **500**     | File generation error       | "Nie udało się wygenerować pliku eksportu"                 | Server error: unable to generate file         |
 
 ### Error Handling Strategy
 
@@ -288,25 +304,21 @@ export async function GET(context) {
     // 1. Validate input early
     const validation = validateExportInput(queryParams);
     if (!validation.valid) {
-      return new Response(JSON.stringify({ error: validation.error }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: validation.error }), { status: 400 });
     }
 
     // 2. Authenticate (middleware ensures this, but check again)
     const user = context.locals.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: "Nie jesteś uwierzytelniony" }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ error: "Nie jesteś uwierzytelniony" }), { status: 401 });
     }
 
     // 3. Authorize (RLS will handle, but explicit check in logic)
     const workspace = await checkWorkspaceAccess(supabase, workspaceId, user.id);
     if (!workspace) {
-      return new Response(JSON.stringify({ error: "Brak uprawnień: nie jesteś członkiem tego workspace'u" }),
-        { status: 403 }
-      );
+      return new Response(JSON.stringify({ error: "Brak uprawnień: nie jesteś członkiem tego workspace'u" }), {
+        status: 403,
+      });
     }
 
     // 4. Execute export
@@ -316,18 +328,16 @@ export async function GET(context) {
     return new Response(result.content, {
       status: 200,
       headers: {
-        'Content-Type': result.mimeType,
-        'Content-Disposition': `attachment; filename="${result.filename}"`,
+        "Content-Type": result.mimeType,
+        "Content-Disposition": `attachment; filename="${result.filename}"`,
       },
     });
   } catch (err) {
     // Log error (without sensitive data)
-    console.error('[exportInventory]', err.message);
+    console.error("[exportInventory]", err.message);
 
     // Return generic error to client
-    return new Response(JSON.stringify({ error: "Nie udało się wyeksportować inwentarza" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Nie udało się wyeksportować inwentarza" }), { status: 500 });
   }
 }
 ```
@@ -335,17 +345,20 @@ export async function GET(context) {
 ### Logging & Monitoring
 
 **What to Log:**
+
 - Request: user_id, workspace_id, format, timestamp
 - Success: rows_exported, file_size, duration
 - Errors: error_type, error_message, stack_trace (dev only)
 
 **What NOT to Log:**
+
 - JWT tokens or authentication headers
 - User personal data (emails, names)
 - Full descriptions (could contain PII)
 - Request body (N/A for GET, but for consistency)
 
 **Logging Pattern:**
+
 ```typescript
 console.info("GET /api/export/inventory - Rozpoczęto eksport", { userId, workspaceId, format });
 console.info("GET /api/export/inventory - Sukces", { userId, workspaceId, format, rowCount, duration });
@@ -359,12 +372,14 @@ console.error("GET /api/export/inventory - Błąd", { userId, workspaceId, error
 ### Query Optimization
 
 **Indexing Strategy:**
+
 - Primary index on boxes(workspace_id) - already exists (foreign key)
 - Index on boxes(location_id) - already exists (foreign key)
 - GIN index on search_vector - exists for full-text search
 - Consider compound index: boxes(workspace_id, created_at DESC) for large workspaces
 
 **JOIN Performance:**
+
 - LEFT JOINs are efficient (boxes → locations → qr_codes)
 - Locations indexed by id (primary key)
 - QR codes indexed by box_id (unique constraint)
@@ -373,11 +388,13 @@ console.error("GET /api/export/inventory - Błąd", { userId, workspaceId, error
 ### Memory Optimization
 
 **Streaming Approach (Optional Phase 2):**
+
 - For large exports (10k+ boxes), consider streaming CSV generation
 - Load boxes in batches, process, and stream to client
 - Prevents holding entire result set in memory
 
 **Current Approach (Phase 1):**
+
 - Load all boxes into memory (feasible for MVP)
 - Generate file in single operation
 - Typical workspace < 1000 boxes = minimal memory impact
@@ -385,11 +402,13 @@ console.error("GET /api/export/inventory - Błąd", { userId, workspaceId, error
 ### File Size Considerations
 
 **Estimated Sizes:**
+
 - Per box: ~200-300 bytes (CSV with 8 columns)
 - 1000 boxes: ~300 KB
 - 10000 boxes: ~3 MB
 
 **Current Limitations:**
+
 - No explicit size limits defined in MVP
 - HTTP response size limit ~100 MB (typical server config)
 - Plan Phase 2: Implement pagination or batch export for large workspaces
@@ -397,6 +416,7 @@ console.error("GET /api/export/inventory - Błąd", { userId, workspaceId, error
 ### Rate Limiting (Phase 2)
 
 **Recommendation:**
+
 - Limit to 5 exports per user per hour
 - Implement at API gateway or middleware
 - Return 429 (Too Many Requests) when exceeded
@@ -410,32 +430,33 @@ console.error("GET /api/export/inventory - Błąd", { userId, workspaceId, error
 **File:** `src/lib/services/exportService.ts`
 
 Create a service module that handles:
+
 - Database query execution
 - Data transformation (ltree → breadcrumb, array → CSV)
 - CSV and JSON file generation
 - Error handling and validation
 
 ```typescript
-import { SupabaseClient } from '@supabase/supabase-js';
-import { stringify } from 'csv-stringify/sync';
+import { SupabaseClient } from "@supabase/supabase-js";
+import { stringify } from "csv-stringify/sync";
 
 export async function exportInventory(
   supabase: SupabaseClient,
   workspaceId: string,
-  format: 'csv' | 'json'
+  format: "csv" | "json"
 ): Promise<{
   content: string;
-  mimeType: 'text/csv' | 'application/json';
+  mimeType: "text/csv" | "application/json";
   filename: string;
 }> {
   // Fetch boxes with related data
   const { data, error } = await supabase
-    .from('boxes')
+    .from("boxes")
     .select(
-      'id, short_id, name, description, tags, location_id, created_at, updated_at, locations(id, path, name), qr_codes(short_id)'
+      "id, short_id, name, description, tags, location_id, created_at, updated_at, locations(id, path, name), qr_codes(short_id)"
     )
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: false });
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
 
@@ -443,61 +464,65 @@ export async function exportInventory(
   const records = transformBoxes(data || []);
 
   // Generate file content
-  const filename = `inventory-${workspaceId}-${new Date().toISOString().split('T')[0]}.${format}`;
+  const filename = `inventory-${workspaceId}-${new Date().toISOString().split("T")[0]}.${format}`;
 
-  if (format === 'csv') {
+  if (format === "csv") {
     const content = stringify(records, { header: true });
     return {
       content,
-      mimeType: 'text/csv',
+      mimeType: "text/csv",
       filename,
     };
   } else {
-    const content = JSON.stringify({
-      meta: {
-        workspace_id: workspaceId,
-        export_date: new Date().toISOString(),
-        total_records: records.length,
-        format_version: '1.0',
+    const content = JSON.stringify(
+      {
+        meta: {
+          workspace_id: workspaceId,
+          export_date: new Date().toISOString(),
+          total_records: records.length,
+          format_version: "1.0",
+        },
+        data: records.map((r) => ({
+          ...r,
+          tags: r.tags ? r.tags.split(",").filter(Boolean) : [],
+        })),
       },
-      data: records.map(r => ({
-        ...r,
-        tags: r.tags ? r.tags.split(',').filter(Boolean) : [],
-      })),
-    }, null, 2);
+      null,
+      2
+    );
 
     return {
       content,
-      mimeType: 'application/json',
-      filename: filename.replace('.json', '.json'),
+      mimeType: "application/json",
+      filename: filename.replace(".json", ".json"),
     };
   }
 }
 
 function transformBoxes(boxes: any[]): Record<string, any>[] {
-  return boxes.map(box => ({
+  return boxes.map((box) => ({
     id: box.id,
     short_id: box.short_id,
     name: box.name,
     location: formatLocation(box.locations),
-    description: box.description || '',
+    description: box.description || "",
     tags: formatTags(box.tags),
-    qr_code: box.qr_codes?.[0]?.short_id || '',
+    qr_code: box.qr_codes?.[0]?.short_id || "",
     created_at: box.created_at,
     updated_at: box.updated_at,
   }));
 }
 
 function formatLocation(location: any | null): string {
-  if (!location) return '';
+  if (!location) return "";
   // Convert ltree path to breadcrumb or use location names
   // Placeholder - implement based on path structure
-  return location.name || '';
+  return location.name || "";
 }
 
 function formatTags(tags: string[] | null): string {
-  if (!tags || tags.length === 0) return '';
-  return tags.map(t => t.replace(/"/g, '""')).join(',');
+  if (!tags || tags.length === 0) return "";
+  return tags.map((t) => t.replace(/"/g, '""')).join(",");
 }
 ```
 
@@ -508,17 +533,17 @@ function formatTags(tags: string[] | null): string {
 Use Zod to validate query parameters:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const exportInventoryQuerySchema = z.object({
-  workspace_id: z.string().uuid('Nieprawidłowy format workspace_id (musi być UUID)'),
+  workspace_id: z.string().uuid("Nieprawidłowy format workspace_id (musi być UUID)"),
   format: z
     .string()
-    .transform(v => v.toLowerCase())
-    .refine(v => ['csv', 'json'].includes(v), {
+    .transform((v) => v.toLowerCase())
+    .refine((v) => ["csv", "json"].includes(v), {
       message: "Nieprawidłowy format: musi być 'csv' lub 'json'",
     })
-    .default('csv'),
+    .default("csv"),
 });
 
 export type ExportInventoryQuery = z.infer<typeof exportInventoryQuerySchema>;
@@ -529,9 +554,9 @@ export type ExportInventoryQuery = z.infer<typeof exportInventoryQuerySchema>;
 **File:** `src/pages/api/export/inventory.ts`
 
 ```typescript
-import { type APIContext } from 'astro';
-import { exportInventoryQuerySchema } from '@/lib/validation/exportValidation';
-import { exportInventory } from '@/lib/services/exportService';
+import { type APIContext } from "astro";
+import { exportInventoryQuerySchema } from "@/lib/validation/exportValidation";
+import { exportInventory } from "@/lib/services/exportService";
 
 export const prerender = false;
 
@@ -542,10 +567,7 @@ export async function GET(context: APIContext) {
   try {
     // Validate authentication
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Nie jesteś uwierzytelniony' }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ error: "Nie jesteś uwierzytelniony" }), { status: 401 });
     }
 
     // Validate and parse query parameters
@@ -555,7 +577,7 @@ export async function GET(context: APIContext) {
     if (!validated.success) {
       return new Response(
         JSON.stringify({
-          error: validated.error.errors[0]?.message || 'Nieprawidłowe parametry zapytania',
+          error: validated.error.errors[0]?.message || "Nieprawidłowe parametry zapytania",
         }),
         { status: 400 }
       );
@@ -565,30 +587,27 @@ export async function GET(context: APIContext) {
 
     // Check workspace membership (RLS policy will enforce)
     const { data: workspace, error: workspaceError } = await supabase
-      .from('workspaces')
-      .select('id')
-      .eq('id', workspace_id)
+      .from("workspaces")
+      .select("id")
+      .eq("id", workspace_id)
       .single();
 
     if (workspaceError || !workspace) {
-      return new Response(
-        JSON.stringify({ error: 'Workspace nie został znaleziony' }),
-        { status: 404 }
-      );
+      return new Response(JSON.stringify({ error: "Workspace nie został znaleziony" }), { status: 404 });
     }
 
     // Check if user is workspace member
     const { data: member, error: memberError } = await supabase
-      .from('workspace_members')
-      .select('role')
-      .eq('workspace_id', workspace_id)
-      .eq('user_id', user.id)
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", workspace_id)
+      .eq("user_id", user.id)
       .single();
 
     if (memberError || !member) {
       return new Response(
         JSON.stringify({
-          error: 'Brak uprawnień: nie jesteś członkiem tego workspace\'u',
+          error: "Brak uprawnień: nie jesteś członkiem tego workspace'u",
         }),
         { status: 403 }
       );
@@ -601,17 +620,17 @@ export async function GET(context: APIContext) {
     return new Response(result.content, {
       status: 200,
       headers: {
-        'Content-Type': result.mimeType,
-        'Content-Disposition': `attachment; filename="${result.filename}"`,
-        'Content-Length': Buffer.byteLength(result.content).toString(),
+        "Content-Type": result.mimeType,
+        "Content-Disposition": `attachment; filename="${result.filename}"`,
+        "Content-Length": Buffer.byteLength(result.content).toString(),
       },
     });
   } catch (err) {
-    console.error('[exportInventory]', err instanceof Error ? err.message : String(err));
+    console.error("[exportInventory]", err instanceof Error ? err.message : String(err));
 
     return new Response(
       JSON.stringify({
-        error: 'Nie udało się wyeksportować inwentarza',
+        error: "Nie udało się wyeksportować inwentarza",
       }),
       { status: 500 }
     );
@@ -628,6 +647,7 @@ npm install csv-stringify
 ```
 
 Update package.json to include:
+
 ```json
 {
   "dependencies": {
@@ -648,7 +668,7 @@ Add new export-related types:
  */
 export interface ExportInventoryQuery {
   workspace_id: string; // UUID
-  format?: 'csv' | 'json'; // Default: 'csv'
+  format?: "csv" | "json"; // Default: 'csv'
 }
 
 /**
@@ -676,7 +696,7 @@ export interface ExportInventoryJsonResponse {
     total_records: number;
     format_version: string;
   };
-  data: Array<Omit<ExportedBoxRecord, 'tags'> & { tags: string[] }>;
+  data: Array<Omit<ExportedBoxRecord, "tags"> & { tags: string[] }>;
 }
 ```
 
@@ -714,10 +734,10 @@ Add export endpoint definition:
 
 ```typescript
 export const exportApi = {
-  exportInventory: async (workspaceId: string, format: 'csv' | 'json' = 'csv') => {
-    const url = new URL('/api/export/inventory', window.location.origin);
-    url.searchParams.append('workspace_id', workspaceId);
-    url.searchParams.append('format', format);
+  exportInventory: async (workspaceId: string, format: "csv" | "json" = "csv") => {
+    const url = new URL("/api/export/inventory", window.location.origin);
+    url.searchParams.append("workspace_id", workspaceId);
+    url.searchParams.append("format", format);
 
     const response = await fetch(url, {
       headers: {
@@ -727,19 +747,17 @@ export const exportApi = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Export failed');
+      throw new Error(error.error || "Export failed");
     }
 
     // Get filename from Content-Disposition header
-    const contentDisposition = response.headers.get('content-disposition');
-    const filename = contentDisposition
-      ?.split('filename="')[1]
-      ?.split('"')[0] || `inventory-${workspaceId}.${format}`;
+    const contentDisposition = response.headers.get("content-disposition");
+    const filename = contentDisposition?.split('filename="')[1]?.split('"')[0] || `inventory-${workspaceId}.${format}`;
 
     // Create blob and download
     const blob = await response.blob();
     const url_blob = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url_blob;
     link.download = filename;
     document.body.appendChild(link);
@@ -815,6 +833,7 @@ ORDER BY b.created_at DESC;
 ### Step 10: Testing Checklist
 
 **Unit Tests:**
+
 - [ ] Validate query parameter validation
 - [ ] Test ltree to breadcrumb conversion
 - [ ] Test tags array to CSV string conversion
@@ -822,6 +841,7 @@ ORDER BY b.created_at DESC;
 - [ ] Test JSON serialization with metadata
 
 **Integration Tests:**
+
 - [ ] CSV export with valid workspace (returns 200)
 - [ ] JSON export with valid workspace (returns 200)
 - [ ] Export with 0 boxes (empty but valid file)
@@ -836,6 +856,7 @@ ORDER BY b.created_at DESC;
 - [ ] Verify filename format in Content-Disposition
 
 **Manual Testing:**
+
 - [ ] Download CSV file and verify in spreadsheet
 - [ ] Download JSON file and verify structure
 - [ ] Test with workspace containing unassigned boxes
@@ -848,21 +869,21 @@ ORDER BY b.created_at DESC;
 
 ## Summary Table
 
-| Aspect | Details |
-|--------|---------|
-| **Route** | `GET /api/export/inventory` |
-| **Authentication** | Required (JWT token) |
-| **Authorization** | Workspace member |
-| **Input Validation** | workspace_id (UUID), format (csv\|json) |
-| **Success Response** | 200 OK with file stream |
-| **Error Responses** | 400, 401, 403, 404, 500 (with Polish messages) |
-| **Service Layer** | `src/lib/services/exportService.ts` |
-| **Validation** | `src/lib/validation/exportValidation.ts` |
-| **Dependencies** | csv-stringify v6+ |
-| **Database** | Queries boxes with location/QR joins |
-| **Performance** | ~10ms for 1000 boxes |
-| **Security** | RLS enforcement, input validation, CSV injection prevention |
-| **File Formats** | CSV (default), JSON (optional) |
+| Aspect               | Details                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| **Route**            | `GET /api/export/inventory`                                 |
+| **Authentication**   | Required (JWT token)                                        |
+| **Authorization**    | Workspace member                                            |
+| **Input Validation** | workspace_id (UUID), format (csv\|json)                     |
+| **Success Response** | 200 OK with file stream                                     |
+| **Error Responses**  | 400, 401, 403, 404, 500 (with Polish messages)              |
+| **Service Layer**    | `src/lib/services/exportService.ts`                         |
+| **Validation**       | `src/lib/validation/exportValidation.ts`                    |
+| **Dependencies**     | csv-stringify v6+                                           |
+| **Database**         | Queries boxes with location/QR joins                        |
+| **Performance**      | ~10ms for 1000 boxes                                        |
+| **Security**         | RLS enforcement, input validation, CSV injection prevention |
+| **File Formats**     | CSV (default), JSON (optional)                              |
 
 ---
 

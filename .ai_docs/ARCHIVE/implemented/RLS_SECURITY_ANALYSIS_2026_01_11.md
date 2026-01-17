@@ -82,18 +82,22 @@ Owner: postgres
 **Security Flow**:
 
 1. **Authentication Check** (line 36-48):
+
    ```typescript
    const user = locals.user;
    if (!user) {
      return new Response(..., { status: 401 });
    }
    ```
+
    ✅ Ensures user is authenticated
 
 2. **Service Layer Call** (line 70):
+
    ```typescript
    const box: BoxDto = await getBoxById(supabase, id, user.id);
    ```
+
    ✅ Passes authenticated Supabase client
 
 3. **Error Handling** (line 79-88):
@@ -115,14 +119,11 @@ Owner: postgres
 **Security Flow**:
 
 ```typescript
-const { data, error } = await supabase
-  .from("boxes")
-  .select(`id, short_id, workspace_id, ...`)
-  .eq("id", boxId)
-  .single();
+const { data, error } = await supabase.from("boxes").select(`id, short_id, workspace_id, ...`).eq("id", boxId).single();
 ```
 
 **RLS Enforcement**:
+
 - The Supabase query automatically applies RLS policies
 - If user is not a member of the box's workspace, RLS filters out the row
 - Result: Query returns no data → `BoxNotFoundError` thrown → API returns 404
@@ -189,6 +190,7 @@ if (sessionData) {
 ### Scenario: User B Attempts to Access User A's Data
 
 Given:
+
 - User A (darek2@testy.usera) has workspace `d67c6cf7-c21d-400d-8193-ee1f31580953`
 - User B (darek3@testy.usera) has workspace `a95fb5b4-d309-442b-9fdf-802b7be27b20`
 - User A creates Box X in their workspace
@@ -200,6 +202,7 @@ Given:
 **Expected Result**: `404 Not Found`
 
 **Security Flow**:
+
 1. User B is authenticated → `auth.uid()` = User B's ID
 2. Supabase query: `SELECT * FROM boxes WHERE id = box_x_id`
 3. RLS policy applies: `is_workspace_member(workspace_id)`
@@ -217,6 +220,7 @@ Given:
 **Expected Result**: `404 Not Found`
 
 **Security Flow**:
+
 1. User B authenticated → `auth.uid()` = User B's ID
 2. Supabase UPDATE query on Box X
 3. RLS UPDATE policy: `is_workspace_member(workspace_id)`
@@ -234,6 +238,7 @@ Given:
 **Expected Result**: `404 Not Found`
 
 **Security Flow**:
+
 1. User B authenticated → `auth.uid()` = User B's ID
 2. Supabase DELETE query on Box X
 3. RLS DELETE policy: `is_workspace_member(workspace_id)`
@@ -251,6 +256,7 @@ Given:
 **Expected Result**: Empty array (User A's boxes not visible)
 
 **Security Flow**:
+
 1. User B authenticated → `auth.uid()` = User B's ID
 2. Supabase query: `SELECT * FROM boxes WHERE workspace_id = user_b_workspace`
 3. RLS SELECT policy: `is_workspace_member(workspace_id)`
@@ -308,6 +314,7 @@ Execute the test procedure in [MULTI_USER_ISOLATION_TEST.md](./MULTI_USER_ISOLAT
 ### Automated Testing (Recommended for CI/CD)
 
 Create integration tests for:
+
 - Cross-workspace read attempts (GET)
 - Cross-workspace modification attempts (PATCH)
 - Cross-workspace deletion attempts (DELETE)
@@ -376,11 +383,13 @@ The code analysis shows that the security implementation follows best practices 
 ### Recommendation
 
 **Proceed with manual testing** to confirm the analysis. If manual tests pass:
+
 - ✅ Mark RLS implementation as PRODUCTION-READY
 - ✅ Document test results in RLS_ANALYSIS.md
 - ✅ Continue with remaining RLS testing (workspace deletion, member operations)
 
 If manual tests fail:
+
 - 🚨 Report as CRITICAL SECURITY BUG
 - 🚨 Do NOT deploy to production
 - 🚨 Review `is_workspace_member()` function implementation

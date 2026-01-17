@@ -12,7 +12,7 @@
  * ```
  */
 
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from "@playwright/test";
 
 export class DashboardPage {
   readonly page: Page;
@@ -34,7 +34,7 @@ export class DashboardPage {
   async navigateToNewBox(): Promise<void> {
     await this.newBoxButton.click();
     // Wait for navigation to complete
-    await this.page.waitForURL('/app/boxes/new', { timeout: 10000 });
+    await this.page.waitForURL("/app/boxes/new", { timeout: 10000 });
   }
 
   /**
@@ -55,7 +55,7 @@ export class DashboardPage {
     const boxElement = this.findBoxByName(boxName);
 
     // Find the box item container and then the menu button within it
-    const boxItem = boxElement.locator('..').locator('..').locator('..'); // Navigate up to article element
+    const boxItem = boxElement.locator("..").locator("..").locator(".."); // Navigate up to article element
     const menuButton = boxItem.locator('[data-testid="box-menu-button"]');
 
     await menuButton.click();
@@ -78,10 +78,10 @@ export class DashboardPage {
   async confirmDelete(): Promise<void> {
     // Wait for confirmation dialog to appear
     const dialog = this.page.locator('[data-testid="delete-confirmation-dialog"]');
-    await dialog.waitFor({ state: 'visible', timeout: 5000 });
+    await dialog.waitFor({ state: "visible", timeout: 5000 });
 
     // Type confirmation text if required
-    const confirmationInput = dialog.locator('input#confirmation-input');
+    const confirmationInput = dialog.locator("input#confirmation-input");
     if (await confirmationInput.isVisible({ timeout: 2000 }).catch(() => false)) {
       // Get the confirmation text from the label
       const labelText = await dialog.locator('label[for="confirmation-input"] span').textContent();
@@ -102,7 +102,7 @@ export class DashboardPage {
    */
   async waitForBoxToDisappear(boxName: string): Promise<void> {
     const box = this.findBoxByName(boxName);
-    await box.waitFor({ state: 'hidden', timeout: 10000 });
+    await box.waitFor({ state: "hidden", timeout: 10000 });
   }
 
   /**
@@ -122,7 +122,7 @@ export class DashboardPage {
    */
   async clearSearch(): Promise<void> {
     const searchInput = this.page.locator('[data-testid="search-input"], input[type="search"]').first();
-    await searchInput.fill('');
+    await searchInput.fill("");
 
     // Wait for results to reset
     await this.page.waitForTimeout(500);
@@ -142,14 +142,14 @@ export class DashboardPage {
    */
   async waitForDashboardLoad(): Promise<void> {
     // Wait for the new box button to be visible (indicates dashboard loaded)
-    await this.newBoxButton.waitFor({ state: 'visible', timeout: 10000 });
+    await this.newBoxButton.waitFor({ state: "visible", timeout: 10000 });
   }
 
   /**
    * Navigate to the dashboard
    */
   async goto(): Promise<void> {
-    await this.page.goto('/app');
+    await this.page.goto("/app");
     await this.waitForDashboardLoad();
   }
 }

@@ -1,10 +1,12 @@
 ## MVP:
+
 - security test
 - fix error toast vs inline errors
 - ✅ simple logging based on winston (Completed Jan 5, 2026)
 - simple tutorial at first logging in form at front
 
 ## Post MVP section:
+
 - implematation of reset password functionality
 - Mobile responsive optimization
 - Dark mode - implemented
@@ -14,9 +16,11 @@
 - Password recovery
 - ✅ implement full logging with levels (Completed Jan 5, 2026)
 - Better GUI layout
+
 ## Recent Completions:
 
 ### January 5, 2026:
+
 - ✅ Winston Logging System Implementation (Branch: fb_implemet-new-logging-approach)
   - **Phase 1**: Infrastructure setup (logger.ts, middleware, daily rotation)
   - **Phase 2**: Service layer migration (6 files, 106 console calls → Winston)
@@ -32,6 +36,7 @@
   - Commits: 32cb4c5 (Phase 1), 03a7a56 (Phase 2), 7897511 (Phase 3), b84806a (Formatting)
 
 ### January 4, 2026 (Session 2):
+
 - ✅ Dashboard Fixes & Improvements (Branch: fb_10xDevs_project)
   - Fixed workspace switching reliability (sequential → parallel execution with Promise.all)
   - Fixed box list loading state (no infinite spinner on empty workspace)
@@ -66,6 +71,7 @@
   - Docs: `.ai_docs/implemented/polish-character-transliteration-implementation-plan.md`
 
 ### January 4, 2026 (Session 1):
+
 - ✅ Box Form View Implementation (Branch: fb_ui-boxform-implememtation)
   - Complete CRUD form for creating and editing boxes
   - Location tree selector with lazy loading
@@ -78,6 +84,7 @@
   - Review: .ai_docs/review/box-form-view-implementation-review.md
 
 ### January 3, 2026:
+
 - ✅ Box Details View Implementation (PR #81)
   - 9 React components + 1 Astro page
   - Full Polish UI (100% coverage)

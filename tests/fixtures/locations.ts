@@ -16,23 +16,23 @@ export interface LocationFixture {
  * Root locations (Level 1)
  */
 export const ROOT_GARAGE: LocationFixture = {
-  name: 'Garage',
-  path: 'root.garage',
-  description: 'Main garage storage area',
+  name: "Garage",
+  path: "root.garage",
+  description: "Main garage storage area",
   level: 1,
 };
 
 export const ROOT_BASEMENT: LocationFixture = {
-  name: 'Basement',
-  path: 'root.basement',
-  description: 'Basement storage',
+  name: "Basement",
+  path: "root.basement",
+  description: "Basement storage",
   level: 1,
 };
 
 export const ROOT_ATTIC: LocationFixture = {
-  name: 'Attic',
-  path: 'root.attic',
-  description: 'Attic storage space',
+  name: "Attic",
+  path: "root.attic",
+  description: "Attic storage space",
   level: 1,
 };
 
@@ -40,16 +40,16 @@ export const ROOT_ATTIC: LocationFixture = {
  * Level 2 locations (children of root)
  */
 export const METAL_RACK: LocationFixture = {
-  name: 'Metal Rack',
-  path: 'root.garage.metalrack',
-  description: 'Large metal storage rack in garage',
+  name: "Metal Rack",
+  path: "root.garage.metalrack",
+  description: "Large metal storage rack in garage",
   level: 2,
 };
 
 export const WOODEN_SHELVES: LocationFixture = {
-  name: 'Wooden Shelves',
-  path: 'root.basement.woodenshelves',
-  description: 'Wooden shelf unit in basement',
+  name: "Wooden Shelves",
+  path: "root.basement.woodenshelves",
+  description: "Wooden shelf unit in basement",
   level: 2,
 };
 
@@ -57,23 +57,23 @@ export const WOODEN_SHELVES: LocationFixture = {
  * Level 3 locations (grandchildren)
  */
 export const TOP_SHELF: LocationFixture = {
-  name: 'Top Shelf',
-  path: 'root.garage.metalrack.topshelf',
-  description: 'Top shelf of metal rack',
+  name: "Top Shelf",
+  path: "root.garage.metalrack.topshelf",
+  description: "Top shelf of metal rack",
   level: 3,
 };
 
 export const MIDDLE_SHELF: LocationFixture = {
-  name: 'Middle Shelf',
-  path: 'root.garage.metalrack.middleshelf',
-  description: 'Middle shelf of metal rack',
+  name: "Middle Shelf",
+  path: "root.garage.metalrack.middleshelf",
+  description: "Middle shelf of metal rack",
   level: 3,
 };
 
 export const BOTTOM_SHELF: LocationFixture = {
-  name: 'Bottom Shelf',
-  path: 'root.garage.metalrack.bottomshelf',
-  description: 'Bottom shelf of metal rack',
+  name: "Bottom Shelf",
+  path: "root.garage.metalrack.bottomshelf",
+  description: "Bottom shelf of metal rack",
   level: 3,
 };
 
@@ -81,16 +81,16 @@ export const BOTTOM_SHELF: LocationFixture = {
  * Level 4 locations
  */
 export const LEFT_SECTION: LocationFixture = {
-  name: 'Left Section',
-  path: 'root.garage.metalrack.topshelf.leftsection',
-  description: 'Left section of top shelf',
+  name: "Left Section",
+  path: "root.garage.metalrack.topshelf.leftsection",
+  description: "Left section of top shelf",
   level: 4,
 };
 
 export const RIGHT_SECTION: LocationFixture = {
-  name: 'Right Section',
-  path: 'root.garage.metalrack.topshelf.rightsection',
-  description: 'Right section of top shelf',
+  name: "Right Section",
+  path: "root.garage.metalrack.topshelf.rightsection",
+  description: "Right section of top shelf",
   level: 4,
 };
 
@@ -98,9 +98,9 @@ export const RIGHT_SECTION: LocationFixture = {
  * Level 5 locations (maximum depth)
  */
 export const BOX_AREA_A: LocationFixture = {
-  name: 'Box Area A',
-  path: 'root.garage.metalrack.topshelf.leftsection.boxareaa',
-  description: 'Box storage area A in left section',
+  name: "Box Area A",
+  path: "root.garage.metalrack.topshelf.leftsection.boxareaa",
+  description: "Box storage area A in left section",
   level: 5,
 };
 
@@ -108,13 +108,7 @@ export const BOX_AREA_A: LocationFixture = {
  * Hierarchical structure for testing
  * Garage → Metal Rack → Top Shelf → Left Section → Box Area A
  */
-export const HIERARCHICAL_LOCATIONS = [
-  ROOT_GARAGE,
-  METAL_RACK,
-  TOP_SHELF,
-  LEFT_SECTION,
-  BOX_AREA_A,
-] as const;
+export const HIERARCHICAL_LOCATIONS = [ROOT_GARAGE, METAL_RACK, TOP_SHELF, LEFT_SECTION, BOX_AREA_A] as const;
 
 /**
  * All root-level locations

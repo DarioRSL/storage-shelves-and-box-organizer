@@ -14,10 +14,10 @@
  * - Authorization enforcement
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllTestData } from '../../../helpers/db-setup';
-import { createAuthenticatedUser } from '../../../helpers/auth-helper';
-import { seedInitialDataset } from '../../../fixtures/initial-dataset';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { clearAllTestData } from "../../../helpers/db-setup";
+import { createAuthenticatedUser } from "../../../helpers/auth-helper";
+import { seedInitialDataset } from "../../../fixtures/initial-dataset";
 import {
   authenticatedGet,
   authenticatedPost,
@@ -25,10 +25,10 @@ import {
   authenticatedDelete,
   assertSuccess,
   assertError,
-} from '../../../helpers/api-client';
-import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
+} from "../../../helpers/api-client";
+import { getAdminSupabaseClient } from "../../../helpers/supabase-test-client";
 
-describe.skip('GET /api/workspaces/:id/members', () => {
+describe.skip("GET /api/workspaces/:id/members", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -37,18 +37,15 @@ describe.skip('GET /api/workspaces/:id/members', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should list all workspace members', async () => {
+  describe("Success Cases", () => {
+    it("should list all workspace members", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedGet(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token
-      );
+      const response = await authenticatedGet(`/api/workspaces/${workspaceId}/members`, adminUser.token);
 
       // Assert
       assertSuccess(response);
@@ -57,42 +54,36 @@ describe.skip('GET /api/workspaces/:id/members', () => {
 
       // Verify member structure
       const member = response.body[0];
-      expect(member).toHaveProperty('user_id');
-      expect(member).toHaveProperty('workspace_id');
-      expect(member).toHaveProperty('role');
-      expect(member).toHaveProperty('created_at');
+      expect(member).toHaveProperty("user_id");
+      expect(member).toHaveProperty("workspace_id");
+      expect(member).toHaveProperty("role");
+      expect(member).toHaveProperty("created_at");
     });
 
-    it('should include user details for each member', async () => {
+    it("should include user details for each member", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedGet(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token
-      );
+      const response = await authenticatedGet(`/api/workspaces/${workspaceId}/members`, adminUser.token);
 
       // Assert: Members should include user profile data
       assertSuccess(response);
       const member = response.body.find((m: any) => m.user_id === dataset.users.admin.id);
       expect(member).toBeTruthy();
-      expect(member.role).toBe('owner');
+      expect(member.role).toBe("owner");
     });
 
-    it('should allow any member to view member list', async () => {
+    it("should allow any member to view member list", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const viewerUser = dataset.users.viewer; // read_only role
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Even read-only member can view list
-      const response = await authenticatedGet(
-        `/api/workspaces/${workspaceId}/members`,
-        viewerUser.token
-      );
+      const response = await authenticatedGet(`/api/workspaces/${workspaceId}/members`, viewerUser.token);
 
       // Assert
       assertSuccess(response);
@@ -100,22 +91,19 @@ describe.skip('GET /api/workspaces/:id/members', () => {
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject request by non-member', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject request by non-member", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const outsider = await createAuthenticatedUser({
-        email: 'outsider-list@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Outsider List User',
+        email: "outsider-list@example.com",
+        password: "SecurePass123!",
+        full_name: "Outsider List User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedGet(
-        `/api/workspaces/${workspaceId}/members`,
-        outsider.token
-      );
+      const response = await authenticatedGet(`/api/workspaces/${workspaceId}/members`, outsider.token);
 
       // Assert
       assertError(response, 403);
@@ -123,7 +111,7 @@ describe.skip('GET /api/workspaces/:id/members', () => {
   });
 });
 
-describe.skip('POST /api/workspaces/:id/members', () => {
+describe.skip("POST /api/workspaces/:id/members", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -132,237 +120,205 @@ describe.skip('POST /api/workspaces/:id/members', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should add member as owner', async () => {
+  describe("Success Cases", () => {
+    it("should add member as owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin; // owner
       const newUser = await createAuthenticatedUser({
-        email: 'new-member@example.com',
-        password: 'SecurePass123!',
-        full_name: 'New Member User',
+        email: "new-member@example.com",
+        password: "SecurePass123!",
+        full_name: "New Member User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: newUser.id,
-          role: 'member',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: newUser.id,
+        role: "member",
+      });
 
       // Assert
       assertSuccess(response);
       expect(response.status).toBe(201);
       expect(response.body.user_id).toBe(newUser.id);
-      expect(response.body.role).toBe('member');
+      expect(response.body.role).toBe("member");
       expect(response.body.workspace_id).toBe(workspaceId);
     });
 
-    it('should add member with read_only role', async () => {
+    it("should add member with read_only role", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const newUser = await createAuthenticatedUser({
-        email: 'readonly-member@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Read Only Member',
+        email: "readonly-member@example.com",
+        password: "SecurePass123!",
+        full_name: "Read Only Member",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: newUser.id,
-          role: 'read_only',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: newUser.id,
+        role: "read_only",
+      });
 
       // Assert
       assertSuccess(response);
-      expect(response.body.role).toBe('read_only');
+      expect(response.body.role).toBe("read_only");
     });
 
-    it('should persist member in database', async () => {
+    it("should persist member in database", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const newUser = await createAuthenticatedUser({
-        email: 'persist-member@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Persist Member',
+        email: "persist-member@example.com",
+        password: "SecurePass123!",
+        full_name: "Persist Member",
       });
       const workspaceId = dataset.workspaces.primary.id;
       const adminClient = getAdminSupabaseClient();
 
       // Act
-      await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: newUser.id,
-          role: 'member',
-        }
-      );
+      await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: newUser.id,
+        role: "member",
+      });
 
       // Assert: Verify in database
       const { data: member } = await adminClient
-        .from('workspace_members')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .eq('user_id', newUser.id)
+        .from("workspace_members")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", newUser.id)
         .single();
 
       expect(member).toBeTruthy();
-      expect(member!.role).toBe('member');
+      expect(member!.role).toBe("member");
     });
   });
 
-  describe.skip('Validation Errors (400)', () => {
-    it('should reject invalid user_id', async () => {
+  describe.skip("Validation Errors (400)", () => {
+    it("should reject invalid user_id", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Try with invalid UUID
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: 'not-a-valid-uuid',
-          role: 'member',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: "not-a-valid-uuid",
+        role: "member",
+      });
 
       // Assert
       assertError(response, 400);
     });
 
-    it('should reject invalid role', async () => {
+    it("should reject invalid role", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const newUser = await createAuthenticatedUser({
-        email: 'invalid-role@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Invalid Role User',
+        email: "invalid-role@example.com",
+        password: "SecurePass123!",
+        full_name: "Invalid Role User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Try with invalid role
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: newUser.id,
-          role: 'invalid_role',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: newUser.id,
+        role: "invalid_role",
+      });
 
       // Assert
       assertError(response, 400);
     });
 
-    it('should reject missing user_id', async () => {
+    it("should reject missing user_id", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        { role: 'member' }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        role: "member",
+      });
 
       // Assert
       assertError(response, 400);
     });
 
-    it('should reject missing role', async () => {
+    it("should reject missing role", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const newUser = await createAuthenticatedUser({
-        email: 'missing-role@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Missing Role User',
+        email: "missing-role@example.com",
+        password: "SecurePass123!",
+        full_name: "Missing Role User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        { user_id: newUser.id }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: newUser.id,
+      });
 
       // Assert
       assertError(response, 400);
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject member addition by non-owner', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject member addition by non-owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member; // member role, not owner
       const newUser = await createAuthenticatedUser({
-        email: 'unauthorized-add@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Unauthorized Add User',
+        email: "unauthorized-add@example.com",
+        password: "SecurePass123!",
+        full_name: "Unauthorized Add User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Member tries to add another member
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        memberUser.token,
-        {
-          user_id: newUser.id,
-          role: 'member',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, memberUser.token, {
+        user_id: newUser.id,
+        role: "member",
+      });
 
       // Assert
       assertError(response, 403);
     });
 
-    it('should reject adding owner role by non-owner', async () => {
+    it("should reject adding owner role by non-owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member;
       const newUser = await createAuthenticatedUser({
-        email: 'owner-attempt@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Owner Attempt User',
+        email: "owner-attempt@example.com",
+        password: "SecurePass123!",
+        full_name: "Owner Attempt User",
       });
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Try to add someone as owner (should fail - only owner can do this)
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        memberUser.token,
-        {
-          user_id: newUser.id,
-          role: 'owner',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, memberUser.token, {
+        user_id: newUser.id,
+        role: "owner",
+      });
 
       // Assert
       assertError(response, 403);
     });
   });
 
-  describe.skip('Conflict Errors (409)', () => {
-    it('should reject duplicate member', async () => {
+  describe.skip("Conflict Errors (409)", () => {
+    it("should reject duplicate member", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -370,14 +326,10 @@ describe.skip('POST /api/workspaces/:id/members', () => {
       const workspaceId = dataset.workspaces.primary.id;
 
       // Act: Try to add existing member
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: memberUser.id,
-          role: 'member',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: memberUser.id,
+        role: "member",
+      });
 
       // Assert
       assertError(response, 409);
@@ -385,23 +337,19 @@ describe.skip('POST /api/workspaces/:id/members', () => {
     });
   });
 
-  describe.skip('Not Found Errors (404)', () => {
-    it('should reject non-existent user', async () => {
+  describe.skip("Not Found Errors (404)", () => {
+    it("should reject non-existent user", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
-      const fakeUserId = '00000000-0000-0000-0000-000000000000';
+      const fakeUserId = "00000000-0000-0000-0000-000000000000";
 
       // Act
-      const response = await authenticatedPost(
-        `/api/workspaces/${workspaceId}/members`,
-        adminUser.token,
-        {
-          user_id: fakeUserId,
-          role: 'member',
-        }
-      );
+      const response = await authenticatedPost(`/api/workspaces/${workspaceId}/members`, adminUser.token, {
+        user_id: fakeUserId,
+        role: "member",
+      });
 
       // Assert
       assertError(response, 404);
@@ -409,7 +357,7 @@ describe.skip('POST /api/workspaces/:id/members', () => {
   });
 });
 
-describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
+describe.skip("PATCH /api/workspaces/:id/members/:user_id", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -418,8 +366,8 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should update member role as owner', async () => {
+  describe("Success Cases", () => {
+    it("should update member role as owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -430,15 +378,15 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
       const response = await authenticatedPatch(
         `/api/workspaces/${workspaceId}/members/${memberUser.id}`,
         adminUser.token,
-        { role: 'read_only' }
+        { role: "read_only" }
       );
 
       // Assert
       assertSuccess(response);
-      expect(response.body.role).toBe('read_only');
+      expect(response.body.role).toBe("read_only");
     });
 
-    it('should promote member to owner', async () => {
+    it("should promote member to owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -449,17 +397,17 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
       const response = await authenticatedPatch(
         `/api/workspaces/${workspaceId}/members/${memberUser.id}`,
         adminUser.token,
-        { role: 'owner' }
+        { role: "owner" }
       );
 
       // Assert
       assertSuccess(response);
-      expect(response.body.role).toBe('owner');
+      expect(response.body.role).toBe("owner");
     });
   });
 
-  describe.skip('Validation Errors (400)', () => {
-    it('should reject invalid role', async () => {
+  describe.skip("Validation Errors (400)", () => {
+    it("should reject invalid role", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -470,7 +418,7 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
       const response = await authenticatedPatch(
         `/api/workspaces/${workspaceId}/members/${memberUser.id}`,
         adminUser.token,
-        { role: 'invalid_role' }
+        { role: "invalid_role" }
       );
 
       // Assert
@@ -478,8 +426,8 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject role update by non-owner', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject role update by non-owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member;
@@ -490,14 +438,14 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
       const response = await authenticatedPatch(
         `/api/workspaces/${workspaceId}/members/${viewerUser.id}`,
         memberUser.token,
-        { role: 'member' }
+        { role: "member" }
       );
 
       // Assert
       assertError(response, 403);
     });
 
-    it('should prevent demoting the last owner', async () => {
+    it("should prevent demoting the last owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin; // only owner
@@ -507,7 +455,7 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
       const response = await authenticatedPatch(
         `/api/workspaces/${workspaceId}/members/${adminUser.id}`,
         adminUser.token,
-        { role: 'member' }
+        { role: "member" }
       );
 
       // Assert: Should fail - cannot remove last owner
@@ -517,7 +465,7 @@ describe.skip('PATCH /api/workspaces/:id/members/:user_id', () => {
   });
 });
 
-describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
+describe.skip("DELETE /api/workspaces/:id/members/:user_id", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -526,8 +474,8 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should remove member as owner', async () => {
+  describe("Success Cases", () => {
+    it("should remove member as owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -544,7 +492,7 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
       expect(response.status).toBe(204);
     });
 
-    it('should allow member to remove themselves', async () => {
+    it("should allow member to remove themselves", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member;
@@ -560,7 +508,7 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
       expect(response.status).toBe(204);
     });
 
-    it('should remove member from database', async () => {
+    it("should remove member from database", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
@@ -569,25 +517,22 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
       const adminClient = getAdminSupabaseClient();
 
       // Act
-      await authenticatedDelete(
-        `/api/workspaces/${workspaceId}/members/${memberUser.id}`,
-        adminUser.token
-      );
+      await authenticatedDelete(`/api/workspaces/${workspaceId}/members/${memberUser.id}`, adminUser.token);
 
       // Assert: Verify removed from database
       const { data: member } = await adminClient
-        .from('workspace_members')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .eq('user_id', memberUser.id)
+        .from("workspace_members")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", memberUser.id)
         .single();
 
       expect(member).toBeNull();
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject member removal by non-owner', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject member removal by non-owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member; // not owner
@@ -604,7 +549,7 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
       assertError(response, 403);
     });
 
-    it.skip('should prevent owner from removing themselves when last owner', async () => {
+    it.skip("should prevent owner from removing themselves when last owner", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin; // only owner
@@ -622,13 +567,13 @@ describe.skip('DELETE /api/workspaces/:id/members/:user_id', () => {
     });
   });
 
-  describe.skip('Not Found Errors (404)', () => {
-    it('should return 404 for non-existent member', async () => {
+  describe.skip("Not Found Errors (404)", () => {
+    it("should return 404 for non-existent member", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const workspaceId = dataset.workspaces.primary.id;
-      const fakeUserId = '00000000-0000-0000-0000-000000000000';
+      const fakeUserId = "00000000-0000-0000-0000-000000000000";
 
       // Act
       const response = await authenticatedDelete(

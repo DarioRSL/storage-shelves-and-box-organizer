@@ -5,6 +5,7 @@ This directory contains project documentation for the Storage & Box Organizer ap
 ## Active Documentation
 
 ### Core Planning Documents
+
 - **ROADMAP.md** - Unified roadmap (single source of truth for project status)
 - **prd.md** - Product Requirements Document
 - **api-plan.md** - REST API Specification (26 endpoints)
@@ -12,12 +13,14 @@ This directory contains project documentation for the Storage & Box Organizer ap
 - **tech-stack.md** - Technology Stack & Architecture Decisions
 
 ### Architecture & Implementation
+
 - **CLAUDE.md** - Project overview for AI assistance (Claude Code)
 - **AUTHENTICATION_ARCHITECTURE.md** - HttpOnly cookie-based auth system
 - **LOCATION_SERVICE_OPTIMIZATION.md** - Hierarchical location system (ltree)
 - **CONTRIBUTING.md** - Contribution Guidelines
 
 ### Testing & Quality Assurance
+
 - **tests/TEST_PLAN.md** - Comprehensive test plan (unit, integration, E2E, security)
   - Testing frameworks: Vitest, Playwright, Supertest
   - Coverage targets: 80% code coverage
@@ -38,11 +41,13 @@ Historical documentation from MVP development phase (December 2025 - January 202
 ## Testing Technologies (New - January 2026)
 
 ### Core Testing Stack
+
 - **Vitest 1.x** - Unit & integration testing (80% coverage target)
 - **Playwright 1.x** - Cross-browser E2E testing with mobile emulation
 - **Supertest** - API endpoint testing with Vitest integration
 
 ### Quality Assurance Tools
+
 - **Coverage**: c8/Istanbul (code coverage), Codecov (reporting)
 - **Security**: OWASP ZAP (automated), Burp Suite (manual)
 - **Performance**: Artillery (load), Lighthouse (frontend), k6 (stress)
@@ -50,6 +55,7 @@ Historical documentation from MVP development phase (December 2025 - January 202
 - **Database**: Supabase CLI (local), pgTAP (unit tests), pg_prove (runner)
 
 ### CI/CD Integration
+
 - **GitHub Actions** - Automated test execution on PRs
 - **Test Phases**:
   - Phase 0: Pre-production critical testing (RLS, security)

@@ -13,19 +13,15 @@
  * - RLS policy enforcement
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllTestData, seedTable } from '../../../helpers/db-setup';
-import { createAuthenticatedUser } from '../../../helpers/auth-helper';
-import { seedInitialDataset } from '../../../fixtures/initial-dataset';
-import { createRootLocationFixture, createBoxFixture } from '../../../helpers/factory';
-import {
-  authenticatedPost,
-  assertSuccess,
-  assertError,
-} from '../../../helpers/api-client';
-import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { clearAllTestData, seedTable } from "../../../helpers/db-setup";
+import { createAuthenticatedUser } from "../../../helpers/auth-helper";
+import { seedInitialDataset } from "../../../fixtures/initial-dataset";
+import { createRootLocationFixture, createBoxFixture } from "../../../helpers/factory";
+import { authenticatedPost, assertSuccess, assertError } from "../../../helpers/api-client";
+import { getAdminSupabaseClient } from "../../../helpers/supabase-test-client";
 
-describe.skip('POST /api/boxes/search', () => {
+describe.skip("POST /api/boxes/search", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -34,209 +30,183 @@ describe.skip('POST /api/boxes/search', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should search boxes by name', async () => {
+  describe("Success Cases", () => {
+    it("should search boxes by name", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
-        createBoxFixture(primaryWorkspaceId, location.id, 'Electronics Box'),
-        createBoxFixture(primaryWorkspaceId, location.id, 'Kitchen Utensils'),
-        createBoxFixture(primaryWorkspaceId, location.id, 'Electronic Components'),
+      await seedTable("boxes", [
+        createBoxFixture(primaryWorkspaceId, location.id, "Electronics Box"),
+        createBoxFixture(primaryWorkspaceId, location.id, "Kitchen Utensils"),
+        createBoxFixture(primaryWorkspaceId, location.id, "Electronic Components"),
       ]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'electronics',
+        query: "electronics",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBe(2);
-      expect(response.body.some((b: any) => b.name.includes('Electronics'))).toBe(true);
+      expect(response.body.some((b: any) => b.name.includes("Electronics"))).toBe(true);
     });
 
-    it('should search boxes by description', async () => {
+    it("should search boxes by description", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
+      await seedTable("boxes", [
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Box 1'),
-          description: 'Contains important documents',
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Box 1"),
+          description: "Contains important documents",
         },
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Box 2'),
-          description: 'Contains tools and equipment',
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Box 2"),
+          description: "Contains tools and equipment",
         },
       ]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'documents',
+        query: "documents",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBe(1);
-      expect(response.body[0].description).toContain('documents');
+      expect(response.body[0].description).toContain("documents");
     });
 
-    it('should search boxes by tags', async () => {
+    it("should search boxes by tags", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
+      await seedTable("boxes", [
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Box 1'),
-          tags: ['electronics', 'cables'],
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Box 1"),
+          tags: ["electronics", "cables"],
         },
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Box 2'),
-          tags: ['kitchen', 'utensils'],
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Box 2"),
+          tags: ["kitchen", "utensils"],
         },
       ]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'cables',
+        query: "cables",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBe(1);
-      expect(response.body[0].tags).toContain('cables');
+      expect(response.body[0].tags).toContain("cables");
     });
 
-    it('should rank results by relevance', async () => {
+    it("should rank results by relevance", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
+      await seedTable("boxes", [
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Important Documents'),
-          description: 'Very important files',
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Important Documents"),
+          description: "Very important files",
         },
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Miscellaneous'),
-          description: 'Contains some important items',
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Miscellaneous"),
+          description: "Contains some important items",
         },
       ]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'important',
+        query: "important",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBe(2);
       // First result should be "Important Documents" (name + description match)
-      expect(response.body[0].name).toBe('Important Documents');
+      expect(response.body[0].name).toBe("Important Documents");
     });
 
-    it('should be case-insensitive', async () => {
+    it("should be case-insensitive", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
-        createBoxFixture(primaryWorkspaceId, location.id, 'Electronics Box'),
-      ]);
+      await seedTable("boxes", [createBoxFixture(primaryWorkspaceId, location.id, "Electronics Box")]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'ELECTRONICS',
+        query: "ELECTRONICS",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBe(1);
     });
 
-    it.skip('should handle special characters', async () => {
+    it.skip("should handle special characters", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
-      await seedTable('boxes', [
+      await seedTable("boxes", [
         {
-          ...createBoxFixture(primaryWorkspaceId, location.id, 'Box 1'),
-          description: 'C++ programming books',
+          ...createBoxFixture(primaryWorkspaceId, location.id, "Box 1"),
+          description: "C++ programming books",
         },
       ]);
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'C++',
+        query: "C++",
       });
 
       assertSuccess(response);
       expect(response.body.length).toBeGreaterThanOrEqual(0);
     });
 
-    it('should return empty array for no matches', async () => {
+    it("should return empty array for no matches", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'nonexistent_search_term_xyz',
+        query: "nonexistent_search_term_xyz",
       });
 
       assertSuccess(response);
       expect(response.body).toEqual([]);
     });
 
-    it('should only search within user workspace (RLS)', async () => {
+    it("should only search within user workspace (RLS)", async () => {
       const dataset = await seedInitialDataset();
       const viewerUser = dataset.users.viewer;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
@@ -244,23 +214,23 @@ describe.skip('POST /api/boxes/search', () => {
 
       const adminClient = getAdminSupabaseClient();
       const [location1, location2] = await adminClient
-        .from('locations')
+        .from("locations")
         .insert([
-          createRootLocationFixture(primaryWorkspaceId, 'Location 1'),
-          createRootLocationFixture(secondaryWorkspaceId, 'Location 2'),
+          createRootLocationFixture(primaryWorkspaceId, "Location 1"),
+          createRootLocationFixture(secondaryWorkspaceId, "Location 2"),
         ])
         .select()
         .throwOnError();
 
-      await seedTable('boxes', [
-        createBoxFixture(primaryWorkspaceId, location1.id, 'Primary Workspace Box'),
-        createBoxFixture(secondaryWorkspaceId, location2.id, 'Secondary Workspace Box'),
+      await seedTable("boxes", [
+        createBoxFixture(primaryWorkspaceId, location1.id, "Primary Workspace Box"),
+        createBoxFixture(secondaryWorkspaceId, location2.id, "Secondary Workspace Box"),
       ]);
 
       // Viewer is only member of primary workspace
-      const response = await authenticatedPost('/api/boxes/search', viewerUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", viewerUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'Box',
+        query: "Box",
       });
 
       assertSuccess(response);
@@ -270,101 +240,101 @@ describe.skip('POST /api/boxes/search', () => {
     });
   });
 
-  describe.skip('Validation Errors (400)', () => {
-    it('should reject search with empty query', async () => {
+  describe.skip("Validation Errors (400)", () => {
+    it("should reject search with empty query", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: '',
+        query: "",
       });
 
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject search with query too short', async () => {
+    it("should reject search with query too short", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'a', // Too short
+        query: "a", // Too short
       });
 
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject search without workspace_id', async () => {
+    it("should reject search without workspace_id", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
-        query: 'test',
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
+        query: "test",
       });
 
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject search with missing query', async () => {
+    it("should reject search with missing query", async () => {
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
-      const response = await authenticatedPost('/api/boxes/search', adminUser.token, {
+      const response = await authenticatedPost("/api/boxes/search", adminUser.token, {
         workspace_id: primaryWorkspaceId,
       });
 
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authentication Errors (401)', () => {
-    it('should reject search without authentication', async () => {
-      const response = await authenticatedPost('/api/boxes/search', '', {
-        workspace_id: '00000000-0000-0000-0000-000000000000',
-        query: 'test',
+  describe.skip("Authentication Errors (401)", () => {
+    it("should reject search without authentication", async () => {
+      const response = await authenticatedPost("/api/boxes/search", "", {
+        workspace_id: "00000000-0000-0000-0000-000000000000",
+        query: "test",
       });
 
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it.skip('should reject with invalid token', async () => {
-      const response = await authenticatedPost('/api/boxes/search', 'invalid.jwt.token', {
-        workspace_id: '00000000-0000-0000-0000-000000000000',
-        query: 'test',
+    it.skip("should reject with invalid token", async () => {
+      const response = await authenticatedPost("/api/boxes/search", "invalid.jwt.token", {
+        workspace_id: "00000000-0000-0000-0000-000000000000",
+        query: "test",
       });
 
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject search from non-member', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject search from non-member", async () => {
       const dataset = await seedInitialDataset();
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const outsider = await createAuthenticatedUser({
-        email: 'search-outsider@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Search Outsider',
+        email: "search-outsider@example.com",
+        password: "SecurePass123!",
+        full_name: "Search Outsider",
       });
 
-      const response = await authenticatedPost('/api/boxes/search', outsider.token, {
+      const response = await authenticatedPost("/api/boxes/search", outsider.token, {
         workspace_id: primaryWorkspaceId,
-        query: 'test',
+        query: "test",
       });
 
       assertError(response, 403);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 });

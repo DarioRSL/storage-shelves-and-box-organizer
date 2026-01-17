@@ -1,4 +1,5 @@
 # QA PRE-LAUNCH CHECKLIST
+
 **Date:** 2025-12-31 | **Purpose:** Verify MVP readiness before production launch
 
 ---
@@ -8,6 +9,7 @@
 This checklist ensures all quality gates are passed before deploying to production. Use this document throughout Phase 6 (Testing & Polish) and Phase 7 (Deployment).
 
 **Status Tracking:**
+
 - ❌ = Not done / Failing
 - 🟡 = In progress / Partially done
 - ✅ = Complete / Passing
@@ -26,14 +28,14 @@ npm run format
 
 **Checklist:**
 
-| Item | Status | Notes |
-|------|--------|-------|
-| ESLint errors | ❌ | Target: 0 errors (currently 73) |
-| ESLint warnings | ❌ | Target: 0 warnings (currently 185) |
-| Prettier formatting | ❌ | All files properly formatted |
-| TypeScript strict mode | 🟡 | Some any types need fixing |
-| Code duplication | 🟡 | Monitor for duplicated code |
-| Dead code | 🟡 | Remove unused exports/imports |
+| Item                   | Status | Notes                              |
+| ---------------------- | ------ | ---------------------------------- |
+| ESLint errors          | ❌     | Target: 0 errors (currently 73)    |
+| ESLint warnings        | ❌     | Target: 0 warnings (currently 185) |
+| Prettier formatting    | ❌     | All files properly formatted       |
+| TypeScript strict mode | 🟡     | Some any types need fixing         |
+| Code duplication       | 🟡     | Monitor for duplicated code        |
+| Dead code              | 🟡     | Remove unused exports/imports      |
 
 **Sign-off Required:** Code Quality Lead
 
@@ -48,14 +50,15 @@ grep -r "console\." src/ --exclude-dir=node_modules
 
 **Checklist:**
 
-| Item | Status | Count |
-|------|--------|-------|
-| console.log in API endpoints | ❌ | ~40 instances |
-| console.log in components | ❌ | ~8 instances |
-| console.error (legitimate) | 🟡 | Should remain for error handling |
-| console.warn (legitimate) | 🟡 | Should remain for warnings |
+| Item                         | Status | Count                            |
+| ---------------------------- | ------ | -------------------------------- |
+| console.log in API endpoints | ❌     | ~40 instances                    |
+| console.log in components    | ❌     | ~8 instances                     |
+| console.error (legitimate)   | 🟡     | Should remain for error handling |
+| console.warn (legitimate)    | 🟡     | Should remain for warnings       |
 
 **Definition of Done:**
+
 - [ ] All debug console.log removed
 - [ ] Only legitimate console.error for critical errors remain
 - [ ] All replaced with Winston logger calls
@@ -68,18 +71,19 @@ grep -r "console\." src/ --exclude-dir=node_modules
 
 **Checklist:**
 
-| Item | Status | Owner |
-|------|--------|-------|
-| Winston installed | ❌ | Backend |
-| Logger configuration created | ❌ | Backend |
-| Middleware integration | ❌ | Backend |
-| API endpoints updated | ❌ | Backend |
-| Log rotation configured | ❌ | DevOps |
-| Log levels set correctly | ❌ | Backend |
-| Sensitive data not logged | ✅ | Code review |
-| Logs directory created | ⏳ | DevOps |
+| Item                         | Status | Owner       |
+| ---------------------------- | ------ | ----------- |
+| Winston installed            | ❌     | Backend     |
+| Logger configuration created | ❌     | Backend     |
+| Middleware integration       | ❌     | Backend     |
+| API endpoints updated        | ❌     | Backend     |
+| Log rotation configured      | ❌     | DevOps      |
+| Log levels set correctly     | ❌     | Backend     |
+| Sensitive data not logged    | ✅     | Code review |
+| Logs directory created       | ⏳     | DevOps      |
 
 **Verification:**
+
 - [ ] Start dev server: `npm run dev`
 - [ ] Make API calls
 - [ ] Check `/logs` directory for generated files
@@ -94,15 +98,16 @@ grep -r "console\." src/ --exclude-dir=node_modules
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| Strict mode enabled | 🟡 | Enable in tsconfig.json |
-| No implicit any | ❌ | Fix remaining any types |
-| No unused variables | ❌ | Remove unused declarations |
-| No unused parameters | ❌ | Remove from function signatures |
-| Proper error handling types | 🟡 | Use Error class |
+| Item                        | Status | Details                         |
+| --------------------------- | ------ | ------------------------------- |
+| Strict mode enabled         | 🟡     | Enable in tsconfig.json         |
+| No implicit any             | ❌     | Fix remaining any types         |
+| No unused variables         | ❌     | Remove unused declarations      |
+| No unused parameters        | ❌     | Remove from function signatures |
+| Proper error handling types | 🟡     | Use Error class                 |
 
 **Commands:**
+
 ```bash
 npx tsc --noEmit              # Check for type errors
 npm run lint                  # Check for eslint issues
@@ -118,18 +123,19 @@ npm run lint                  # Check for eslint issues
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| User registration | ⏳ | Email/password validation |
-| Email verification | ⏳ | Confirmation email sent |
-| User login | ⏳ | Correct credentials work |
-| Session persistence | ⏳ | HttpOnly cookie set |
-| Session timeout | ⏳ | Session expires after 1 hour |
-| Logout | ⏳ | Session cleared, user redirected |
-| Protected routes | ⏳ | Unauthenticated users redirected |
-| RLS enforcement | ⏳ | Database level access control |
+| Scenario            | Status | Details                          |
+| ------------------- | ------ | -------------------------------- |
+| User registration   | ⏳     | Email/password validation        |
+| Email verification  | ⏳     | Confirmation email sent          |
+| User login          | ⏳     | Correct credentials work         |
+| Session persistence | ⏳     | HttpOnly cookie set              |
+| Session timeout     | ⏳     | Session expires after 1 hour     |
+| Logout              | ⏳     | Session cleared, user redirected |
+| Protected routes    | ⏳     | Unauthenticated users redirected |
+| RLS enforcement     | ⏳     | Database level access control    |
 
 **Commands:**
+
 ```bash
 # Manual testing
 1. Go to http://localhost:3000/auth
@@ -149,15 +155,15 @@ npm run lint                  # Check for eslint issues
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| Auto-workspace on signup | ⏳ | Workspace created automatically |
-| Workspace name display | ⏳ | Correct name shown in UI |
-| Workspace switching | ⏳ | Switch between workspaces |
-| Member invite | ⏳ | Add members by email |
-| Member removal | ⏳ | Remove members with confirmation |
-| Role assignment | ⏳ | Assign owner/admin/member roles |
-| Permission enforcement | ⏳ | Members can only see assigned workspace |
+| Scenario                 | Status | Details                                 |
+| ------------------------ | ------ | --------------------------------------- |
+| Auto-workspace on signup | ⏳     | Workspace created automatically         |
+| Workspace name display   | ⏳     | Correct name shown in UI                |
+| Workspace switching      | ⏳     | Switch between workspaces               |
+| Member invite            | ⏳     | Add members by email                    |
+| Member removal           | ⏳     | Remove members with confirmation        |
+| Role assignment          | ⏳     | Assign owner/admin/member roles         |
+| Permission enforcement   | ⏳     | Members can only see assigned workspace |
 
 **Sign-off Required:** QA Lead
 
@@ -167,18 +173,19 @@ npm run lint                  # Check for eslint issues
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| Create location | ⏳ | Add new location with name |
-| Location nesting | ⏳ | Create up to 5 levels deep |
-| Location tree display | ⏳ | Tree shows hierarchy correctly |
-| Expand/collapse nodes | ⏳ | Tree navigation works |
-| Edit location | ⏳ | Update location name |
-| Delete location | ⏳ | Soft delete with confirmation |
-| Box reassignment | ⏳ | Boxes moved to "Unassigned" |
-| Location search in form | ⏳ | Can select location when creating box |
+| Scenario                | Status | Details                               |
+| ----------------------- | ------ | ------------------------------------- |
+| Create location         | ⏳     | Add new location with name            |
+| Location nesting        | ⏳     | Create up to 5 levels deep            |
+| Location tree display   | ⏳     | Tree shows hierarchy correctly        |
+| Expand/collapse nodes   | ⏳     | Tree navigation works                 |
+| Edit location           | ⏳     | Update location name                  |
+| Delete location         | ⏳     | Soft delete with confirmation         |
+| Box reassignment        | ⏳     | Boxes moved to "Unassigned"           |
+| Location search in form | ⏳     | Can select location when creating box |
 
 **Browser Testing:**
+
 - [ ] Chrome DevTools → Device Toolbar (tablet view)
 - [ ] Tree layout responsive
 - [ ] Touch interactions work
@@ -192,20 +199,21 @@ npm run lint                  # Check for eslint issues
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| Create box | ⏳ | New box form works |
-| Box name validation | ⏳ | Required field |
-| Box description | ⏳ | Max 10,000 chars enforced |
-| Tags input | ⏳ | Add/remove tags |
-| Location assignment | ⏳ | Assign to location |
-| Box details view | ⏳ | All info displays correctly |
-| Edit box | ⏳ | Update name, description, tags, location |
-| Delete box | ⏳ | Delete with confirmation |
-| Move box | ⏳ | Change location |
-| Verify QR association | ⏳ | Box linked to QR code |
+| Scenario              | Status | Details                                  |
+| --------------------- | ------ | ---------------------------------------- |
+| Create box            | ⏳     | New box form works                       |
+| Box name validation   | ⏳     | Required field                           |
+| Box description       | ⏳     | Max 10,000 chars enforced                |
+| Tags input            | ⏳     | Add/remove tags                          |
+| Location assignment   | ⏳     | Assign to location                       |
+| Box details view      | ⏳     | All info displays correctly              |
+| Edit box              | ⏳     | Update name, description, tags, location |
+| Delete box            | ⏳     | Delete with confirmation                 |
+| Move box              | ⏳     | Change location                          |
+| Verify QR association | ⏳     | Box linked to QR code                    |
 
 **Test Data:**
+
 ```
 Box 1: Simple box
 - Name: "Winter Clothes"
@@ -220,6 +228,7 @@ Box 2: Complex box
 ```
 
 **Edge Cases to Test:**
+
 - [ ] Create box with very long name (500 chars)
 - [ ] Create box with special characters in name
 - [ ] Create box with emoji in description
@@ -235,19 +244,20 @@ Box 2: Complex box
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| Search by name | ⏳ | Type name → results appear |
-| Search by description | ⏳ | Type description words → results |
-| Search by tags | ⏳ | Search for tags works |
-| Search minimum length | ⏳ | Require 3+ characters |
-| Search debouncing | ⏳ | Debounce 300ms to avoid spam |
-| Search results display | ⏳ | Show box name + location breadcrumb |
-| Search result click | ⏳ | Navigate to box details |
-| Search empty state | ⏳ | Show "No results" message |
-| Search pagination | ⏳ | Handle 50+ results |
+| Scenario               | Status | Details                             |
+| ---------------------- | ------ | ----------------------------------- |
+| Search by name         | ⏳     | Type name → results appear          |
+| Search by description  | ⏳     | Type description words → results    |
+| Search by tags         | ⏳     | Search for tags works               |
+| Search minimum length  | ⏳     | Require 3+ characters               |
+| Search debouncing      | ⏳     | Debounce 300ms to avoid spam        |
+| Search results display | ⏳     | Show box name + location breadcrumb |
+| Search result click    | ⏳     | Navigate to box details             |
+| Search empty state     | ⏳     | Show "No results" message           |
+| Search pagination      | ⏳     | Handle 50+ results                  |
 
 **Test Queries:**
+
 - [ ] Common word: "box"
 - [ ] Specific word: "seasonal"
 - [ ] Special characters: "@" or "$"
@@ -256,6 +266,7 @@ Box 2: Complex box
 - [ ] Partial word: "sea" (should match "seasonal")
 
 **Performance:**
+
 - [ ] Search results appear < 500ms after typing stops
 - [ ] No lag typing quickly
 - [ ] Pagination loads quickly
@@ -268,19 +279,20 @@ Box 2: Complex box
 
 **Test Scenarios:**
 
-| Scenario | Status | Details |
-|----------|--------|---------|
-| Generate QR codes | ⏳ | Batch generation works |
-| QR quantity validation | ⏳ | 1-100 range enforced |
-| QR display grid | ⏳ | Codes display in 3-column grid |
-| QR unique IDs | ⏳ | Each code has unique ID |
-| QR print dialog | ⏳ | Print button opens dialog |
-| QR print layout | ⏳ | 3 columns x 7 rows on A4 |
-| QR scan redirect | ⏳ | Scanning redirects to /qr/:id |
-| Unassigned QR | ⏳ | Shows create box form |
-| Assigned QR | ⏳ | Shows box details |
+| Scenario               | Status | Details                        |
+| ---------------------- | ------ | ------------------------------ |
+| Generate QR codes      | ⏳     | Batch generation works         |
+| QR quantity validation | ⏳     | 1-100 range enforced           |
+| QR display grid        | ⏳     | Codes display in 3-column grid |
+| QR unique IDs          | ⏳     | Each code has unique ID        |
+| QR print dialog        | ⏳     | Print button opens dialog      |
+| QR print layout        | ⏳     | 3 columns x 7 rows on A4       |
+| QR scan redirect       | ⏳     | Scanning redirects to /qr/:id  |
+| Unassigned QR          | ⏳     | Shows create box form          |
+| Assigned QR            | ⏳     | Shows box details              |
 
 **Manual QR Testing:**
+
 ```
 1. Generate 10 QR codes
 2. Open Chrome DevTools → Print Preview (Ctrl+P or Cmd+P)
@@ -301,18 +313,19 @@ Box 2: Complex box
 
 **Test with keyboard only (no mouse):**
 
-| Page/Feature | Status | Details |
-|--------------|--------|---------|
-| Tab order | ⏳ | Logical tab sequence |
-| Skip links | ⏳ | Can skip to main content |
-| Button activation | ⏳ | All buttons work with Enter/Space |
-| Form fields | ⏳ | All inputs accessible |
-| Links | ⏳ | All links keyboard accessible |
-| Modals | ⏳ | Focus trapped in modal |
-| Location tree | ⏳ | Navigate with Arrow keys |
-| Search results | ⏳ | Navigate with Tab/Arrow keys |
+| Page/Feature      | Status | Details                           |
+| ----------------- | ------ | --------------------------------- |
+| Tab order         | ⏳     | Logical tab sequence              |
+| Skip links        | ⏳     | Can skip to main content          |
+| Button activation | ⏳     | All buttons work with Enter/Space |
+| Form fields       | ⏳     | All inputs accessible             |
+| Links             | ⏳     | All links keyboard accessible     |
+| Modals            | ⏳     | Focus trapped in modal            |
+| Location tree     | ⏳     | Navigate with Arrow keys          |
+| Search results    | ⏳     | Navigate with Tab/Arrow keys      |
 
 **Commands:**
+
 ```
 1. Tab through entire page
 2. Verify focus indicators visible
@@ -329,19 +342,20 @@ Box 2: Complex box
 
 **Test with screen reader (NVDA on Windows, VoiceOver on Mac):**
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Page structure | ⏳ | Semantic HTML (h1, main, nav) |
-| Form labels | ⏳ | All inputs have labels |
-| Button labels | ⏳ | All buttons have accessible text |
-| ARIA landmarks | ⏳ | main, navigation, search roles |
-| ARIA labels | ⏳ | aria-label on icon buttons |
-| ARIA descriptions | ⏳ | Complex elements described |
-| Focus announcements | ⏳ | Screen reader announces focus changes |
-| Tree navigation | ⏳ | Tree items announced correctly |
-| Error messages | ⏳ | Error text announced to user |
+| Feature             | Status | Details                               |
+| ------------------- | ------ | ------------------------------------- |
+| Page structure      | ⏳     | Semantic HTML (h1, main, nav)         |
+| Form labels         | ⏳     | All inputs have labels                |
+| Button labels       | ⏳     | All buttons have accessible text      |
+| ARIA landmarks      | ⏳     | main, navigation, search roles        |
+| ARIA labels         | ⏳     | aria-label on icon buttons            |
+| ARIA descriptions   | ⏳     | Complex elements described            |
+| Focus announcements | ⏳     | Screen reader announces focus changes |
+| Tree navigation     | ⏳     | Tree items announced correctly        |
+| Error messages      | ⏳     | Error text announced to user          |
 
 **Commands (macOS VoiceOver):**
+
 ```
 1. Enable VoiceOver: Cmd+F5
 2. Cmd+U to open Rotor
@@ -351,6 +365,7 @@ Box 2: Complex box
 ```
 
 **Commands (Windows NVDA):**
+
 ```
 1. Download and run NVDA
 2. Tab through entire page
@@ -367,15 +382,16 @@ Box 2: Complex box
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| Text contrast | ⏳ | 4.5:1 for normal text |
-| Large text contrast | ⏳ | 3:1 for large text (18pt+) |
-| Color not only indicator | ⏳ | Don't use color alone to convey info |
-| Focus indicators | ⏳ | Visible 3px outline |
-| Disabled state | ⏳ | Clearly indicates disabled |
+| Item                     | Status | Details                              |
+| ------------------------ | ------ | ------------------------------------ |
+| Text contrast            | ⏳     | 4.5:1 for normal text                |
+| Large text contrast      | ⏳     | 3:1 for large text (18pt+)           |
+| Color not only indicator | ⏳     | Don't use color alone to convey info |
+| Focus indicators         | ⏳     | Visible 3px outline                  |
+| Disabled state           | ⏳     | Clearly indicates disabled           |
 
 **Tools:**
+
 - WebAIM Contrast Checker: https://webaim.org/resources/contrastchecker/
 - WAVE Browser Extension
 - Lighthouse DevTools
@@ -388,15 +404,16 @@ Box 2: Complex box
 
 **Test on Multiple Devices:**
 
-| Device | Resolution | Status | Notes |
-|--------|-----------|--------|-------|
-| Desktop | 1920x1080 | ⏳ | Primary target |
-| Laptop | 1366x768 | ⏳ | Common size |
-| Tablet | 1024x768 | ⏳ | Portrait mode |
-| Mobile | 375x667 | ⏳ | iPhone-sized |
-| Mobile | 360x640 | ⏳ | Android-sized |
+| Device  | Resolution | Status | Notes          |
+| ------- | ---------- | ------ | -------------- |
+| Desktop | 1920x1080  | ⏳     | Primary target |
+| Laptop  | 1366x768   | ⏳     | Common size    |
+| Tablet  | 1024x768   | ⏳     | Portrait mode  |
+| Mobile  | 375x667    | ⏳     | iPhone-sized   |
+| Mobile  | 360x640    | ⏳     | Android-sized  |
 
 **Testing Approach:**
+
 ```
 1. Chrome DevTools → Device Toolbar
 2. Select each device
@@ -416,12 +433,12 @@ Box 2: Complex box
 
 #### 4.1.1 Injection (SQL, XSS, etc.)
 
-| Issue | Status | Test |
-|-------|--------|------|
-| SQL Injection | ⏳ | Input: `'; DROP TABLE boxes; --` |
-| XSS via name | ⏳ | Input: `<script>alert('xss')</script>` |
-| XSS via tags | ⏳ | Input: `<img src=x onerror=alert('xss')>` |
-| Command injection | ⏳ | API should sanitize inputs |
+| Issue             | Status | Test                                      |
+| ----------------- | ------ | ----------------------------------------- |
+| SQL Injection     | ⏳     | Input: `'; DROP TABLE boxes; --`          |
+| XSS via name      | ⏳     | Input: `<script>alert('xss')</script>`    |
+| XSS via tags      | ⏳     | Input: `<img src=x onerror=alert('xss')>` |
+| Command injection | ⏳     | API should sanitize inputs                |
 
 **Expected Result:** Inputs escaped/sanitized, no console errors
 
@@ -429,36 +446,37 @@ Box 2: Complex box
 
 #### 4.1.2 Broken Authentication
 
-| Test | Status | Expected |
-|------|--------|----------|
-| No CSRF token bypass | ⏳ | State-changing requests protected |
-| Session fixation | ⏳ | New session on login |
-| Password strength | ⏳ | No weak passwords accepted |
-| Session timeout | ⏳ | Sessions expire correctly |
+| Test                 | Status | Expected                          |
+| -------------------- | ------ | --------------------------------- |
+| No CSRF token bypass | ⏳     | State-changing requests protected |
+| Session fixation     | ⏳     | New session on login              |
+| Password strength    | ⏳     | No weak passwords accepted        |
+| Session timeout      | ⏳     | Sessions expire correctly         |
 
 ---
 
 #### 4.1.3 Sensitive Data Exposure
 
-| Test | Status | Check |
-|------|--------|-------|
-| HTTPS only | ⏳ | Prod uses HTTPS |
-| No passwords in logs | ⏳ | grep logs for secrets |
-| No tokens in URLs | ⏳ | Tokens in cookies only |
-| No PII in error messages | ⏳ | Generic error messages |
+| Test                     | Status | Check                  |
+| ------------------------ | ------ | ---------------------- |
+| HTTPS only               | ⏳     | Prod uses HTTPS        |
+| No passwords in logs     | ⏳     | grep logs for secrets  |
+| No tokens in URLs        | ⏳     | Tokens in cookies only |
+| No PII in error messages | ⏳     | Generic error messages |
 
 ---
 
 #### 4.1.4 Broken Access Control
 
-| Test | Status | Details |
-|------|--------|---------|
-| User isolation | ⏳ | Can't access other user's data |
-| Workspace isolation | ⏳ | Can't access other workspace's data |
-| Role enforcement | ⏳ | Member can't edit workspace |
-| RLS verified | ⏳ | Database enforces policies |
+| Test                | Status | Details                             |
+| ------------------- | ------ | ----------------------------------- |
+| User isolation      | ⏳     | Can't access other user's data      |
+| Workspace isolation | ⏳     | Can't access other workspace's data |
+| Role enforcement    | ⏳     | Member can't edit workspace         |
+| RLS verified        | ⏳     | Database enforces policies          |
 
 **Test Method:**
+
 ```
 1. Create 2 users (user1, user2)
 2. user1 creates box with ID: box-123
@@ -470,12 +488,12 @@ Box 2: Complex box
 
 #### 4.1.5 Security Misconfiguration
 
-| Check | Status | Details |
-|-------|--------|---------|
-| CORS configured | ⏳ | Restrict to known origins |
-| Security headers set | ⏳ | CSP, X-Frame-Options, etc. |
-| Dependencies current | ⏳ | `npm audit` passes |
-| Secrets not in repo | ⏳ | .env not committed |
+| Check                | Status | Details                    |
+| -------------------- | ------ | -------------------------- |
+| CORS configured      | ⏳     | Restrict to known origins  |
+| Security headers set | ⏳     | CSP, X-Frame-Options, etc. |
+| Dependencies current | ⏳     | `npm audit` passes         |
+| Secrets not in repo  | ⏳     | .env not committed         |
 
 ---
 
@@ -489,6 +507,7 @@ npm audit
 ```
 
 **Action Items:**
+
 - [ ] Run `npm audit`
 - [ ] Fix any vulnerabilities
 - [ ] Update packages if needed
@@ -499,12 +518,12 @@ npm audit
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| Audit logs | ⏳ | Log sensitive operations |
-| Error logging | ⏳ | All errors captured |
-| Access logging | ⏳ | Track who accessed what |
-| Alert system | ⏳ | Alert on suspicious activity |
+| Item           | Status | Details                      |
+| -------------- | ------ | ---------------------------- |
+| Audit logs     | ⏳     | Log sensitive operations     |
+| Error logging  | ⏳     | All errors captured          |
+| Access logging | ⏳     | Track who accessed what      |
+| Alert system   | ⏳     | Alert on suspicious activity |
 
 **Sign-off Required:** Security Lead
 
@@ -514,12 +533,12 @@ npm audit
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| Supabase security | ✅ | Uses industry-standard auth |
-| RLS policies tested | ⏳ | Database level security |
-| API key rotation | ⏳ | Regular key rotation process |
-| Secrets management | ⏳ | Env vars not in repo |
+| Item                | Status | Details                      |
+| ------------------- | ------ | ---------------------------- |
+| Supabase security   | ✅     | Uses industry-standard auth  |
+| RLS policies tested | ⏳     | Database level security      |
+| API key rotation    | ⏳     | Regular key rotation process |
+| Secrets management  | ⏳     | Env vars not in repo         |
 
 ---
 
@@ -529,14 +548,15 @@ npm audit
 
 **Metrics:**
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| First Contentful Paint (FCP) | < 2s | TBD | ⏳ |
-| Largest Contentful Paint (LCP) | < 3s | TBD | ⏳ |
-| Time to Interactive (TTI) | < 3s | TBD | ⏳ |
-| Cumulative Layout Shift (CLS) | < 0.1 | TBD | ⏳ |
+| Metric                         | Target | Current | Status |
+| ------------------------------ | ------ | ------- | ------ |
+| First Contentful Paint (FCP)   | < 2s   | TBD     | ⏳     |
+| Largest Contentful Paint (LCP) | < 3s   | TBD     | ⏳     |
+| Time to Interactive (TTI)      | < 3s   | TBD     | ⏳     |
+| Cumulative Layout Shift (CLS)  | < 0.1  | TBD     | ⏳     |
 
 **Testing Tool:**
+
 ```
 1. Chrome DevTools → Lighthouse
 2. Run audit (Desktop)
@@ -551,14 +571,15 @@ npm audit
 
 **Endpoints to Measure:**
 
-| Endpoint | Target | Method | Status |
-|----------|--------|--------|--------|
-| `/api/boxes` | < 500ms | GET with search | ⏳ |
-| `/api/locations` | < 300ms | GET | ⏳ |
-| `/api/boxes/:id` | < 300ms | GET | ⏳ |
-| `/api/qr-codes/batch` | < 2s | POST (20 codes) | ⏳ |
+| Endpoint              | Target  | Method          | Status |
+| --------------------- | ------- | --------------- | ------ |
+| `/api/boxes`          | < 500ms | GET with search | ⏳     |
+| `/api/locations`      | < 300ms | GET             | ⏳     |
+| `/api/boxes/:id`      | < 300ms | GET             | ⏳     |
+| `/api/qr-codes/batch` | < 2s    | POST (20 codes) | ⏳     |
 
 **Testing Tool:**
+
 ```bash
 # Using curl
 time curl http://localhost:3000/api/boxes?q=test
@@ -586,12 +607,12 @@ npm run build
 
 **Test:** Search with various query sizes
 
-| Query | Size | Target Response | Status |
-|-------|------|-----------------|--------|
-| "a" | 1 char | < 100ms (not triggered) | ⏳ |
-| "box" | 3 chars | < 500ms | ⏳ |
-| "seasonal clothing" | Long | < 500ms | ⏳ |
-| Special chars | Various | < 500ms | ⏳ |
+| Query               | Size    | Target Response         | Status |
+| ------------------- | ------- | ----------------------- | ------ |
+| "a"                 | 1 char  | < 100ms (not triggered) | ⏳     |
+| "box"               | 3 chars | < 500ms                 | ⏳     |
+| "seasonal clothing" | Long    | < 500ms                 | ⏳     |
+| Special chars       | Various | < 500ms                 | ⏳     |
 
 ---
 
@@ -609,6 +630,7 @@ npm run build
 - [ ] Example curl commands work
 
 **Files:**
+
 - [x] `.ai_docs/api-plan.md` - EXISTS
 - [ ] Verify content is current
 
@@ -671,13 +693,13 @@ npm run build
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| .env.example created | ⏳ | All vars documented |
-| Staging env ready | ⏳ | Full copy of prod setup |
-| Production env ready | ⏳ | All secrets configured |
-| Backup strategy | ⏳ | Daily backups scheduled |
-| Log rotation | ⏳ | Old logs archived |
+| Item                 | Status | Details                 |
+| -------------------- | ------ | ----------------------- |
+| .env.example created | ⏳     | All vars documented     |
+| Staging env ready    | ⏳     | Full copy of prod setup |
+| Production env ready | ⏳     | All secrets configured  |
+| Backup strategy      | ⏳     | Daily backups scheduled |
+| Log rotation         | ⏳     | Old logs archived       |
 
 ---
 
@@ -685,13 +707,13 @@ npm run build
 
 **Checklist:**
 
-| Item | Status | Details |
-|------|--------|---------|
-| Error tracking | ⏳ | Sentry or similar setup |
-| Performance monitoring | ⏳ | Monitor response times |
-| Uptime monitoring | ⏳ | Alert if service down |
-| Log aggregation | ⏳ | Logs centralized |
-| Alert thresholds | ⏳ | Alert on high error rates |
+| Item                   | Status | Details                   |
+| ---------------------- | ------ | ------------------------- |
+| Error tracking         | ⏳     | Sentry or similar setup   |
+| Performance monitoring | ⏳     | Monitor response times    |
+| Uptime monitoring      | ⏳     | Alert if service down     |
+| Log aggregation        | ⏳     | Logs centralized          |
+| Alert thresholds       | ⏳     | Alert on high error rates |
 
 ---
 
@@ -747,6 +769,7 @@ npm run preview       # ✅ Preview works
 ```
 
 **Checklist:**
+
 - [ ] Build completes without errors
 - [ ] Preview server starts
 - [ ] All pages load
@@ -792,14 +815,14 @@ npm run preview       # ✅ Preview works
 
 **Checklist:**
 
-| Role | Name | Date | Sign-off |
-|------|------|------|----------|
-| Tech Lead | _____ | _____ | ☐ |
-| QA Lead | _____ | _____ | ☐ |
-| Security Lead | _____ | _____ | ☐ |
-| Product Manager | _____ | _____ | ☐ |
-| DevOps Lead | _____ | _____ | ☐ |
-| Project Manager | _____ | _____ | ☐ |
+| Role            | Name   | Date   | Sign-off |
+| --------------- | ------ | ------ | -------- |
+| Tech Lead       | **\_** | **\_** | ☐        |
+| QA Lead         | **\_** | **\_** | ☐        |
+| Security Lead   | **\_** | **\_** | ☐        |
+| Product Manager | **\_** | **\_** | ☐        |
+| DevOps Lead     | **\_** | **\_** | ☐        |
+| Project Manager | **\_** | **\_** | ☐        |
 
 ---
 
@@ -826,6 +849,7 @@ npm run preview       # ✅ Preview works
 - [ ] Support tickets
 
 **Escalation:**
+
 - [ ] Critical issue (> 10% errors) → Immediate rollback
 - [ ] Major issue (> 5% errors) → Hotfix
 - [ ] Minor issue (< 5% errors) → Post-launch fix

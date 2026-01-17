@@ -9,14 +9,14 @@ This document describes the PostgreSQL database schema for the Storage & Box Org
 
 ## Migration Timeline
 
-| Migration | Date | Status | Description |
-|-----------|------|--------|-------------|
-| `20251212120000_initial_schema.sql` | 2025-12-12 | ✅ Applied | Initial schema with all tables, triggers, indexes |
-| `20251214120000_workspace_creation_trigger.sql` | 2025-12-14 | ✅ Applied | Workspace owner auto-assignment trigger |
-| `20260102182001_add_theme_preference_to_profiles.sql` | 2026-01-02 | ✅ Applied | Theme preference column in profiles |
-| `20260106200458_enable_rls_policies.sql` | 2026-01-06 | ✅ Applied | Row Level Security policies for multi-tenant isolation |
-| `20260110213659_fix_workspace_creation_trigger_security.sql` | 2026-01-10 | ✅ Applied | SECURITY DEFINER for workspace creation trigger |
-| `20260110214918_create_workspace_function.sql` | 2026-01-10 | ✅ Applied | Create workspace function with RLS bypass |
+| Migration                                                    | Date       | Status     | Description                                            |
+| ------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------ |
+| `20251212120000_initial_schema.sql`                          | 2025-12-12 | ✅ Applied | Initial schema with all tables, triggers, indexes      |
+| `20251214120000_workspace_creation_trigger.sql`              | 2025-12-14 | ✅ Applied | Workspace owner auto-assignment trigger                |
+| `20260102182001_add_theme_preference_to_profiles.sql`        | 2026-01-02 | ✅ Applied | Theme preference column in profiles                    |
+| `20260106200458_enable_rls_policies.sql`                     | 2026-01-06 | ✅ Applied | Row Level Security policies for multi-tenant isolation |
+| `20260110213659_fix_workspace_creation_trigger_security.sql` | 2026-01-10 | ✅ Applied | SECURITY DEFINER for workspace creation trigger        |
+| `20260110214918_create_workspace_function.sql`               | 2026-01-10 | ✅ Applied | Create workspace function with RLS bypass              |
 
 **✅ SECURITY STATUS:**
 
@@ -324,16 +324,16 @@ const children = locations.filter(loc =>
 
 **Current RLS Policies Enforce:**
 
-| Table | Policy | Condition |
-|-------|--------|-----------|
-| profiles | SELECT/UPDATE | User is self |
-| workspaces | SELECT | User is workspace member |
-| workspaces | UPDATE/DELETE | User is workspace owner |
-| workspace_members | SELECT | User is workspace member |
-| workspace_members | INSERT/UPDATE/DELETE | User is workspace owner/admin |
-| locations | All | `is_workspace_member(workspace_id)` |
-| boxes | All | `is_workspace_member(workspace_id)` |
-| qr_codes | All | `is_workspace_member(workspace_id)` |
+| Table             | Policy               | Condition                           |
+| ----------------- | -------------------- | ----------------------------------- |
+| profiles          | SELECT/UPDATE        | User is self                        |
+| workspaces        | SELECT               | User is workspace member            |
+| workspaces        | UPDATE/DELETE        | User is workspace owner             |
+| workspace_members | SELECT               | User is workspace member            |
+| workspace_members | INSERT/UPDATE/DELETE | User is workspace owner/admin       |
+| locations         | All                  | `is_workspace_member(workspace_id)` |
+| boxes             | All                  | `is_workspace_member(workspace_id)` |
+| qr_codes          | All                  | `is_workspace_member(workspace_id)` |
 
 **Helper Function:**
 

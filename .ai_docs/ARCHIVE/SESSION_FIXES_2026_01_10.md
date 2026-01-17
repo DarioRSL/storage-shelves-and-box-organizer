@@ -99,12 +99,11 @@ const handleAuthSuccess = useCallback((data: AuthSuccessResponse) => {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ token: data.token }),
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          window.location.href = "/app";
-        }
-      });
+    }).then(async (res) => {
+      if (res.ok) {
+        window.location.href = "/app";
+      }
+    });
   }
 }, []);
 ```

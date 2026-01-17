@@ -12,6 +12,7 @@ This guide provides step-by-step instructions for testing the Row Level Security
 ## Migration Summary
 
 The migration implements:
+
 - **Helper Function:** `is_workspace_member(workspace_id_param uuid)` - checks if current user is a member of specified workspace
 - **6 Tables Secured:** workspaces, workspace_members, locations, boxes, qr_codes, profiles
 - **22+ RLS Policies:** Granular SELECT, INSERT, UPDATE, DELETE policies per table
@@ -29,6 +30,7 @@ The migration implements:
 ### Phase 1: Apply Migration
 
 **Option A: Via Supabase CLI (Recommended)**
+
 ```bash
 # Reset local database to clean state
 npx supabase db reset
@@ -38,6 +40,7 @@ npx supabase start
 ```
 
 **Option B: Manual SQL Application**
+
 ```bash
 # Connect to local Supabase database
 npx supabase db push
@@ -394,6 +397,7 @@ SELECT * FROM profiles WHERE id = '<user-b-id>';
 ```
 
 **Expected Result:**
+
 - First query returns User A's profile
 - Second query returns 0 rows (blocked by RLS)
 
@@ -413,6 +417,7 @@ SELECT * FROM profiles WHERE id = '<user-b-id>';
 ### Issue: Migration Fails with "duplicate key"
 
 **Solution:** Reset local database:
+
 ```bash
 npx supabase db reset
 npx supabase start
@@ -421,6 +426,7 @@ npx supabase start
 ### Issue: RLS Not Blocking Cross-Workspace Access
 
 **Possible Causes:**
+
 1. RLS not enabled on table (check Phase 2)
 2. User is postgres superuser (RLS bypassed for superusers)
 3. JWT claims not set correctly in test queries
@@ -436,6 +442,7 @@ npx supabase start
 **Error:** `Migration failed. Reason: duplicate key value violates unique constraint "migrations_name_key"`
 
 **Solution:**
+
 ```bash
 # Stop Supabase completely
 npx supabase stop

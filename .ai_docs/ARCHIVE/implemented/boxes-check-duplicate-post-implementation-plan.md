@@ -3,7 +3,7 @@
 **Status:** ✅ IMPLEMENTED (2026-01-04)  
 **Branch:** `fb_10xDevs_project`  
 **Implementation Time:** ~2.5 hours  
-**Risk Level:** Very Low  
+**Risk Level:** Very Low
 
 ---
 
@@ -46,6 +46,7 @@ Per PRD discussion, box names are NOT unique (QR codes provide unique identifica
 ### Request Body Example
 
 **Create mode (new box):**
+
 ```json
 {
   "workspace_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -54,6 +55,7 @@ Per PRD discussion, box names are NOT unique (QR codes provide unique identifica
 ```
 
 **Edit mode (updating existing box):**
+
 ```json
 {
   "workspace_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -89,18 +91,13 @@ export interface CheckDuplicateBoxResponse {
 import { z } from "zod";
 
 export const CheckDuplicateBoxSchema = z.object({
-  workspace_id: z
-    .string()
-    .uuid("Nieprawidłowy format ID obszaru roboczego"),
+  workspace_id: z.string().uuid("Nieprawidłowy format ID obszaru roboczego"),
   name: z
     .string()
     .min(1, "Nazwa pudełka jest wymagana")
     .max(100, "Nazwa pudełka nie może przekraczać 100 znaków")
     .trim(),
-  exclude_box_id: z
-    .string()
-    .uuid("Nieprawidłowy format ID pudełka")
-    .optional(),
+  exclude_box_id: z.string().uuid("Nieprawidłowy format ID pudełka").optional(),
 });
 
 export type CheckDuplicateBoxInput = z.infer<typeof CheckDuplicateBoxSchema>;
@@ -113,6 +110,7 @@ export type CheckDuplicateBoxInput = z.infer<typeof CheckDuplicateBoxSchema>;
 ### Success Response (200 OK)
 
 **No duplicates found:**
+
 ```json
 {
   "isDuplicate": false,
@@ -121,6 +119,7 @@ export type CheckDuplicateBoxInput = z.infer<typeof CheckDuplicateBoxSchema>;
 ```
 
 **Duplicates found:**
+
 ```json
 {
   "isDuplicate": true,
@@ -240,11 +239,11 @@ export type CheckDuplicateBoxInput = z.infer<typeof CheckDuplicateBoxSchema>;
 
 ### Load Testing Results (Projected)
 
-| Concurrent Users | Peak RPS | DB CPU Time/sec | Impact |
-|-----------------|----------|-----------------|---------|
-| 10 | 1-2 | 6-12ms | Negligible |
-| 100 | 1-2 | 6-12ms | Negligible |
-| 1000 | 10-20 | 60-120ms | Low (<1% CPU) |
+| Concurrent Users | Peak RPS | DB CPU Time/sec | Impact        |
+| ---------------- | -------- | --------------- | ------------- |
+| 10               | 1-2      | 6-12ms          | Negligible    |
+| 100              | 1-2      | 6-12ms          | Negligible    |
+| 1000             | 10-20    | 60-120ms        | Low (<1% CPU) |
 
 ### Caching Strategy (Future)
 
@@ -292,22 +291,26 @@ The duplicate name warning is integrated into the `BoxForm` component with the f
 ## 10. Design Decisions
 
 ### Why POST instead of GET?
+
 - Request body allows complex parameters (exclude_box_id)
 - Keeps URLs clean (no long query strings)
 - Consistent with project patterns for search/filter operations
 
 ### Why case-sensitive matching?
+
 - Simpler SQL query (no LOWER() function needed)
 - Faster execution
 - Users can have "Pudełko Kasi" and "PUDEŁKO KASI" if desired
 - Can upgrade to case-insensitive in v2 if needed
 
 ### Why graceful failure on errors?
+
 - Duplicate warning is non-critical "nice to have"
 - Shouldn't block user from saving box
 - Better UX than showing error for failed warning check
 
 ### Why before-submit checking (not real-time)?
+
 - Simplest MVP implementation
 - Minimal API load (1 call per form submission)
 - Zero performance risk
@@ -350,4 +353,4 @@ The duplicate name warning is integrated into the `BoxForm` component with the f
 **Implemented By:** Claude Sonnet 4.5  
 **Build Status:** ✅ Successful  
 **TypeScript Check:** ✅ Passed  
-**Linting:** ✅ Passed  
+**Linting:** ✅ Passed

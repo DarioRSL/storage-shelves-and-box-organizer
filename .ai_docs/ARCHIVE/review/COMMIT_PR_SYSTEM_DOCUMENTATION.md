@@ -21,6 +21,7 @@ This document describes the **generic, reusable system** for automating Git work
 ### Prerequisites
 
 1. **GitHub CLI authenticated:**
+
    ```bash
    gh auth status
    # If not authenticated:
@@ -28,6 +29,7 @@ This document describes the **generic, reusable system** for automating Git work
    ```
 
 2. **On a feature branch with uncommitted changes:**
+
    ```bash
    git status
    # Should show modified/new files
@@ -82,6 +84,7 @@ The skill will guide you through:
 **Purpose:** Central configuration for project-specific conventions
 
 **Contains:**
+
 - Commit types (feat, fix, docs, refactor, chore, style, i18n, test, perf, security)
 - Valid scopes for each type
 - Scope categories (frontend, backend, database, documentation, tooling)
@@ -90,6 +93,7 @@ The skill will guide you through:
 - GitHub label mappings
 
 **Example:**
+
 ```json
 {
   "commit": {
@@ -118,6 +122,7 @@ The skill will guide you through:
 **Purpose:** Define reusable commit message structure
 
 **Format:**
+
 ```
 {TYPE}({SCOPE}): {HEADLINE}
 
@@ -130,6 +135,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 **Variables:**
+
 - `{TYPE}` - Commit type (feat, fix, docs, etc.)
 - `{SCOPE}` - Area of codebase (ui, api, db, etc.)
 - `{HEADLINE}` - Short description (max 72 chars total)
@@ -137,6 +143,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - `{DETAILS}` - Bullet-point list of changes
 
 **Type-Specific Guidelines:**
+
 - **feat:** User benefits, integration points, new components
 - **fix:** Bug description, root cause, solution, impact
 - **docs:** Sections updated, related implementation
@@ -149,6 +156,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Purpose:** Define comprehensive PR structure
 
 **Sections:**
+
 1. **🎯 Summary** - High-level overview
 2. **📊 Changes Overview** - Commits by category
 3. **🏗️ Technical Architecture** - Design decisions
@@ -161,6 +169,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 10. **✅ Checklist** - Pre-merge verification
 
 **Footer:**
+
 - Total commits
 - Implementation date
 - PR status
@@ -171,6 +180,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Purpose:** Orchestrate entire workflow with AI intelligence
 
 **Phases:**
+
 1. **Analyze Changes** - Parse git status/diff, categorize files
 2. **Suggest Grouping** - Group files into logical commits
 3. **Generate Commits** - Create detailed commit messages
@@ -178,6 +188,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 5. **Generate PR** - Create comprehensive pull request
 
 **Key Features:**
+
 - User interaction at decision points
 - Error handling with recovery options
 - Progress updates throughout
@@ -189,6 +200,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Phase 1: Analyze Changes
 
 **What it does:**
+
 - Loads configuration from `config.json`
 - Runs `git status`, `git diff`, `git log`
 - Categorizes files by matching paths against `filePatterns`
@@ -197,6 +209,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - Detects related files (imports, same directory)
 
 **Output:**
+
 ```
 📊 Analysis Complete:
 
@@ -211,6 +224,7 @@ Suggested groupings: 4 commits
 ### Phase 2: Suggest Grouping
 
 **What it does:**
+
 - Groups files into logical commits
 - Prioritizes: DB → Backend → Frontend → Docs
 - Splits fixes from features
@@ -218,6 +232,7 @@ Suggested groupings: 4 commits
 - Presents groupings with file counts and suggested headlines
 
 **Example Output:**
+
 ```
 📦 Suggested Commit Groups (4 commits):
 
@@ -250,6 +265,7 @@ Options:
 ```
 
 **Grouping Algorithm:**
+
 1. Extract database migrations (always first, always separate)
 2. Group backend files by scope
 3. Group frontend files by feature/component
@@ -260,6 +276,7 @@ Options:
 ### Phase 3: Generate Commits
 
 **What it does:**
+
 - For each group, generates commit components:
   - **TYPE:** From group metadata
   - **SCOPE:** From file paths and config
@@ -272,6 +289,7 @@ Options:
 - Verifies commit with `git log -1 --stat`
 
 **Example Output:**
+
 ```
 📝 Commit 1 Preview:
 
@@ -302,6 +320,7 @@ Options:
 **Commit Generation Details:**
 
 **Headline Generation:**
+
 - Infers action verb based on type:
   - `feat` + new files = "add"
   - `feat` + existing = "implement"
@@ -312,12 +331,14 @@ Options:
 - Adds key detail if space permits (max 72 chars total)
 
 **Summary Generation:**
+
 - **feat:** "Enables [user benefit]"
 - **fix:** "Fixes [issue] [impact]"
 - **docs:** "Documents [coverage]"
 - **refactor:** "Improves [improvement] without behavior changes"
 
 **Details Generation:**
+
 - Parses diff to detect:
   - New functions/components
   - Import changes
@@ -330,6 +351,7 @@ Options:
 ### Phase 4: Search Issues
 
 **What it does:**
+
 - Extracts keywords from branch name and commit messages
 - Searches GitHub issues using `gh issue list`
 - Scores issues by relevance:
@@ -347,6 +369,7 @@ Options:
 - Offers to create new issue if none found
 
 **Example Output:**
+
 ```
 🔍 Found 3 related issues:
 
@@ -377,6 +400,7 @@ Options:
 ### Phase 5: Generate PR
 
 **What it does:**
+
 - Pushes branch to remote (warns if force push needed)
 - Gathers PR data:
   - All commits on branch
@@ -391,6 +415,7 @@ Options:
 - Creates PR using `gh pr create`
 
 **Example Output:**
+
 ```
 📋 Pull Request Preview:
 
@@ -417,6 +442,7 @@ Options:
 ```
 
 **After creation:**
+
 ```
 ✅ Pull Request Created Successfully!
 
@@ -444,6 +470,7 @@ Next steps:
 **Steps:**
 
 1. Add type definition to `commit.types` array:
+
    ```json
    {
      "type": "perf",
@@ -454,8 +481,10 @@ Next steps:
    ```
 
 2. Update commit message template (`.claude/templates/commit-message.md`) with type-specific guidelines:
+
    ```markdown
    **perf (Performance):**
+
    - Describe performance issue and impact
    - Include before/after metrics (timing, memory, etc.)
    - Explain optimization technique used
@@ -471,14 +500,16 @@ Next steps:
 **Steps:**
 
 1. Add scope to relevant commit type(s):
+
    ```json
    {
      "type": "feat",
-     "scopes": ["ui", "api", "db", "qr-scanner"]  // Added qr-scanner
+     "scopes": ["ui", "api", "db", "qr-scanner"] // Added qr-scanner
    }
    ```
 
 2. Add to scope category if applicable:
+
    ```json
    {
      "scopeCategories": {
@@ -494,7 +525,7 @@ Next steps:
        "frontend": [
          "src/components/**",
          "src/pages/**",
-         "src/lib/qr-scanner/**"  // Added pattern
+         "src/lib/qr-scanner/**" // Added pattern
        ]
      }
    }
@@ -507,23 +538,29 @@ Next steps:
 **Steps:**
 
 1. Add section to template:
+
    ```markdown
    ## 🔒 Security Considerations
+
    {SECURITY_CONSIDERATIONS}
    ```
 
 2. Add variable description:
+
    ```markdown
    ### {SECURITY_CONSIDERATIONS}
+
    **Purpose:** Document security analysis and mitigations
 
    **Format:**
+
    - List security issues addressed
    - Note new security measures added
    - Explain authentication/authorization changes
    ```
 
 3. Update config (`config.json`) with section metadata:
+
    ```json
    {
      "pr": {
@@ -558,37 +595,17 @@ Next steps:
       "src/layouts/**/*.astro",
       "src/styles/**/*.css"
     ],
-    "backend": [
-      "src/pages/api/**/*.ts",
-      "src/lib/services/**/*.ts",
-      "src/middleware/**/*.ts"
-    ],
-    "database": [
-      "supabase/migrations/**/*.sql",
-      "src/db/**/*.ts"
-    ],
-    "testing": [
-      "**/*.test.{ts,tsx}",
-      "**/*.spec.{ts,tsx}",
-      "tests/**/*"
-    ],
-    "documentation": [
-      ".ai_docs/**/*.md",
-      "*.md",
-      "CLAUDE.md",
-      "README.md"
-    ],
-    "config": [
-      "*.config.{js,ts,json}",
-      ".prettierrc*",
-      ".eslintrc*",
-      "tsconfig.json"
-    ]
+    "backend": ["src/pages/api/**/*.ts", "src/lib/services/**/*.ts", "src/middleware/**/*.ts"],
+    "database": ["supabase/migrations/**/*.sql", "src/db/**/*.ts"],
+    "testing": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}", "tests/**/*"],
+    "documentation": [".ai_docs/**/*.md", "*.md", "CLAUDE.md", "README.md"],
+    "config": ["*.config.{js,ts,json}", ".prettierrc*", ".eslintrc*", "tsconfig.json"]
   }
 }
 ```
 
 **Glob Pattern Syntax:**
+
 - `**` - Match any number of directories
 - `*` - Match any characters except `/`
 - `{a,b}` - Match `a` or `b`
@@ -606,6 +623,7 @@ Next steps:
 # Commit Message Template
 
 ## Standard Format
+
 {TYPE}({SCOPE}): {HEADLINE}
 
 {SUMMARY}
@@ -616,18 +634,23 @@ Next steps:
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ## Variable Descriptions
+
 [Detailed explanations of each variable]
 
 ## Type-Specific Guidelines
+
 [Guidelines for feat, fix, docs, refactor, etc.]
 
 ## Type-Specific Examples
+
 [7+ complete examples from real commits]
 
 ## Best Practices
+
 [Tips and anti-patterns]
 
 ## Validation Checklist
+
 [Pre-commit verification items]
 ```
 
@@ -676,18 +699,23 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 # Pull Request Description Template
 
 ## Standard Format
+
 [10 sections with emojis]
 
 ## Variable Descriptions
+
 [Detailed explanations for each section]
 
 ## Complete PR Example
+
 [Full example with all sections filled]
 
 ## Best Practices
+
 [Tips for comprehensive PRs]
 
 ## Validation Checklist
+
 [Pre-submission verification]
 ```
 
@@ -746,6 +774,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
     - Type-specific items (accessibility, i18n, etc.)
 
 **Footer Variables:**
+
 - `{COMMIT_COUNT}` - Total number of commits
 - `{IMPLEMENTATION_DATE}` - Date(s) of work
 - `{PR_STATUS}` - Production ready, in progress, etc.
@@ -758,6 +787,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Branch:** `fb_ui-box-form-implementation`
 
 **Changes:**
+
 - 7 modified files (hooks, forms, components)
 - 2 new documentation files
 
@@ -792,6 +822,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
    - User approved and created PR #83
 
 **Result:**
+
 - 6 commits total (4 from skill + 2 previous)
 - Professional PR description
 - Linked to 2 issues
@@ -802,6 +833,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Branch:** `fb_fix-location-selector-400`
 
 **Changes:**
+
 - 1 modified file (useBoxForm.ts)
 
 **Skill Execution:**
@@ -812,6 +844,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 4. **Phase 5:** Created simple PR (mostly commit details)
 
 **Result:**
+
 - 1 focused commit
 - Issue closed automatically when PR merged
 - Clear bug description and fix in commit message
@@ -821,6 +854,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Branch:** `fb_docs-api-endpoints`
 
 **Changes:**
+
 - 3 modified `.ai_docs/*.md` files
 
 **Skill Execution:**
@@ -831,6 +865,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 4. **Phase 5:** Simple docs PR with file list
 
 **Result:**
+
 - 1 commit
 - No issue linking
 - Clean documentation PR
@@ -840,6 +875,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Skill suggests wrong commit type
 
 **Symptoms:**
+
 - File changes are categorized as `feat` but should be `fix`
 - Or vice versa
 
@@ -862,6 +898,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Generated commit message too generic
 
 **Symptoms:**
+
 - Headline says "update files" or "add component"
 - Details list files but don't explain changes
 - Summary doesn't explain WHY
@@ -885,6 +922,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: PR description missing key information
 
 **Symptoms:**
+
 - Technical Architecture section empty
 - Testing section has only template
 - Next Steps missing important tasks
@@ -908,6 +946,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Issue linking suggestions irrelevant
 
 **Symptoms:**
+
 - Suggested issues don't relate to work
 - Scoring algorithm finds wrong matches
 - Missing relevant issues
@@ -932,6 +971,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Skill takes too long to run
 
 **Symptoms:**
+
 - Waiting several minutes for analysis
 - Large number of files to process
 - Complex diff analysis
@@ -956,6 +996,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Git commit fails (pre-commit hook)
 
 **Symptoms:**
+
 - Linting errors prevent commit
 - Type errors block commit
 - Tests fail in pre-commit hook
@@ -983,6 +1024,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Problem: Remote branch already exists
 
 **Symptoms:**
+
 - Error when trying to push branch
 - Warning about force push needed
 
@@ -1010,6 +1052,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Why:** Understanding your changes helps you guide the skill
 
 **How:**
+
 ```bash
 # Check what files changed
 git status
@@ -1033,6 +1076,7 @@ git diff --stat master..HEAD
 **Format:** `fb_<feature-area>_<short-description>`
 
 **Examples:**
+
 - ✅ `fb_ui-box-form-implementation`
 - ✅ `fb_api-duplicate-name-validation`
 - ✅ `fb_db-workspace-permissions-rls`
@@ -1046,11 +1090,13 @@ git diff --stat master..HEAD
 **Why:** Smaller, focused commits are easier to review and revert
 
 **Strategy:**
+
 - Complete one logical unit of work
 - Run skill to commit
 - Move to next unit
 
 **Example:**
+
 ```
 Day 1: Implement Box Form component → commit
 Day 1: Add form validation → commit
@@ -1060,6 +1106,7 @@ Day 2: Create PR
 ```
 
 **vs. Bad:**
+
 ```
 Day 1-2: Work on everything
 Day 2: Run skill, get 50 files in one commit
@@ -1072,6 +1119,7 @@ Day 2: Run skill, get 50 files in one commit
 **Why:** Future you (and team) will thank you
 
 **What to include:**
+
 - **WHY** changes were made (not just WHAT)
 - Root cause of bugs
 - User feedback that influenced decisions
@@ -1081,6 +1129,7 @@ Day 2: Run skill, get 50 files in one commit
 **Example:**
 
 ✅ Good commit message:
+
 ```
 fix(hooks): correct workspace store reference and expose currentWorkspaceId
 
@@ -1095,6 +1144,7 @@ Impact: Location selector now loads correctly (200 OK instead of 400).
 ```
 
 ❌ Bad commit message:
+
 ```
 fix: update useBoxForm
 
@@ -1109,11 +1159,13 @@ fix: update useBoxForm
 **Guidelines:**
 
 - **Use "Closes"** only for work that fully completes an issue
+
   ```markdown
   Closes #57 - Box Management CRUD complete
   ```
 
 - **Use "Partially addresses"** for contributions to larger work
+
   ```markdown
   Partially addresses #75 - MVP Launch (Box Form contribution)
   ```
@@ -1124,6 +1176,7 @@ fix: update useBoxForm
   ```
 
 **Benefits:**
+
 - Issues auto-close when appropriate
 - Issue timeline shows all related PRs
 - Clear progress tracking
@@ -1175,6 +1228,7 @@ fix: update useBoxForm
   - Replace with recent, better examples
 
 **Process:**
+
 1. Edit template/config files
 2. Test on new branch
 3. Document changes in this file
@@ -1194,6 +1248,7 @@ fix: update useBoxForm
    - File categorization wrong
 
 2. **Update relevant files:**
+
    ```bash
    # Edit configuration
    nano .claude/templates/config.json
@@ -1232,6 +1287,7 @@ Track template changes:
 ## Template Changelog
 
 ### v1.0.0 (2026-01-04)
+
 - Initial implementation
 - 10 commit types
 - 10 PR sections
@@ -1239,6 +1295,7 @@ Track template changes:
 - Issue scoring algorithm
 
 ### v1.1.0 (Future)
+
 - Added `perf` commit type
 - Added Security Considerations PR section
 - Updated file patterns for new directory structure
@@ -1269,6 +1326,7 @@ Track template changes:
    - Code review time (clearer PRs = faster reviews)
 
 **Review quarterly:**
+
 - Analyze metrics
 - Identify template improvements
 - Update documentation
@@ -1278,16 +1336,19 @@ Track template changes:
 ### Customizing Workflow
 
 **Skip issue linking:**
+
 - When prompted in Phase 4, select "Skip"
 - Useful for internal branches or WIP PRs
 
 **Create multiple PRs from one branch:**
+
 - Run skill for first set of commits
 - Create PR
 - Continue working on branch
 - Run skill again for next set
 
 **Rebase before PR:**
+
 ```bash
 # Update master
 git checkout master
@@ -1304,6 +1365,7 @@ git rebase master
 ### Integration with CI/CD
 
 **Validate commit messages:**
+
 ```yaml
 # .github/workflows/validate-commits.yml
 name: Validate Commits
@@ -1322,6 +1384,7 @@ jobs:
 ```
 
 **Auto-label PRs:**
+
 ```yaml
 # .github/workflows/auto-label.yml
 name: Auto Label PRs
@@ -1341,12 +1404,14 @@ jobs:
 ### Team Adoption
 
 **Training:**
+
 1. Share this documentation
 2. Demo skill on sample branch
 3. Pair program first few uses
 4. Establish team conventions
 
 **Code review checklist:**
+
 - [ ] Commits follow conventional format
 - [ ] Each commit is logical unit
 - [ ] PR description complete
@@ -1354,6 +1419,7 @@ jobs:
 - [ ] All checklist items marked
 
 **Continuous improvement:**
+
 - Collect feedback on template quality
 - Share best practices
 - Update templates based on team input
@@ -1403,11 +1469,13 @@ jobs:
 ## Support and Contributions
 
 **For help:**
+
 - Review this documentation
 - Check `.claude/templates/` for examples
 - Review recent PRs created with the skill
 
 **To improve the system:**
+
 1. Identify limitation or improvement
 2. Update relevant templates/config/skill
 3. Test thoroughly
@@ -1415,6 +1483,7 @@ jobs:
 5. Create PR with template updates
 
 **Report issues:**
+
 - Open GitHub issue with "template" label
 - Describe problem and expected behavior
 - Include example branch/PR where issue occurred
@@ -1452,6 +1521,7 @@ You get the best of both worlds: automation speed with human judgment.
 **Last Updated:** 2026-01-04
 **Maintained By:** Project Team
 **Related Files:**
+
 - [Commit Template](../../.claude/templates/commit-message.md)
 - [PR Template](../../.claude/templates/pr-description.md)
 - [Configuration](../../.claude/templates/config.json)
