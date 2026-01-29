@@ -661,16 +661,7 @@ describe("evaluatePasswordStrength", () => {
 
   describe("Score increments validation", () => {
     it("should always have score as multiple of 20", () => {
-      const passwords = [
-        "",
-        "a",
-        "abc",
-        "abcdefgh",
-        "Abcdefgh",
-        "Abcdefg1",
-        "Abcdefg!",
-        "Abc123!@",
-      ];
+      const passwords = ["", "a", "abc", "abcdefgh", "Abcdefgh", "Abcdefg1", "Abcdefg!", "Abc123!@"];
 
       passwords.forEach((password) => {
         const result = evaluatePasswordStrength(password);

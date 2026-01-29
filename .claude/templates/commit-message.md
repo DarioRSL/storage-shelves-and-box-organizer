@@ -19,9 +19,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ## Variable Descriptions
 
 ### {TYPE}
+
 **Purpose:** Categorize the type of change
 
 **Valid values:**
+
 - `feat` - New feature or functionality
 - `fix` - Bug fix
 - `docs` - Documentation changes
@@ -34,6 +36,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - `security` - Security improvements
 
 **Selection criteria:**
+
 - If files add new user-facing functionality → `feat`
 - If files fix bugs or issues → `fix`
 - If files only change documentation → `docs`
@@ -46,14 +49,17 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - If files improve security → `security`
 
 ### {SCOPE}
+
 **Purpose:** Specify the area of the codebase affected
 
 **Selection criteria:**
+
 1. Extract the most specific scope from file paths
 2. Match against valid scopes in config.json for the selected type
 3. Use the scope that best represents the primary area of change
 
 **Examples:**
+
 - `src/components/box-details/*.tsx` → scope: `box-details`
 - `src/pages/api/boxes.ts` → scope: `api`
 - `supabase/migrations/*.sql` → scope: `db`
@@ -61,13 +67,16 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - `src/components/hooks/*.ts` → scope: `hooks`
 
 **Multiple scopes:**
+
 - If changes span multiple areas, choose the most significant scope
 - Alternatively, create separate commits for each scope
 
 ### {HEADLINE}
+
 **Purpose:** Concise description of what changed
 
 **Format:**
+
 - Start with lowercase action verb (imperative mood)
 - Be specific about what component/feature/file
 - Maximum length: 72 characters total for `{TYPE}({SCOPE}): {HEADLINE}`
@@ -75,6 +84,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - Use present tense
 
 **Action verbs:**
+
 - `add` - New files, features, or functionality
 - `implement` - New implementation of planned feature
 - `create` - New components, services, or modules
@@ -87,6 +97,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - `migrate` - Moving to new patterns/libraries
 
 **Examples:**
+
 - `add BoxDetailsContent component with full CRUD`
 - `implement useBoxForm hook for state management`
 - `fix workspace ID propagation in location selector`
@@ -94,24 +105,29 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - `remove unused React imports from components`
 
 ### {SUMMARY}
+
 **Purpose:** One-line explanation of WHY the change was made
 
 **Format:**
+
 - Single sentence explaining the motivation or purpose
 - Maximum 100 characters
 - Focus on business value or technical necessity
 - Provide context that's not obvious from the headline
 
 **Examples:**
+
 - `Enables users to view complete box information with navigation breadcrumbs and QR codes.`
 - `Centralizes box form state management and API communication for better maintainability.`
 - `Fixes critical bug preventing location tree from loading due to wrong workspace store.`
 - `Brings API documentation in sync with latest endpoint implementations.`
 
 ### {DETAILS}
+
 **Purpose:** Bullet-point list of specific changes made
 
 **Format:**
+
 - Use `-` for bullet points
 - Start each point with action verb (present tense, imperative mood)
 - Be specific: include file names, component names, function names
@@ -121,6 +137,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - Include integration points with existing code
 
 **Structure:**
+
 ```
 - Add [component/file/feature] with [specific capability]
 - Implement [functionality] using [approach/library]
@@ -134,6 +151,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 **Detail guidelines by type:**
 
 **feat (Feature):**
+
 - List new components/functions/endpoints created
 - Explain how they integrate with existing system
 - Describe user-facing benefits
@@ -141,6 +159,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - Include example usage if complex
 
 **fix (Bug Fix):**
+
 - Describe the bug and its symptoms
 - Explain root cause if known
 - Detail the fix applied
@@ -148,24 +167,28 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - Mention testing done
 
 **docs (Documentation):**
+
 - List specific sections/files updated
 - Explain what information was added/changed
 - Reference related implementation if applicable
 - Note any examples or diagrams added
 
 **refactor (Refactoring):**
+
 - Explain motivation for restructuring
 - List specific improvements made
 - Note that behavior is unchanged
 - Mention any patterns or conventions introduced
 
 **chore (Maintenance):**
+
 - Explain why the change was needed
 - Include version numbers for dependency updates
 - Note any configuration changes
 - Mention impact on development workflow
 
 **i18n (Internationalization):**
+
 - List components/pages translated
 - Specify language (e.g., "Polish", "English")
 - Show key text transformations (before → after)
@@ -342,28 +365,35 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ## Best Practices
 
 ### Be Specific
+
 ❌ Bad: `fix: update component`
 ✅ Good: `fix(box-details): correct QR code print styling in Safari`
 
 ### Explain WHY
+
 ❌ Bad: `feat(api): add new endpoint`
 ✅ Good: `feat(api): add POST /api/boxes endpoint for box creation`
 
 ### Include Context
+
 ❌ Bad: `refactor: change code`
 ✅ Good: `refactor(hooks): extract location tree logic into custom hook for reusability`
 
 ### Use Imperative Mood
+
 ❌ Bad: `Added new feature`
 ✅ Good: `add new feature`
 
 ### Reference Issues/PRs When Relevant
+
 ✅ Good: `fix(auth): correct session cookie expiration (fixes #123)`
 
 ### Group Related Changes
+
 ✅ Good: Commit all LocationTree changes together, not scattered across multiple commits
 
 ### One Logical Change Per Commit
+
 ❌ Bad: Commit that fixes bug AND adds new feature
 ✅ Good: Separate commits for bug fix and new feature
 
@@ -379,13 +409,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ## Template Variables Reference
 
-| Variable | Description | Max Length | Required |
-|----------|-------------|------------|----------|
-| {TYPE} | Commit type | N/A | Yes |
-| {SCOPE} | Area of codebase | N/A | Yes |
-| {HEADLINE} | Short description | 72 chars total | Yes |
-| {SUMMARY} | One-line WHY | 100 chars | Yes |
-| {DETAILS} | Bullet points | No limit | Yes |
+| Variable   | Description       | Max Length     | Required |
+| ---------- | ----------------- | -------------- | -------- |
+| {TYPE}     | Commit type       | N/A            | Yes      |
+| {SCOPE}    | Area of codebase  | N/A            | Yes      |
+| {HEADLINE} | Short description | 72 chars total | Yes      |
+| {SUMMARY}  | One-line WHY      | 100 chars      | Yes      |
+| {DETAILS}  | Bullet points     | No limit       | Yes      |
 
 ## Footer (Always Include)
 
@@ -396,6 +426,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 This footer:
+
 - Credits Claude Code for commit generation
 - Attributes co-authorship to Claude Sonnet 4.5
 - Maintains consistency across all commits
@@ -404,6 +435,7 @@ This footer:
 ## Usage in Skill
 
 The `/commit-pr-issue` skill will:
+
 1. Analyze changed files
 2. Determine appropriate {TYPE} and {SCOPE}
 3. Generate {HEADLINE} from diff analysis
@@ -415,6 +447,7 @@ The `/commit-pr-issue` skill will:
 ## Customization
 
 To add new commit types or scopes:
+
 1. Edit `.claude/templates/config.json`
 2. Add to `commit.types` array for new type
 3. Add to `scopes` array for new scope
@@ -423,6 +456,7 @@ To add new commit types or scopes:
 ## Validation
 
 Before committing, verify:
+
 - [ ] Type is valid (from config.json)
 - [ ] Scope is valid (from config.json)
 - [ ] Headline is concise and specific

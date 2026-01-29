@@ -21,13 +21,13 @@
  * 9. Verify QR code status reset to 'generated'
  */
 
-import { test, expect, type Page } from '@playwright/test';
-import { setupE2ETest, cleanupE2ETest, loginViaUI, type E2ETestSetup } from '../../helpers/e2e-setup';
-import { getAdminSupabaseClient } from '../../helpers/supabase-test-client';
-import { seedTable } from '../../helpers/db-setup';
-import { DashboardPage } from '../page-objects/DashboardPage';
+import { test, expect, type Page } from "@playwright/test";
+import { setupE2ETest, cleanupE2ETest, loginViaUI, type E2ETestSetup } from "../../helpers/e2e-setup";
+import { getAdminSupabaseClient } from "../../helpers/supabase-test-client";
+import { seedTable } from "../../helpers/db-setup";
+import { DashboardPage } from "../page-objects/DashboardPage";
 
-test.describe('Box Deletion E2E (US-020)', () => {
+test.describe("Box Deletion E2E (US-020)", () => {
   let testSetup: E2ETestSetup;
   let page: Page;
   let boxIdToDelete: string;
@@ -38,12 +38,12 @@ test.describe('Box Deletion E2E (US-020)', () => {
 
     // Seed a box to delete
     const adminClient = getAdminSupabaseClient();
-    const boxes = await seedTable('boxes', [
+    const boxes = await seedTable("boxes", [
       {
         workspace_id: testSetup.workspace.id,
-        name: 'Box to Delete',
-        description: 'This box will be deleted in the test',
-        tags: ['test', 'temporary'],
+        name: "Box to Delete",
+        description: "This box will be deleted in the test",
+        tags: ["test", "temporary"],
         location_id: testSetup.locations[0]?.id || null,
       },
     ]);
@@ -53,9 +53,9 @@ test.describe('Box Deletion E2E (US-020)', () => {
     // Assign QR code to the box (update qr_codes table)
     if (testSetup.qrCodes[0]?.id) {
       await adminClient
-        .from('qr_codes')
-        .update({ box_id: boxIdToDelete, status: 'assigned' })
-        .eq('id', testSetup.qrCodes[0].id);
+        .from("qr_codes")
+        .update({ box_id: boxIdToDelete, status: "assigned" })
+        .eq("id", testSetup.qrCodes[0].id);
     }
 
     // Assign page from test context
@@ -70,12 +70,12 @@ test.describe('Box Deletion E2E (US-020)', () => {
     await cleanupE2ETest(testSetup.workspace.id);
   });
 
-  test('should delete a box from dashboard with confirmation', async () => {
+  test("should delete a box from dashboard with confirmation", async () => {
     // Note: Already logged in and on dashboard via loginViaUI in beforeEach
     const dashboard = new DashboardPage(page);
 
     // 2. Verify the box exists in the UI
-    const boxLocator = dashboard.findBoxByName('Box to Delete');
+    const boxLocator = dashboard.findBoxByName("Box to Delete");
     await expect(boxLocator).toBeVisible({ timeout: 10000 });
 
     // 3. Open box menu/actions
@@ -89,12 +89,12 @@ test.describe('Box Deletion E2E (US-020)', () => {
     await page.waitForTimeout(500);
 
     // If we're on edit page, look for delete button
-    if (page.url().includes('/edit')) {
-      const deleteButton = page.locator('button', { hasText: /usu[nń]|delete/i });
+    if (page.url().includes("/edit")) {
+      const deleteButton = page.locator("button", { hasText: /usu[nń]|delete/i });
       await deleteButton.click();
     } else {
       // Option 2: Look for inline delete button or menu
-      await dashboard.openBoxMenu('Box to Delete');
+      await dashboard.openBoxMenu("Box to Delete");
       await dashboard.clickDeleteBox();
     }
 
@@ -102,59 +102,56 @@ test.describe('Box Deletion E2E (US-020)', () => {
     await dashboard.confirmDelete();
 
     // 5. Wait for box to disappear from UI
-    await dashboard.waitForBoxToDisappear('Box to Delete');
+    await dashboard.waitForBoxToDisappear("Box to Delete");
 
     // Also verify we're back on dashboard (not on edit page)
-    await expect(page).toHaveURL('/app', { timeout: 5000 });
+    await expect(page).toHaveURL("/app", { timeout: 5000 });
 
     // 6. Verify box is deleted from database
     const adminClient = getAdminSupabaseClient();
-    const { data: boxes } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('id', boxIdToDelete);
+    const { data: boxes } = await adminClient.from("boxes").select("*").eq("id", boxIdToDelete);
 
     expect(boxes).toHaveLength(0);
 
     // 7. Verify QR code was reset to 'generated' status (database trigger)
     if (testSetup.qrCodes[0]?.id) {
       const { data: qrCode } = await adminClient
-        .from('qr_codes')
-        .select('status')
-        .eq('id', testSetup.qrCodes[0].id)
+        .from("qr_codes")
+        .select("status")
+        .eq("id", testSetup.qrCodes[0].id)
         .single();
 
-      expect(qrCode?.status).toBe('generated');
+      expect(qrCode?.status).toBe("generated");
     }
   });
 
-  test('should cancel deletion when user clicks cancel', async () => {
+  test("should cancel deletion when user clicks cancel", async () => {
     // Navigate to dashboard
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
 
     // Find the box
-    const boxLocator = dashboard.findBoxByName('Box to Delete');
+    const boxLocator = dashboard.findBoxByName("Box to Delete");
     await expect(boxLocator).toBeVisible({ timeout: 10000 });
 
     // Navigate to delete (via edit page or menu)
     await boxLocator.click();
     await page.waitForTimeout(500);
 
-    if (page.url().includes('/edit')) {
-      const deleteButton = page.locator('button', { hasText: /usu[nń]|delete/i });
+    if (page.url().includes("/edit")) {
+      const deleteButton = page.locator("button", { hasText: /usu[nń]|delete/i });
       await deleteButton.click();
     } else {
-      await dashboard.openBoxMenu('Box to Delete');
+      await dashboard.openBoxMenu("Box to Delete");
       await dashboard.clickDeleteBox();
     }
 
     // Wait for confirmation dialog
     const dialog = page.locator('[data-testid="delete-confirmation-dialog"]');
-    await dialog.waitFor({ state: 'visible', timeout: 5000 });
+    await dialog.waitFor({ state: "visible", timeout: 5000 });
 
     // Click cancel button
-    const cancelButton = dialog.locator('button', { hasText: /cancel|anuluj/i });
+    const cancelButton = dialog.locator("button", { hasText: /cancel|anuluj/i });
     await cancelButton.click();
 
     // Dialog should close
@@ -165,36 +162,33 @@ test.describe('Box Deletion E2E (US-020)', () => {
 
     // Verify box still exists in database
     const adminClient = getAdminSupabaseClient();
-    const { data: boxes } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('id', boxIdToDelete);
+    const { data: boxes } = await adminClient.from("boxes").select("*").eq("id", boxIdToDelete);
 
     expect(boxes).toHaveLength(1);
-    expect(boxes![0].name).toBe('Box to Delete');
+    expect(boxes![0].name).toBe("Box to Delete");
   });
 
-  test('should require text confirmation for deletion', async () => {
+  test("should require text confirmation for deletion", async () => {
     // Navigate to dashboard
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
 
     // Find and initiate delete
-    const boxLocator = dashboard.findBoxByName('Box to Delete');
+    const boxLocator = dashboard.findBoxByName("Box to Delete");
     await boxLocator.click();
     await page.waitForTimeout(500);
 
-    if (page.url().includes('/edit')) {
-      const deleteButton = page.locator('button', { hasText: /usu[nń]|delete/i });
+    if (page.url().includes("/edit")) {
+      const deleteButton = page.locator("button", { hasText: /usu[nń]|delete/i });
       await deleteButton.click();
     }
 
     // Wait for confirmation dialog
     const dialog = page.locator('[data-testid="delete-confirmation-dialog"]');
-    await dialog.waitFor({ state: 'visible', timeout: 5000 });
+    await dialog.waitFor({ state: "visible", timeout: 5000 });
 
     // Check if text confirmation is required
-    const confirmationInput = dialog.locator('input#confirmation-input');
+    const confirmationInput = dialog.locator("input#confirmation-input");
     const hasConfirmationInput = await confirmationInput.isVisible({ timeout: 2000 }).catch(() => false);
 
     if (hasConfirmationInput) {
@@ -203,7 +197,7 @@ test.describe('Box Deletion E2E (US-020)', () => {
       await expect(confirmButton).toBeDisabled();
 
       // Type wrong text
-      await confirmationInput.fill('wrong text');
+      await confirmationInput.fill("wrong text");
       await expect(confirmButton).toBeDisabled();
 
       // Type correct confirmation text
@@ -216,25 +210,25 @@ test.describe('Box Deletion E2E (US-020)', () => {
     }
   });
 
-  test('should handle deletion error gracefully', async () => {
+  test("should handle deletion error gracefully", async () => {
     // Navigate to dashboard
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
 
     // Delete the box from database first to simulate a race condition
     const adminClient = getAdminSupabaseClient();
-    await adminClient.from('boxes').delete().eq('id', boxIdToDelete);
+    await adminClient.from("boxes").delete().eq("id", boxIdToDelete);
 
     // Try to delete via UI (box no longer exists in DB)
-    const boxLocator = dashboard.findBoxByName('Box to Delete');
+    const boxLocator = dashboard.findBoxByName("Box to Delete");
 
     // Box might still be visible in UI cache
     if (await boxLocator.isVisible({ timeout: 2000 }).catch(() => false)) {
       await boxLocator.click();
       await page.waitForTimeout(500);
 
-      if (page.url().includes('/edit')) {
-        const deleteButton = page.locator('button', { hasText: /usu[nń]|delete/i });
+      if (page.url().includes("/edit")) {
+        const deleteButton = page.locator("button", { hasText: /usu[nń]|delete/i });
 
         // This might fail or show an error, which is expected
         const hasDeleteButton = await deleteButton.isVisible({ timeout: 2000 }).catch(() => false);
@@ -247,7 +241,7 @@ test.describe('Box Deletion E2E (US-020)', () => {
           const hasError = await errorMessage.isVisible({ timeout: 3000 }).catch(() => false);
 
           // Either we see an error or we're redirected to dashboard
-          const isOnDashboard = page.url().includes('/app') && !page.url().includes('/edit');
+          const isOnDashboard = page.url().includes("/app") && !page.url().includes("/edit");
 
           expect(hasError || isOnDashboard).toBeTruthy();
         }

@@ -19,10 +19,10 @@
 
 These endpoints were originally marked as "missing" but are now complete:
 
-| Endpoint | Status | Implementation | Tests | Docs |
-|----------|--------|----------------|-------|------|
-| **PATCH /api/workspaces/:workspace_id** | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:22-162` | ✅ | ✅ |
-| **DELETE /api/workspaces/:workspace_id** | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:181-297` | ✅ (8/8) | ✅ |
+| Endpoint                                 | Status      | Implementation                                       | Tests    | Docs |
+| ---------------------------------------- | ----------- | ---------------------------------------------------- | -------- | ---- |
+| **PATCH /api/workspaces/:workspace_id**  | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:22-162`  | ✅       | ✅   |
+| **DELETE /api/workspaces/:workspace_id** | ✅ Complete | `src/pages/api/workspaces/[workspace_id].ts:181-297` | ✅ (8/8) | ✅   |
 
 **Documentation:** See `.ai_docs/api-plan.md` (lines 93-164)
 
@@ -30,10 +30,10 @@ These endpoints were originally marked as "missing" but are now complete:
 
 These were planned as post-MVP but have also been completed:
 
-| Endpoint | Status | Implementation | Tests | Docs |
-|----------|--------|----------------|-------|------|
-| **DELETE /api/auth/delete-account** | ✅ Complete | `src/pages/api/auth/delete-account.ts` | ✅ | ✅ |
-| **GET /api/export/inventory** | ✅ Complete | `src/pages/api/export/inventory.ts` | ✅ | ✅ |
+| Endpoint                            | Status      | Implementation                         | Tests | Docs |
+| ----------------------------------- | ----------- | -------------------------------------- | ----- | ---- |
+| **DELETE /api/auth/delete-account** | ✅ Complete | `src/pages/api/auth/delete-account.ts` | ✅    | ✅   |
+| **GET /api/export/inventory**       | ✅ Complete | `src/pages/api/export/inventory.ts`    | ✅    | ✅   |
 
 **Documentation:** See `.ai_docs/api-plan.md` (lines 614-683 and 577-610)
 
@@ -50,9 +50,11 @@ This document originally specified endpoints needed for MVP implementation. All 
 ## 1. PATCH /api/workspaces/:workspace_id
 
 ### Purpose
+
 Update workspace properties (name, description, etc.)
 
 ### Used By
+
 - Settings view (WorkspaceEditModal)
 - Dashboard (future: workspace settings)
 
@@ -72,8 +74,8 @@ Content-Type: application/json
 
 ```typescript
 interface PatchWorkspaceRequest {
-  name?: string;                    // Optional, max 255 chars
-  description?: string;            // Optional (future)
+  name?: string; // Optional, max 255 chars
+  description?: string; // Optional (future)
 }
 ```
 
@@ -94,6 +96,7 @@ interface PatchWorkspaceRequest {
 ### Response
 
 **Success (200 OK):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -105,6 +108,7 @@ interface PatchWorkspaceRequest {
 ```
 
 **Type Definition:**
+
 ```typescript
 interface PatchWorkspaceResponse extends WorkspaceDto {
   // inherits all WorkspaceDto fields
@@ -114,20 +118,21 @@ interface PatchWorkspaceResponse extends WorkspaceDto {
 
 ### Error Responses
 
-| Status | Condition | Message | Details |
-|--------|-----------|---------|---------|
-| **400** | Invalid request body | Bad Request | Invalid JSON or schema violation |
-| **400** | Name is empty | Bad Request | "Workspace name cannot be empty" |
-| **400** | Name > 255 chars | Bad Request | "Workspace name must be less than 255 characters" |
-| **401** | Missing JWT | Unauthorized | "Missing or invalid JWT token" |
-| **403** | User is not owner | Forbidden | "Only workspace owner can update" |
-| **404** | Workspace not found | Not Found | "Workspace does not exist" |
-| **409** | Duplicate name | Conflict | "Workspace with this name already exists" (optional) |
-| **500** | Database error | Internal Server Error | "Failed to update workspace" |
+| Status  | Condition            | Message               | Details                                              |
+| ------- | -------------------- | --------------------- | ---------------------------------------------------- |
+| **400** | Invalid request body | Bad Request           | Invalid JSON or schema violation                     |
+| **400** | Name is empty        | Bad Request           | "Workspace name cannot be empty"                     |
+| **400** | Name > 255 chars     | Bad Request           | "Workspace name must be less than 255 characters"    |
+| **401** | Missing JWT          | Unauthorized          | "Missing or invalid JWT token"                       |
+| **403** | User is not owner    | Forbidden             | "Only workspace owner can update"                    |
+| **404** | Workspace not found  | Not Found             | "Workspace does not exist"                           |
+| **409** | Duplicate name       | Conflict              | "Workspace with this name already exists" (optional) |
+| **500** | Database error       | Internal Server Error | "Failed to update workspace"                         |
 
 ### Implementation Notes
 
 **Database Query:**
+
 ```sql
 -- Verify ownership
 SELECT role FROM workspace_members
@@ -142,6 +147,7 @@ RETURNING *;
 ```
 
 **RLS Policy:**
+
 ```sql
 CREATE POLICY "Users can update own workspaces"
   ON workspaces FOR UPDATE
@@ -150,6 +156,7 @@ CREATE POLICY "Users can update own workspaces"
 ```
 
 **Tests Required:**
+
 - [ ] Owner can update workspace name
 - [ ] Non-owner cannot update (403)
 - [ ] Invalid name rejected (400)
@@ -161,9 +168,11 @@ CREATE POLICY "Users can update own workspaces"
 ## 2. DELETE /api/workspaces/:workspace_id
 
 ### Purpose
+
 Delete workspace and all associated data (cascade)
 
 ### Used By
+
 - Settings view (DangerZoneSection - delete workspace)
 
 ### Request
@@ -174,9 +183,11 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 ### Query Parameters
+
 None
 
 ### Request Body
+
 None
 
 ### Validation
@@ -192,6 +203,7 @@ None
 ### Response
 
 **Success (200 OK):**
+
 ```json
 {
   "message": "Workspace deleted successfully",
@@ -200,6 +212,7 @@ None
 ```
 
 **Type Definition:**
+
 ```typescript
 interface DeleteWorkspaceResponse {
   message: string;
@@ -209,13 +222,13 @@ interface DeleteWorkspaceResponse {
 
 ### Error Responses
 
-| Status | Condition | Message | Details |
-|--------|-----------|---------|---------|
-| **401** | Missing JWT | Unauthorized | "Missing or invalid JWT token" |
-| **403** | User is not owner | Forbidden | "Only workspace owner can delete" |
-| **404** | Workspace not found | Not Found | "Workspace does not exist" |
-| **409** | Cannot delete (only workspace) | Conflict | "Cannot delete your only workspace" (optional) |
-| **500** | Database error | Internal Server Error | "Failed to delete workspace" |
+| Status  | Condition                      | Message               | Details                                        |
+| ------- | ------------------------------ | --------------------- | ---------------------------------------------- |
+| **401** | Missing JWT                    | Unauthorized          | "Missing or invalid JWT token"                 |
+| **403** | User is not owner              | Forbidden             | "Only workspace owner can delete"              |
+| **404** | Workspace not found            | Not Found             | "Workspace does not exist"                     |
+| **409** | Cannot delete (only workspace) | Conflict              | "Cannot delete your only workspace" (optional) |
+| **500** | Database error                 | Internal Server Error | "Failed to delete workspace"                   |
 
 ### Implementation Notes
 
@@ -246,6 +259,7 @@ RETURNING *;
 ```
 
 **Or use Postgres Triggers for FOREIGN KEY CASCADE:**
+
 ```sql
 ALTER TABLE boxes
 ADD CONSTRAINT fk_boxes_workspace
@@ -256,6 +270,7 @@ ON DELETE CASCADE;
 ```
 
 **Transaction Requirement:**
+
 ```sql
 BEGIN;
   -- All DELETE statements
@@ -267,6 +282,7 @@ COMMIT;
 ```
 
 **RLS Policy:**
+
 ```sql
 CREATE POLICY "Users can delete own workspaces"
   ON workspaces FOR DELETE
@@ -274,6 +290,7 @@ CREATE POLICY "Users can delete own workspaces"
 ```
 
 **Tests Required:**
+
 - [ ] Owner can delete workspace
 - [ ] Non-owner cannot delete (403)
 - [ ] Workspace not found returns 404
@@ -293,12 +310,15 @@ These endpoints are referenced in Settings view but are marked as **Post-MVP**. 
 ## 3. DELETE /api/auth/delete-account
 
 ### Purpose
+
 Permanently delete user account and all associated data
 
 ### Used By
+
 - Settings view (DangerZoneSection - delete account)
 
 ### Status
+
 ❌ **Not yet implemented** - Post-MVP feature
 
 ### Request
@@ -311,6 +331,7 @@ Authorization: Bearer <JWT_TOKEN>
 ### Response
 
 **Success (200 OK):**
+
 ```json
 {
   "message": "Account successfully deleted"
@@ -319,14 +340,15 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### Error Responses
 
-| Status | Condition | Message |
-|--------|-----------|---------|
-| **401** | Not authenticated | Unauthorized |
-| **500** | Database error | Internal Server Error |
+| Status  | Condition         | Message               |
+| ------- | ----------------- | --------------------- |
+| **401** | Not authenticated | Unauthorized          |
+| **500** | Database error    | Internal Server Error |
 
 ### Implementation Notes
 
 **Cascade Delete:**
+
 - Delete user profile
 - Delete all workspaces owned by user
 - Delete workspace memberships
@@ -334,6 +356,7 @@ Authorization: Bearer <JWT_TOKEN>
 - Revoke Supabase Auth user
 
 **Recommendation:**
+
 - Add soft-delete flag (deleted_at) instead of hard delete
 - Allow account reactivation (grace period of 30 days)
 - Data anonymization instead of deletion
@@ -343,12 +366,15 @@ Authorization: Bearer <JWT_TOKEN>
 ## 4. GET /api/export/inventory
 
 ### Purpose
+
 Export all boxes from workspace to CSV file
 
 ### Used By
+
 - Settings view (DataSection - export button)
 
 ### Status
+
 ❌ **Placeholder in API plan** - Post-MVP feature
 
 ### Request
@@ -361,14 +387,15 @@ Accept: text/csv
 
 ### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| workspace_id | UUID | Yes | Workspace to export |
-| format | string | No | Export format: csv, json (default: csv) |
+| Parameter    | Type   | Required | Description                             |
+| ------------ | ------ | -------- | --------------------------------------- |
+| workspace_id | UUID   | Yes      | Workspace to export                     |
+| format       | string | No       | Export format: csv, json (default: csv) |
 
 ### Response
 
 **Success (200 OK):**
+
 ```
 Content-Type: text/csv
 Content-Disposition: attachment; filename="inventory-{workspace_id}-{date}.csv"
@@ -381,32 +408,33 @@ name,location,description,tags,qr_code,created_at,updated_at
 
 ### CSV Column Definition
 
-| Column | Source | Notes |
-|--------|--------|-------|
-| id | boxes.id | UUID |
-| short_id | boxes.short_id | 10-char alphanumeric |
-| name | boxes.name | Text |
-| location | locations.name | Full path (e.g., "Basement > Shelf A") |
-| description | boxes.description | Text, max 10k chars |
-| tags | boxes.tags | JSON array as comma-separated string |
-| qr_code | qr_codes.short_id | Format: QR-XXXXXX |
-| created_at | boxes.created_at | ISO 8601 timestamp |
-| updated_at | boxes.updated_at | ISO 8601 timestamp |
+| Column      | Source            | Notes                                  |
+| ----------- | ----------------- | -------------------------------------- |
+| id          | boxes.id          | UUID                                   |
+| short_id    | boxes.short_id    | 10-char alphanumeric                   |
+| name        | boxes.name        | Text                                   |
+| location    | locations.name    | Full path (e.g., "Basement > Shelf A") |
+| description | boxes.description | Text, max 10k chars                    |
+| tags        | boxes.tags        | JSON array as comma-separated string   |
+| qr_code     | qr_codes.short_id | Format: QR-XXXXXX                      |
+| created_at  | boxes.created_at  | ISO 8601 timestamp                     |
+| updated_at  | boxes.updated_at  | ISO 8601 timestamp                     |
 
 ### Error Responses
 
-| Status | Condition | Message |
-|--------|-----------|---------|
-| **400** | Missing workspace_id | Bad Request |
-| **400** | Invalid workspace_id | Bad Request |
-| **401** | Not authenticated | Unauthorized |
-| **403** | No access to workspace | Forbidden |
-| **404** | Workspace not found | Not Found |
-| **500** | Server error | Internal Server Error |
+| Status  | Condition              | Message               |
+| ------- | ---------------------- | --------------------- |
+| **400** | Missing workspace_id   | Bad Request           |
+| **400** | Invalid workspace_id   | Bad Request           |
+| **401** | Not authenticated      | Unauthorized          |
+| **403** | No access to workspace | Forbidden             |
+| **404** | Workspace not found    | Not Found             |
+| **500** | Server error           | Internal Server Error |
 
 ### Implementation Notes
 
 **Query:**
+
 ```sql
 SELECT
   b.id,
@@ -426,6 +454,7 @@ ORDER BY b.created_at DESC;
 ```
 
 **CSV Generation:**
+
 - Use npm package: `csv-stringify` or similar
 - Handle quotes, commas, newlines in fields
 - Format location path as breadcrumb (Basement > Shelf A)
@@ -433,6 +462,7 @@ ORDER BY b.created_at DESC;
 - ISO 8601 timestamps
 
 **Response Headers:**
+
 ```
 Content-Type: text/csv; charset=utf-8
 Content-Disposition: attachment; filename="inventory-{workspace_id}-{YYYY-MM-DD}.csv"
@@ -443,6 +473,7 @@ Content-Disposition: attachment; filename="inventory-{workspace_id}-{YYYY-MM-DD}
 # IMPLEMENTATION PRIORITY
 
 ## Phase 0-1 (Critical - Blocks Phase 3)
+
 ```
 Priority 1: PATCH /api/workspaces/:workspace_id
 Priority 2: DELETE /api/workspaces/:workspace_id
@@ -452,6 +483,7 @@ Priority 2: DELETE /api/workspaces/:workspace_id
 **Estimated Dev Time:** 4-6 hours per endpoint
 
 ## Phase 5+ (Optional - Post-MVP)
+
 ```
 Priority 3: DELETE /api/auth/delete-account
 Priority 4: GET /api/export/inventory
@@ -467,6 +499,7 @@ Priority 4: GET /api/export/inventory
 ## Endpoint 1: PATCH /api/workspaces/:workspace_id
 
 ### Backend
+
 - [ ] Route created: `PATCH /api/workspaces/:workspace_id`
 - [ ] Request validation (Zod schema)
 - [ ] Permission check (user is owner)
@@ -482,6 +515,7 @@ Priority 4: GET /api/export/inventory
   - [ ] 404 on missing workspace
 
 ### Frontend
+
 - [ ] API endpoint called (POST /api/workspaces/:id)
 - [ ] Request body formatted
 - [ ] Response handled
@@ -491,6 +525,7 @@ Priority 4: GET /api/export/inventory
 - [ ] Loading state shown
 
 ### Testing
+
 - [ ] Manual test with valid data
 - [ ] Manual test with invalid data
 - [ ] Manual test with permission error
@@ -502,6 +537,7 @@ Priority 4: GET /api/export/inventory
 ## Endpoint 2: DELETE /api/workspaces/:workspace_id
 
 ### Backend
+
 - [ ] Route created: `DELETE /api/workspaces/:workspace_id`
 - [ ] Permission check (user is owner)
 - [ ] Transaction for cascade deletes
@@ -521,6 +557,7 @@ Priority 4: GET /api/export/inventory
   - [ ] Transaction rollback verify
 
 ### Frontend
+
 - [ ] Confirmation dialog displays
 - [ ] User must type "DELETE WORKSPACE"
 - [ ] API call DELETE /api/workspaces/:id
@@ -530,6 +567,7 @@ Priority 4: GET /api/export/inventory
 - [ ] Loading state shown
 
 ### Testing
+
 - [ ] Manual test delete + verify cascade
 - [ ] Manual test permission denied
 - [ ] Manual test rollback on error
@@ -551,44 +589,33 @@ export function useSettingsView(userId: string) {
     // ...
   });
 
-  const updateWorkspace = useCallback(
-    async (workspaceId: string, name: string) => {
-      try {
-        const updated = await apiClient.patch(
-          `/api/workspaces/${workspaceId}`,
-          { name }
-        );
+  const updateWorkspace = useCallback(async (workspaceId: string, name: string) => {
+    try {
+      const updated = await apiClient.patch(`/api/workspaces/${workspaceId}`, { name });
 
-        // Update local state
-        setState(prev => ({
-          ...prev,
-          workspaces: prev.workspaces.map(w =>
-            w.id === workspaceId ? { ...w, ...updated } : w
-          ),
-        }));
-      } catch (err) {
-        throw new Error(`Failed to update workspace: ${err.message}`);
-      }
-    },
-    []
-  );
+      // Update local state
+      setState((prev) => ({
+        ...prev,
+        workspaces: prev.workspaces.map((w) => (w.id === workspaceId ? { ...w, ...updated } : w)),
+      }));
+    } catch (err) {
+      throw new Error(`Failed to update workspace: ${err.message}`);
+    }
+  }, []);
 
-  const deleteWorkspace = useCallback(
-    async (workspaceId: string) => {
-      try {
-        await apiClient.delete(`/api/workspaces/${workspaceId}`);
+  const deleteWorkspace = useCallback(async (workspaceId: string) => {
+    try {
+      await apiClient.delete(`/api/workspaces/${workspaceId}`);
 
-        // Update local state
-        setState(prev => ({
-          ...prev,
-          workspaces: prev.workspaces.filter(w => w.id !== workspaceId),
-        }));
-      } catch (err) {
-        throw new Error(`Failed to delete workspace: ${err.message}`);
-      }
-    },
-    []
-  );
+      // Update local state
+      setState((prev) => ({
+        ...prev,
+        workspaces: prev.workspaces.filter((w) => w.id !== workspaceId),
+      }));
+    } catch (err) {
+      throw new Error(`Failed to delete workspace: ${err.message}`);
+    }
+  }, []);
 
   return {
     state,
@@ -609,11 +636,9 @@ export function useSettingsView(userId: string) {
 export const workspacesApi = {
   // ... existing endpoints
 
-  update: (id: string, name: string) =>
-    apiClient.patch<WorkspaceDto>(`/api/workspaces/${id}`, { name }),
+  update: (id: string, name: string) => apiClient.patch<WorkspaceDto>(`/api/workspaces/${id}`, { name }),
 
-  delete: (id: string) =>
-    apiClient.delete<{ message: string }>(`/api/workspaces/${id}`),
+  delete: (id: string) => apiClient.delete<{ message: string }>(`/api/workspaces/${id}`),
 };
 ```
 
@@ -624,37 +649,37 @@ export const workspacesApi = {
 ## Unit Tests (Backend)
 
 ```typescript
-describe('PATCH /api/workspaces/:id', () => {
-  it('should update workspace name if user is owner', async () => {
+describe("PATCH /api/workspaces/:id", () => {
+  it("should update workspace name if user is owner", async () => {
     // Setup
     const owner = await createUser();
     const workspace = await createWorkspace(owner.id);
 
     // Execute
     const response = await fetch(`/api/workspaces/${workspace.id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: { Authorization: `Bearer ${owner.token}` },
-      body: JSON.stringify({ name: 'New Name' }),
+      body: JSON.stringify({ name: "New Name" }),
     });
 
     // Assert
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.name).toBe('New Name');
+    expect(data.name).toBe("New Name");
   });
 
-  it('should reject if user is not owner', async () => {
+  it("should reject if user is not owner", async () => {
     // Setup
     const owner = await createUser();
     const member = await createUser();
     const workspace = await createWorkspace(owner.id);
-    await addWorkspaceMember(workspace.id, member.id, 'member');
+    await addWorkspaceMember(workspace.id, member.id, "member");
 
     // Execute
     const response = await fetch(`/api/workspaces/${workspace.id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: { Authorization: `Bearer ${member.token}` },
-      body: JSON.stringify({ name: 'New Name' }),
+      body: JSON.stringify({ name: "New Name" }),
     });
 
     // Assert
@@ -709,6 +734,7 @@ describe('WorkspaceEditModal', () => {
 ## Database Migrations
 
 Create migration file:
+
 ```sql
 -- supabase/migrations/20241228_add_workspace_management_endpoints.sql
 
@@ -739,6 +765,7 @@ ON DELETE CASCADE;
 If endpoints have issues post-deployment:
 
 1. **Disable UI buttons temporarily:**
+
    ```typescript
    // In Settings component
    <button disabled title="Coming soon">Delete Workspace</button>
@@ -746,11 +773,13 @@ If endpoints have issues post-deployment:
    ```
 
 2. **Disable API calls:**
+
    ```typescript
-   throw new Error('Workspace management temporarily unavailable');
+   throw new Error("Workspace management temporarily unavailable");
    ```
 
 3. **Roll back database changes:**
+
    ```bash
    supabase migration down --version {migration_number}
    ```
@@ -761,25 +790,27 @@ If endpoints have issues post-deployment:
 
 # SUMMARY TABLE
 
-| Endpoint | Status | Priority | Timeline | Blocks | Est. Hours |
-|----------|--------|----------|----------|--------|-----------|
-| PATCH /workspaces/:id | ❌ Missing | HIGH | Phase 1-2 | Phase 3 | 4-6 |
-| DELETE /workspaces/:id | ❌ Missing | HIGH | Phase 1-2 | Phase 3 | 4-6 |
-| DELETE /auth/delete-account | ❌ Missing | MEDIUM | Phase 5+ | None | 3-4 |
-| GET /export/inventory | ❌ Missing | MEDIUM | Phase 5+ | None | 3-4 |
+| Endpoint                    | Status     | Priority | Timeline  | Blocks  | Est. Hours |
+| --------------------------- | ---------- | -------- | --------- | ------- | ---------- |
+| PATCH /workspaces/:id       | ❌ Missing | HIGH     | Phase 1-2 | Phase 3 | 4-6        |
+| DELETE /workspaces/:id      | ❌ Missing | HIGH     | Phase 1-2 | Phase 3 | 4-6        |
+| DELETE /auth/delete-account | ❌ Missing | MEDIUM   | Phase 5+  | None    | 3-4        |
+| GET /export/inventory       | ❌ Missing | MEDIUM   | Phase 5+  | None    | 3-4        |
 
 ---
 
 # CONTACT & ESCALATION
 
 **For implementation questions:**
-- Backend Lead: ___________________
-- API Architect: ___________________
-- Database Admin: ___________________
+
+- Backend Lead: ********\_\_\_********
+- API Architect: ********\_\_\_********
+- Database Admin: ********\_\_\_********
 
 **For blockers:**
-- Product Owner: ___________________
-- Tech Lead: ___________________
+
+- Product Owner: ********\_\_\_********
+- Tech Lead: ********\_\_\_********
 
 ---
 

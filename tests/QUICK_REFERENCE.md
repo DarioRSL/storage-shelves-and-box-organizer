@@ -31,13 +31,13 @@ npm run test:all              # Run everything
 
 ```typescript
 // tests/unit/my-service.test.ts
-import { describe, it, expect, vi } from 'vitest';
-import { myService } from '@/lib/services/my-service';
+import { describe, it, expect, vi } from "vitest";
+import { myService } from "@/lib/services/my-service";
 
-describe('MyService', () => {
-  it('should do something', () => {
+describe("MyService", () => {
+  it("should do something", () => {
     // Arrange
-    const input = { id: '123' };
+    const input = { id: "123" };
 
     // Act
     const result = myService.process(input);
@@ -53,10 +53,10 @@ describe('MyService', () => {
 
 ```typescript
 // tests/integration/api.test.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
 
-describe('API /api/workspaces', () => {
+describe("API /api/workspaces", () => {
   beforeEach(async () => {
     await seedTestDatabase();
   });
@@ -65,11 +65,8 @@ describe('API /api/workspaces', () => {
     await cleanTestDatabase();
   });
 
-  it('GET should return workspaces', async () => {
-    const response = await request(app)
-      .get('/api/workspaces')
-      .set('Cookie', authCookie)
-      .expect(200);
+  it("GET should return workspaces", async () => {
+    const response = await request(app).get("/api/workspaces").set("Cookie", authCookie).expect(200);
 
     expect(response.body.data).toBeInstanceOf(Array);
   });
@@ -80,17 +77,17 @@ describe('API /api/workspaces', () => {
 
 ```typescript
 // tests/e2e/login.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('User Login', () => {
-  test('should login successfully', async ({ page }) => {
-    await page.goto('/auth');
+test.describe("User Login", () => {
+  test("should login successfully", async ({ page }) => {
+    await page.goto("/auth");
 
-    await page.getByLabel('Email').fill('user@test.com');
-    await page.getByLabel('Password').fill('password');
-    await page.getByRole('button', { name: 'Zaloguj' }).click();
+    await page.getByLabel("Email").fill("user@test.com");
+    await page.getByLabel("Password").fill("password");
+    await page.getByRole("button", { name: "Zaloguj" }).click();
 
-    await expect(page).toHaveURL('/app');
+    await expect(page).toHaveURL("/app");
   });
 });
 ```
@@ -98,8 +95,9 @@ test.describe('User Login', () => {
 ## Common Patterns
 
 ### Mock Supabase
+
 ```typescript
-vi.mock('@/db/supabase.client', () => ({
+vi.mock("@/db/supabase.client", () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -110,6 +108,7 @@ vi.mock('@/db/supabase.client', () => ({
 ```
 
 ### Mock Functions
+
 ```typescript
 const mockFn = vi.fn((x) => x * 2);
 const result = mockFn(5);
@@ -117,27 +116,30 @@ expect(mockFn).toHaveBeenCalledWith(5);
 ```
 
 ### Spy on Methods
+
 ```typescript
-const spy = vi.spyOn(obj, 'method');
+const spy = vi.spyOn(obj, "method");
 obj.method();
 expect(spy).toHaveBeenCalled();
 ```
 
 ### Async Tests
+
 ```typescript
-it('should handle async', async () => {
+it("should handle async", async () => {
   const result = await asyncFunction();
   expect(result).toBe(expected);
 });
 ```
 
 ### Playwright Locators
+
 ```typescript
 // Prefer accessible locators
-page.getByRole('button', { name: 'Submit' })
-page.getByLabel('Email')
-page.getByText('Success')
-page.getByTestId('custom-element')
+page.getByRole("button", { name: "Submit" });
+page.getByLabel("Email");
+page.getByText("Success");
+page.getByTestId("custom-element");
 ```
 
 ## Coverage Targets
@@ -156,19 +158,19 @@ page.getByTestId('custom-element')
 ## Import Aliases
 
 ```typescript
-import { service } from '@/lib/services/service';
-import { Component } from '@/components/Component';
-import { supabase } from '@/db/supabase.client';
+import { service } from "@/lib/services/service";
+import { Component } from "@/components/Component";
+import { supabase } from "@/db/supabase.client";
 ```
 
 ## Testing Library Matchers
 
 ```typescript
-expect(element).toBeInTheDocument()
-expect(element).toHaveTextContent('text')
-expect(element).toBeVisible()
-expect(element).toBeDisabled()
-expect(element).toHaveAttribute('attr', 'value')
+expect(element).toBeInTheDocument();
+expect(element).toHaveTextContent("text");
+expect(element).toBeVisible();
+expect(element).toBeDisabled();
+expect(element).toHaveAttribute("attr", "value");
 ```
 
 ## Debugging
@@ -186,6 +188,7 @@ PWDEBUG=1 npm run test:e2e     # Playwright inspector
 ## Best Practices
 
 ✅ **DO:**
+
 - Follow Arrange-Act-Assert pattern
 - Use descriptive test names
 - Keep tests isolated and independent
@@ -194,6 +197,7 @@ PWDEBUG=1 npm run test:e2e     # Playwright inspector
 - Clean up after tests
 
 ❌ **DON'T:**
+
 - Test implementation details
 - Create test interdependencies
 - Skip test cleanup

@@ -12,6 +12,7 @@
 ### 1.1 In Scope
 
 **MVP Features (100% Complete - Regression Testing Required):**
+
 - ✅ Email/Password authentication and session management
 - ✅ HttpOnly cookie-based authentication system
 - ✅ Workspace creation and management
@@ -25,6 +26,7 @@
 - ✅ Multi-tenant workspace isolation (RLS policies)
 
 **Critical Pre-Production Testing (US-036, US-037):**
+
 - 🔴 Row Level Security (RLS) policy verification
 - 🔴 Multi-user data isolation testing
 - 🔴 Workspace member authorization
@@ -32,6 +34,7 @@
 - 🔴 Log sanitization (no PII, passwords, or sensitive data)
 
 **Post-MVP Features (Planned for Phase 2):**
+
 - Password reset flow via email
 - Account deletion with RODO compliance
 - Export to CSV functionality
@@ -40,6 +43,7 @@
 - Mobile-optimized UI
 
 **Cross-Cutting Concerns:**
+
 - Security testing (OWASP Top 10 compliance)
 - Performance testing (load, stress, scalability)
 - Accessibility testing (WCAG 2.1 AA compliance)
@@ -51,6 +55,7 @@
 ### 1.2 Out of Scope
 
 **Explicitly Excluded from MVP (per PRD):**
+
 - Offline mode functionality
 - Photo upload and image optimization
 - Native mobile app testing (iOS/Android stores)
@@ -60,6 +65,7 @@
 - Collaborative workspace features (prepared but not implemented)
 
 **Technical Limitations:**
+
 - PostgREST ltree operator testing (known limitation, JavaScript fallback implemented)
 - Real-time subscriptions (Supabase feature deferred)
 
@@ -72,6 +78,7 @@
 **Scope:** Individual functions, utilities, and business logic in isolation.
 
 **Focus Areas:**
+
 - **Validation Logic** (`src/lib/validation/`)
   - Zod schema validation for all API endpoints
   - Polish error message generation
@@ -98,6 +105,7 @@
 **Scope:** Interactions between application layers and external services.
 
 **Focus Areas:**
+
 - **API Endpoint Testing** (14 REST endpoints in `src/pages/api/`)
   - Authentication endpoints (`POST /api/auth/session`, `DELETE /api/auth/session`)
   - Workspace endpoints (`GET /api/workspaces`, `POST /api/workspaces`)
@@ -241,6 +249,7 @@
    - React component render performance
 
 **Performance Targets:**
+
 - API response time: <200ms (p95)
 - Page load time: <3s (3G network)
 - Search response: <500ms (10,000 boxes)
@@ -288,16 +297,19 @@
 **Scope:** Browser, device, and platform compatibility.
 
 **Browser Matrix:**
+
 - **Desktop:** Chrome 120+, Firefox 120+, Safari 17+, Edge 120+
 - **Mobile:** Chrome Android 120+, Safari iOS 17+
 - **Testing:** Latest 2 major versions of each browser
 
 **Device Matrix:**
+
 - **Mobile:** iPhone 12/13/14/15, Samsung Galaxy S21/S22/S23
 - **Tablet:** iPad Air, iPad Pro, Samsung Galaxy Tab
 - **Desktop:** 1920x1080, 1366x768, 2560x1440
 
 **PWA Testing:**
+
 - Add to Home Screen functionality
 - Offline fallback page
 - Service worker registration
@@ -310,6 +322,7 @@
 **Scope:** Ensure existing MVP functionality remains intact after changes.
 
 **Critical Regression Suites:**
+
 - Authentication and session management
 - QR code lifecycle (generate → assign → scan → delete → reset)
 - Location hierarchy and soft delete
@@ -329,7 +342,9 @@
 ### 3.1 Test Frameworks
 
 #### Unit & Integration Testing
+
 **Primary:** Vitest 1.x
+
 - **Rationale:** Native Vite integration, faster than Jest, TypeScript support
 - **Use Cases:** Service layer, utilities, validation logic
 - **Features:** Snapshot testing, mocking, coverage reports
@@ -337,7 +352,9 @@
 **Alternative Consideration:** Jest (if team has existing expertise)
 
 #### End-to-End Testing
+
 **Primary:** Playwright 1.x
+
 - **Rationale:** Cross-browser support, mobile emulation, network control
 - **Use Cases:** Critical user workflows, visual regression
 - **Features:** Parallel execution, auto-waiting, video/screenshot capture
@@ -345,7 +362,9 @@
 **Alternative Consideration:** Cypress (if real-time debugging is priority)
 
 #### API Testing
+
 **Primary:** Supertest + Vitest
+
 - **Rationale:** Express-style API testing, integrates with Vitest
 - **Use Cases:** REST endpoint testing, request/response validation
 - **Features:** Chainable assertions, cookie handling
@@ -353,16 +372,19 @@
 ### 3.2 Security Testing Tools
 
 **OWASP ZAP (Free)**
+
 - Automated vulnerability scanning
 - OWASP Top 10 coverage
 - CI/CD integration
 
 **Burp Suite Community Edition**
+
 - Manual security testing
 - Proxy interception
 - Request tampering
 
 **Custom RLS Testing Scripts**
+
 - Supabase client with different user contexts
 - Direct SQL query validation
 - Automated multi-user scenario testing
@@ -370,16 +392,19 @@
 ### 3.3 Performance Testing Tools
 
 **Artillery 2.x**
+
 - Load testing for API endpoints
 - Scenario-based testing
 - Real-time metrics
 
 **Lighthouse (Chrome DevTools)**
+
 - Frontend performance auditing
 - Core Web Vitals measurement
 - Progressive Web App checks
 
 **k6 (Grafana)**
+
 - Advanced load testing
 - Scripting in JavaScript
 - Real-time dashboards
@@ -387,49 +412,58 @@
 ### 3.4 Accessibility Testing Tools
 
 **axe DevTools (Browser Extension)**
+
 - Automated WCAG checks
 - Real-time issue detection
 - Detailed remediation guidance
 
 **WAVE (Browser Extension)**
+
 - Visual accessibility audit
 - Color contrast analyzer
 - Structural markup review
 
 **Screen Readers:**
+
 - **NVDA** (Windows) - Free, JAWS-compatible
 - **VoiceOver** (macOS) - Built-in
 
 ### 3.5 CI/CD Integration Tools
 
 **GitHub Actions** (Already in use)
+
 - Automated test execution
 - Linting and formatting checks
 - Build verification
 
 **Test Coverage Tools:**
+
 - **Vitest Coverage** (c8 or istanbul)
 - **Codecov** (coverage reporting and tracking)
 
 ### 3.6 Database Testing Tools
 
 **Supabase CLI** (Local development)
+
 - Local PostgreSQL instance
 - Migration testing
 - RLS policy testing
 
 **PostgreSQL Testing:**
+
 - **pgTAP** - Unit tests for database functions
 - **pg_prove** - TAP test runner
 
 ### 3.7 Monitoring and Logging
 
 **Winston Logger** (Already implemented - US-037)
+
 - Structured logging
 - Daily log rotation
 - Sanitized output (no PII)
 
 **Sentry** (Recommended for production)
+
 - Error tracking
 - Performance monitoring
 - User session replay
@@ -463,6 +497,7 @@
 ### 4.2 Test Data Strategy
 
 **Data Seeding:**
+
 - **Script Location:** `supabase/seed.sql` (to be created)
 - **Seed Data:**
   - 3 test users (user1@test.com, user2@test.com, admin@test.com)
@@ -472,11 +507,13 @@
   - 100 QR codes (50 assigned, 50 available)
 
 **Test Data Cleanup:**
+
 - Automated cleanup after E2E tests
 - Isolated test workspaces
 - Database reset scripts
 
 **Production-Like Data:**
+
 - Staging environment mirrors production schema
 - Performance testing uses 10,000+ box dataset
 - Anonymized production data export (optional)
@@ -484,6 +521,7 @@
 ### 4.3 Environment Configuration
 
 **Environment Variables:**
+
 ```bash
 # Development
 PUBLIC_SUPABASE_URL=http://localhost:54321
@@ -502,12 +540,14 @@ NODE_ENV=production
 ```
 
 **Database Requirements:**
+
 - PostgreSQL 15.x
 - Extensions: `uuid-ossp`, `ltree`, `moddatetime`, `pg_trgm`
 - RLS enabled on all tables
 - Test database size: 1GB minimum
 
 **Infrastructure Requirements:**
+
 - **Development:** Local machine (8GB RAM, 4 cores minimum)
 - **Staging:** DigitalOcean App Platform (Basic tier)
 - **CI/CD:** GitHub Actions runners (2GB RAM per runner)
@@ -515,6 +555,7 @@ NODE_ENV=production
 ### 4.4 Browser/Device Lab
 
 **Physical Devices:**
+
 - iPhone 14 (iOS 17)
 - Samsung Galaxy S23 (Android 14)
 - iPad Air (iPadOS 17)
@@ -522,6 +563,7 @@ NODE_ENV=production
 - Windows 11 Desktop
 
 **Cloud Testing:**
+
 - BrowserStack (cross-browser testing)
 - Sauce Labs (mobile device testing)
 
@@ -542,6 +584,7 @@ NODE_ENV=production
 ```
 
 **Rationale:**
+
 - Unit tests are fast, isolated, and provide immediate feedback
 - Integration tests validate layer interactions
 - E2E tests are slow but verify real user workflows
@@ -549,6 +592,7 @@ NODE_ENV=production
 ### 5.2 Risk-Based Testing Approach
 
 **High-Risk Areas (Priority 1):**
+
 - 🔴 **RLS Policies** (US-036) - Data leakage prevention
 - 🔴 **Authentication System** - HttpOnly cookies, JWT validation
 - 🔴 **Multi-Tenant Isolation** - Workspace data segregation
@@ -556,12 +600,14 @@ NODE_ENV=production
 - 🔴 **Soft Delete** - Location deletion with box unlinking
 
 **Medium-Risk Areas (Priority 2):**
+
 - 🟡 **Search Functionality** - Full-text search accuracy
 - 🟡 **Hierarchical Locations** - ltree path integrity
 - 🟡 **API Endpoints** - Input validation, error handling
 - 🟡 **Performance** - Large dataset scalability
 
 **Low-Risk Areas (Priority 3):**
+
 - 🟢 **UI Components** - Visual styling, layout
 - 🟢 **Theme Toggle** - Dark/light mode switching
 - 🟢 **Logging** - Winston structured logging
@@ -569,18 +615,21 @@ NODE_ENV=production
 ### 5.3 Test Execution Strategy
 
 **Continuous Testing:**
+
 - Unit tests run on every file save (Vitest watch mode)
 - Integration tests run on every commit (Git hooks)
 - E2E tests run on every PR (GitHub Actions)
 - Full test suite runs nightly (Scheduled CI)
 
 **Manual Testing:**
+
 - Exploratory testing for new features
 - Usability testing with real users
 - Accessibility testing with assistive technologies
 - Security testing for critical vulnerabilities
 
 **Defect Management:**
+
 - **Blocker:** Prevents release (RLS failure, auth bypass)
 - **Critical:** Major functionality broken (search fails, QR duplicate)
 - **Major:** Feature partially broken (soft delete incomplete)
@@ -589,12 +638,14 @@ NODE_ENV=production
 ### 5.4 Test Coverage Goals
 
 **Code Coverage Targets:**
+
 - **Service Layer:** 80% line coverage
 - **API Endpoints:** 90% line coverage (high risk)
 - **Validation Logic:** 100% line coverage (critical)
 - **UI Components:** 60% line coverage (lower priority)
 
 **Functional Coverage:**
+
 - **MVP User Stories:** 100% coverage (all 24 stories)
 - **Critical Workflows:** 100% coverage (auth, QR, search)
 - **Edge Cases:** 80% coverage (error handling, boundaries)
@@ -602,12 +653,14 @@ NODE_ENV=production
 ### 5.5 Test Documentation
 
 **Test Case Management:**
+
 - Test cases stored in `.ai_docs/tests/test-cases/` (markdown format)
 - Organized by feature area
 - Include preconditions, steps, expected results
 - Linked to user stories (US-XXX)
 
 **Test Results:**
+
 - CI/CD pipeline generates HTML reports
 - Coverage reports published to Codecov
 - Failed tests notify team via Slack/Email
@@ -619,36 +672,42 @@ NODE_ENV=production
 ### 6.1 Authentication & Authorization
 
 **TC-AUTH-001: User Registration**
+
 - **Precondition:** User not registered
 - **Steps:** Enter email/password, submit form
 - **Expected:** User created, workspace auto-created, redirected to /app
 - **Priority:** High
 
 **TC-AUTH-002: Login with Valid Credentials**
+
 - **Precondition:** User exists
 - **Steps:** Enter valid email/password, submit
 - **Expected:** Session cookie set, redirected to /app
 - **Priority:** High
 
 **TC-AUTH-003: Login with Invalid Credentials**
+
 - **Precondition:** User exists
 - **Steps:** Enter invalid password
 - **Expected:** Error message "Nieprawidłowy e-mail lub hasło"
 - **Priority:** High
 
 **TC-AUTH-004: Session Persistence**
+
 - **Precondition:** User logged in
 - **Steps:** Refresh page
 - **Expected:** User remains logged in, no redirect to /auth
 - **Priority:** Medium
 
 **TC-AUTH-005: Logout**
+
 - **Precondition:** User logged in
 - **Steps:** Click "Wyloguj" button
 - **Expected:** Session cleared, redirected to /login
 - **Priority:** High
 
 **TC-AUTH-006: HttpOnly Cookie Security**
+
 - **Precondition:** User logged in
 - **Steps:** Attempt to access `document.cookie` via DevTools
 - **Expected:** `sb_session` cookie not visible to JavaScript
@@ -657,36 +716,42 @@ NODE_ENV=production
 ### 6.2 Row Level Security (RLS) - US-036
 
 **TC-RLS-001: Workspace Data Isolation**
+
 - **Precondition:** Two users (A, B) in different workspaces
 - **Steps:** User A queries boxes, User B queries boxes
 - **Expected:** Each user sees only their workspace data
 - **Priority:** Critical
 
 **TC-RLS-002: Cross-Workspace Data Leakage**
+
 - **Precondition:** Two users in different workspaces
 - **Steps:** User A attempts to query User B's box by ID
 - **Expected:** 403 Forbidden or empty result
 - **Priority:** Critical
 
 **TC-RLS-003: Workspace Member Access**
+
 - **Precondition:** User A is member of Workspace X
 - **Steps:** User A queries locations in Workspace X
 - **Expected:** All locations returned
 - **Priority:** High
 
 **TC-RLS-004: Non-Member Access Denial**
+
 - **Precondition:** User A is NOT member of Workspace Y
 - **Steps:** User A attempts to query Workspace Y data
 - **Expected:** Empty result or 403 Forbidden
 - **Priority:** Critical
 
 **TC-RLS-005: `auth.uid()` Context**
+
 - **Precondition:** User logged in
 - **Steps:** Execute query with RLS policy checking `auth.uid()`
 - **Expected:** Policy correctly identifies user
 - **Priority:** Critical
 
 **TC-RLS-006: Direct Database Query Blocking**
+
 - **Precondition:** Attacker has database credentials
 - **Steps:** Attempt direct SQL query without auth context
 - **Expected:** Query blocked by RLS, no data returned
@@ -695,42 +760,49 @@ NODE_ENV=production
 ### 6.3 QR Code Management
 
 **TC-QR-001: Batch Generation**
+
 - **Precondition:** User logged in
 - **Steps:** Navigate to /app/qr-generator, enter 20, submit
 - **Expected:** 20 QR codes generated with status "generated"
 - **Priority:** High
 
 **TC-QR-002: QR Code Uniqueness**
+
 - **Precondition:** 100 QR codes generated
 - **Steps:** Query database for duplicate `qr_code` values
 - **Expected:** All QR codes unique
 - **Priority:** Critical
 
 **TC-QR-003: QR Code Assignment**
+
 - **Precondition:** Empty QR code exists
 - **Steps:** Create box and assign QR
 - **Expected:** QR status changes to "assigned"
 - **Priority:** High
 
 **TC-QR-004: Scan Empty QR Code**
+
 - **Precondition:** QR code generated but unassigned
 - **Steps:** Scan QR with mobile device
 - **Expected:** Redirect to /app/boxes/new?qr_id=XXX
 - **Priority:** High
 
 **TC-QR-005: Scan Assigned QR Code**
+
 - **Precondition:** QR assigned to Box A
 - **Steps:** Scan QR
 - **Expected:** Redirect to /app/boxes/[box_id]
 - **Priority:** High
 
 **TC-QR-006: QR Reset on Box Delete**
+
 - **Precondition:** Box with assigned QR
 - **Steps:** Delete box
 - **Expected:** QR status reset to "generated", reusable
 - **Priority:** High
 
 **TC-QR-007: QR Code Format Validation**
+
 - **Precondition:** QR generation trigger
 - **Steps:** Generate QR codes
 - **Expected:** All QR codes match format `QR-[A-Z0-9]{6}`
@@ -739,36 +811,42 @@ NODE_ENV=production
 ### 6.4 Location Hierarchy
 
 **TC-LOC-001: Create Root Location**
+
 - **Precondition:** User logged in
 - **Steps:** Create location "Garage" with no parent
 - **Expected:** Location created with path "root.garage"
 - **Priority:** High
 
 **TC-LOC-002: Create Nested Location**
+
 - **Precondition:** Root location "Garage" exists
 - **Steps:** Create location "Metal Rack" under "Garage"
 - **Expected:** Location created with path "root.garage.metalrack"
 - **Priority:** High
 
 **TC-LOC-003: Maximum Depth Enforcement**
+
 - **Precondition:** 5-level hierarchy exists
 - **Steps:** Attempt to create 6th level
 - **Expected:** Error "Maximum depth of 5 levels exceeded"
 - **Priority:** Medium
 
 **TC-LOC-004: Edit Location Name**
+
 - **Precondition:** Location "Regał A" exists
 - **Steps:** Edit name to "Regał Metalowy"
 - **Expected:** Name updated, path regenerated
 - **Priority:** Medium
 
 **TC-LOC-005: Soft Delete Location**
+
 - **Precondition:** Location with 3 boxes
 - **Steps:** Delete location
 - **Expected:** Location marked `is_deleted=true`, boxes moved to "Unassigned"
 - **Priority:** High
 
 **TC-LOC-006: Soft Delete Location Without Boxes**
+
 - **Precondition:** Empty location
 - **Steps:** Delete location
 - **Expected:** Location marked deleted, no boxes affected
@@ -777,42 +855,49 @@ NODE_ENV=production
 ### 6.5 Box Management
 
 **TC-BOX-001: Create Box**
+
 - **Precondition:** User logged in
 - **Steps:** Fill name, description, tags, location, submit
 - **Expected:** Box created with short_id, search_vector generated
 - **Priority:** High
 
 **TC-BOX-002: Create Box with QR**
+
 - **Precondition:** Available QR code exists
 - **Steps:** Create box and assign QR
 - **Expected:** Box created, QR assigned
 - **Priority:** High
 
 **TC-BOX-003: Edit Box Details**
+
 - **Precondition:** Box exists
 - **Steps:** Update name, description, tags
 - **Expected:** Box updated, search_vector regenerated
 - **Priority:** High
 
 **TC-BOX-004: Move Box to Different Location**
+
 - **Precondition:** Box in Location A
 - **Steps:** Edit box, change location to Location B
 - **Expected:** Box location_id updated
 - **Priority:** Medium
 
 **TC-BOX-005: Delete Box**
+
 - **Precondition:** Box with assigned QR
 - **Steps:** Delete box
 - **Expected:** Box deleted, QR reset to "generated"
 - **Priority:** High
 
 **TC-BOX-006: View Box Details**
+
 - **Precondition:** Box exists
 - **Steps:** Navigate to /app/boxes/[id]
 - **Expected:** Name, description, tags, location, QR code displayed
 - **Priority:** Medium
 
 **TC-BOX-007: Box Short ID Generation**
+
 - **Precondition:** Create new box
 - **Steps:** Submit box creation
 - **Expected:** short_id auto-generated (10 alphanumeric chars)
@@ -821,48 +906,56 @@ NODE_ENV=production
 ### 6.6 Search Functionality
 
 **TC-SEARCH-001: Live Search Activation**
+
 - **Precondition:** Dashboard loaded
 - **Steps:** Type 3 characters in search bar
 - **Expected:** Search results appear
 - **Priority:** High
 
 **TC-SEARCH-002: Search by Box Name**
+
 - **Precondition:** Box named "Narzędzia" exists
 - **Steps:** Search "Narzędzia"
 - **Expected:** Box returned in results
 - **Priority:** High
 
 **TC-SEARCH-003: Search by Description**
+
 - **Precondition:** Box description contains "śrubokręty"
 - **Steps:** Search "śrubokręty"
 - **Expected:** Box returned in results
 - **Priority:** High
 
 **TC-SEARCH-004: Search by Tags**
+
 - **Precondition:** Box tagged "elektronika"
 - **Steps:** Search "elektronika"
 - **Expected:** Box returned in results
 - **Priority:** High
 
 **TC-SEARCH-005: Search by Location Name**
+
 - **Precondition:** Box in "Garaż" location
 - **Steps:** Search "Garaż"
 - **Expected:** All boxes in Garaż returned
 - **Priority:** Medium
 
 **TC-SEARCH-006: Clear Search**
+
 - **Precondition:** Active search with results
 - **Steps:** Click "X" button
 - **Expected:** Search cleared, full list restored
 - **Priority:** Low
 
 **TC-SEARCH-007: No Results Handling**
+
 - **Precondition:** Search term doesn't match any data
 - **Steps:** Search "nonexistent"
 - **Expected:** "Brak pudełek spełniających kryteria" message
 - **Priority:** Medium
 
 **TC-SEARCH-008: Full-Text Search Performance**
+
 - **Precondition:** 10,000 boxes in database
 - **Steps:** Perform search
 - **Expected:** Results returned in <500ms
@@ -871,18 +964,21 @@ NODE_ENV=production
 ### 6.7 Theme Management
 
 **TC-THEME-001: Toggle Dark Mode**
+
 - **Precondition:** Light mode active
 - **Steps:** Click theme toggle
 - **Expected:** Dark mode activated, saved to database
 - **Priority:** Low
 
 **TC-THEME-002: Theme Persistence**
+
 - **Precondition:** Dark mode saved
 - **Steps:** Logout, login
 - **Expected:** Dark mode restored
 - **Priority:** Low
 
 **TC-THEME-003: System Theme Preference**
+
 - **Precondition:** Theme set to "system"
 - **Steps:** Change OS theme
 - **Expected:** App theme follows OS
@@ -891,26 +987,31 @@ NODE_ENV=production
 ### 6.8 API Endpoint Testing
 
 **TC-API-001: GET /api/workspaces - Unauthorized**
+
 - **Steps:** Request without session cookie
 - **Expected:** 401 Unauthorized
 - **Priority:** High
 
 **TC-API-002: POST /api/boxes - Invalid Data**
+
 - **Steps:** Send request with missing required fields
 - **Expected:** 400 Bad Request with Zod error messages
 - **Priority:** High
 
 **TC-API-003: PATCH /api/locations/[id] - Non-Existent ID**
+
 - **Steps:** Update location with invalid UUID
 - **Expected:** 404 Not Found
 - **Priority:** Medium
 
 **TC-API-004: DELETE /api/boxes/[id] - Forbidden**
+
 - **Steps:** User A attempts to delete User B's box
 - **Expected:** 403 Forbidden (RLS enforcement)
 - **Priority:** Critical
 
 **TC-API-005: POST /api/qr-codes/batch - Range Validation**
+
 - **Steps:** Request 150 QR codes (exceeds limit)
 - **Expected:** 400 Bad Request "Maximum 100 codes per batch"
 - **Priority:** Medium
@@ -922,6 +1023,7 @@ NODE_ENV=production
 ### 7.1 Automation Scope
 
 **Automate:**
+
 - ✅ Unit tests (100% automated)
 - ✅ Integration tests (100% automated)
 - ✅ API endpoint tests (100% automated)
@@ -931,6 +1033,7 @@ NODE_ENV=production
 - ✅ Performance benchmarks (80% automated)
 
 **Manual Testing:**
+
 - ❌ Exploratory testing (new features)
 - ❌ Usability testing (user feedback)
 - ❌ Accessibility testing with screen readers (supplemental)
@@ -957,7 +1060,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.14.0'
+          node-version: "22.14.0"
       - run: npm ci
       - run: npm run lint
       - run: npm run test:unit
@@ -998,10 +1101,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm audit --production
-      - run: npm run security:scan  # OWASP ZAP baseline scan
+      - run: npm run security:scan # OWASP ZAP baseline scan
 ```
 
 **Pipeline Gates:**
+
 - All tests must pass before merge to `main`
 - Code coverage must be ≥75%
 - No critical security vulnerabilities
@@ -1010,12 +1114,14 @@ jobs:
 ### 7.3 Test Automation Tools
 
 **Unit & Integration Tests:**
+
 - **Framework:** Vitest
 - **Execution:** `npm run test:unit`, `npm run test:integration`
 - **Watch Mode:** `npm run test:watch`
 - **Coverage:** `npm run test:coverage`
 
 **E2E Tests:**
+
 - **Framework:** Playwright
 - **Execution:** `npm run test:e2e`
 - **Headed Mode:** `npm run test:e2e:headed`
@@ -1023,11 +1129,13 @@ jobs:
 - **Parallel:** 4 workers (configurable)
 
 **API Tests:**
+
 - **Framework:** Supertest + Vitest
 - **Execution:** `npm run test:api`
 - **Isolation:** Separate test database
 
 **RLS Tests:**
+
 - **Framework:** Vitest + Supabase client
 - **Execution:** `npm run test:rls`
 - **Approach:** Create multiple user contexts, verify isolation
@@ -1037,13 +1145,14 @@ jobs:
 **Strategy:** Factory Pattern + Database Seeding
 
 **Test Factories:**
+
 ```typescript
 // tests/factories/userFactory.ts
 export function createUser(overrides = {}) {
   return {
     email: `user-${Date.now()}@test.com`,
-    password: 'TestPass123!',
-    ...overrides
+    password: "TestPass123!",
+    ...overrides,
   };
 }
 
@@ -1051,15 +1160,16 @@ export function createUser(overrides = {}) {
 export function createBox(overrides = {}) {
   return {
     name: `Test Box ${Date.now()}`,
-    description: 'Test description',
-    tags: ['test', 'automation'],
-    workspace_id: '...',
-    ...overrides
+    description: "Test description",
+    tags: ["test", "automation"],
+    workspace_id: "...",
+    ...overrides,
   };
 }
 ```
 
 **Cleanup Strategy:**
+
 - Teardown after each test suite
 - Isolated test workspaces
 - Database transactions (rollback after test)
@@ -1067,12 +1177,14 @@ export function createBox(overrides = {}) {
 ### 7.5 Test Reporting
 
 **Reports Generated:**
+
 - **HTML Report:** Vitest UI (`npm run test:ui`)
 - **JUnit XML:** CI/CD integration
 - **Coverage Report:** HTML + LCOV format
 - **Playwright Report:** HTML with screenshots/videos
 
 **Dashboard:**
+
 - Codecov for coverage trends
 - GitHub Actions for test history
 - Custom dashboard (optional): Allure Report
@@ -1084,9 +1196,11 @@ export function createBox(overrides = {}) {
 ### 8.1 Testing Phases
 
 #### Phase 0: Pre-Production Critical Testing (Week 1-2)
+
 **Objective:** Ensure production-ready security and stability
 
 **Activities:**
+
 - ✅ Enable and verify RLS policies (US-036) - **2 hours**
 - ✅ Multi-user isolation testing - **4 hours**
 - ✅ Verify Winston logging (US-037) - **1 hour**
@@ -1094,6 +1208,7 @@ export function createBox(overrides = {}) {
 - ✅ Regression testing (MVP features) - **6 hours**
 
 **Deliverables:**
+
 - RLS test suite (100% coverage)
 - Security audit report
 - Pre-production sign-off
@@ -1105,9 +1220,11 @@ export function createBox(overrides = {}) {
 ---
 
 #### Phase 1: Test Infrastructure Setup (Week 3-4)
+
 **Objective:** Establish testing foundation and tooling
 
 **Activities:**
+
 - Set up Vitest for unit/integration tests - **4 hours**
 - Configure Playwright for E2E tests - **6 hours**
 - Create test factories and utilities - **8 hours**
@@ -1116,6 +1233,7 @@ export function createBox(overrides = {}) {
 - Test environment configuration - **4 hours**
 
 **Deliverables:**
+
 - Test framework configured
 - CI/CD pipeline operational
 - Test data seeding automated
@@ -1125,9 +1243,11 @@ export function createBox(overrides = {}) {
 ---
 
 #### Phase 2: Core Test Suite Development (Week 5-8)
+
 **Objective:** Achieve 80% test coverage for MVP features
 
 **Activities:**
+
 - Unit tests for service layer (6 services) - **20 hours**
 - Integration tests for API endpoints (14 endpoints) - **24 hours**
 - E2E tests for critical workflows (5 journeys) - **30 hours**
@@ -1135,6 +1255,7 @@ export function createBox(overrides = {}) {
 - Search functionality tests (8 test cases) - **8 hours**
 
 **Deliverables:**
+
 - 150+ unit tests
 - 50+ integration tests
 - 25+ E2E tests
@@ -1145,9 +1266,11 @@ export function createBox(overrides = {}) {
 ---
 
 #### Phase 3: Non-Functional Testing (Week 9-10)
+
 **Objective:** Validate performance, security, and accessibility
 
 **Activities:**
+
 - Performance testing (load, stress) - **16 hours**
 - Security testing (penetration, vulnerability scan) - **12 hours**
 - Accessibility testing (WCAG 2.1 AA) - **12 hours**
@@ -1155,6 +1278,7 @@ export function createBox(overrides = {}) {
 - PWA functionality testing - **4 hours**
 
 **Deliverables:**
+
 - Performance benchmark report
 - Security audit report
 - Accessibility audit report
@@ -1165,15 +1289,18 @@ export function createBox(overrides = {}) {
 ---
 
 #### Phase 4: Regression & Maintenance (Ongoing)
+
 **Objective:** Maintain test suite and prevent regressions
 
 **Activities:**
+
 - Update tests for new features - **4 hours/week**
 - Fix flaky tests - **2 hours/week**
 - Review test coverage - **1 hour/week**
 - Update test documentation - **1 hour/week**
 
 **Deliverables:**
+
 - Stable test suite (>95% pass rate)
 - Up-to-date test documentation
 
@@ -1186,6 +1313,7 @@ export function createBox(overrides = {}) {
 #### Team Composition
 
 **QA Engineers (2 FTE for 10 weeks):**
+
 - Test strategy and planning
 - Test case development
 - Test automation (Vitest, Playwright)
@@ -1193,17 +1321,20 @@ export function createBox(overrides = {}) {
 - Bug tracking and reporting
 
 **Developers (0.5 FTE for 10 weeks):**
+
 - Test infrastructure setup
 - Complex integration test scenarios
 - RLS policy test implementation
 - Performance test scripting
 
 **DevOps Engineer (0.25 FTE for 10 weeks):**
+
 - CI/CD pipeline configuration
 - Test environment provisioning
 - Database seeding automation
 
 **Security Specialist (0.1 FTE for 2 weeks):**
+
 - Penetration testing
 - Security audit review
 - OWASP compliance verification
@@ -1211,15 +1342,18 @@ export function createBox(overrides = {}) {
 #### Hardware/Software
 
 **Development Machines:**
+
 - 2 laptops (macOS or Windows, 16GB RAM, SSD)
 - 2 mobile devices (iPhone, Android)
 
 **Cloud Services:**
+
 - BrowserStack subscription ($99/month)
 - DigitalOcean staging environment ($20/month)
 - Codecov Pro ($10/month)
 
 **Testing Tools:**
+
 - Playwright (free)
 - Vitest (free)
 - OWASP ZAP (free)
@@ -1232,18 +1366,21 @@ export function createBox(overrides = {}) {
 ### 8.3 Milestones and Success Criteria
 
 **Milestone 1: Pre-Production Ready (Week 2)**
+
 - ✅ All RLS policies enabled and tested
 - ✅ Security audit complete (0 critical issues)
 - ✅ Regression test suite passes
 - **Gate:** Production deployment approved
 
 **Milestone 2: Test Infrastructure Complete (Week 4)**
+
 - ✅ CI/CD pipeline operational
 - ✅ Test environments provisioned
 - ✅ Test frameworks configured
 - **Gate:** Ready for test development
 
 **Milestone 3: 80% Test Coverage (Week 8)**
+
 - ✅ 150+ unit tests written
 - ✅ 50+ integration tests written
 - ✅ 25+ E2E tests written
@@ -1251,12 +1388,14 @@ export function createBox(overrides = {}) {
 - **Gate:** MVP feature coverage complete
 
 **Milestone 4: Non-Functional Testing Complete (Week 10)**
+
 - ✅ Performance benchmarks established
 - ✅ Security audit passed
 - ✅ WCAG 2.1 AA compliance verified
 - **Gate:** Production-ready certification
 
 **Milestone 5: Continuous Testing Established (Week 12+)**
+
 - ✅ Automated test suite runs on every PR
 - ✅ <5% flaky test rate
 - ✅ Test suite execution <15 minutes
@@ -1267,26 +1406,31 @@ export function createBox(overrides = {}) {
 ### 8.4 Risk Management
 
 **Risk 1: RLS Policy Failures in Production**
+
 - **Probability:** Low (with Phase 0 testing)
 - **Impact:** Critical (data breach)
 - **Mitigation:** Mandatory Phase 0 testing, production monitoring, canary deployments
 
 **Risk 2: Flaky E2E Tests**
+
 - **Probability:** Medium
 - **Impact:** Low (CI/CD delays)
 - **Mitigation:** Playwright auto-retry, explicit waits, quarantine flaky tests
 
 **Risk 3: Limited Mobile Device Access**
+
 - **Probability:** Medium
 - **Impact:** Medium (PWA usability issues)
 - **Mitigation:** BrowserStack subscription, borrow devices, beta tester program
 
 **Risk 4: Test Maintenance Overhead**
+
 - **Probability:** High
 - **Impact:** Medium (test debt)
 - **Mitigation:** Regular refactoring, shared test utilities, documentation
 
 **Risk 5: Performance Regression**
+
 - **Probability:** Medium
 - **Impact:** Medium (user experience degradation)
 - **Mitigation:** Continuous performance benchmarking, Lighthouse CI, database query optimization
@@ -1298,25 +1442,30 @@ export function createBox(overrides = {}) {
 ### 9.1 Test Execution Schedule
 
 **Daily:**
+
 - Unit tests on every commit (developer machines)
 - Linting on every commit (pre-commit hook)
 
 **Per Pull Request:**
+
 - Full test suite (unit + integration + E2E)
 - Code coverage check
 - Security scan (npm audit)
 
 **Nightly:**
+
 - Full regression suite (all E2E tests)
 - Performance benchmarks
 - Database integrity checks
 
 **Weekly:**
+
 - Accessibility audit (axe scan)
 - Browser compatibility checks
 - Test suite review
 
 **Pre-Release:**
+
 - Full manual exploratory testing
 - Security penetration testing
 - Smoke tests on staging
@@ -1327,18 +1476,21 @@ export function createBox(overrides = {}) {
 **Tool:** GitHub Issues (already in use)
 
 **Severity Levels:**
+
 - **S1 - Blocker:** Production-blocking, security breach, data loss
 - **S2 - Critical:** Major functionality broken, no workaround
 - **S3 - Major:** Feature broken, workaround exists
 - **S4 - Minor:** Cosmetic, edge case, low impact
 
 **Priority Levels:**
+
 - **P1:** Fix immediately (hotfix)
 - **P2:** Fix in current sprint
 - **P3:** Fix in next sprint
 - **P4:** Backlog (nice-to-have)
 
 **SLA:**
+
 - S1/P1: Fix within 4 hours
 - S2/P2: Fix within 2 days
 - S3/P3: Fix within 1 week
@@ -1347,6 +1499,7 @@ export function createBox(overrides = {}) {
 ### 9.3 Test Metrics
 
 **Key Metrics to Track:**
+
 - **Test Pass Rate:** Target >95%
 - **Code Coverage:** Target ≥80%
 - **Defect Density:** Target <2 defects per 1000 LOC
@@ -1355,6 +1508,7 @@ export function createBox(overrides = {}) {
 - **Mean Time to Repair (MTTR):** Target <24 hours
 
 **Dashboard Tools:**
+
 - GitHub Actions (test results)
 - Codecov (coverage trends)
 - Custom dashboard (optional)
@@ -1362,12 +1516,14 @@ export function createBox(overrides = {}) {
 ### 9.4 Exit Criteria
 
 **Pre-Production (Phase 0):**
+
 - ✅ All RLS tests passing (100%)
 - ✅ Security audit passed (0 critical issues)
 - ✅ Regression tests passing (100%)
 - ✅ Logging verified (no PII leakage)
 
 **MVP Release:**
+
 - ✅ 80% code coverage achieved
 - ✅ All critical test cases passing
 - ✅ 0 blocker/critical defects open
@@ -1375,6 +1531,7 @@ export function createBox(overrides = {}) {
 - ✅ Accessibility audit passed
 
 **Post-MVP Releases:**
+
 - ✅ All new feature tests passing
 - ✅ Regression tests passing
 - ✅ Code coverage maintained ≥80%
@@ -1388,13 +1545,15 @@ export function createBox(overrides = {}) {
 **Date:** January 11, 2026
 
 **Reviewed By:**
-- [ ] Product Owner - ___________________
-- [ ] Technical Lead - ___________________
-- [ ] Security Lead - ___________________
+
+- [ ] Product Owner - ********\_\_\_********
+- [ ] Technical Lead - ********\_\_\_********
+- [ ] Security Lead - ********\_\_\_********
 
 **Approved By:**
-- [ ] Project Manager - ___________________
-- [ ] CTO - ___________________
+
+- [ ] Project Manager - ********\_\_\_********
+- [ ] CTO - ********\_\_\_********
 
 **Version History:**
 | Version | Date | Author | Changes |

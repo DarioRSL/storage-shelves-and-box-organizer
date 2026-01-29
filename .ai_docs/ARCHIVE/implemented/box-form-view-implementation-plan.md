@@ -3,6 +3,7 @@
 ## 1. Overview
 
 The Box Form View is a universal form for creating and editing boxes in the Storage & Box Organizer application. It enables users to:
+
 - Add new boxes manually or by scanning a QR code
 - Edit existing boxes (change name, description, tags, location)
 - Delete boxes with confirmation
@@ -17,6 +18,7 @@ The view supports both creation (create mode) and editing (edit mode) in a singl
 - **Path for details (optional):** `/app/boxes/[id]` (read-only view)
 
 The form can be rendered as:
+
 - Full page (in files `src/pages/app/boxes/new.astro` and `src/pages/app/boxes/[id]/edit.astro`)
 - Modal (within another view, e.g., dashboard)
 
@@ -53,6 +55,7 @@ BoxFormView (main page/modal component)
 **Component description:** Main form component for creating and editing boxes. Manages form state, validation, API communication, and submit/delete flow.
 
 **Main elements:**
+
 - `<form>` element with `onSubmit` handler
 - Sequence of input fields grouped in `<fieldset>` or `<div role="group">`
 - Action section (buttons) at the bottom
@@ -60,6 +63,7 @@ BoxFormView (main page/modal component)
 - Delete confirmation modal
 
 **Supported interactions:**
+
 - Text input in name and description fields
 - Adding/removing tags
 - Selecting location from tree/dropdown
@@ -69,6 +73,7 @@ BoxFormView (main page/modal component)
 - Delete confirmation (Delete button → Confirmation Dialog → DELETE API call)
 
 **Supported validation:**
+
 - **Name:** required, non-empty string (minimum 1 character), max 255 characters (implicit from API schema)
 - **Description:** optional, max 10,000 characters, real-time character counter
 - **Tags:** optional array of strings, each tag max 50 characters (recommendation), no duplicates
@@ -76,15 +81,17 @@ BoxFormView (main page/modal component)
 - **QR Code:** optional UUID, must have "generated" status (server-side validation)
 
 Validation has two layers:
+
 1. **Client-side:** Zod schema (mirror of API schema) for quick feedback
 2. **Server-side:** API validates again for security
 
 **Types:** CreateBoxRequest, CreateBoxResponse, UpdateBoxRequest, UpdateBoxResponse, BoxDto, LocationDto, GetBoxesQuery
 
 **Props:**
+
 ```typescript
 interface BoxFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   boxId?: string; // required if mode === 'edit'
   workspaceId: string;
   initialLocationId?: string; // pre-select location from URL/context
@@ -101,16 +108,19 @@ interface BoxFormProps {
 **Component description:** Input field for entering box name. Integral form element.
 
 **Main elements:**
+
 - `<label>` with `htmlFor` connector
 - `<input type="text">` with placeholder
 - Error icon (if error)
 - Error text below input
 
 **Supported interactions:**
+
 - Text input
 - Focus/blur for validation
 
 **Supported validation:**
+
 - Required field
 - Minimum 1 character
 - Can contain unicode (e.g., Polish characters)
@@ -118,6 +128,7 @@ interface BoxFormProps {
 **Types:** string
 
 **Props:**
+
 ```typescript
 interface NameInputProps {
   value: string;
@@ -135,6 +146,7 @@ interface NameInputProps {
 **Component description:** Textarea field for entering box description (contents). Supports character counter for UX feedback.
 
 **Main elements:**
+
 - `<label>` with `htmlFor`
 - `<textarea>` with placeholder
 - Character counter (e.g., "245 / 10,000")
@@ -142,11 +154,13 @@ interface NameInputProps {
 - Progress bar (optional) showing 80% (color change on warning)
 
 **Supported interactions:**
+
 - Text input
 - Auto-resize textarea (optional)
 - Focus/blur
 
 **Supported validation:**
+
 - Optional field
 - Max 10,000 characters
 - Real-time feedback on counter
@@ -155,6 +169,7 @@ interface NameInputProps {
 **Types:** string | null
 
 **Props:**
+
 ```typescript
 interface DescriptionTextareaProps {
   value: string | null;
@@ -173,6 +188,7 @@ interface DescriptionTextareaProps {
 **Component description:** Combobox for managing box tags. Supports predefined tags (from workspace box history) and custom tags.
 
 **Main elements:**
+
 - `<label>` with `htmlFor`
 - `<div role="combobox">` - container for interactive elements
 - `<input>` for filtering/adding tags
@@ -181,6 +197,7 @@ interface DescriptionTextareaProps {
 - Error icon and text below
 
 **Supported interactions:**
+
 - Text input → suggestions filtering
 - Click suggestion or Enter → add tag
 - Backspace in empty input → remove last tag
@@ -189,15 +206,17 @@ interface DescriptionTextareaProps {
 - Arrow keys → navigation in suggestions
 
 **Supported validation:**
+
 - Optional field
 - Max 10 tags (UX recommendation)
 - Each tag: 1-50 characters
 - No duplicates (case-insensitive check)
-- Only alphanumeric + -, _, spaces
+- Only alphanumeric + -, \_, spaces
 
 **Types:** string[]
 
 **Props:**
+
 ```typescript
 interface TagInputProps {
   value: string[];
@@ -217,6 +236,7 @@ interface TagInputProps {
 **Component description:** Location selector in tree/dropdown form. Displays hierarchical location structure with expand/collapse capability.
 
 **Main elements:**
+
 - `<label>` with `htmlFor`
 - `<button>` to open tree/dropdown (trigger)
 - Displayed selected location path (breadcrumb)
@@ -227,6 +247,7 @@ interface TagInputProps {
 - Error icon and text below
 
 **Supported interactions:**
+
 - Click trigger → open tree/dropdown
 - Click location node → selection
 - Click expand icon → lazy load children
@@ -234,6 +255,7 @@ interface TagInputProps {
 - Keyboard: Arrow Up/Down, Enter, Escape
 
 **Supported validation:**
+
 - Optional field (box can be without location)
 - Selected location_id must exist and belong to workspace (server-side)
 - Recursive loading: if parent_id provided, fetch only children
@@ -241,6 +263,7 @@ interface TagInputProps {
 **Types:** LocationDto[], GetLocationsQuery
 
 **Props:**
+
 ```typescript
 interface LocationSelectorProps {
   value: string | null; // selected location_id
@@ -260,6 +283,7 @@ interface LocationSelectorProps {
 **Component description:** Optional selector for assigning a free QR code to a box (if the box doesn't already have an assigned code in edit mode).
 
 **Main elements:**
+
 - `<label>` with `htmlFor`
 - `<select>` or custom dropdown with list of available QR codes
 - Displayed QR code short_id (format: QR-XXXXXX)
@@ -269,11 +293,13 @@ interface LocationSelectorProps {
 - Error icon and text below
 
 **Supported interactions:**
+
 - Select from list → selection
 - Click "Generate" → POST /qr-codes/batch
 - Click preview → enlarge modal (optional)
 
 **Supported validation:**
+
 - Optional field
 - Selected QR code must have "generated" status (server-side)
 - Validation in create mode: can be null
@@ -282,6 +308,7 @@ interface LocationSelectorProps {
 **Types:** QrCodeDetailDto[]
 
 **Props:**
+
 ```typescript
 interface QRCodeSelectorProps {
   value: string | null; // selected qr_code_id
@@ -303,6 +330,7 @@ interface QRCodeSelectorProps {
 **Component description:** Section with buttons at the bottom of the form (Save, Cancel, Delete).
 
 **Main elements:**
+
 - Container with flexbox for horizontal layout
 - `<button type="submit">` Save/Create
 - `<button type="button">` Cancel
@@ -311,6 +339,7 @@ interface QRCodeSelectorProps {
 - Disabled state on all buttons during submission
 
 **Supported interactions:**
+
 - Click Save → submit form
 - Click Cancel → onCancel callback
 - Click Delete → show confirmation dialog
@@ -318,6 +347,7 @@ interface QRCodeSelectorProps {
 **Types:** None (presentational)
 
 **Props:**
+
 ```typescript
 interface FormActionsProps {
   onSave?: () => void; // handled by form.onSubmit, but optional explicit
@@ -325,7 +355,7 @@ interface FormActionsProps {
   onDelete?: () => void; // if mode === 'edit'
   isSaving?: boolean;
   isDeleting?: boolean;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   disabled?: boolean;
 }
 ```
@@ -337,6 +367,7 @@ interface FormActionsProps {
 **Component description:** Modal dialog for confirming dangerous operations (box deletion).
 
 **Main elements:**
+
 - Modal overlay
 - Warning icon
 - Title: "Delete box?"
@@ -346,6 +377,7 @@ interface FormActionsProps {
 - `<button variant="outline">` Cancel
 
 **Supported interactions:**
+
 - Type confirmation text
 - Click Delete → execute DELETE /boxes/:id
 - Click Cancel → close dialog
@@ -354,6 +386,7 @@ interface FormActionsProps {
 **Types:** None
 
 **Props:**
+
 ```typescript
 interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -372,12 +405,12 @@ interface ConfirmationDialogProps {
 
 ```typescript
 interface CreateBoxRequest {
-  workspace_id: string;        // required, UUID
-  name: string;                // required, non-empty string
+  workspace_id: string; // required, UUID
+  name: string; // required, non-empty string
   description?: string | null; // optional, max 10,000 chars
-  tags?: string[] | null;      // optional, array of tags
+  tags?: string[] | null; // optional, array of tags
   location_id?: string | null; // optional, UUID of existing location
-  qr_code_id?: string | null;  // optional, UUID of unassigned QR code
+  qr_code_id?: string | null; // optional, UUID of unassigned QR code
 }
 ```
 
@@ -388,9 +421,9 @@ type UpdateBoxRequest = Partial<Pick<Tables<"boxes">, "name" | "description" | "
 
 // In practice:
 interface UpdateBoxRequestImpl {
-  name?: string;               // optional on PATCH
+  name?: string; // optional on PATCH
   description?: string | null; // optional
-  tags?: string[] | null;      // optional
+  tags?: string[] | null; // optional
   location_id?: string | null; // optional
 }
 ```
@@ -407,10 +440,10 @@ interface BoxFormState {
   qr_code_id: string | null;
 
   // UI state
-  isLoading: boolean;        // while loading data in edit mode
-  isSaving: boolean;         // during submit
-  isDeleting: boolean;       // during delete
-  isDirty: boolean;          // whether form has changed
+  isLoading: boolean; // while loading data in edit mode
+  isSaving: boolean; // during submit
+  isDeleting: boolean; // during delete
+  isDirty: boolean; // whether form has changed
   errors: Record<string, string>; // field-level errors
 
   // References
@@ -424,7 +457,7 @@ interface BoxFormState {
 
 ```typescript
 interface BoxFormValidationError {
-  field: 'name' | 'description' | 'tags' | 'location_id' | 'qr_code_id';
+  field: "name" | "description" | "tags" | "location_id" | "qr_code_id";
   message: string;
 }
 ```
@@ -458,6 +491,7 @@ interface TagSuggestion {
 Recommendation: **Combine React local state + custom hook** for BoxForm, with Nano Store for shared workspace context.
 
 **React Local State (in BoxForm component):**
+
 - Form fields (name, description, tags, location_id, qr_code_id)
 - UI state (isLoading, isSaving, isDeleting, errors, isDirty)
 
@@ -485,6 +519,7 @@ interface UseBoxFormReturn {
 ```
 
 **Nano Store (shared):**
+
 - `workspaceStore` - current workspace_id, workspace info
 - `userStore` - authenticated user info (optional)
 
@@ -513,12 +548,14 @@ interface UseBoxFormReturn {
 ### Error State Management
 
 Errors stored as:
+
 ```typescript
 const [errors, setErrors] = useState<Record<string, string>>({});
 // e.g. { name: "Name cannot be empty", location_id: "Location not found" }
 ```
 
 **Clearing errors:**
+
 - On blur (field-level)
 - On change (clear that field's error)
 - On successful submit (clear all)
@@ -530,6 +567,7 @@ const [errors, setErrors] = useState<Record<string, string>>({});
 ### API Flow - Create Mode
 
 **Step 1: Loading initial data (componentDidMount)**
+
 ```
 GET /locations?workspace_id={workspaceId}
   → Response: LocationDto[]
@@ -542,10 +580,12 @@ GET /qr-codes/... (no dedicated endpoint, fetch from storage or POST batch)
 ```
 
 **Step 2: User fills form**
+
 - Real-time client-side validation
 - Display errors below fields
 
 **Step 3: User submits (Save button)**
+
 ```
 POST /api/boxes
   Request: CreateBoxRequest {
@@ -580,11 +620,13 @@ POST /api/boxes
 ```
 
 **Step 4: Success handling**
+
 - Show success toast/snackbar
 - Call onSuccess callback with new box ID
 - Navigate to /app/boxes/{newId} or /app/dashboard
 
 **Step 5: Error handling**
+
 - Parse response and extract error message
 - Display error in modal or form-level error
 - Keep form data for retry
@@ -594,6 +636,7 @@ POST /api/boxes
 ### API Flow - Edit Mode
 
 **Step 1: Loading box + data**
+
 ```
 GET /boxes/{boxId}
   → Response: BoxDto (full data + location + qr_code)
@@ -605,10 +648,12 @@ GET /locations?workspace_id={workspaceId}
 ```
 
 **Step 2: User modifies form**
+
 - Validation as in create mode
 - Track isDirty flag
 
 **Step 3: User submits (Save button)**
+
 ```
 PATCH /api/boxes/{boxId}
   Request: UpdateBoxRequest {
@@ -630,6 +675,7 @@ PATCH /api/boxes/{boxId}
 ```
 
 **Step 4: Success handling**
+
 - Show success toast
 - Call onSuccess callback
 - Refresh box details (optional)
@@ -640,9 +686,11 @@ PATCH /api/boxes/{boxId}
 ### API Flow - Delete Mode
 
 **Step 1: User clicks Delete button**
+
 - Show ConfirmationDialog
 
 **Step 2: User confirms (types "DELETE" and clicks Delete)**
+
 ```
 DELETE /api/boxes/{boxId}
   Expected Response (200 OK):
@@ -658,6 +706,7 @@ DELETE /api/boxes/{boxId}
 ```
 
 **Step 3: Success handling**
+
 - Close ConfirmationDialog
 - Show success toast
 - Call onSuccess callback
@@ -667,14 +716,14 @@ DELETE /api/boxes/{boxId}
 
 ### Type Mappings
 
-| API Endpoint | Request Type | Response Type | Frontend Handler |
-|---|---|---|---|
-| POST /boxes | CreateBoxRequest | CreateBoxResponse | createBox handler |
-| PATCH /boxes/:id | UpdateBoxRequest | UpdateBoxResponse | updateBox handler |
-| DELETE /boxes/:id | None | SuccessResponse | deleteBox handler |
-| GET /locations | GetLocationsQuery (query params) | LocationDto[] | loadLocations handler |
-| GET /boxes/:id | None | BoxDto | loadBoxData handler (edit mode) |
-| GET /qr-codes/:short_id | None | QrCodeDetailDto | on scanning (not in form) |
+| API Endpoint            | Request Type                     | Response Type     | Frontend Handler                |
+| ----------------------- | -------------------------------- | ----------------- | ------------------------------- |
+| POST /boxes             | CreateBoxRequest                 | CreateBoxResponse | createBox handler               |
+| PATCH /boxes/:id        | UpdateBoxRequest                 | UpdateBoxResponse | updateBox handler               |
+| DELETE /boxes/:id       | None                             | SuccessResponse   | deleteBox handler               |
+| GET /locations          | GetLocationsQuery (query params) | LocationDto[]     | loadLocations handler           |
+| GET /boxes/:id          | None                             | BoxDto            | loadBoxData handler (edit mode) |
+| GET /qr-codes/:short_id | None                             | QrCodeDetailDto   | on scanning (not in form)       |
 
 ---
 
@@ -775,6 +824,7 @@ const BoxFormSchema = z.object({
 ```
 
 **Validation application:**
+
 - On blur (field-level)
 - On submit (entire form)
 - Real-time on character counter (description)
@@ -783,6 +833,7 @@ const BoxFormSchema = z.object({
 ### Server-Side Validation (already implemented)
 
 API endpoints validate:
+
 - Name: required, non-empty
 - Description: max 10,000 chars
 - Tags: array of strings
@@ -790,6 +841,7 @@ API endpoints validate:
 - QR_code_id: must exist, status "generated" (server logic)
 
 **Corresponding errors returned:**
+
 - 400: Validation error
 - 401: Not authenticated
 - 403: Workspace forbidden
@@ -798,18 +850,18 @@ API endpoints validate:
 
 ### UI Conditions (conditional rendering)
 
-| Condition | Element | Effect |
-|---|---|---|
-| mode === 'edit' | Delete button | Visible |
-| mode === 'create' | Delete button | Hidden |
-| isSaving === true | Save button | Disabled + loading spinner |
-| errors.name exists | Name field | Red border, error text |
-| isDirty === false && mode === 'edit' | Save button | Disabled |
-| description.length > 8000 | Character counter | Warning color (yellow) |
-| description.length === 10000 | Description input | Full, can't add more |
-| availableLocations.length === 0 | Location field | "No locations" message |
-| confirmDialog.inputValue !== "DELETE" | Confirm delete btn | Disabled |
-| isLoading === true | Form | Opacity 0.5, disabled |
+| Condition                             | Element            | Effect                     |
+| ------------------------------------- | ------------------ | -------------------------- |
+| mode === 'edit'                       | Delete button      | Visible                    |
+| mode === 'create'                     | Delete button      | Hidden                     |
+| isSaving === true                     | Save button        | Disabled + loading spinner |
+| errors.name exists                    | Name field         | Red border, error text     |
+| isDirty === false && mode === 'edit'  | Save button        | Disabled                   |
+| description.length > 8000             | Character counter  | Warning color (yellow)     |
+| description.length === 10000          | Description input  | Full, can't add more       |
+| availableLocations.length === 0       | Location field     | "No locations" message     |
+| confirmDialog.inputValue !== "DELETE" | Confirm delete btn | Disabled                   |
+| isLoading === true                    | Form               | Opacity 0.5, disabled      |
 
 ---
 
@@ -818,12 +870,14 @@ API endpoints validate:
 ### Error Categories & Handling
 
 **Validation Errors (400)**
+
 - Field name empty: Show error below Name input
 - Location doesn't exist: Show error below Location selector + log
 - QR code already assigned: Show error below QR selector
 - Description > 10k: Prevent typing (input maxLength)
 
 Handler:
+
 ```typescript
 if (error.status === 400) {
   const parsed = JSON.parse(error.body);
@@ -832,22 +886,26 @@ if (error.status === 400) {
 ```
 
 **Authentication Error (401)**
+
 - User session expired
 - Invalid JWT token
 
 Handler:
+
 ```typescript
 if (error.status === 401) {
   // Redirect to login
-  window.location.href = '/login';
+  window.location.href = "/login";
 }
 ```
 
 **Authorization Error (403)**
+
 - User doesn't have access to workspace
 - User doesn't have role for editing
 
 Handler:
+
 ```typescript
 if (error.status === 403) {
   showErrorModal("No access to this workspace");
@@ -855,11 +913,13 @@ if (error.status === 403) {
 ```
 
 **Not Found Error (404)**
+
 - Box doesn't exist (edit mode)
 - Location doesn't exist
 - QR code doesn't exist
 
 Handler:
+
 ```typescript
 if (error.status === 404) {
   showErrorModal("Resources not found. Refresh and try again.");
@@ -868,9 +928,11 @@ if (error.status === 404) {
 ```
 
 **Conflict Error (409)**
+
 - QR code already assigned
 
 Handler:
+
 ```typescript
 if (error.status === 409) {
   setErrors({ qr_code_id: error.message });
@@ -879,10 +941,12 @@ if (error.status === 409) {
 ```
 
 **Server Error (500)**
+
 - Database error
 - Unexpected error
 
 Handler:
+
 ```typescript
 if (error.status === 500) {
   showErrorModal("Server error. Try again later.");
@@ -891,11 +955,13 @@ if (error.status === 500) {
 ```
 
 **Network Errors**
+
 - Timeout
 - Connection lost
 - CORS error
 
 Handler:
+
 ```typescript
 try {
   const response = await fetch(...);

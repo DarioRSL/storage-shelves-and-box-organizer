@@ -143,6 +143,7 @@ This document describes the complete authentication system implemented in PR #62
 **Purpose:** Establishes server-side session after successful Supabase authentication.
 
 **Request:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3Y2EzMTBlMC03ZGExLTQ0YzgtYWUyYS1mNzA2OTcxMmRjZGQiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20ifQ..."
@@ -150,6 +151,7 @@ This document describes the complete authentication system implemented in PR #62
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true
@@ -157,6 +159,7 @@ This document describes the complete authentication system implemented in PR #62
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Token missing or invalid format
   ```json
   { "error": "Token required" }
@@ -167,6 +170,7 @@ This document describes the complete authentication system implemented in PR #62
   ```
 
 **Security Flags:**
+
 - **HttpOnly** - Prevents JavaScript access via `document.cookie`
 - **Secure** - Only sent over HTTPS (auto-enabled in production)
 - **SameSite=Strict** - Only sent to same-origin requests (CSRF protection)
@@ -174,6 +178,7 @@ This document describes the complete authentication system implemented in PR #62
 - **Path=/** - Cookie available to all routes
 
 **Internal Logic:**
+
 1. Parse request body for `token` field
 2. Split token by "." (3 parts required: header.payload.signature)
 3. Decode payload using Base64
@@ -184,6 +189,7 @@ This document describes the complete authentication system implemented in PR #62
 8. Return JSON response
 
 **Important Notes:**
+
 - Token is NOT verified (JWT signature check skipped)
 - Verification skipped because we trust our own tokens from authenticated Supabase session
 - This is safe because token only set if Supabase auth succeeded first
@@ -197,11 +203,13 @@ This document describes the complete authentication system implemented in PR #62
 **Purpose:** Clears session cookie to log out user.
 
 **Request:**
+
 ```
 DELETE /api/auth/session
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true
@@ -209,6 +217,7 @@ DELETE /api/auth/session
 ```
 
 **Cookie Clearing:**
+
 ```
 Set-Cookie: sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0
 ```
@@ -235,16 +244,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const sessionToken = cookies.sb_session;
 
   // 3. Create Supabase client with cookie handler
-  const supabase = createServerClient<Database>(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_KEY,
-    {
-      cookies: {
-        getAll() { /* Return all cookies */ },
-        setAll() { /* Store cookies to set later */ }
-      }
-    }
-  );
+  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+    cookies: {
+      getAll() {
+        /* Return all cookies */
+      },
+      setAll() {
+        /* Store cookies to set later */
+      },
+    },
+  });
 
   // 4. Try to get user from Supabase auth
   let user = null;
@@ -257,9 +266,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Fallback: Try to decode JWT from session token
     try {
       const parts = sessionToken.split(".");
-      const payload = JSON.parse(
-        Buffer.from(parts[1], "base64").toString("utf-8")
-      );
+      const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
 
       if (payload.sub && payload.email) {
         // Create user object from JWT payload
@@ -283,7 +290,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 7. Set any cookies from Supabase
   cookiesToSet.forEach(({ name, value, options }) => {
-    response.headers.append("Set-Cookie", /* ... */);
+    response.headers.append("Set-Cookie" /* ... */);
   });
 
   return response;
@@ -291,6 +298,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ```
 
 **Authentication Priority:**
+
 1. **Primary:** Supabase `auth.getUser()` via cookies
    - Most reliable, uses full Supabase infrastructure
    - Only fails if Supabase API unavailable
@@ -301,6 +309,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
    - No signature verification (we trust our own tokens)
 
 **Logging:**
+
 - Logs user identification for paths `/app` and `/auth` only
 - Logs "Session token present: [true/false]"
 - Logs "User found from cookies: [email]" or "User found from session token: [email]"
@@ -317,10 +326,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 **Key Export: `apiFetch()`**
 
 ```typescript
-export async function apiFetch<T = unknown>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> {
+export async function apiFetch<T = unknown>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await globalThis.fetch(url, {
     headers: {
       "Content-Type": "application/json",
@@ -342,16 +348,18 @@ export async function apiFetch<T = unknown>(
 ```
 
 **Usage in Components:**
+
 ```typescript
 // All cookies automatically included
-const workspaces = await apiFetch('/api/workspaces');
-const newWorkspace = await apiFetch('/api/workspaces', {
-  method: 'POST',
-  body: JSON.stringify({ name: 'New Workspace' })
+const workspaces = await apiFetch("/api/workspaces");
+const newWorkspace = await apiFetch("/api/workspaces", {
+  method: "POST",
+  body: JSON.stringify({ name: "New Workspace" }),
 });
 ```
 
 **What `credentials: 'include'` Does:**
+
 - Tells browser to send cookies with request (even cross-origin if SameSite allows)
 - Without this flag, cookies are NOT sent with fetch requests
 - This ensures `sb_session` cookie is included in all API calls
@@ -367,38 +375,36 @@ const newWorkspace = await apiFetch('/api/workspaces', {
 **Key Steps:**
 
 ```typescript
-const handleAuthSuccess = useCallback(
-  (data: AuthSuccessResponse) => {
-    // 1. Receive JWT token from Supabase auth
-    console.log("[AuthLayout] Auth success, token length:", data.token?.length);
+const handleAuthSuccess = useCallback((data: AuthSuccessResponse) => {
+  // 1. Receive JWT token from Supabase auth
+  console.log("[AuthLayout] Auth success, token length:", data.token?.length);
 
-    if (typeof window !== "undefined") {
-      // 2. Send token to session endpoint
-      fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Send cookies
-        body: JSON.stringify({ token: data.token }),
+  if (typeof window !== "undefined") {
+    // 2. Send token to session endpoint
+    fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // Send cookies
+      body: JSON.stringify({ token: data.token }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          // 3. Redirect to /app
+          window.location.href = "/app";
+        } else {
+          // Handle error
+          setGlobalError("Nie udało się ustanowić sesji");
+        }
       })
-        .then(async (res) => {
-          if (res.ok) {
-            // 3. Redirect to /app
-            window.location.href = "/app";
-          } else {
-            // Handle error
-            setGlobalError("Nie udało się ustanowić sesji");
-          }
-        })
-        .catch((err) => {
-          setGlobalError("Błąd połączenia: " + err.message);
-        });
-    }
-  },
-  []
-);
+      .catch((err) => {
+        setGlobalError("Błąd połączenia: " + err.message);
+      });
+  }
+}, []);
 ```
 
 **Important Details:**
+
 - Token is passed in request BODY, not URL or header
 - JWT never stored in localStorage or sessionStorage
 - JWT only exists temporarily in JavaScript memory
@@ -410,63 +416,73 @@ const handleAuthSuccess = useCallback(
 
 ### 4.1 Threat Model & Mitigations
 
-| Threat | Attack | Mitigation |
-|--------|--------|-----------|
-| **XSS Attack** | Malicious JS steals token from localStorage | HttpOnly flag prevents JS access |
-| **CSRF Attack** | Attacker tricks browser into making unwanted request | SameSite=Strict blocks cross-site cookie transmission |
-| **Session Hijacking** | Attacker intercepts token in transit | HTTPS (Secure flag) encrypts transmission |
-| **Token Expiration** | Attacker uses token indefinitely | Max-Age=3600 (1 hour) forces re-auth |
-| **Logout Failure** | User logs out but stays authenticated | Delete cookie with Max-Age=0 |
-| **Supabase Outage** | Entire auth fails if Supabase down | Fallback JWT decode in middleware |
+| Threat                | Attack                                               | Mitigation                                            |
+| --------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
+| **XSS Attack**        | Malicious JS steals token from localStorage          | HttpOnly flag prevents JS access                      |
+| **CSRF Attack**       | Attacker tricks browser into making unwanted request | SameSite=Strict blocks cross-site cookie transmission |
+| **Session Hijacking** | Attacker intercepts token in transit                 | HTTPS (Secure flag) encrypts transmission             |
+| **Token Expiration**  | Attacker uses token indefinitely                     | Max-Age=3600 (1 hour) forces re-auth                  |
+| **Logout Failure**    | User logs out but stays authenticated                | Delete cookie with Max-Age=0                          |
+| **Supabase Outage**   | Entire auth fails if Supabase down                   | Fallback JWT decode in middleware                     |
 
 ### 4.2 OWASP Top 10 Compliance
 
 ✅ **A01:2021 - Broken Access Control**
+
 - RLS policies enforce workspace membership
 - API endpoints validate user authorization
 - Service layer provides additional checks
 
 ✅ **A02:2021 - Cryptographic Failures**
+
 - HTTPS only in production (Secure flag)
 - Tokens transmitted only in HTTPS
 - No sensitive data in URL
 
 ✅ **A03:2021 - Injection**
+
 - All inputs validated with Zod schemas
 - Supabase prepared statements prevent SQL injection
 - No dynamic SQL query building
 
 ✅ **A04:2021 - Insecure Design**
+
 - Multi-layer authentication (middleware + RLS + API)
 - Secure by default (HttpOnly, Secure, SameSite)
 - Principle of least privilege (role-based access)
 
 ✅ **A05:2021 - Security Misconfiguration**
+
 - RLS enabled on all tables
 - Secure defaults for cookies
 - Environment variables for secrets
 
 ✅ **A06:2021 - Vulnerable & Outdated Components**
+
 - Regular dependency updates
 - Security patches applied promptly
 - Supabase handles auth library updates
 
 ✅ **A07:2021 - Authentication Failures**
+
 - JWT tokens validated
 - Session expiration enforced
 - Fallback authentication ensures reliability
 
 ✅ **A08:2021 - Software & Data Integrity Failures**
+
 - Dependencies from trusted npm registry
 - Lock file (package-lock.json) for reproducibility
 - Git signed commits recommended
 
 ✅ **A09:2021 - Logging & Monitoring**
+
 - Errors logged with context (no sensitive data)
 - Authentication events logged
 - User actions tracked for auditing
 
 ✅ **A10:2021 - SSRF**
+
 - All external requests go through vetted APIs
 - Supabase handles database access
 - No user-controlled URLs in external requests
@@ -483,16 +499,14 @@ const handleAuthSuccess = useCallback(
 export const GET = async ({ locals }) => {
   // 1. Validate authentication
   if (!locals.user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // 2. Use Supabase client with authenticated context
-  const { data, error } = await locals.supabase
-    .from("workspaces")
-    .select("*");
+  const { data, error } = await locals.supabase.from("workspaces").select("*");
 
   // 3. RLS policies automatically filter by workspace membership
 
@@ -502,7 +516,7 @@ export const GET = async ({ locals }) => {
   // 5. Return response
   return new Response(JSON.stringify(result), {
     status: 200,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   });
 };
 ```
@@ -515,14 +529,16 @@ export const GET = async ({ locals }) => {
 export async function getWorkspaces(userId: string, supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("workspaces")
-    .select(`
+    .select(
+      `
       id,
       owner_id,
       name,
       created_at,
       updated_at,
       workspace_members (user_id, role)
-    `)
+    `
+    )
     .eq("workspace_members.user_id", userId);
 
   // RLS policy automatically filters:
@@ -532,7 +548,7 @@ export async function getWorkspaces(userId: string, supabase: SupabaseClient) {
     throw new WorkspaceError(`Failed to fetch workspaces: ${error.message}`);
   }
 
-  return data.map(ws => ({
+  return data.map((ws) => ({
     id: ws.id,
     name: ws.name,
     // ... transform to DTO
@@ -565,6 +581,7 @@ This policy automatically filters `SELECT` queries to only return workspaces whe
 ### 6.1 Token Generation
 
 1. **Supabase Auth** generates JWT:
+
    ```json
    {
      "iss": "https://supabase.example.com/auth/v1",
@@ -584,12 +601,14 @@ This policy automatically filters `SELECT` queries to only return workspaces whe
 ### 6.2 Token Validation
 
 **In Middleware:**
+
 - Attempts Supabase auth (most thorough)
 - Falls back to JWT decode if Supabase unavailable
 - JWT decoded WITHOUT signature verification (trusted source)
 - Only basic format validation: 3 parts, valid Base64
 
 **In API Endpoints:**
+
 - Validates `context.locals.user` exists
 - Supabase client already has authenticated context
 - RLS policies enforce fine-grained access control
@@ -618,17 +637,15 @@ async function logout() {
 ```
 
 **Server endpoint:**
+
 ```typescript
 export const DELETE = async () => {
-  return new Response(
-    JSON.stringify({ success: true }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": `sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`
-      }
-    }
-  );
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      "Set-Cookie": `sb_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+    },
+  });
 };
 ```
 
@@ -652,6 +669,7 @@ export const DELETE = async () => {
 ### 7.2 DevTools Verification
 
 **Check HttpOnly Cookie:**
+
 1. Open DevTools → Application → Cookies
 2. Click on domain
 3. Find `sb_session` cookie
@@ -661,6 +679,7 @@ export const DELETE = async () => {
    - ✅ SameSite=Strict
 
 **Check Network Requests:**
+
 1. Open DevTools → Network
 2. Click any API request
 3. Check Headers:
@@ -668,9 +687,10 @@ export const DELETE = async () => {
    - Request Headers: No `Authorization` header
 
 **Test JavaScript Access:**
+
 ```javascript
 console.log(document.cookie); // Should be empty
-console.log(await fetch('/api/workspaces')); // Should work (cookie sent automatically)
+console.log(await fetch("/api/workspaces")); // Should work (cookie sent automatically)
 ```
 
 ---
@@ -713,9 +733,7 @@ if (!error && data?.user) {
     const parts = sessionToken.split(".");
     if (parts.length !== 3) throw new Error("Invalid JWT format");
 
-    const payload = JSON.parse(
-      Buffer.from(parts[1], "base64").toString("utf-8")
-    );
+    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
 
     if (payload.sub && payload.email) {
       user = {
@@ -736,16 +754,19 @@ context.locals.user = user;
 ### 8.3 Fallback Limitations
 
 ⚠️ **No Signature Verification**
+
 - JWT signature not validated
 - Acceptable because we trust our own tokens from session endpoint
 - Would need JWT secret to verify signature
 
 ⚠️ **No Real-Time Revocation**
+
 - If Supabase unavailable, revoked tokens still valid
 - 1-hour expiration limits damage window
 - Future: Implement local token blacklist
 
 ⚠️ **No Metadata Updates**
+
 - User profile changes not reflected immediately
 - Only JWT claims available from fallback
 - Metadata updates need Supabase API
@@ -757,24 +778,27 @@ context.locals.user = user;
 **What Changed:**
 
 Before PR #62:
+
 ```typescript
 // Old: Authorization header
-const response = await fetch('/api/workspaces', {
+const response = await fetch("/api/workspaces", {
   headers: {
-    'Authorization': `Bearer ${token}`
-  }
+    Authorization: `Bearer ${token}`,
+  },
 });
 ```
 
 After PR #62:
+
 ```typescript
 // New: HttpOnly cookie (automatic)
-const response = await fetch('/api/workspaces', {
-  credentials: 'include'  // Cookies included automatically
+const response = await fetch("/api/workspaces", {
+  credentials: "include", // Cookies included automatically
 });
 ```
 
 **Benefits:**
+
 1. **Better Security:** XSS protection with HttpOnly
 2. **Simpler Code:** No manual token handling
 3. **Better UX:** No refresh token logic needed (yet)
@@ -858,12 +882,14 @@ if (revokedTokens.has(tokenHash)) {
 ### 11.1 "Unauthorized" (401) on All API Calls
 
 **Causes:**
+
 1. Cookie not set (session endpoint failed)
 2. Cookie has wrong name (`sb_session`)
 3. Browser not sending cookie (`credentials: 'include'` missing)
 4. Session expired (Max-Age=3600 exceeded)
 
 **Debug Steps:**
+
 1. Check DevTools → Application → Cookies for `sb_session`
 2. Check DevTools → Network → API request headers for `Cookie: sb_session=...`
 3. Check middleware logs: "User found from [cookies/session token]"
@@ -872,11 +898,13 @@ if (revokedTokens.has(tokenHash)) {
 ### 11.2 "Invalid token format" on Login
 
 **Causes:**
+
 1. Token not 3 parts (header.payload.signature)
 2. Base64 decode failed
 3. Payload missing `sub` or `email` claim
 
 **Debug Steps:**
+
 1. Check AuthLayout console: "Auth success, token length: [number]"
 2. Check session endpoint console logs
 3. Verify Supabase auth returning proper JWT
@@ -884,12 +912,14 @@ if (revokedTokens.has(tokenHash)) {
 ### 11.3 Supabase Auth Fails but API Still Works
 
 **Expected Behavior:**
+
 - Middleware fails Supabase auth
 - Fallback JWT decode succeeds
 - API calls work with fallback user
 - RLS policies may not apply (use fallback user ID only)
 
 **To Fix:**
+
 1. Check Supabase service status
 2. Verify `SUPABASE_URL` and `SUPABASE_KEY` are correct
 3. Test Supabase directly: `await supabase.auth.getUser()`
@@ -897,11 +927,13 @@ if (revokedTokens.has(tokenHash)) {
 ### 11.4 Cookie Not Persisting After Logout
 
 **Cause:**
+
 - Cookie delete command not executed
 - Browser set to "Always clear cookies on close"
 - Cookie has wrong path or domain
 
 **Debug Steps:**
+
 1. Check network response from DELETE endpoint
 2. Verify `Set-Cookie: sb_session=; Max-Age=0` header
 3. Check browser cookie settings
@@ -935,11 +967,13 @@ if (revokedTokens.has(tokenHash)) {
 ### 13.1 Problem Statement (Resolved)
 
 **Previous Issue:**
+
 - API endpoints were re-authenticating by calling `supabase.auth.getUser()` inside each endpoint
 - This redundantly duplicated middleware's authentication work
 - Resulted in 401 errors because Supabase client didn't have JWT context for RLS policies
 
 **Solution Implemented:**
+
 - API endpoints now use pre-authenticated `context.locals.user` from middleware
 - Middleware sets JWT in Supabase client via `supabase.auth.setSession()`
 - RLS policies can now access `auth.uid()` for authorization checks
@@ -954,14 +988,14 @@ export const GET: APIRoute = async ({ locals }) => {
   try {
     // 1. Get Supabase client and authenticated user from middleware
     const supabase = locals.supabase;
-    const user = locals.user;  // ← Already authenticated by middleware
+    const user = locals.user; // ← Already authenticated by middleware
 
     // 2. Verify authentication (short-circuit if missing)
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: "Nie jesteś uwierzytelniony" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Nie jesteś uwierzytelniony" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 3. Call service layer - Supabase client has JWT context
@@ -971,19 +1005,20 @@ export const GET: APIRoute = async ({ locals }) => {
     // 4. Return success response
     return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     // 5. Error handling (service layer errors)
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
 
 **Key Changes:**
+
 - ❌ **Removed:** `const { data: { user }, error } = await supabase.auth.getUser();`
 - ✅ **Now uses:** `const user = locals.user;` (from middleware)
 - ✅ **Middleware sets JWT:** Via `supabase.auth.setSession({ access_token, refresh_token: "" })`
@@ -997,18 +1032,21 @@ export const GET: APIRoute = async ({ locals }) => {
 ```typescript
 // When JWT fallback decoding succeeds, set JWT in Supabase client
 if (payload.sub && payload.email) {
-  user = { /* user object from JWT payload */ };
+  user = {
+    /* user object from JWT payload */
+  };
 
   // Set JWT in Supabase client so RLS policies can check auth.uid()
   // Manually set the session with the JWT token and empty refresh token
   await supabase.auth.setSession({
-    access_token: sessionToken,  // JWT from sb_session cookie
-    refresh_token: "",           // Not used (will be empty)
+    access_token: sessionToken, // JWT from sb_session cookie
+    refresh_token: "", // Not used (will be empty)
   });
 }
 ```
 
 **Why This Works:**
+
 1. Middleware decodes JWT from `sb_session` cookie
 2. Creates user object with `id`, `email`, and other claims
 3. Calls `supabase.auth.setSession()` to inject JWT into client
@@ -1033,12 +1071,14 @@ CREATE POLICY "Users can view their workspaces"
 ```
 
 **Without JWT Setup:**
+
 ```
 Error: 401 Unauthorized
 Reason: auth.uid() returns NULL because Supabase client has no JWT
 ```
 
 **With JWT Setup:**
+
 ```
 Success: Queries return workspace data
 Reason: auth.uid() returns user ID from JWT, RLS policy filters correctly
@@ -1081,6 +1121,7 @@ Reason: auth.uid() returns user ID from JWT, RLS policy filters correctly
 ### 13.6 Files Modified in This Update
 
 **Core Files:**
+
 - ✅ `src/middleware/index.ts` - Added `supabase.auth.setSession()` call
 - ✅ `src/pages/api/workspaces.ts` - 2 handlers (GET, POST)
 - ✅ `src/pages/api/workspaces/[workspace_id].ts` - 2 handlers (PATCH, DELETE)
@@ -1103,6 +1144,7 @@ Reason: auth.uid() returns user ID from JWT, RLS policy filters correctly
 **500 Internal Server Error with RLS Not Yet Implemented**
 
 This is **expected and correct behavior**:
+
 - ✅ 401 errors → **FIXED** (authentication now works)
 - 500 errors → RLS policies rejecting queries (awaiting RLS implementation)
 
@@ -1111,12 +1153,14 @@ The authentication is 100% functional. 500 errors will disappear once RLS polici
 ### 13.8 Performance Impact
 
 **Before Update:**
+
 ```
 Request → Middleware (auth check) → Endpoint (re-auth) → Service (query)
           ✅ Sets context.locals.user   ❌ Calls getUser() again   ✓
 ```
 
 **After Update:**
+
 ```
 Request → Middleware (auth check + JWT setup) → Endpoint (use user) → Service (query)
           ✅ Sets context.locals.user         ✅ Reuses context.locals    ✓
@@ -1124,6 +1168,7 @@ Request → Middleware (auth check + JWT setup) → Endpoint (use user) → Serv
 ```
 
 **Improvements:**
+
 - Eliminates redundant `supabase.auth.getUser()` calls in 14 endpoints
 - Faster authentication check (direct context.locals access)
 - RLS policies can properly enforce authorization
@@ -1160,6 +1205,7 @@ The HttpOnly cookie-based authentication system provides **robust security** thr
 6. **JWT Context** - Supabase client has auth.uid() for RLS policies
 
 **Latest Update (This Task):**
+
 - ✅ API endpoints now use middleware-authenticated user
 - ✅ Middleware injects JWT into Supabase client for RLS
 - ✅ No redundant authentication calls

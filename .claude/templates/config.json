@@ -74,95 +74,43 @@
         "type": "refactor",
         "description": "Code restructuring without behavior change",
         "emoji": "♻️",
-        "scopes": [
-          "types",
-          "services",
-          "components",
-          "hooks",
-          "middleware",
-          "utils",
-          "api",
-          "ui"
-        ]
+        "scopes": ["types", "services", "components", "hooks", "middleware", "utils", "api", "ui"]
       },
       {
         "type": "chore",
         "description": "Maintenance and tooling",
         "emoji": "🔧",
-        "scopes": [
-          "deps",
-          "build",
-          "ci",
-          "lint",
-          "prettier",
-          "gitignore",
-          "config",
-          "husky",
-          "npm"
-        ]
+        "scopes": ["deps", "build", "ci", "lint", "prettier", "gitignore", "config", "husky", "npm"]
       },
       {
         "type": "style",
         "description": "Code style and formatting",
         "emoji": "💄",
-        "scopes": [
-          "formatting",
-          "lint",
-          "prettier",
-          "ui",
-          "components"
-        ]
+        "scopes": ["formatting", "lint", "prettier", "ui", "components"]
       },
       {
         "type": "i18n",
         "description": "Internationalization and localization",
         "emoji": "🌐",
-        "scopes": [
-          "polish",
-          "english",
-          "settings",
-          "dashboard",
-          "ui",
-          "forms",
-          "box-details"
-        ]
+        "scopes": ["polish", "english", "settings", "dashboard", "ui", "forms", "box-details"]
       },
       {
         "type": "test",
         "description": "Adding or updating tests",
         "emoji": "✅",
-        "scopes": [
-          "unit",
-          "integration",
-          "e2e",
-          "api",
-          "components"
-        ]
+        "scopes": ["unit", "integration", "e2e", "api", "components"]
       },
       {
         "type": "perf",
         "description": "Performance improvements",
         "emoji": "⚡",
-        "scopes": [
-          "db",
-          "api",
-          "ui",
-          "bundle",
-          "render",
-          "queries"
-        ]
+        "scopes": ["db", "api", "ui", "bundle", "render", "queries"]
       },
       {
         "type": "security",
         "description": "Security improvements",
         "emoji": "🔒",
-        "scopes": [
-          "auth",
-          "rls",
-          "api",
-          "middleware",
-          "validation"
-        ]
+        "scopes": ["auth", "rls", "api", "middleware", "validation"]
       }
     ],
     "scopeCategories": {
@@ -181,18 +129,8 @@
         "layout",
         "forms"
       ],
-      "backend": [
-        "api",
-        "services",
-        "middleware",
-        "auth",
-        "validation"
-      ],
-      "database": [
-        "db",
-        "rls",
-        "migrations"
-      ],
+      "backend": ["api", "services", "middleware", "auth", "validation"],
+      "database": ["db", "rls", "migrations"],
       "documentation": [
         "ai_docs",
         "api-plan",
@@ -205,21 +143,8 @@
         "review",
         "planning"
       ],
-      "tooling": [
-        "deps",
-        "build",
-        "ci",
-        "lint",
-        "prettier",
-        "config",
-        "husky",
-        "npm"
-      ],
-      "shared": [
-        "types",
-        "utils",
-        "shared"
-      ]
+      "tooling": ["deps", "build", "ci", "lint", "prettier", "config", "husky", "npm"],
+      "shared": ["types", "utils", "shared"]
     },
     "maxHeadlineLength": 72,
     "maxSummaryLength": 100
@@ -314,37 +239,11 @@
     }
   },
   "filePatterns": {
-    "frontend": [
-      "src/components/**",
-      "src/pages/**",
-      "src/layouts/**",
-      "src/styles/**"
-    ],
-    "backend": [
-      "src/pages/api/**",
-      "src/lib/services/**",
-      "src/middleware/**"
-    ],
-    "database": [
-      "supabase/migrations/**",
-      "src/db/**"
-    ],
-    "documentation": [
-      ".ai_docs/**",
-      "*.md",
-      "CLAUDE.md",
-      "README.md"
-    ],
-    "config": [
-      "*.config.*",
-      "*.json",
-      ".prettierrc",
-      ".eslintrc",
-      "tsconfig.json"
-    ],
-    "shared": [
-      "src/types.ts",
-      "src/lib/**"
-    ]
+    "frontend": ["src/components/**", "src/pages/**", "src/layouts/**", "src/styles/**"],
+    "backend": ["src/pages/api/**", "src/lib/services/**", "src/middleware/**"],
+    "database": ["supabase/migrations/**", "src/db/**"],
+    "documentation": [".ai_docs/**", "*.md", "CLAUDE.md", "README.md"],
+    "config": ["*.config.*", "*.json", ".prettierrc", ".eslintrc", "tsconfig.json"],
+    "shared": ["src/types.ts", "src/lib/**"]
   }
 }

@@ -19,13 +19,13 @@
  * workspaces they don't belong to, even with direct database queries.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllTestData } from '../../helpers/db-setup';
-import { createAuthenticatedUser } from '../../helpers/auth-helper';
-import { seedInitialDataset } from '../../fixtures/initial-dataset';
-import { getUserSupabaseClient, getAdminSupabaseClient } from '../../helpers/supabase-test-client';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { clearAllTestData } from "../../helpers/db-setup";
+import { createAuthenticatedUser } from "../../helpers/auth-helper";
+import { seedInitialDataset } from "../../fixtures/initial-dataset";
+import { getUserSupabaseClient, getAdminSupabaseClient } from "../../helpers/supabase-test-client";
 
-describe('RLS Policies: Workspace Isolation', () => {
+describe("RLS Policies: Workspace Isolation", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -34,16 +34,14 @@ describe('RLS Policies: Workspace Isolation', () => {
     await clearAllTestData();
   });
 
-  it.skip('should allow user to access their own workspaces', async () => {
+  it.skip("should allow user to access their own workspaces", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const adminUser = dataset.users.admin;
     const userClient = getUserSupabaseClient(adminUser.token);
 
     // Act: Query workspaces as admin user
-    const { data: workspaces, error } = await userClient
-      .from('workspaces')
-      .select('*');
+    const { data: workspaces, error } = await userClient.from("workspaces").select("*");
 
     // Assert: Can see workspaces they're a member of
     expect(error).toBeNull();
@@ -51,7 +49,7 @@ describe('RLS Policies: Workspace Isolation', () => {
     expect(workspaces!.length).toBeGreaterThan(0);
   });
 
-  it.skip('should prevent user from accessing other users workspaces directly', async () => {
+  it.skip("should prevent user from accessing other users workspaces directly", async () => {
     // Arrange: Create two separate users with their own workspaces
     const dataset = await seedInitialDataset();
     const adminUser = dataset.users.admin; // member of primary workspace
@@ -60,34 +58,34 @@ describe('RLS Policies: Workspace Isolation', () => {
 
     // Create isolated workspace for viewer only
     const outsider = await createAuthenticatedUser({
-      email: 'isolated@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Isolated User',
+      email: "isolated@example.com",
+      password: "SecurePass123!",
+      full_name: "Isolated User",
     });
     const adminDbClient = getAdminSupabaseClient();
     const [isolatedWorkspace] = await adminDbClient
-      .from('workspaces')
-      .insert({ name: 'Isolated Workspace', owner_id: outsider.id })
+      .from("workspaces")
+      .insert({ name: "Isolated Workspace", owner_id: outsider.id })
       .select()
       .throwOnError();
 
     await adminDbClient
-      .from('workspace_members')
-      .insert({ workspace_id: isolatedWorkspace.id, user_id: outsider.id, role: 'owner' })
+      .from("workspace_members")
+      .insert({ workspace_id: isolatedWorkspace.id, user_id: outsider.id, role: "owner" })
       .throwOnError();
 
     // Act: Admin tries to query isolated workspace
     const { data: workspace } = await adminClient
-      .from('workspaces')
-      .select('*')
-      .eq('id', isolatedWorkspace.id)
+      .from("workspaces")
+      .select("*")
+      .eq("id", isolatedWorkspace.id)
       .single();
 
     // Assert: Should not be able to access workspace they're not a member of
     expect(workspace).toBeNull();
   });
 
-  it.skip('should allow workspace member to query workspace', async () => {
+  it.skip("should allow workspace member to query workspace", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member; // member of primary workspace
@@ -95,11 +93,7 @@ describe('RLS Policies: Workspace Isolation', () => {
     const userClient = getUserSupabaseClient(memberUser.token);
 
     // Act
-    const { data: workspace, error } = await userClient
-      .from('workspaces')
-      .select('*')
-      .eq('id', workspaceId)
-      .single();
+    const { data: workspace, error } = await userClient.from("workspaces").select("*").eq("id", workspaceId).single();
 
     // Assert
     expect(error).toBeNull();
@@ -107,7 +101,7 @@ describe('RLS Policies: Workspace Isolation', () => {
     expect(workspace!.id).toBe(workspaceId);
   });
 
-  it('should show different workspaces to different users based on membership', async () => {
+  it("should show different workspaces to different users based on membership", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const adminUser = dataset.users.admin; // member of primary
@@ -116,40 +110,38 @@ describe('RLS Policies: Workspace Isolation', () => {
     const memberClient = getUserSupabaseClient(memberUser.token);
 
     // Act
-    const { data: adminWorkspaces } = await adminClient.from('workspaces').select('*');
-    const { data: memberWorkspaces } = await memberClient.from('workspaces').select('*');
+    const { data: adminWorkspaces } = await adminClient.from("workspaces").select("*");
+    const { data: memberWorkspaces } = await memberClient.from("workspaces").select("*");
 
     // Assert: Admin sees 1 workspace, member sees 2
     expect(adminWorkspaces!.length).toBe(1);
     expect(memberWorkspaces!.length).toBe(2);
   });
 
-  it('should prevent user from inserting workspace_members for other workspaces', async () => {
+  it("should prevent user from inserting workspace_members for other workspaces", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-insert@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Insert User',
+      email: "outsider-insert@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Insert User",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act: Try to add self to workspace they don't own
-    const { error } = await outsiderClient
-      .from('workspace_members')
-      .insert({
-        workspace_id: workspaceId,
-        user_id: outsider.id,
-        role: 'owner',
-      });
+    const { error } = await outsiderClient.from("workspace_members").insert({
+      workspace_id: workspaceId,
+      user_id: outsider.id,
+      role: "owner",
+    });
 
     // Assert: Should be blocked by RLS
     expect(error).toBeTruthy();
   });
 });
 
-describe('RLS Policies: Location Isolation', () => {
+describe("RLS Policies: Location Isolation", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -158,7 +150,7 @@ describe('RLS Policies: Location Isolation', () => {
     await clearAllTestData();
   });
 
-  it('should allow workspace member to view locations', async () => {
+  it("should allow workspace member to view locations", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -166,10 +158,7 @@ describe('RLS Policies: Location Isolation', () => {
     const userClient = getUserSupabaseClient(memberUser.token);
 
     // Act
-    const { data: locations, error } = await userClient
-      .from('locations')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: locations, error } = await userClient.from("locations").select("*").eq("workspace_id", workspaceId);
 
     // Assert
     expect(error).toBeNull();
@@ -177,94 +166,83 @@ describe('RLS Policies: Location Isolation', () => {
     expect(locations!.length).toBeGreaterThan(0);
   });
 
-  it('should prevent non-member from viewing locations', async () => {
+  it("should prevent non-member from viewing locations", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-location@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Location User',
+      email: "outsider-location@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Location User",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { data: locations } = await outsiderClient
-      .from('locations')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: locations } = await outsiderClient.from("locations").select("*").eq("workspace_id", workspaceId);
 
     // Assert: Should return empty array or null due to RLS
     expect(locations).toEqual([]);
   });
 
-  it.skip('should prevent non-member from creating locations', async () => {
+  it.skip("should prevent non-member from creating locations", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-create-location@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Create Location',
+      email: "outsider-create-location@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Create Location",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('locations')
-      .insert({
-        workspace_id: workspaceId,
-        name: 'Unauthorized Location',
-        path: 'root.unauthorized',
-      });
+    const { error } = await outsiderClient.from("locations").insert({
+      workspace_id: workspaceId,
+      name: "Unauthorized Location",
+      path: "root.unauthorized",
+    });
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it.skip('should prevent non-member from updating locations', async () => {
+  it.skip("should prevent non-member from updating locations", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-update-location@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Update Location',
+      email: "outsider-update-location@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Update Location",
     });
     const locationId = dataset.locations.primary.garage.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('locations')
-      .update({ name: 'Hacked Location' })
-      .eq('id', locationId);
+    const { error } = await outsiderClient.from("locations").update({ name: "Hacked Location" }).eq("id", locationId);
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it.skip('should prevent non-member from deleting locations', async () => {
+  it.skip("should prevent non-member from deleting locations", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-delete-location@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Delete Location',
+      email: "outsider-delete-location@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Delete Location",
     });
     const locationId = dataset.locations.primary.garage.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('locations')
-      .delete()
-      .eq('id', locationId);
+    const { error } = await outsiderClient.from("locations").delete().eq("id", locationId);
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it('should allow member to CRUD locations in their workspace', async () => {
+  it("should allow member to CRUD locations in their workspace", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -273,11 +251,11 @@ describe('RLS Policies: Location Isolation', () => {
 
     // Act: Create
     const { data: created, error: createError } = await userClient
-      .from('locations')
+      .from("locations")
       .insert({
         workspace_id: workspaceId,
-        name: 'Member Created Location',
-        path: 'root.membercreated',
+        name: "Member Created Location",
+        path: "root.membercreated",
       })
       .select()
       .single();
@@ -288,25 +266,22 @@ describe('RLS Policies: Location Isolation', () => {
 
     // Act: Update
     const { error: updateError } = await userClient
-      .from('locations')
-      .update({ name: 'Updated Location' })
-      .eq('id', created!.id);
+      .from("locations")
+      .update({ name: "Updated Location" })
+      .eq("id", created!.id);
 
     // Assert: Can update
     expect(updateError).toBeNull();
 
     // Act: Delete
-    const { error: deleteError } = await userClient
-      .from('locations')
-      .delete()
-      .eq('id', created!.id);
+    const { error: deleteError } = await userClient.from("locations").delete().eq("id", created!.id);
 
     // Assert: Can delete
     expect(deleteError).toBeNull();
   });
 });
 
-describe('RLS Policies: Box Isolation', () => {
+describe("RLS Policies: Box Isolation", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -315,7 +290,7 @@ describe('RLS Policies: Box Isolation', () => {
     await clearAllTestData();
   });
 
-  it('should allow workspace member to view boxes', async () => {
+  it("should allow workspace member to view boxes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -323,10 +298,7 @@ describe('RLS Policies: Box Isolation', () => {
     const userClient = getUserSupabaseClient(memberUser.token);
 
     // Act
-    const { data: boxes, error } = await userClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: boxes, error } = await userClient.from("boxes").select("*").eq("workspace_id", workspaceId);
 
     // Assert
     expect(error).toBeNull();
@@ -334,94 +306,83 @@ describe('RLS Policies: Box Isolation', () => {
     expect(boxes!.length).toBeGreaterThan(0);
   });
 
-  it('should prevent non-member from viewing boxes', async () => {
+  it("should prevent non-member from viewing boxes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-box@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Box User',
+      email: "outsider-box@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Box User",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { data: boxes } = await outsiderClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: boxes } = await outsiderClient.from("boxes").select("*").eq("workspace_id", workspaceId);
 
     // Assert
     expect(boxes).toEqual([]);
   });
 
-  it.skip('should prevent non-member from creating boxes', async () => {
+  it.skip("should prevent non-member from creating boxes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-create-box@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Create Box',
+      email: "outsider-create-box@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Create Box",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('boxes')
-      .insert({
-        workspace_id: workspaceId,
-        name: 'Unauthorized Box',
-        short_id: 'HACK123456',
-      });
+    const { error } = await outsiderClient.from("boxes").insert({
+      workspace_id: workspaceId,
+      name: "Unauthorized Box",
+      short_id: "HACK123456",
+    });
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it.skip('should prevent non-member from updating boxes', async () => {
+  it.skip("should prevent non-member from updating boxes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-update-box@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Update Box',
+      email: "outsider-update-box@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Update Box",
     });
     const boxId = dataset.boxes.primary[0].id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('boxes')
-      .update({ name: 'Hacked Box' })
-      .eq('id', boxId);
+    const { error } = await outsiderClient.from("boxes").update({ name: "Hacked Box" }).eq("id", boxId);
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it.skip('should prevent non-member from deleting boxes', async () => {
+  it.skip("should prevent non-member from deleting boxes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-delete-box@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Delete Box',
+      email: "outsider-delete-box@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Delete Box",
     });
     const boxId = dataset.boxes.primary[0].id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('boxes')
-      .delete()
-      .eq('id', boxId);
+    const { error } = await outsiderClient.from("boxes").delete().eq("id", boxId);
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it('should allow member to CRUD boxes in their workspace', async () => {
+  it("should allow member to CRUD boxes in their workspace", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -430,11 +391,11 @@ describe('RLS Policies: Box Isolation', () => {
 
     // Act: Create
     const { data: created, error: createError } = await userClient
-      .from('boxes')
+      .from("boxes")
       .insert({
         workspace_id: workspaceId,
-        name: 'Member Created Box',
-        short_id: 'MEM1234567',
+        name: "Member Created Box",
+        short_id: "MEM1234567",
       })
       .select()
       .single();
@@ -444,26 +405,20 @@ describe('RLS Policies: Box Isolation', () => {
     expect(created).toBeTruthy();
 
     // Act: Update
-    const { error: updateError } = await userClient
-      .from('boxes')
-      .update({ name: 'Updated Box' })
-      .eq('id', created!.id);
+    const { error: updateError } = await userClient.from("boxes").update({ name: "Updated Box" }).eq("id", created!.id);
 
     // Assert: Can update
     expect(updateError).toBeNull();
 
     // Act: Delete
-    const { error: deleteError } = await userClient
-      .from('boxes')
-      .delete()
-      .eq('id', created!.id);
+    const { error: deleteError } = await userClient.from("boxes").delete().eq("id", created!.id);
 
     // Assert: Can delete
     expect(deleteError).toBeNull();
   });
 });
 
-describe('RLS Policies: QR Code Isolation', () => {
+describe("RLS Policies: QR Code Isolation", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -472,7 +427,7 @@ describe('RLS Policies: QR Code Isolation', () => {
     await clearAllTestData();
   });
 
-  it('should allow workspace member to view QR codes', async () => {
+  it("should allow workspace member to view QR codes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -480,10 +435,7 @@ describe('RLS Policies: QR Code Isolation', () => {
     const userClient = getUserSupabaseClient(memberUser.token);
 
     // Act
-    const { data: qrCodes, error } = await userClient
-      .from('qr_codes')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: qrCodes, error } = await userClient.from("qr_codes").select("*").eq("workspace_id", workspaceId);
 
     // Assert
     expect(error).toBeNull();
@@ -491,52 +443,47 @@ describe('RLS Policies: QR Code Isolation', () => {
     expect(qrCodes!.length).toBeGreaterThan(0);
   });
 
-  it('should prevent non-member from viewing QR codes', async () => {
+  it("should prevent non-member from viewing QR codes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-qr@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider QR User',
+      email: "outsider-qr@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider QR User",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { data: qrCodes } = await outsiderClient
-      .from('qr_codes')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+    const { data: qrCodes } = await outsiderClient.from("qr_codes").select("*").eq("workspace_id", workspaceId);
 
     // Assert
     expect(qrCodes).toEqual([]);
   });
 
-  it('should prevent non-member from creating QR codes', async () => {
+  it("should prevent non-member from creating QR codes", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-create-qr@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Create QR',
+      email: "outsider-create-qr@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Create QR",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
-    const { error } = await outsiderClient
-      .from('qr_codes')
-      .insert({
-        workspace_id: workspaceId,
-        short_id: 'QR-HACK01',
-        status: 'generated',
-      });
+    const { error } = await outsiderClient.from("qr_codes").insert({
+      workspace_id: workspaceId,
+      short_id: "QR-HACK01",
+      status: "generated",
+    });
 
     // Assert
     expect(error).toBeTruthy();
   });
 
-  it('should allow member to generate QR codes in their workspace', async () => {
+  it("should allow member to generate QR codes in their workspace", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const memberUser = dataset.users.member;
@@ -545,11 +492,11 @@ describe('RLS Policies: QR Code Isolation', () => {
 
     // Act
     const { data: created, error } = await userClient
-      .from('qr_codes')
+      .from("qr_codes")
       .insert({
         workspace_id: workspaceId,
-        short_id: 'QR-MEM001',
-        status: 'generated',
+        short_id: "QR-MEM001",
+        status: "generated",
       })
       .select()
       .single();
@@ -560,7 +507,7 @@ describe('RLS Policies: QR Code Isolation', () => {
   });
 });
 
-describe.skip('RLS Policies: Profile Access Control', () => {
+describe.skip("RLS Policies: Profile Access Control", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -569,21 +516,17 @@ describe.skip('RLS Policies: Profile Access Control', () => {
     await clearAllTestData();
   });
 
-  it.skip('should allow user to view their own profile', async () => {
+  it.skip("should allow user to view their own profile", async () => {
     // Arrange
     const testUser = await createAuthenticatedUser({
-      email: 'profile-view@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Profile View User',
+      email: "profile-view@example.com",
+      password: "SecurePass123!",
+      full_name: "Profile View User",
     });
     const userClient = getUserSupabaseClient(testUser.token);
 
     // Act
-    const { data: profile, error } = await userClient
-      .from('profiles')
-      .select('*')
-      .eq('id', testUser.id)
-      .single();
+    const { data: profile, error } = await userClient.from("profiles").select("*").eq("id", testUser.id).single();
 
     // Assert
     expect(error).toBeNull();
@@ -591,7 +534,7 @@ describe.skip('RLS Policies: Profile Access Control', () => {
     expect(profile!.id).toBe(testUser.id);
   });
 
-  it('should prevent user from viewing other users profiles', async () => {
+  it("should prevent user from viewing other users profiles", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const user1 = dataset.users.admin;
@@ -599,18 +542,14 @@ describe.skip('RLS Policies: Profile Access Control', () => {
     const user1Client = getUserSupabaseClient(user1.token);
 
     // Act: User1 tries to query User2's profile
-    const { data: profile } = await user1Client
-      .from('profiles')
-      .select('*')
-      .eq('id', user2.id)
-      .single();
+    const { data: profile } = await user1Client.from("profiles").select("*").eq("id", user2.id).single();
 
     // Assert: Should not be able to access other user's profile
     expect(profile).toBeNull();
   });
 });
 
-describe.skip('RLS Policies: Workspace Member Management', () => {
+describe.skip("RLS Policies: Workspace Member Management", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -619,25 +558,25 @@ describe.skip('RLS Policies: Workspace Member Management', () => {
     await clearAllTestData();
   });
 
-  it('should allow owner to add members', async () => {
+  it("should allow owner to add members", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const adminUser = dataset.users.admin; // owner
     const newUser = await createAuthenticatedUser({
-      email: 'new-member-rls@example.com',
-      password: 'SecurePass123!',
-      full_name: 'New Member RLS',
+      email: "new-member-rls@example.com",
+      password: "SecurePass123!",
+      full_name: "New Member RLS",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const adminClient = getUserSupabaseClient(adminUser.token);
 
     // Act: Owner adds new member (via RLS-protected table)
     const { data: member, error } = await adminClient
-      .from('workspace_members')
+      .from("workspace_members")
       .insert({
         workspace_id: workspaceId,
         user_id: newUser.id,
-        role: 'member',
+        role: "member",
       })
       .select()
       .single();
@@ -654,22 +593,22 @@ describe.skip('RLS Policies: Workspace Member Management', () => {
     }
   });
 
-  it('should prevent non-member from viewing workspace_members', async () => {
+  it("should prevent non-member from viewing workspace_members", async () => {
     // Arrange
     const dataset = await seedInitialDataset();
     const outsider = await createAuthenticatedUser({
-      email: 'outsider-members@example.com',
-      password: 'SecurePass123!',
-      full_name: 'Outsider Members User',
+      email: "outsider-members@example.com",
+      password: "SecurePass123!",
+      full_name: "Outsider Members User",
     });
     const workspaceId = dataset.workspaces.primary.id;
     const outsiderClient = getUserSupabaseClient(outsider.token);
 
     // Act
     const { data: members } = await outsiderClient
-      .from('workspace_members')
-      .select('*')
-      .eq('workspace_id', workspaceId);
+      .from("workspace_members")
+      .select("*")
+      .eq("workspace_id", workspaceId);
 
     // Assert: Should not be able to see members of workspace they're not in
     expect(members).toEqual([]);

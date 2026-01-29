@@ -23,43 +23,43 @@
  * Test Count: 16 tests
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useAuthForm } from '@/components/hooks/useAuthForm';
-import { createClient } from '@supabase/supabase-js';
-import type { ProfileDto, WorkspaceDto } from '@/types';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { useAuthForm } from "@/components/hooks/useAuthForm";
+import { createClient } from "@supabase/supabase-js";
+import type { ProfileDto, WorkspaceDto } from "@/types";
 
 // Mock dependencies
-vi.mock('@supabase/supabase-js');
-vi.mock('@/lib/services/logger.client');
+vi.mock("@supabase/supabase-js");
+vi.mock("@/lib/services/logger.client");
 
-describe('useAuthForm', () => {
+describe("useAuthForm", () => {
   // Mock data
   const mockProfile: ProfileDto = {
-    id: 'user-123',
-    email: 'test@example.com',
-    full_name: 'Test User',
+    id: "user-123",
+    email: "test@example.com",
+    full_name: "Test User",
     avatar_url: null,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
   };
 
   const mockWorkspace: WorkspaceDto = {
-    id: 'workspace-123',
-    name: 'My Workspace',
-    owner_id: 'user-123',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    id: "workspace-123",
+    name: "My Workspace",
+    owner_id: "user-123",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
   };
 
   const mockSession = {
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
+    access_token: "mock-access-token",
+    refresh_token: "mock-refresh-token",
     expires_in: 3600,
-    token_type: 'bearer',
+    token_type: "bearer",
     user: {
-      id: 'user-123',
-      email: 'test@example.com',
+      id: "user-123",
+      email: "test@example.com",
     },
   };
 
@@ -76,10 +76,10 @@ describe('useAuthForm', () => {
     vi.clearAllMocks();
 
     // Set up environment variables
-    vi.stubGlobal('import.meta', {
+    vi.stubGlobal("import.meta", {
       env: {
-        PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
-        PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+        PUBLIC_SUPABASE_URL: "https://test.supabase.co",
+        PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
       },
     });
 
@@ -107,8 +107,8 @@ describe('useAuthForm', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Hook Initialization', () => {
-    it('TC-AUTH-FORM-001: should initialize with default state', () => {
+  describe("Hook Initialization", () => {
+    it("TC-AUTH-FORM-001: should initialize with default state", () => {
       const { result } = renderHook(() => useAuthForm());
 
       expect(result.current.isLoading).toBe(false);
@@ -118,7 +118,7 @@ describe('useAuthForm', () => {
       expect(result.current.submitRegistration).toBeInstanceOf(Function);
     });
 
-    it('TC-AUTH-FORM-002: should accept options with callbacks', () => {
+    it("TC-AUTH-FORM-002: should accept options with callbacks", () => {
       const onSuccess = vi.fn();
       const onError = vi.fn();
 
@@ -129,21 +129,21 @@ describe('useAuthForm', () => {
     });
   });
 
-  describe('clearError Functionality', () => {
-    it('TC-AUTH-FORM-003: should clear error state when clearError is called', async () => {
+  describe("clearError Functionality", () => {
+    it("TC-AUTH-FORM-003: should clear error state when clearError is called", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       // Trigger an error by missing Supabase config
-      vi.stubGlobal('import.meta', {
+      vi.stubGlobal("import.meta", {
         env: {
-          PUBLIC_SUPABASE_URL: '',
-          PUBLIC_SUPABASE_ANON_KEY: '',
+          PUBLIC_SUPABASE_URL: "",
+          PUBLIC_SUPABASE_ANON_KEY: "",
         },
       });
 
       await act(async () => {
         try {
-          await result.current.submitLogin({ email: 'test@example.com', password: 'password' });
+          await result.current.submitLogin({ email: "test@example.com", password: "password" });
         } catch {
           // Expected to throw
         }
@@ -159,8 +159,8 @@ describe('useAuthForm', () => {
     });
   });
 
-  describe('Login Flow - Success', () => {
-    it('TC-AUTH-FORM-004: should successfully login with valid credentials', async () => {
+  describe("Login Flow - Success", () => {
+    it("TC-AUTH-FORM-004: should successfully login with valid credentials", async () => {
       const onSuccess = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onSuccess }));
 
@@ -201,8 +201,8 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
@@ -216,7 +216,7 @@ describe('useAuthForm', () => {
       });
     });
 
-    it('TC-AUTH-FORM-005: should create Supabase client with correct config', async () => {
+    it("TC-AUTH-FORM-005: should create Supabase client with correct config", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignInWithPassword.mockResolvedValueOnce({
@@ -237,61 +237,58 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(createClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-anon-key'
-      );
+      expect(createClient).toHaveBeenCalledWith("https://test.supabase.co", "test-anon-key");
     });
   });
 
-  describe('Login Flow - Error Handling', () => {
-    it('TC-AUTH-FORM-006: should handle invalid credentials error', async () => {
+  describe("Login Flow - Error Handling", () => {
+    it("TC-AUTH-FORM-006: should handle invalid credentials error", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onError }));
 
       mockSignInWithPassword.mockResolvedValueOnce({
         data: { session: null, user: null },
-        error: { message: 'Invalid login credentials' },
+        error: { message: "Invalid login credentials" },
       });
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'wrong@example.com',
-          password: 'wrongpassword',
+          email: "wrong@example.com",
+          password: "wrongpassword",
         });
       });
 
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBe('Nieprawidłowy email lub hasło');
-      expect(onError).toHaveBeenCalledWith('Nieprawidłowy email lub hasło');
+      expect(result.current.error).toBe("Nieprawidłowy email lub hasło");
+      expect(onError).toHaveBeenCalledWith("Nieprawidłowy email lub hasło");
     });
 
-    it('TC-AUTH-FORM-007: should handle generic authentication errors', async () => {
+    it("TC-AUTH-FORM-007: should handle generic authentication errors", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onError }));
 
       mockSignInWithPassword.mockResolvedValueOnce({
         data: { session: null, user: null },
-        error: { message: 'Generic auth error' },
+        error: { message: "Generic auth error" },
       });
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(result.current.error).toBe('Błąd logowania. Spróbuj ponownie.');
-      expect(onError).toHaveBeenCalledWith('Błąd logowania. Spróbuj ponownie.');
+      expect(result.current.error).toBe("Błąd logowania. Spróbuj ponownie.");
+      expect(onError).toHaveBeenCalledWith("Błąd logowania. Spróbuj ponownie.");
     });
 
-    it('TC-AUTH-FORM-008: should handle missing session after authentication', async () => {
+    it("TC-AUTH-FORM-008: should handle missing session after authentication", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignInWithPassword.mockResolvedValueOnce({
@@ -301,15 +298,15 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(result.current.error).toBe('Błąd uwierzytelniania. Spróbuj ponownie.');
+      expect(result.current.error).toBe("Błąd uwierzytelniania. Spróbuj ponownie.");
     });
 
-    it('TC-AUTH-FORM-009: should handle profile fetch error', async () => {
+    it("TC-AUTH-FORM-009: should handle profile fetch error", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignInWithPassword.mockResolvedValueOnce({
@@ -322,7 +319,7 @@ describe('useAuthForm', () => {
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: null,
-              error: { message: 'Profile not found' },
+              error: { message: "Profile not found" },
             }),
           }),
         }),
@@ -330,15 +327,15 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(result.current.error).toBe('Nie udało się pobrać profilu użytkownika');
+      expect(result.current.error).toBe("Nie udało się pobrać profilu użytkownika");
     });
 
-    it('TC-AUTH-FORM-010: should handle workspace fetch error', async () => {
+    it("TC-AUTH-FORM-010: should handle workspace fetch error", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignInWithPassword.mockResolvedValueOnce({
@@ -363,7 +360,7 @@ describe('useAuthForm', () => {
             limit: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
                 data: null,
-                error: { message: 'Workspace not found' },
+                error: { message: "Workspace not found" },
               }),
             }),
           }),
@@ -372,15 +369,15 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(result.current.error).toBe('Nie udało się pobrać workspace');
+      expect(result.current.error).toBe("Nie udało się pobrać workspace");
     });
 
-    it('TC-AUTH-FORM-011: should handle missing workspace data', async () => {
+    it("TC-AUTH-FORM-011: should handle missing workspace data", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignInWithPassword.mockResolvedValueOnce({
@@ -414,17 +411,17 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 
-      expect(result.current.error).toBe('Nie znaleziono workspace dla użytkownika');
+      expect(result.current.error).toBe("Nie znaleziono workspace dla użytkownika");
     });
   });
 
-  describe('Registration Flow - Success', () => {
-    it('TC-AUTH-FORM-012: should successfully register a new user', async () => {
+  describe("Registration Flow - Success", () => {
+    it("TC-AUTH-FORM-012: should successfully register a new user", async () => {
       const onSuccess = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onSuccess }));
 
@@ -462,9 +459,9 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitRegistration({
-          email: 'newuser@example.com',
-          password: 'password123',
-          confirmPassword: 'password123',
+          email: "newuser@example.com",
+          password: "password123",
+          confirmPassword: "password123",
           agreeToPasswordLimitation: true,
         });
       });
@@ -480,52 +477,52 @@ describe('useAuthForm', () => {
     });
   });
 
-  describe('Registration Flow - Error Handling', () => {
-    it('TC-AUTH-FORM-013: should handle email already exists error', async () => {
+  describe("Registration Flow - Error Handling", () => {
+    it("TC-AUTH-FORM-013: should handle email already exists error", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onError }));
 
       mockSignUp.mockResolvedValueOnce({
         data: { session: null, user: null },
-        error: { message: 'User already exists' },
+        error: { message: "User already exists" },
       });
 
       await act(async () => {
         await result.current.submitRegistration({
-          email: 'existing@example.com',
-          password: 'password123',
-          confirmPassword: 'password123',
+          email: "existing@example.com",
+          password: "password123",
+          confirmPassword: "password123",
           agreeToPasswordLimitation: true,
         });
       });
 
-      expect(result.current.error).toBe('Email jest już zarejestrowany');
-      expect(onError).toHaveBeenCalledWith('Email jest już zarejestrowany');
+      expect(result.current.error).toBe("Email jest już zarejestrowany");
+      expect(onError).toHaveBeenCalledWith("Email jest już zarejestrowany");
     });
 
-    it('TC-AUTH-FORM-014: should handle weak password error', async () => {
+    it("TC-AUTH-FORM-014: should handle weak password error", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() => useAuthForm({ onError }));
 
       mockSignUp.mockResolvedValueOnce({
         data: { session: null, user: null },
-        error: { message: 'Password is too weak' },
+        error: { message: "Password is too weak" },
       });
 
       await act(async () => {
         await result.current.submitRegistration({
-          email: 'test@example.com',
-          password: '123',
-          confirmPassword: '123',
+          email: "test@example.com",
+          password: "123",
+          confirmPassword: "123",
           agreeToPasswordLimitation: true,
         });
       });
 
-      expect(result.current.error).toBe('Hasło jest zbyt słabe');
-      expect(onError).toHaveBeenCalledWith('Hasło jest zbyt słabe');
+      expect(result.current.error).toBe("Hasło jest zbyt słabe");
+      expect(onError).toHaveBeenCalledWith("Hasło jest zbyt słabe");
     });
 
-    it('TC-AUTH-FORM-015: should handle profile fetch error during registration', async () => {
+    it("TC-AUTH-FORM-015: should handle profile fetch error during registration", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignUp.mockResolvedValueOnce({
@@ -538,7 +535,7 @@ describe('useAuthForm', () => {
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: null,
-              error: { message: 'Profile not found' },
+              error: { message: "Profile not found" },
             }),
           }),
         }),
@@ -546,17 +543,17 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitRegistration({
-          email: 'test@example.com',
-          password: 'password123',
-          confirmPassword: 'password123',
+          email: "test@example.com",
+          password: "password123",
+          confirmPassword: "password123",
           agreeToPasswordLimitation: true,
         });
       });
 
-      expect(result.current.error).toBe('Błąd pobierania danych użytkownika. Spróbuj ponownie.');
+      expect(result.current.error).toBe("Błąd pobierania danych użytkownika. Spróbuj ponownie.");
     });
 
-    it('TC-AUTH-FORM-016: should handle workspace initialization error during registration', async () => {
+    it("TC-AUTH-FORM-016: should handle workspace initialization error during registration", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       mockSignUp.mockResolvedValueOnce({
@@ -581,7 +578,7 @@ describe('useAuthForm', () => {
             limit: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
                 data: null,
-                error: { message: 'Workspace not found' },
+                error: { message: "Workspace not found" },
               }),
             }),
           }),
@@ -590,19 +587,19 @@ describe('useAuthForm', () => {
 
       await act(async () => {
         await result.current.submitRegistration({
-          email: 'test@example.com',
-          password: 'password123',
-          confirmPassword: 'password123',
+          email: "test@example.com",
+          password: "password123",
+          confirmPassword: "password123",
           agreeToPasswordLimitation: true,
         });
       });
 
-      expect(result.current.error).toBe('Błąd inicjalizacji konta. Spróbuj ponownie.');
+      expect(result.current.error).toBe("Błąd inicjalizacji konta. Spróbuj ponownie.");
     });
   });
 
-  describe('Loading State Management', () => {
-    it('should set loading state during login', async () => {
+  describe("Loading State Management", () => {
+    it("should set loading state during login", async () => {
       const { result } = renderHook(() => useAuthForm());
 
       let resolveLogin: (value: any) => void;
@@ -616,8 +613,8 @@ describe('useAuthForm', () => {
       let submitPromise: Promise<void>;
       act(() => {
         submitPromise = result.current.submitLogin({
-          email: 'test@example.com',
-          password: 'password123',
+          email: "test@example.com",
+          password: "password123",
         });
       });
 

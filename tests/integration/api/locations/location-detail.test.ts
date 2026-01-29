@@ -15,11 +15,11 @@
  * - RLS policy enforcement
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllTestData, seedTable } from '../../../helpers/db-setup';
-import { createAuthenticatedUser } from '../../../helpers/auth-helper';
-import { seedInitialDataset } from '../../../fixtures/initial-dataset';
-import { createRootLocationFixture, createBoxFixture } from '../../../helpers/factory';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { clearAllTestData, seedTable } from "../../../helpers/db-setup";
+import { createAuthenticatedUser } from "../../../helpers/auth-helper";
+import { seedInitialDataset } from "../../../fixtures/initial-dataset";
+import { createRootLocationFixture, createBoxFixture } from "../../../helpers/factory";
 import {
   authenticatedGet,
   authenticatedPatch,
@@ -27,10 +27,10 @@ import {
   assertSuccess,
   assertError,
   extractId,
-} from '../../../helpers/api-client';
-import { getAdminSupabaseClient } from '../../../helpers/supabase-test-client';
+} from "../../../helpers/api-client";
+import { getAdminSupabaseClient } from "../../../helpers/supabase-test-client";
 
-describe.skip('GET /api/locations/:id', () => {
+describe.skip("GET /api/locations/:id", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -39,20 +39,16 @@ describe.skip('GET /api/locations/:id', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should return location details for member', async () => {
+  describe("Success Cases", () => {
+    it("should return location details for member", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Test Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Test Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act
       const response = await authenticatedGet(`/api/locations/${location.id}`, adminUser.token);
@@ -61,65 +57,57 @@ describe.skip('GET /api/locations/:id', () => {
       assertSuccess(response);
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(location.id);
-      expect(response.body.name).toBe('Test Location');
+      expect(response.body.name).toBe("Test Location");
       expect(response.body.workspace_id).toBe(primaryWorkspaceId);
     });
 
-    it('should include location metadata', async () => {
+    it("should include location metadata", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Metadata Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Metadata Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act
       const response = await authenticatedGet(`/api/locations/${location.id}`, adminUser.token);
 
       // Assert
       assertSuccess(response);
-      expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('workspace_id');
-      expect(response.body).toHaveProperty('name');
-      expect(response.body).toHaveProperty('path');
-      expect(response.body).toHaveProperty('description');
-      expect(response.body).toHaveProperty('is_deleted');
-      expect(response.body).toHaveProperty('created_at');
-      expect(response.body).toHaveProperty('updated_at');
+      expect(response.body).toHaveProperty("id");
+      expect(response.body).toHaveProperty("workspace_id");
+      expect(response.body).toHaveProperty("name");
+      expect(response.body).toHaveProperty("path");
+      expect(response.body).toHaveProperty("description");
+      expect(response.body).toHaveProperty("is_deleted");
+      expect(response.body).toHaveProperty("created_at");
+      expect(response.body).toHaveProperty("updated_at");
     });
 
-    it.skip('should include child locations count', async () => {
+    it.skip("should include child locations count", async () => {
       // Arrange: Create parent with children
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const parentData = createRootLocationFixture(primaryWorkspaceId, 'Parent');
-      const [parent] = await adminClient
-        .from('locations')
-        .insert(parentData)
-        .select()
-        .throwOnError();
+      const parentData = createRootLocationFixture(primaryWorkspaceId, "Parent");
+      const [parent] = await adminClient.from("locations").insert(parentData).select().throwOnError();
 
       // Create 2 children
       await adminClient
-        .from('locations')
+        .from("locations")
         .insert([
           {
             workspace_id: primaryWorkspaceId,
-            name: 'Child1',
+            name: "Child1",
             path: `${parent.path}.child1`,
           },
           {
             workspace_id: primaryWorkspaceId,
-            name: 'Child2',
+            name: "Child2",
             path: `${parent.path}.child2`,
           },
         ])
@@ -133,27 +121,23 @@ describe.skip('GET /api/locations/:id', () => {
       expect(response.body.child_count || response.body.children?.length).toBe(2);
     });
 
-    it('should include box count for location', async () => {
+    it("should include box count for location", async () => {
       // Arrange: Create location with boxes
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location With Boxes');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location With Boxes");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Create 3 boxes in this location
       const boxData = [
-        createBoxFixture(primaryWorkspaceId, location.id, 'Box 1'),
-        createBoxFixture(primaryWorkspaceId, location.id, 'Box 2'),
-        createBoxFixture(primaryWorkspaceId, location.id, 'Box 3'),
+        createBoxFixture(primaryWorkspaceId, location.id, "Box 1"),
+        createBoxFixture(primaryWorkspaceId, location.id, "Box 2"),
+        createBoxFixture(primaryWorkspaceId, location.id, "Box 3"),
       ];
-      await seedTable('boxes', boxData);
+      await seedTable("boxes", boxData);
 
       // Act
       const response = await authenticatedGet(`/api/locations/${location.id}`, adminUser.token);
@@ -164,46 +148,42 @@ describe.skip('GET /api/locations/:id', () => {
     });
   });
 
-  describe.skip('Authentication Errors (401)', () => {
-    it('should reject request without authentication', async () => {
+  describe.skip("Authentication Errors (401)", () => {
+    it("should reject request without authentication", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedGet(`/api/locations/${fakeId}`, '');
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedGet(`/api/locations/${fakeId}`, "");
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject request with invalid token', async () => {
+    it("should reject request with invalid token", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedGet(`/api/locations/${fakeId}`, 'invalid.jwt.token');
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedGet(`/api/locations/${fakeId}`, "invalid.jwt.token");
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject request from non-member', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject request from non-member", async () => {
       // Arrange: Create location and outsider
       const dataset = await seedInitialDataset();
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Protected Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Protected Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       const outsider = await createAuthenticatedUser({
-        email: 'location-detail-outsider@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Location Detail Outsider',
+        email: "location-detail-outsider@example.com",
+        password: "SecurePass123!",
+        full_name: "Location Detail Outsider",
       });
 
       // Act: Outsider tries to access location
@@ -211,57 +191,49 @@ describe.skip('GET /api/locations/:id', () => {
 
       // Assert
       assertError(response, 403);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Not Found Errors (404)', () => {
-    it('should return 404 for non-existent location', async () => {
+  describe.skip("Not Found Errors (404)", () => {
+    it("should return 404 for non-existent location", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
 
       // Act: Try to get non-existent location
-      const fakeId = '00000000-0000-0000-0000-000000000001';
+      const fakeId = "00000000-0000-0000-0000-000000000001";
       const response = await authenticatedGet(`/api/locations/${fakeId}`, adminUser.token);
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should return 404 for soft-deleted location', async () => {
+    it("should return 404 for soft-deleted location", async () => {
       // Arrange: Create and soft delete location
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Deleted Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Deleted Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Soft delete
-      await adminClient
-        .from('locations')
-        .update({ is_deleted: true })
-        .eq('id', location.id)
-        .throwOnError();
+      await adminClient.from("locations").update({ is_deleted: true }).eq("id", location.id).throwOnError();
 
       // Act
       const response = await authenticatedGet(`/api/locations/${location.id}`, adminUser.token);
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 });
 
-describe.skip('PATCH /api/locations/:id', () => {
+describe.skip("PATCH /api/locations/:id", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -270,76 +242,64 @@ describe.skip('PATCH /api/locations/:id', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should update location name', async () => {
+  describe("Success Cases", () => {
+    it("should update location name", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Old Name');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Old Name");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Update name
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        name: 'New Name',
+        name: "New Name",
       });
 
       // Assert
       assertSuccess(response);
       expect(response.status).toBe(200);
-      expect(response.body.name).toBe('New Name');
+      expect(response.body.name).toBe("New Name");
       expect(response.body.id).toBe(location.id);
     });
 
-    it('should update location description', async () => {
+    it("should update location description", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        description: 'Updated description',
+        description: "Updated description",
       });
 
       // Assert
       assertSuccess(response);
-      expect(response.body.description).toBe('Updated description');
+      expect(response.body.description).toBe("Updated description");
     });
 
-    it('should regenerate ltree path when name changes', async () => {
+    it("should regenerate ltree path when name changes", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Original Name');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Original Name");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       const oldPath = location.path;
 
       // Act: Update name
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        name: 'New Location Name',
+        name: "New Location Name",
       });
 
       // Assert: Path should be regenerated
@@ -348,26 +308,22 @@ describe.skip('PATCH /api/locations/:id', () => {
       expect(response.body.path).toMatch(/^root\.newlocationname$/);
     });
 
-    it.skip('should update child paths recursively when parent path changes', async () => {
+    it.skip("should update child paths recursively when parent path changes", async () => {
       // Arrange: Create parent with children
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const parentData = createRootLocationFixture(primaryWorkspaceId, 'Parent');
-      const [parent] = await adminClient
-        .from('locations')
-        .insert(parentData)
-        .select()
-        .throwOnError();
+      const parentData = createRootLocationFixture(primaryWorkspaceId, "Parent");
+      const [parent] = await adminClient.from("locations").insert(parentData).select().throwOnError();
 
       // Create child
       const [child] = await adminClient
-        .from('locations')
+        .from("locations")
         .insert({
           workspace_id: primaryWorkspaceId,
-          name: 'Child',
+          name: "Child",
           path: `${parent.path}.child`,
         })
         .select()
@@ -375,41 +331,33 @@ describe.skip('PATCH /api/locations/:id', () => {
 
       // Act: Update parent name (changes path)
       const response = await authenticatedPatch(`/api/locations/${parent.id}`, adminUser.token, {
-        name: 'New Parent Name',
+        name: "New Parent Name",
       });
 
       assertSuccess(response);
       const newParentPath = response.body.path;
 
       // Assert: Child path should be updated
-      const { data: updatedChild } = await adminClient
-        .from('locations')
-        .select('*')
-        .eq('id', child.id)
-        .single();
+      const { data: updatedChild } = await adminClient.from("locations").select("*").eq("id", child.id).single();
 
       expect(updatedChild.path).toBe(`${newParentPath}.child`);
     });
 
-    it('should update location without changing path if only description changes', async () => {
+    it("should update location without changing path if only description changes", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       const oldPath = location.path;
 
       // Act: Update only description
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        description: 'New description',
+        description: "New description",
       });
 
       // Assert: Path should remain unchanged
@@ -417,215 +365,187 @@ describe.skip('PATCH /api/locations/:id', () => {
       expect(response.body.path).toBe(oldPath);
     });
 
-    it('should allow member to update location in their workspace', async () => {
+    it("should allow member to update location in their workspace", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Member Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Member Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Member updates location
       const response = await authenticatedPatch(`/api/locations/${location.id}`, memberUser.token, {
-        name: 'Updated By Member',
+        name: "Updated By Member",
       });
 
       // Assert
       assertSuccess(response);
-      expect(response.body.name).toBe('Updated By Member');
+      expect(response.body.name).toBe("Updated By Member");
     });
   });
 
-  describe.skip('Validation Errors (400)', () => {
-    it('should reject update with empty name', async () => {
+  describe.skip("Validation Errors (400)", () => {
+    it("should reject update with empty name", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        name: '',
+        name: "",
       });
 
       // Assert
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject update with name exceeding max length', async () => {
+    it("should reject update with name exceeding max length", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Name > 100 chars
-      const longName = 'A'.repeat(101);
+      const longName = "A".repeat(101);
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
         name: longName,
       });
 
       // Assert
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject update with description exceeding max length', async () => {
+    it("should reject update with description exceeding max length", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Description > 500 chars
-      const longDescription = 'A'.repeat(501);
+      const longDescription = "A".repeat(501);
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
         description: longDescription,
       });
 
       // Assert
       assertError(response, 400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authentication Errors (401)', () => {
-    it('should reject update without authentication', async () => {
+  describe.skip("Authentication Errors (401)", () => {
+    it("should reject update without authentication", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedPatch(`/api/locations/${fakeId}`, '', {
-        name: 'Unauthenticated Update',
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedPatch(`/api/locations/${fakeId}`, "", {
+        name: "Unauthenticated Update",
       });
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject update with invalid token', async () => {
+    it("should reject update with invalid token", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedPatch(`/api/locations/${fakeId}`, 'invalid.jwt.token', {
-        name: 'Invalid Token Update',
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedPatch(`/api/locations/${fakeId}`, "invalid.jwt.token", {
+        name: "Invalid Token Update",
       });
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject update from non-member', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject update from non-member", async () => {
       // Arrange: Create location and outsider
       const dataset = await seedInitialDataset();
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Protected Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Protected Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       const outsider = await createAuthenticatedUser({
-        email: 'location-update-outsider@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Location Update Outsider',
+        email: "location-update-outsider@example.com",
+        password: "SecurePass123!",
+        full_name: "Location Update Outsider",
       });
 
       // Act: Outsider tries to update location
       const response = await authenticatedPatch(`/api/locations/${location.id}`, outsider.token, {
-        name: 'Unauthorized Update',
+        name: "Unauthorized Update",
       });
 
       // Assert
       assertError(response, 403);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Not Found Errors (404)', () => {
-    it('should return 404 for non-existent location', async () => {
+  describe.skip("Not Found Errors (404)", () => {
+    it("should return 404 for non-existent location", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
 
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
+      const fakeId = "00000000-0000-0000-0000-000000000001";
       const response = await authenticatedPatch(`/api/locations/${fakeId}`, adminUser.token, {
-        name: 'Update Non-existent',
+        name: "Update Non-existent",
       });
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should return 404 for soft-deleted location', async () => {
+    it("should return 404 for soft-deleted location", async () => {
       // Arrange: Create and soft delete location
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Deleted Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Deleted Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Soft delete
-      await adminClient
-        .from('locations')
-        .update({ is_deleted: true })
-        .eq('id', location.id)
-        .throwOnError();
+      await adminClient.from("locations").update({ is_deleted: true }).eq("id", location.id).throwOnError();
 
       // Act
       const response = await authenticatedPatch(`/api/locations/${location.id}`, adminUser.token, {
-        name: 'Update Deleted',
+        name: "Update Deleted",
       });
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 });
 
-describe.skip('DELETE /api/locations/:id', () => {
+describe.skip("DELETE /api/locations/:id", () => {
   beforeEach(async () => {
     await clearAllTestData();
   });
@@ -634,20 +554,16 @@ describe.skip('DELETE /api/locations/:id', () => {
     await clearAllTestData();
   });
 
-  describe('Success Cases', () => {
-    it('should soft delete location', async () => {
+  describe("Success Cases", () => {
+    it("should soft delete location", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location To Delete');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location To Delete");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Soft delete
       const response = await authenticatedDelete(`/api/locations/${location.id}`, adminUser.token);
@@ -656,41 +572,33 @@ describe.skip('DELETE /api/locations/:id', () => {
       expect(response.status).toBe(204);
 
       // Verify soft delete (is_deleted=true)
-      const { data: deletedLocation } = await adminClient
-        .from('locations')
-        .select('*')
-        .eq('id', location.id)
-        .single();
+      const { data: deletedLocation } = await adminClient.from("locations").select("*").eq("id", location.id).single();
 
       expect(deletedLocation.is_deleted).toBe(true);
     });
 
-    it.skip('should soft delete child locations recursively', async () => {
+    it.skip("should soft delete child locations recursively", async () => {
       // Arrange: Create parent with children
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const parentData = createRootLocationFixture(primaryWorkspaceId, 'Parent');
-      const [parent] = await adminClient
-        .from('locations')
-        .insert(parentData)
-        .select()
-        .throwOnError();
+      const parentData = createRootLocationFixture(primaryWorkspaceId, "Parent");
+      const [parent] = await adminClient.from("locations").insert(parentData).select().throwOnError();
 
       // Create children
       const [child1, child2] = await adminClient
-        .from('locations')
+        .from("locations")
         .insert([
           {
             workspace_id: primaryWorkspaceId,
-            name: 'Child1',
+            name: "Child1",
             path: `${parent.path}.child1`,
           },
           {
             workspace_id: primaryWorkspaceId,
-            name: 'Child2',
+            name: "Child2",
             path: `${parent.path}.child2`,
           },
         ])
@@ -704,34 +612,27 @@ describe.skip('DELETE /api/locations/:id', () => {
       expect(response.status).toBe(204);
 
       // Verify all children are soft deleted
-      const { data: children } = await adminClient
-        .from('locations')
-        .select('*')
-        .in('id', [child1.id, child2.id]);
+      const { data: children } = await adminClient.from("locations").select("*").in("id", [child1.id, child2.id]);
 
       expect(children.every((c: any) => c.is_deleted === true)).toBe(true);
     });
 
-    it('should unlink boxes from deleted location', async () => {
+    it("should unlink boxes from deleted location", async () => {
       // Arrange: Create location with boxes
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Location With Boxes');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Location With Boxes");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Create boxes in location
       const boxData = [
-        createBoxFixture(primaryWorkspaceId, location.id, 'Box 1'),
-        createBoxFixture(primaryWorkspaceId, location.id, 'Box 2'),
+        createBoxFixture(primaryWorkspaceId, location.id, "Box 1"),
+        createBoxFixture(primaryWorkspaceId, location.id, "Box 2"),
       ];
-      const boxes = await seedTable('boxes', boxData);
+      const boxes = await seedTable("boxes", boxData);
 
       // Act: Delete location
       const response = await authenticatedDelete(`/api/locations/${location.id}`, adminUser.token);
@@ -741,26 +642,25 @@ describe.skip('DELETE /api/locations/:id', () => {
 
       // Verify boxes are unlinked (location_id set to null)
       const { data: unlinkedBoxes } = await adminClient
-        .from('boxes')
-        .select('*')
-        .in('id', boxes.map((b: any) => b.id));
+        .from("boxes")
+        .select("*")
+        .in(
+          "id",
+          boxes.map((b: any) => b.id)
+        );
 
       expect(unlinkedBoxes.every((b: any) => b.location_id === null)).toBe(true);
     });
 
-    it('should allow member to delete location in their workspace', async () => {
+    it("should allow member to delete location in their workspace", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const memberUser = dataset.users.member;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Member Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Member Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Act: Member deletes location
       const response = await authenticatedDelete(`/api/locations/${location.id}`, memberUser.token);
@@ -770,46 +670,42 @@ describe.skip('DELETE /api/locations/:id', () => {
     });
   });
 
-  describe.skip('Authentication Errors (401)', () => {
-    it('should reject delete without authentication', async () => {
+  describe.skip("Authentication Errors (401)", () => {
+    it("should reject delete without authentication", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedDelete(`/api/locations/${fakeId}`, '');
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedDelete(`/api/locations/${fakeId}`, "");
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should reject delete with invalid token', async () => {
+    it("should reject delete with invalid token", async () => {
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
-      const response = await authenticatedDelete(`/api/locations/${fakeId}`, 'invalid.jwt.token');
+      const fakeId = "00000000-0000-0000-0000-000000000001";
+      const response = await authenticatedDelete(`/api/locations/${fakeId}`, "invalid.jwt.token");
 
       // Assert
       assertError(response, 401);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Authorization Errors (403)', () => {
-    it('should reject delete from non-member', async () => {
+  describe.skip("Authorization Errors (403)", () => {
+    it("should reject delete from non-member", async () => {
       // Arrange: Create location and outsider
       const dataset = await seedInitialDataset();
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Protected Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Protected Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       const outsider = await createAuthenticatedUser({
-        email: 'location-delete-outsider@example.com',
-        password: 'SecurePass123!',
-        full_name: 'Location Delete Outsider',
+        email: "location-delete-outsider@example.com",
+        password: "SecurePass123!",
+        full_name: "Location Delete Outsider",
       });
 
       // Act: Outsider tries to delete location
@@ -817,52 +713,44 @@ describe.skip('DELETE /api/locations/:id', () => {
 
       // Assert
       assertError(response, 403);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 
-  describe.skip('Not Found Errors (404)', () => {
-    it('should return 404 for non-existent location', async () => {
+  describe.skip("Not Found Errors (404)", () => {
+    it("should return 404 for non-existent location", async () => {
       // Arrange
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
 
       // Act
-      const fakeId = '00000000-0000-0000-0000-000000000001';
+      const fakeId = "00000000-0000-0000-0000-000000000001";
       const response = await authenticatedDelete(`/api/locations/${fakeId}`, adminUser.token);
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
 
-    it('should return 404 for already deleted location', async () => {
+    it("should return 404 for already deleted location", async () => {
       // Arrange: Create and soft delete location
       const dataset = await seedInitialDataset();
       const adminUser = dataset.users.admin;
       const primaryWorkspaceId = dataset.workspaces.primary.id;
 
       const adminClient = getAdminSupabaseClient();
-      const locationData = createRootLocationFixture(primaryWorkspaceId, 'Deleted Location');
-      const [location] = await adminClient
-        .from('locations')
-        .insert(locationData)
-        .select()
-        .throwOnError();
+      const locationData = createRootLocationFixture(primaryWorkspaceId, "Deleted Location");
+      const [location] = await adminClient.from("locations").insert(locationData).select().throwOnError();
 
       // Soft delete
-      await adminClient
-        .from('locations')
-        .update({ is_deleted: true })
-        .eq('id', location.id)
-        .throwOnError();
+      await adminClient.from("locations").update({ is_deleted: true }).eq("id", location.id).throwOnError();
 
       // Act: Try to delete again
       const response = await authenticatedDelete(`/api/locations/${location.id}`, adminUser.token);
 
       // Assert
       assertError(response, 404);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty("error");
     });
   });
 });

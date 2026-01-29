@@ -1,23 +1,23 @@
-| Endpoint                                                 | Status      | Notes |
-| -------------------------------------------------------- | ----------- | ----- |
-| `GET /profiles/me`                                       | Done        |       |
-| `POST /api/workspaces`                                   | Done        |       |
-| `GET /api/workspaces`                                    | Done        |       |
-| `GET /api/workspaces/:workspace_id/members`              | Done        |       |
-| `POST /api/workspaces/:workspace_id/members`             | Done        |       |
-| `PATCH /api/workspaces/:workspace_id/members/:user_id`   | Done        |       |
-| `DELETE /api/workspaces/:workspace_id/members/:user_id`  | Done        |       |
-| `GET /api/locations`                                     | Done        |       |
-| `POST /api/locations`                                    | Done        |       |
-| `PATCH /api/locations/:id`                               | Done        |       |
-| `DELETE /api/locations/:id`                              | Done        |       |
-| `GET /api/boxes`                                         | Done        |       |
-| `GET /api/boxes/:id`                                     | Done        |       |
-| `POST /api/boxes`                                        | Done        |       |
-| `PATCH /api/boxes/:id`                                   | Done        |       |
-| `DELETE /api/boxes/:id`                                  | Done        |       |
-| `POST /api/qr-codes/batch`                               | Done        |       |
-| `GET /api/qr-codes/:short_id`                            | Done        |       |
+| Endpoint                                                | Status | Notes |
+| ------------------------------------------------------- | ------ | ----- |
+| `GET /profiles/me`                                      | Done   |       |
+| `POST /api/workspaces`                                  | Done   |       |
+| `GET /api/workspaces`                                   | Done   |       |
+| `GET /api/workspaces/:workspace_id/members`             | Done   |       |
+| `POST /api/workspaces/:workspace_id/members`            | Done   |       |
+| `PATCH /api/workspaces/:workspace_id/members/:user_id`  | Done   |       |
+| `DELETE /api/workspaces/:workspace_id/members/:user_id` | Done   |       |
+| `GET /api/locations`                                    | Done   |       |
+| `POST /api/locations`                                   | Done   |       |
+| `PATCH /api/locations/:id`                              | Done   |       |
+| `DELETE /api/locations/:id`                             | Done   |       |
+| `GET /api/boxes`                                        | Done   |       |
+| `GET /api/boxes/:id`                                    | Done   |       |
+| `POST /api/boxes`                                       | Done   |       |
+| `PATCH /api/boxes/:id`                                  | Done   |       |
+| `DELETE /api/boxes/:id`                                 | Done   |       |
+| `POST /api/qr-codes/batch`                              | Done   |       |
+| `GET /api/qr-codes/:short_id`                           | Done   |       |
 
 # Lista Zadań API
 
@@ -60,5 +60,5 @@ Poniższa lista przedstawia planowane endpointy API i ich stan implementacji na 
 - [x] `GET /api/qr-codes/:short_id` - Rozpoznawanie zeskanowanego kodu QR.
 
 ---
-*Lista wygenerowana automatycznie.*
 
+_Lista wygenerowana automatycznie._

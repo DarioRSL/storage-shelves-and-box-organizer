@@ -20,10 +20,10 @@
  * ```
  */
 
-import type { Session } from '@supabase/supabase-js';
-import { createAuthenticatedUser, type TestUser } from './auth-helper';
-import { getAdminSupabaseClient } from './supabase-test-client';
-import { seedTable, seedTableWithUpsert, clearAllTestData } from './db-setup';
+import type { Session } from "@supabase/supabase-js";
+import { createAuthenticatedUser, type TestUser } from "./auth-helper";
+import { getAdminSupabaseClient } from "./supabase-test-client";
+import { seedTable, seedTableWithUpsert, clearAllTestData } from "./db-setup";
 
 /**
  * E2E Test Setup Result
@@ -38,17 +38,17 @@ export interface E2ETestSetup {
     name: string;
   };
   /** Test locations seeded for this test */
-  locations: Array<{
+  locations: {
     id: string;
     name: string;
     path: string;
-  }>;
+  }[];
   /** Test QR codes generated for this test */
-  qrCodes: Array<{
+  qrCodes: {
     id: string;
     short_id: string;
     status: string;
-  }>;
+  }[];
 }
 
 /**
@@ -67,19 +67,19 @@ export async function setupE2ETest(): Promise<E2ETestSetup> {
   const testPassword = process.env.E2E_PASSWORD;
 
   if (!testEmail || !testPassword) {
-    throw new Error('E2E_USERNAME and E2E_PASSWORD must be set in .env.test');
+    throw new Error("E2E_USERNAME and E2E_PASSWORD must be set in .env.test");
   }
 
   // 2. Create or login test user (ensures default workspace exists)
   const testUser = await createAuthenticatedUser({
     email: testEmail,
     password: testPassword,
-    full_name: 'E2E Test User',
+    full_name: "E2E Test User",
   });
 
   // 3. Create a unique test workspace for this test (ensures isolation)
   const timestamp = Date.now();
-  const workspaceData = await seedTable('workspaces', [
+  const workspaceData = await seedTable("workspaces", [
     {
       name: `E2E Test Workspace ${timestamp}`,
       owner_id: testUser.id,
@@ -87,66 +87,70 @@ export async function setupE2ETest(): Promise<E2ETestSetup> {
   ]);
 
   if (!workspaceData || workspaceData.length === 0) {
-    throw new Error('Failed to create test workspace');
+    throw new Error("Failed to create test workspace");
   }
 
   const workspace = workspaceData[0];
 
-  console.log('[E2E Setup] Created unique workspace:', workspace.name, workspace.id);
+  console.log("[E2E Setup] Created unique workspace:", workspace.name, workspace.id);
 
   // 4. Add user as workspace member (use upsert to handle any edge cases)
-  await seedTableWithUpsert('workspace_members', [
-    {
-      workspace_id: workspace.id,
-      user_id: testUser.id,
-      role: 'owner',
-    },
-  ], 'workspace_id,user_id');
+  await seedTableWithUpsert(
+    "workspace_members",
+    [
+      {
+        workspace_id: workspace.id,
+        user_id: testUser.id,
+        role: "owner",
+      },
+    ],
+    "workspace_id,user_id"
+  );
 
   // 5. Create test locations (hierarchical structure)
-  const locationsData = await seedTable('locations', [
+  const locationsData = await seedTable("locations", [
     {
       workspace_id: workspace.id,
-      name: 'Garage',
-      path: 'root.garage',
+      name: "Garage",
+      path: "root.garage",
     },
     {
       workspace_id: workspace.id,
-      name: 'Basement',
-      path: 'root.basement',
+      name: "Basement",
+      path: "root.basement",
     },
     {
       workspace_id: workspace.id,
-      name: 'Metal Rack',
-      path: 'root.garage.metalrack',
+      name: "Metal Rack",
+      path: "root.garage.metalrack",
     },
   ]);
 
   if (!locationsData || locationsData.length === 0) {
-    throw new Error('Failed to create test locations');
+    throw new Error("Failed to create test locations");
   }
 
   // 6. Generate test QR codes
-  const qrCodesData = await seedTable('qr_codes', [
+  const qrCodesData = await seedTable("qr_codes", [
     {
       workspace_id: workspace.id,
       short_id: `QR-E2E${Date.now().toString().slice(-6)}`,
-      status: 'generated',
+      status: "generated",
     },
     {
       workspace_id: workspace.id,
       short_id: `QR-E2E${(Date.now() + 1).toString().slice(-6)}`,
-      status: 'generated',
+      status: "generated",
     },
     {
       workspace_id: workspace.id,
       short_id: `QR-E2E${(Date.now() + 2).toString().slice(-6)}`,
-      status: 'generated',
+      status: "generated",
     },
   ]);
 
   if (!qrCodesData || qrCodesData.length === 0) {
-    throw new Error('Failed to generate test QR codes');
+    throw new Error("Failed to generate test QR codes");
   }
 
   return {
@@ -183,19 +187,19 @@ export async function cleanupE2ETest(workspaceId: string): Promise<void> {
   try {
     // Delete in correct order (children before parents)
     // 1. Boxes (references qr_codes, locations, workspaces)
-    await adminClient.from('boxes').delete().eq('workspace_id', workspaceId);
+    await adminClient.from("boxes").delete().eq("workspace_id", workspaceId);
 
     // 2. QR codes (references workspaces)
-    await adminClient.from('qr_codes').delete().eq('workspace_id', workspaceId);
+    await adminClient.from("qr_codes").delete().eq("workspace_id", workspaceId);
 
     // 3. Locations (references workspaces)
-    await adminClient.from('locations').delete().eq('workspace_id', workspaceId);
+    await adminClient.from("locations").delete().eq("workspace_id", workspaceId);
 
     // 4. Workspace members (references workspaces)
-    await adminClient.from('workspace_members').delete().eq('workspace_id', workspaceId);
+    await adminClient.from("workspace_members").delete().eq("workspace_id", workspaceId);
 
     // 5. Workspace
-    await adminClient.from('workspaces').delete().eq('id', workspaceId);
+    await adminClient.from("workspaces").delete().eq("id", workspaceId);
 
     // Note: We don't delete profiles/auth users - they persist for reuse
   } catch (error) {
@@ -227,16 +231,11 @@ export async function cleanupE2ETest(workspaceId: string): Promise<void> {
  * @param workspaceId - Optional workspace ID to set after login
  * @returns Promise<void>
  */
-export async function loginViaUI(
-  page: any,
-  email: string,
-  password: string,
-  workspaceId?: string
-): Promise<void> {
-  console.log('[E2E Setup] Logging in via UI as:', email);
+export async function loginViaUI(page: any, email: string, password: string, workspaceId?: string): Promise<void> {
+  console.log("[E2E Setup] Logging in via UI as:", email);
 
   // Navigate to auth page
-  await page.goto('http://localhost:3000/auth');
+  await page.goto("http://localhost:3000/auth");
 
   // Wait for the login form to be visible
   await page.waitForSelector('input[name="email"]', { timeout: 10000 });
@@ -249,80 +248,83 @@ export async function loginViaUI(
   await page.click('button[type="submit"]');
 
   // Wait for the auth API call to complete (successful login with Supabase)
-  await page.waitForResponse((response: any) =>
-    response.url().includes('/auth/v1/token') && response.status() === 200,
+  await page.waitForResponse(
+    (response: any) => response.url().includes("/auth/v1/token") && response.status() === 200,
     { timeout: 10000 }
   );
 
-  console.log('[E2E Setup] Supabase login API call successful');
+  console.log("[E2E Setup] Supabase login API call successful");
 
   // CRITICAL: Wait for the session establishment API call
   // After Supabase login, the client calls /api/auth/session to set HttpOnly cookie
-  await page.waitForResponse((response: any) =>
-    response.url().includes('/api/auth/session') && response.status() === 200,
+  await page.waitForResponse(
+    (response: any) => response.url().includes("/api/auth/session") && response.status() === 200,
     { timeout: 10000 }
   );
 
-  console.log('[E2E Setup] Session cookie established via /api/auth/session');
+  console.log("[E2E Setup] Session cookie established via /api/auth/session");
 
   // Verify cookie was set
   const cookiesAfterLogin = await page.context().cookies();
-  const sbSessionCookie = cookiesAfterLogin.find((c: any) => c.name === 'sb_session');
+  const sbSessionCookie = cookiesAfterLogin.find((c: any) => c.name === "sb_session");
 
   if (!sbSessionCookie) {
-    console.log('[E2E Setup] ERROR: sb_session cookie not found!');
-    console.log('[E2E Setup] Available cookies:', cookiesAfterLogin.map((c: any) => c.name));
-    throw new Error('Session cookie was not set after login');
+    console.log("[E2E Setup] ERROR: sb_session cookie not found!");
+    console.log(
+      "[E2E Setup] Available cookies:",
+      cookiesAfterLogin.map((c: any) => c.name)
+    );
+    throw new Error("Session cookie was not set after login");
   }
 
-  console.log('[E2E Setup] Session cookie verified:', sbSessionCookie.name);
+  console.log("[E2E Setup] Session cookie verified:", sbSessionCookie.name);
 
   // Wait for automatic redirect to /app or navigate manually
   try {
-    await page.waitForURL('**/app', { timeout: 5000 });
-    console.log('[E2E Setup] Automatically redirected to /app');
+    await page.waitForURL("**/app", { timeout: 5000 });
+    console.log("[E2E Setup] Automatically redirected to /app");
   } catch {
     // If automatic redirect doesn't happen, navigate manually
-    console.log('[E2E Setup] No automatic redirect, navigating to /app manually');
-    await page.goto('http://localhost:3000/app');
+    console.log("[E2E Setup] No automatic redirect, navigating to /app manually");
+    await page.goto("http://localhost:3000/app");
   }
 
   // Wait for dashboard to load first
   await page.waitForSelector('[data-testid="new-box-button"]', { timeout: 10000 });
-  console.log('[E2E Setup] Dashboard loaded');
+  console.log("[E2E Setup] Dashboard loaded");
 
   // Click on the workspace selector if it exists (for multiple workspaces)
   // If only one workspace, it will be auto-selected
   if (workspaceId) {
-    console.log('[E2E Setup] Checking for workspace selector...');
+    console.log("[E2E Setup] Checking for workspace selector...");
 
     // Check if there's a workspace dropdown button
     const workspaceButton = page.locator('button:has-text("Workspace"), button:has-text("E2E Test Workspace")').first();
     const isWorkspaceButtonVisible = await workspaceButton.isVisible().catch(() => false);
 
     if (isWorkspaceButtonVisible) {
-      console.log('[E2E Setup] Workspace button found, clicking it...');
+      console.log("[E2E Setup] Workspace button found, clicking it...");
       await workspaceButton.click();
       await page.waitForTimeout(500);
 
       // Click the first menu item (should be our workspace)
       const menuItem = page.locator('[role="menuitem"]').first();
       await menuItem.click();
-      console.log('[E2E Setup] Workspace selected via dropdown');
+      console.log("[E2E Setup] Workspace selected via dropdown");
 
       // Wait for workspace data to load
       await page.waitForTimeout(2000);
     } else {
       // If no dropdown, the workspace is already selected (single workspace case)
-      console.log('[E2E Setup] No workspace dropdown found - workspace may be auto-selected');
+      console.log("[E2E Setup] No workspace dropdown found - workspace may be auto-selected");
       // Still wait a bit for data to load
       await page.waitForTimeout(2000);
     }
   }
 
-  console.log('[E2E Setup] Dashboard loaded and workspace ready');
+  console.log("[E2E Setup] Dashboard loaded and workspace ready");
 
-  console.log('[E2E Setup] Login complete, dashboard ready');
+  console.log("[E2E Setup] Login complete, dashboard ready");
 }
 
 /**

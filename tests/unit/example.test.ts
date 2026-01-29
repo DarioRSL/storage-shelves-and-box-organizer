@@ -5,26 +5,26 @@
  * Delete or modify this file when you start writing real tests.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 
-describe('Vitest Setup Verification', () => {
-  it('should run basic assertions', () => {
+describe("Vitest Setup Verification", () => {
+  it("should run basic assertions", () => {
     expect(true).toBe(true);
     expect(1 + 1).toBe(2);
   });
 
-  it('should handle async operations', async () => {
+  it("should handle async operations", async () => {
     const asyncOperation = async () => {
       return new Promise((resolve) => {
-        setTimeout(() => resolve('success'), 100);
+        setTimeout(() => resolve("success"), 100);
       });
     };
 
     const result = await asyncOperation();
-    expect(result).toBe('success');
+    expect(result).toBe("success");
   });
 
-  it('should support mocking functions', () => {
+  it("should support mocking functions", () => {
     const mockFn = vi.fn((x: number) => x * 2);
 
     const result = mockFn(5);
@@ -34,13 +34,13 @@ describe('Vitest Setup Verification', () => {
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should support spying on objects', () => {
+  it("should support spying on objects", () => {
     const calculator = {
       add: (a: number, b: number) => a + b,
       subtract: (a: number, b: number) => a - b,
     };
 
-    const addSpy = vi.spyOn(calculator, 'add');
+    const addSpy = vi.spyOn(calculator, "add");
 
     const result = calculator.add(2, 3);
 
@@ -48,13 +48,13 @@ describe('Vitest Setup Verification', () => {
     expect(addSpy).toHaveBeenCalledWith(2, 3);
   });
 
-  it('should have access to testing-library matchers', () => {
-    const element = document.createElement('div');
-    element.textContent = 'Hello World';
+  it("should have access to testing-library matchers", () => {
+    const element = document.createElement("div");
+    element.textContent = "Hello World";
     document.body.appendChild(element);
 
     expect(element).toBeInTheDocument();
-    expect(element).toHaveTextContent('Hello World');
+    expect(element).toHaveTextContent("Hello World");
 
     // Cleanup
     document.body.removeChild(element);
@@ -62,25 +62,25 @@ describe('Vitest Setup Verification', () => {
 });
 
 // Example: Testing a simple utility function
-describe('Example Utility Function Test', () => {
+describe("Example Utility Function Test", () => {
   const slugify = (text: string): string => {
     return text
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
-  it('should convert text to slug format', () => {
-    expect(slugify('Hello World')).toBe('hello-world');
-    expect(slugify('Test  Multiple   Spaces')).toBe('test-multiple-spaces');
-    expect(slugify('Special!@#Characters')).toBe('specialcharacters');
+  it("should convert text to slug format", () => {
+    expect(slugify("Hello World")).toBe("hello-world");
+    expect(slugify("Test  Multiple   Spaces")).toBe("test-multiple-spaces");
+    expect(slugify("Special!@#Characters")).toBe("specialcharacters");
   });
 
-  it('should handle edge cases', () => {
-    expect(slugify('')).toBe('');
-    expect(slugify('   ')).toBe('');
-    expect(slugify('---')).toBe('');
+  it("should handle edge cases", () => {
+    expect(slugify("")).toBe("");
+    expect(slugify("   ")).toBe("");
+    expect(slugify("---")).toBe("");
   });
 });
