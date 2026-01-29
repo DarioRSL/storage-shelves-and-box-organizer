@@ -14,18 +14,15 @@
  * Test Count: 14-18 tests
  */
 
-import { describe, it, expect } from 'vitest';
-import {
-  ExportInventoryQuerySchema,
-  type ExportInventoryQueryInput,
-} from '@/lib/validators/export.validators';
+import { describe, it, expect } from "vitest";
+import { ExportInventoryQuerySchema, type ExportInventoryQueryInput } from "@/lib/validators/export.validators";
 
-describe('Export Validators', () => {
-  describe('ExportInventoryQuerySchema', () => {
-    const validWorkspaceId = '550e8400-e29b-41d4-a716-446655440000';
+describe("Export Validators", () => {
+  describe("ExportInventoryQuerySchema", () => {
+    const validWorkspaceId = "550e8400-e29b-41d4-a716-446655440000";
 
-    describe('Valid inputs', () => {
-      it('TC-EXP-VAL-001: should validate with workspace_id only (default format)', () => {
+    describe("Valid inputs", () => {
+      it("TC-EXP-VAL-001: should validate with workspace_id only (default format)", () => {
         const input = {
           workspace_id: validWorkspaceId,
         };
@@ -34,134 +31,134 @@ describe('Export Validators', () => {
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.workspace_id).toBe(validWorkspaceId);
-          expect(result.data.format).toBe('csv'); // Default format
+          expect(result.data.format).toBe("csv"); // Default format
         }
       });
 
-      it('should validate with explicit csv format', () => {
+      it("should validate with explicit csv format", () => {
         const input: ExportInventoryQueryInput = {
           workspace_id: validWorkspaceId,
-          format: 'csv',
+          format: "csv",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.workspace_id).toBe(validWorkspaceId);
-          expect(result.data.format).toBe('csv');
+          expect(result.data.format).toBe("csv");
         }
       });
 
-      it('should validate with json format', () => {
+      it("should validate with json format", () => {
         const input: ExportInventoryQueryInput = {
           workspace_id: validWorkspaceId,
-          format: 'json',
+          format: "json",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.workspace_id).toBe(validWorkspaceId);
-          expect(result.data.format).toBe('json');
+          expect(result.data.format).toBe("json");
         }
       });
 
-      it('TC-EXP-VAL-002: should transform uppercase CSV to lowercase', () => {
+      it("TC-EXP-VAL-002: should transform uppercase CSV to lowercase", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'CSV',
+          format: "CSV",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.format).toBe('csv'); // Transformed to lowercase
+          expect(result.data.format).toBe("csv"); // Transformed to lowercase
         }
       });
 
-      it('should transform uppercase JSON to lowercase', () => {
+      it("should transform uppercase JSON to lowercase", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'JSON',
+          format: "JSON",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.format).toBe('json');
+          expect(result.data.format).toBe("json");
         }
       });
 
-      it('should transform mixed case format to lowercase', () => {
+      it("should transform mixed case format to lowercase", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'CsV',
+          format: "CsV",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.format).toBe('csv');
+          expect(result.data.format).toBe("csv");
         }
       });
 
-      it('should validate different valid UUID formats', () => {
+      it("should validate different valid UUID formats", () => {
         const validIds = [
-          '123e4567-e89b-12d3-a456-426614174000',
-          '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-          'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          "123e4567-e89b-12d3-a456-426614174000",
+          "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+          "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
         ];
 
         validIds.forEach((id) => {
           const result = ExportInventoryQuerySchema.safeParse({
             workspace_id: id,
-            format: 'csv',
+            format: "csv",
           });
           expect(result.success).toBe(true);
         });
       });
     });
 
-    describe('Invalid inputs - workspace_id', () => {
-      it('TC-EXP-VAL-003: should reject missing workspace_id', () => {
+    describe("Invalid inputs - workspace_id", () => {
+      it("TC-EXP-VAL-003: should reject missing workspace_id", () => {
         const input = {
-          format: 'csv',
+          format: "csv",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].path).toContain('workspace_id');
+          expect(result.error.issues[0].path).toContain("workspace_id");
         }
       });
 
-      it('should reject invalid workspace_id format', () => {
+      it("should reject invalid workspace_id format", () => {
         const input = {
-          workspace_id: 'not-a-uuid',
-          format: 'csv',
+          workspace_id: "not-a-uuid",
+          format: "csv",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].message).toBe('Nieprawidłowy format workspace_id (musi być UUID)');
+          expect(result.error.issues[0].message).toBe("Nieprawidłowy format workspace_id (musi być UUID)");
         }
       });
 
-      it('should reject empty string workspace_id', () => {
+      it("should reject empty string workspace_id", () => {
         const input = {
-          workspace_id: '',
-          format: 'csv',
+          workspace_id: "",
+          format: "csv",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(false);
       });
 
-      it('should reject workspace_id with invalid characters', () => {
+      it("should reject workspace_id with invalid characters", () => {
         const input = {
-          workspace_id: '550e8400-e29b-41d4-a716-44665544000g',
-          format: 'csv',
+          workspace_id: "550e8400-e29b-41d4-a716-44665544000g",
+          format: "csv",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
@@ -169,11 +166,11 @@ describe('Export Validators', () => {
       });
     });
 
-    describe('Invalid inputs - format', () => {
-      it('TC-EXP-VAL-004: should reject invalid format value', () => {
+    describe("Invalid inputs - format", () => {
+      it("TC-EXP-VAL-004: should reject invalid format value", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'xml',
+          format: "xml",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
@@ -183,10 +180,10 @@ describe('Export Validators', () => {
         }
       });
 
-      it('should reject empty string format', () => {
+      it("should reject empty string format", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: '',
+          format: "",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
@@ -196,7 +193,7 @@ describe('Export Validators', () => {
         }
       });
 
-      it('should reject numeric format', () => {
+      it("should reject numeric format", () => {
         const input = {
           workspace_id: validWorkspaceId,
           format: 123,
@@ -206,10 +203,10 @@ describe('Export Validators', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject format with whitespace', () => {
+      it("should reject format with whitespace", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'csv ',
+          format: "csv ",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
@@ -217,27 +214,27 @@ describe('Export Validators', () => {
       });
     });
 
-    describe('Strict mode - extra properties', () => {
-      it('TC-EXP-VAL-005: should reject extra properties (strict mode)', () => {
+    describe("Strict mode - extra properties", () => {
+      it("TC-EXP-VAL-005: should reject extra properties (strict mode)", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'csv',
-          extra_field: 'should not be allowed',
+          format: "csv",
+          extra_field: "should not be allowed",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues[0].code).toBe('unrecognized_keys');
+          expect(result.error.issues[0].code).toBe("unrecognized_keys");
         }
       });
 
-      it('should reject multiple extra properties', () => {
+      it("should reject multiple extra properties", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: 'json',
-          foo: 'bar',
-          baz: 'qux',
+          format: "json",
+          foo: "bar",
+          baz: "qux",
         };
 
         const result = ExportInventoryQuerySchema.safeParse(input);
@@ -245,11 +242,11 @@ describe('Export Validators', () => {
       });
     });
 
-    describe('Edge cases', () => {
-      it('should handle format with leading/trailing spaces before transform', () => {
+    describe("Edge cases", () => {
+      it("should handle format with leading/trailing spaces before transform", () => {
         const input = {
           workspace_id: validWorkspaceId,
-          format: ' csv ',
+          format: " csv ",
         };
 
         // Should fail because transform happens before trim
@@ -257,10 +254,10 @@ describe('Export Validators', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should handle both valid values in sequence', () => {
+      it("should handle both valid values in sequence", () => {
         const inputs = [
-          { workspace_id: validWorkspaceId, format: 'csv' },
-          { workspace_id: validWorkspaceId, format: 'json' },
+          { workspace_id: validWorkspaceId, format: "csv" },
+          { workspace_id: validWorkspaceId, format: "json" },
         ];
 
         inputs.forEach((input) => {

@@ -62,7 +62,10 @@ describe("useSettingsView", () => {
     updated_at: "2024-01-01T00:00:00Z",
   });
 
-  const createMockMember = (userId: string, role: "owner" | "admin" | "member" | "read_only"): WorkspaceMemberWithProfileDto => ({
+  const createMockMember = (
+    userId: string,
+    role: "owner" | "admin" | "member" | "read_only"
+  ): WorkspaceMemberWithProfileDto => ({
     id: `member-${userId}`,
     user_id: userId,
     workspace_id: "ws-1",
@@ -192,10 +195,7 @@ describe("useSettingsView", () => {
 
     it("TC-SETTINGS-004: should fallback to memberCount: 0 when member fetch fails for workspace", async () => {
       const mockProfile = createMockProfile();
-      const mockWorkspaces = [
-        createMockWorkspace("ws-1", "Workspace 1"),
-        createMockWorkspace("ws-2", "Workspace 2"),
-      ];
+      const mockWorkspaces = [createMockWorkspace("ws-1", "Workspace 1"), createMockWorkspace("ws-2", "Workspace 2")];
 
       vi.mocked(apiClient.apiFetch)
         .mockResolvedValueOnce(mockProfile) // fetchProfile

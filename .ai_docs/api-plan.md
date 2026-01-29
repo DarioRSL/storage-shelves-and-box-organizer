@@ -7,19 +7,20 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 
 ## Implementation Status Summary
 
-| Category | Endpoints | Status | Notes |
-|----------|-----------|--------|-------|
-| **Authentication** | 3 | ✅ Complete | HttpOnly cookie-based sessions |
-| **Profiles** | 2 | ✅ Complete | Includes theme preference endpoint |
-| **Workspaces** | 6 | ✅ Complete | Full CRUD + member management |
-| **Locations** | 4 | ✅ Complete | Hierarchical structure with soft delete |
-| **Boxes** | 6 | ✅ Complete | Full CRUD + search & pagination + duplicate check |
-| **QR Codes** | 3 | ✅ Complete | Batch generation + lookup + workspace listing |
-| **Export** | 1 | ✅ Complete | CSV/JSON inventory export |
-| **Account Management** | 1 | ✅ Complete | Account deletion with cascade |
-| **TOTAL** | **26** | ✅ **100%** | All endpoints production-ready |
+| Category               | Endpoints | Status      | Notes                                             |
+| ---------------------- | --------- | ----------- | ------------------------------------------------- |
+| **Authentication**     | 3         | ✅ Complete | HttpOnly cookie-based sessions                    |
+| **Profiles**           | 2         | ✅ Complete | Includes theme preference endpoint                |
+| **Workspaces**         | 6         | ✅ Complete | Full CRUD + member management                     |
+| **Locations**          | 4         | ✅ Complete | Hierarchical structure with soft delete           |
+| **Boxes**              | 6         | ✅ Complete | Full CRUD + search & pagination + duplicate check |
+| **QR Codes**           | 3         | ✅ Complete | Batch generation + lookup + workspace listing     |
+| **Export**             | 1         | ✅ Complete | CSV/JSON inventory export                         |
+| **Account Management** | 1         | ✅ Complete | Account deletion with cascade                     |
+| **TOTAL**              | **26**    | ✅ **100%** | All endpoints production-ready                    |
 
 **Architecture Highlights:**
+
 - ✅ Consistent Zod validation on all inputs
 - ✅ Service layer separation for business logic
 - ✅ Middleware-based authentication via `context.locals.user`
@@ -881,9 +882,11 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   - Includes header: `Cache-Control: no-cache, no-store, must-revalidate`
 
 **Export Columns (CSV):**
+
 - id, short_id, name, location, description, tags, qr_code, created_at, updated_at
 
 **Features:**
+
 - Supports both CSV and JSON formats
 - Automatic file download with proper headers
 - Includes all box metadata with joined location and QR code data
@@ -922,6 +925,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 ```
 
 **Cascade Operations:**
+
 - Deletes user profile
 - Deletes all workspaces owned by user
 - Deletes all workspace memberships
@@ -938,6 +942,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   - `500 Internal Server Error`: Account deletion or auth revocation failed
 
 **Important Notes:**
+
 - This is an irreversible operation - all user data is permanently deleted
 - User will be logged out after deletion
 - No recovery or grace period available
@@ -970,6 +975,7 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
   - Example: `const data = await apiFetch('/api/workspaces')`
 
 - **Middleware Authentication Flow:**
+
   ```
   Request → Parse Cookies → Extract sb_session
            → Try Supabase auth (primary)
@@ -985,10 +991,10 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
     ```typescript
     export const GET = async ({ locals }) => {
       if (!locals.user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
       }
       // User authenticated, proceed with business logic
-    }
+    };
     ```
 
 ### 3.2 Row Level Security (RLS)
@@ -1002,19 +1008,23 @@ This document outlines the REST API structure for the Storage & Box Organizer ap
 ### 3.3 Security Features
 
 ✅ **XSS Protection (HttpOnly flag)**
+
 - JWT tokens cannot be accessed by JavaScript
 - Prevents token theft via malicious scripts
 
 ✅ **CSRF Protection (SameSite=Strict)**
+
 - Cookies only sent to same-origin requests
 - Cross-site requests automatically blocked
 
 ✅ **Token Security**
+
 - Tokens never exposed in URL
 - Tokens never in Authorization header (browser-readable)
 - Tokens stored securely by browser in HttpOnly cookies
 
 ✅ **Session Management**
+
 - 1-hour expiration ensures time-limited access
 - Logout clears cookie immediately (Max-Age=0)
 

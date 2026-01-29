@@ -62,10 +62,7 @@ describe("useWorkspaces", () => {
 
   describe("Workspace Fetch on Mount", () => {
     it("TC-WORKSPACES-001: should fetch workspaces automatically on mount", async () => {
-      const mockWorkspaces = [
-        createMockWorkspace("ws-1", "Workspace 1"),
-        createMockWorkspace("ws-2", "Workspace 2"),
-      ];
+      const mockWorkspaces = [createMockWorkspace("ws-1", "Workspace 1"), createMockWorkspace("ws-2", "Workspace 2")];
 
       vi.mocked(apiFetch).mockResolvedValueOnce(mockWorkspaces);
       vi.mocked(currentWorkspaceId.get).mockReturnValue(null);
@@ -108,10 +105,7 @@ describe("useWorkspaces", () => {
 
   describe("Auto-Selection Logic", () => {
     it("TC-WORKSPACES-003: should auto-select first workspace when none is stored", async () => {
-      const mockWorkspaces = [
-        createMockWorkspace("ws-1", "Workspace 1"),
-        createMockWorkspace("ws-2", "Workspace 2"),
-      ];
+      const mockWorkspaces = [createMockWorkspace("ws-1", "Workspace 1"), createMockWorkspace("ws-2", "Workspace 2")];
 
       vi.mocked(apiFetch).mockResolvedValueOnce(mockWorkspaces);
       vi.mocked(currentWorkspaceId.get).mockReturnValue(null);
@@ -128,10 +122,7 @@ describe("useWorkspaces", () => {
     });
 
     it("TC-WORKSPACES-004: should auto-select first workspace when stored workspace doesn't exist", async () => {
-      const mockWorkspaces = [
-        createMockWorkspace("ws-1", "Workspace 1"),
-        createMockWorkspace("ws-2", "Workspace 2"),
-      ];
+      const mockWorkspaces = [createMockWorkspace("ws-1", "Workspace 1"), createMockWorkspace("ws-2", "Workspace 2")];
 
       vi.mocked(apiFetch).mockResolvedValueOnce(mockWorkspaces);
       vi.mocked(currentWorkspaceId.get).mockReturnValue("ws-nonexistent");
@@ -367,10 +358,7 @@ describe("useWorkspaces", () => {
     });
 
     it("should handle store.get returning empty string", async () => {
-      const mockWorkspaces = [
-        createMockWorkspace("ws-1", "Workspace 1"),
-        createMockWorkspace("ws-2", "Workspace 2"),
-      ];
+      const mockWorkspaces = [createMockWorkspace("ws-1", "Workspace 1"), createMockWorkspace("ws-2", "Workspace 2")];
 
       vi.mocked(apiFetch).mockResolvedValueOnce(mockWorkspaces);
       vi.mocked(currentWorkspaceId.get).mockReturnValue("");
@@ -384,7 +372,6 @@ describe("useWorkspaces", () => {
       // Empty string is falsy, should auto-select
       expect(currentWorkspaceId.set).toHaveBeenCalledWith("ws-1");
     });
-
 
     it("should handle malformed workspace data gracefully", async () => {
       const mockWorkspaces = [

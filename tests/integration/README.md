@@ -50,11 +50,13 @@ npm run test:watch tests/integration
 ### Test Coverage Summary
 
 **Total Tests**: 39 tests across 3 files
+
 - Authentication (session management): 17 tests
-- Authentication (account deletion): 8 tests  
+- Authentication (account deletion): 8 tests
 - User profiles: 14 tests
 
 **Coverage Areas**:
+
 - ✅ Success cases (2xx responses)
 - ✅ Validation errors (400)
 - ✅ Authentication errors (401)
@@ -66,8 +68,9 @@ npm run test:watch tests/integration
 ### Test Patterns Used
 
 **Pattern 1: Simple Authentication Test**
+
 ```typescript
-describe('Endpoint', () => {
+describe("Endpoint", () => {
   let user;
 
   beforeEach(async () => {
@@ -79,37 +82,35 @@ describe('Endpoint', () => {
     await clearAllTestData();
   });
 
-  it('should do something', async () => {
-    const response = await authenticatedGet('/api/endpoint', user.token);
+  it("should do something", async () => {
+    const response = await authenticatedGet("/api/endpoint", user.token);
     assertSuccess(response);
   });
 });
 ```
 
 **Pattern 2: Database Verification Test**
+
 ```typescript
-it('should persist changes in database', async () => {
+it("should persist changes in database", async () => {
   // Arrange
   const user = await createAuthenticatedUser();
   const adminClient = getAdminSupabaseClient();
 
   // Act
-  await authenticatedPatch('/api/endpoint', user.token, { field: 'value' });
+  await authenticatedPatch("/api/endpoint", user.token, { field: "value" });
 
   // Assert: Verify in database
-  const { data } = await adminClient
-    .from('table')
-    .select('field')
-    .eq('id', user.id)
-    .single();
-  
-  expect(data.field).toBe('value');
+  const { data } = await adminClient.from("table").select("field").eq("id", user.id).single();
+
+  expect(data.field).toBe("value");
 });
 ```
 
 **Pattern 3: Cascade Deletion Test**
+
 ```typescript
-it('should cascade delete related data', async () => {
+it("should cascade delete related data", async () => {
   // Arrange
   const dataset = await seedInitialDataset();
   const user = dataset.users.admin;
@@ -117,20 +118,14 @@ it('should cascade delete related data', async () => {
   const adminClient = getAdminSupabaseClient();
 
   // Verify data exists before
-  const { data: before } = await adminClient
-    .from('table')
-    .select('id')
-    .eq('workspace_id', workspaceId);
+  const { data: before } = await adminClient.from("table").select("id").eq("workspace_id", workspaceId);
   expect(before.length).toBeGreaterThan(0);
 
   // Act: Delete
-  await authenticatedDelete('/api/endpoint', user.token);
+  await authenticatedDelete("/api/endpoint", user.token);
 
   // Assert: Data deleted
-  const { data: after } = await adminClient
-    .from('table')
-    .select('id')
-    .eq('workspace_id', workspaceId);
+  const { data: after } = await adminClient.from("table").select("id").eq("workspace_id", workspaceId);
   expect(after).toEqual([]);
 });
 ```
@@ -140,11 +135,13 @@ it('should cascade delete related data', async () => {
 Before running integration tests:
 
 1. **Start Supabase**:
+
    ```bash
    supabase start
    ```
 
 2. **Set up test environment**:
+
    ```bash
    cp .env.test.example .env.test
    # Fill in credentials from: supabase status

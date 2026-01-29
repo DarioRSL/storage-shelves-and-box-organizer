@@ -37,12 +37,7 @@ describe("useLocations", () => {
   });
 
   // Mock data factories
-  const createMockLocation = (
-    id: string,
-    name: string,
-    path: string,
-    workspaceId: string = "ws-123"
-  ): LocationDto => ({
+  const createMockLocation = (id: string, name: string, path: string, workspaceId = "ws-123"): LocationDto => ({
     id,
     workspace_id: workspaceId,
     name,

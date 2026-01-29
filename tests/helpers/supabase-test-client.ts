@@ -7,8 +7,8 @@
  * - User-scoped client for testing RLS policies
  */
 
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@/db/supabase.client';
+import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@/db/supabase.client";
 
 /**
  * Get environment variables for test Supabase instance
@@ -21,22 +21,22 @@ function getTestEnvVars() {
 
   if (!url) {
     throw new Error(
-      'TEST_SUPABASE_URL or PUBLIC_SUPABASE_URL environment variable is required for tests. ' +
-      'Make sure .env.test is loaded.'
+      "TEST_SUPABASE_URL or PUBLIC_SUPABASE_URL environment variable is required for tests. " +
+        "Make sure .env.test is loaded."
     );
   }
 
   if (!anonKey) {
     throw new Error(
-      'TEST_SUPABASE_ANON_KEY or PUBLIC_SUPABASE_ANON_KEY environment variable is required for tests. ' +
-      'Make sure .env.test is loaded.'
+      "TEST_SUPABASE_ANON_KEY or PUBLIC_SUPABASE_ANON_KEY environment variable is required for tests. " +
+        "Make sure .env.test is loaded."
     );
   }
 
   if (!serviceRoleKey) {
     throw new Error(
-      'TEST_SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_ROLE_KEY environment variable is required for tests. ' +
-      'Make sure .env.test is loaded.'
+      "TEST_SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_ROLE_KEY environment variable is required for tests. " +
+        "Make sure .env.test is loaded."
     );
   }
 
@@ -125,7 +125,7 @@ export async function verifyTestDatabaseConnection(): Promise<void> {
 
   try {
     // Try a simple query to verify connection
-    const { error } = await client.from('profiles').select('count').limit(1);
+    const { error } = await client.from("profiles").select("count").limit(1);
 
     if (error) {
       throw new Error(`Test database connection failed: ${error.message}`);
@@ -145,11 +145,11 @@ export async function verifyTestDatabaseConnection(): Promise<void> {
  * @returns Database connection URL
  */
 export function getTestDatabaseUrl(): string {
-  const host = process.env.TEST_DB_HOST || '127.0.0.1';
-  const port = process.env.TEST_DB_PORT || '54422';
-  const user = process.env.TEST_DB_USER || 'postgres';
-  const password = process.env.TEST_DB_PASSWORD || 'postgres';
-  const database = process.env.TEST_DB_NAME || 'postgres';
+  const host = process.env.TEST_DB_HOST || "127.0.0.1";
+  const port = process.env.TEST_DB_PORT || "54422";
+  const user = process.env.TEST_DB_USER || "postgres";
+  const password = process.env.TEST_DB_PASSWORD || "postgres";
+  const database = process.env.TEST_DB_NAME || "postgres";
 
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
 }

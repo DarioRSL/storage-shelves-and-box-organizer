@@ -64,7 +64,7 @@ export async function getUserFromPool(index?: number): Promise<TestUser> {
   if (!poolInitialized || userPool.length === 0) {
     // Fallback: If pool not initialized (can happen in isolated test contexts),
     // try to initialize it now
-    console.warn('[UserPool] Pool not available, attempting late initialization...');
+    console.warn("[UserPool] Pool not available, attempting late initialization...");
     await initializeUserPool(10);
 
     // If still not initialized, throw error

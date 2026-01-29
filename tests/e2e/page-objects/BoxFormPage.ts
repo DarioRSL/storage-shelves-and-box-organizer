@@ -12,7 +12,7 @@
  * ```
  */
 
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from "@playwright/test";
 
 export class BoxFormPage {
   readonly page: Page;
@@ -56,9 +56,9 @@ export class BoxFormPage {
    */
   async addTag(tag: string): Promise<void> {
     // Use the input ID for reliable selection
-    const tagInput = this.page.locator('#box-tags');
+    const tagInput = this.page.locator("#box-tags");
     await tagInput.fill(tag);
-    await this.page.keyboard.press('Enter');
+    await this.page.keyboard.press("Enter");
     // Wait for tag to be processed before next interaction
     await this.page.waitForTimeout(300);
   }
@@ -70,7 +70,10 @@ export class BoxFormPage {
    */
   async selectLocation(locationName: string): Promise<void> {
     // Find the location selector and select by visible text
-    const locationSelector = this.page.locator('select, [role="combobox"]').filter({ hasText: /location/i }).first();
+    const locationSelector = this.page
+      .locator('select, [role="combobox"]')
+      .filter({ hasText: /location/i })
+      .first();
 
     // Try to find and click the location by text
     const locationOption = this.page.locator(`text="${locationName}"`).first();
@@ -85,7 +88,7 @@ export class BoxFormPage {
    */
   async selectQRCode(qrCode: string): Promise<void> {
     // Find the QR code selector
-    const qrSelector = this.page.locator('select').filter({ has: this.page.locator('option', { hasText: qrCode }) });
+    const qrSelector = this.page.locator("select").filter({ has: this.page.locator("option", { hasText: qrCode }) });
     if (await qrSelector.isVisible({ timeout: 2000 }).catch(() => false)) {
       await qrSelector.selectOption({ label: qrCode });
     }
@@ -102,7 +105,7 @@ export class BoxFormPage {
    * Wait for the form to be visible
    */
   async waitForForm(): Promise<void> {
-    await this.form.waitFor({ state: 'visible' });
+    await this.form.waitFor({ state: "visible" });
   }
 
   /**
@@ -110,7 +113,7 @@ export class BoxFormPage {
    */
   async waitForSuccess(): Promise<void> {
     // Wait for redirect to dashboard
-    await this.page.waitForURL('/app', { timeout: 10000 });
+    await this.page.waitForURL("/app", { timeout: 10000 });
   }
 
   /**

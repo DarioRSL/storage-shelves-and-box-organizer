@@ -5,31 +5,36 @@ This directory contains test data and fixtures for tests.
 ## Recommended Fixtures to Create
 
 ### User Fixtures
+
 - `users.json` - Test user data
 - `profiles.json` - Test profile data
 
 ### Workspace Fixtures
+
 - `workspaces.json` - Test workspace data
 - `workspace-members.json` - Test workspace membership data
 
 ### Location Fixtures
+
 - `locations.json` - Test location hierarchy data
 
 ### Box Fixtures
+
 - `boxes.json` - Test box data
 - `box-items.json` - Test box item data
 
 ### QR Code Fixtures
+
 - `qr-codes.json` - Test QR code data
 
 ## Usage Example
 
 ```typescript
-import usersFixture from '../fixtures/users.json';
-import workspacesFixture from '../fixtures/workspaces.json';
+import usersFixture from "../fixtures/users.json";
+import workspacesFixture from "../fixtures/workspaces.json";
 
-describe('My Test', () => {
-  it('should use fixture data', () => {
+describe("My Test", () => {
+  it("should use fixture data", () => {
     const testUser = usersFixture[0];
     const testWorkspace = workspacesFixture[0];
 
@@ -41,6 +46,7 @@ describe('My Test', () => {
 ## Fixture Format Examples
 
 ### users.json
+
 ```json
 [
   {
@@ -57,6 +63,7 @@ describe('My Test', () => {
 ```
 
 ### workspaces.json
+
 ```json
 [
   {

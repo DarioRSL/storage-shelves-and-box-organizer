@@ -13,28 +13,34 @@ The DELETE /api/auth/delete-account endpoint permanently deletes a user's accoun
 ## 2. Request Details
 
 ### HTTP Method
+
 `DELETE`
 
 ### URL
+
 ```
 DELETE /api/auth/delete-account
 ```
 
 ### Authorization
+
 - **Required:** Yes (JWT token in `Authorization: Bearer <token>` header)
 - **Validation:** Middleware extracts user from JWT; endpoint verifies user exists
 - **Scope:** User can only delete their own account (no parameter-based user ID)
 
 ### Headers
+
 ```
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 ```
 
 ### Request Body
+
 None (DELETE endpoint with no body parameters)
 
 ### Query Parameters
+
 None
 
 ---
@@ -50,6 +56,7 @@ None
 ```
 
 **Response Type:**
+
 ```typescript
 interface DeleteAccountResponse {
   message: string;
@@ -58,14 +65,14 @@ interface DeleteAccountResponse {
 
 ### Error Responses
 
-| HTTP Status | Error Type | Message | Details |
-|-------------|-----------|---------|---------|
-| **400** | Bad Request | "Nieprawidłowy format żądania" | Malformed JSON or invalid Content-Type |
-| **401** | Unauthorized | "Brakujący lub nieprawidłowy token JWT" | No token provided or token invalid/expired |
-| **404** | Not Found | "Konto użytkownika nie zostało znalezione" | Authenticated user doesn't exist in database |
-| **409** | Conflict | "Usuwanie konta w toku" | Concurrent deletion request detected |
-| **500** | Internal Server Error | "Nie udało się usunąć konta" | Database error during deletion |
-| **500** | Internal Server Error | "Nie udało się odwołać uwierzytelnienia" | Supabase Auth revocation failed |
+| HTTP Status | Error Type            | Message                                    | Details                                      |
+| ----------- | --------------------- | ------------------------------------------ | -------------------------------------------- |
+| **400**     | Bad Request           | "Nieprawidłowy format żądania"             | Malformed JSON or invalid Content-Type       |
+| **401**     | Unauthorized          | "Brakujący lub nieprawidłowy token JWT"    | No token provided or token invalid/expired   |
+| **404**     | Not Found             | "Konto użytkownika nie zostało znalezione" | Authenticated user doesn't exist in database |
+| **409**     | Conflict              | "Usuwanie konta w toku"                    | Concurrent deletion request detected         |
+| **500**     | Internal Server Error | "Nie udało się usunąć konta"               | Database error during deletion               |
+| **500**     | Internal Server Error | "Nie udało się odwołać uwierzytelnienia"   | Supabase Auth revocation failed              |
 
 ---
 
@@ -366,11 +373,9 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_workspace_id ON qr_codes(workspace_id);
 **File:** `src/lib/services/auth.service.ts` (NEW)
 
 1. Create `deleteUserAccount()` function with signature:
+
    ```typescript
-   export async function deleteUserAccount(
-     supabase: SupabaseClient,
-     userId: string
-   ): Promise<{ user_id: string }>
+   export async function deleteUserAccount(supabase: SupabaseClient, userId: string): Promise<{ user_id: string }>;
    ```
 
 2. Implement cascade deletion logic:
@@ -402,6 +407,7 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_workspace_id ON qr_codes(workspace_id);
    - 500: Internal error (database/auth failures)
 
 3. Return proper response format:
+
    ```json
    {
      "message": "Account successfully deleted"
@@ -431,11 +437,12 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_workspace_id ON qr_codes(workspace_id);
    - Show loading state during deletion
 
 2. Call API endpoint:
+
    ```typescript
-   const response = await fetch('/api/auth/delete-account', {
-     method: 'DELETE',
+   const response = await fetch("/api/auth/delete-account", {
+     method: "DELETE",
      headers: {
-       'Authorization': `Bearer ${token}`,
+       Authorization: `Bearer ${token}`,
      },
    });
    ```
@@ -549,6 +556,7 @@ CREATE POLICY "exclude_deleted_profiles"
 ```
 
 Benefits:
+
 - Allow account recovery within grace period
 - Preserve data for compliance/audits
 - Safer operation (easier to undo mistakes)
@@ -613,26 +621,26 @@ curl -X DELETE http://localhost:3000/api/auth/delete-account \
 ```typescript
 async function deleteUserAccount(token: string) {
   try {
-    const response = await fetch('/api/auth/delete-account', {
-      method: 'DELETE',
+    const response = await fetch("/api/auth/delete-account", {
+      method: "DELETE",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Nie udało się usunąć konta');
+      throw new Error(error.error || "Nie udało się usunąć konta");
     }
 
     const data: DeleteAccountResponse = await response.json();
     console.log(data.message);
 
     // Logout and redirect
-    window.location.href = '/login';
+    window.location.href = "/login";
   } catch (error) {
-    console.error('Usuwanie konta nie powiodło się:', error);
+    console.error("Usuwanie konta nie powiodło się:", error);
     throw error;
   }
 }

@@ -47,7 +47,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ initialMode = "login" })
         credentials: "include",
         body: JSON.stringify({
           token: data.token,
-          refreshToken: data.refreshToken
+          refreshToken: data.refreshToken,
         }),
       })
         .then(async (res) => {

@@ -5,6 +5,7 @@
 The `PATCH /api/workspaces/:workspace_id` endpoint allows workspace owners to update workspace properties such as name and description. This is a critical endpoint for the Settings view (WorkspaceEditModal) and enables users to modify their workspace configuration after creation.
 
 **Key Responsibilities:**
+
 - Verify user authentication and ownership of the workspace
 - Validate incoming request data (name, description)
 - Update workspace in PostgreSQL via Supabase
@@ -12,6 +13,7 @@ The `PATCH /api/workspaces/:workspace_id` endpoint allows workspace owners to up
 - Handle all error scenarios with appropriate HTTP status codes and messages
 
 **Used By:**
+
 - Settings view (WorkspaceEditModal)
 - Future workspace management features
 
@@ -20,33 +22,37 @@ The `PATCH /api/workspaces/:workspace_id` endpoint allows workspace owners to up
 ## 2. Request Details
 
 ### HTTP Method & URL Pattern
+
 ```
 PATCH /api/workspaces/{workspace_id}
 ```
 
 ### URL Parameters
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| workspace_id | UUID | Yes | The UUID of the workspace to update |
+
+| Parameter    | Type | Required | Description                         |
+| ------------ | ---- | -------- | ----------------------------------- |
+| workspace_id | UUID | Yes      | The UUID of the workspace to update |
 
 ### Headers
-| Header | Value | Description |
-|--------|-------|-------------|
+
+| Header        | Value              | Description                                |
+| ------------- | ------------------ | ------------------------------------------ |
 | Authorization | Bearer <JWT_TOKEN> | Required JWT token from authenticated user |
-| Content-Type | application/json | Required for request body |
+| Content-Type  | application/json   | Required for request body                  |
 
 ### Request Body Schema
 
 ```typescript
 interface PatchWorkspaceRequest {
-  name?: string;              // Optional, max 255 chars, will be trimmed
-  description?: string;       // Optional (reserved for future use)
+  name?: string; // Optional, max 255 chars, will be trimmed
+  description?: string; // Optional (reserved for future use)
 }
 ```
 
 ### Validation Rules
 
 **name field (optional):**
+
 - Type: string
 - Minimum length: 1 character
 - Maximum length: 255 characters
@@ -55,12 +61,14 @@ interface PatchWorkspaceRequest {
 - Business rule: At least one field (name or description) must be provided
 
 **description field (optional):**
+
 - Type: string or null
 - Reserved for future use
 - Currently not stored in database (not in workspaces table)
 - Can be provided but will not be persisted
 
 **Global Validation:**
+
 - At least one field must be provided (cannot send empty object)
 - Invalid JSON in body returns 400
 - Extraneous fields in body are ignored
@@ -74,6 +82,7 @@ interface PatchWorkspaceRequest {
 **HTTP Status:** 200 OK
 
 **Response Body:**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -85,6 +94,7 @@ interface PatchWorkspaceRequest {
 ```
 
 **Type Definition:**
+
 ```typescript
 interface PatchWorkspaceResponse extends WorkspaceDto {
   // Inherits all WorkspaceDto fields from database.types.ts
@@ -99,16 +109,16 @@ interface PatchWorkspaceResponse extends WorkspaceDto {
 
 ### Error Responses
 
-| HTTP Status | Condition | Error Message | Details |
-|-------------|-----------|---------------|---------|
-| **400** | Invalid JSON format | "Nieprawidłowy format JSON" | Body is not valid JSON |
-| **400** | Missing/empty name | "Nazwa workspace'a nie może być pusta" | Name field empty when provided |
-| **400** | Name exceeds 255 chars | "Nazwa workspace'a nie może przekraczać 255 znaków" | Validation error |
-| **400** | No fields provided | "Proszę podać co najmniej jedno pole do aktualizacji" | Neither name nor description provided |
-| **401** | Missing/invalid JWT | "Nie jesteś uwierzytelniony" | User not authenticated or invalid token |
-| **403** | User is not owner | "Tylko właściciel workspace'u może go aktualizować" | User in workspace but not as owner |
-| **404** | Workspace not found | "Workspace nie został znaleziony" | workspace_id doesn't exist or not accessible |
-| **500** | Database error | "Nie udało się zaktualizować workspace'u" | Server-side error during update |
+| HTTP Status | Condition              | Error Message                                         | Details                                      |
+| ----------- | ---------------------- | ----------------------------------------------------- | -------------------------------------------- |
+| **400**     | Invalid JSON format    | "Nieprawidłowy format JSON"                           | Body is not valid JSON                       |
+| **400**     | Missing/empty name     | "Nazwa workspace'a nie może być pusta"                | Name field empty when provided               |
+| **400**     | Name exceeds 255 chars | "Nazwa workspace'a nie może przekraczać 255 znaków"   | Validation error                             |
+| **400**     | No fields provided     | "Proszę podać co najmniej jedno pole do aktualizacji" | Neither name nor description provided        |
+| **401**     | Missing/invalid JWT    | "Nie jesteś uwierzytelniony"                          | User not authenticated or invalid token      |
+| **403**     | User is not owner      | "Tylko właściciel workspace'u może go aktualizować"   | User in workspace but not as owner           |
+| **404**     | Workspace not found    | "Workspace nie został znaleziony"                     | workspace_id doesn't exist or not accessible |
+| **500**     | Database error         | "Nie udało się zaktualizować workspace'u"             | Server-side error during update              |
 
 ---
 
@@ -153,6 +163,7 @@ interface PatchWorkspaceResponse extends WorkspaceDto {
 ### Database Interaction
 
 **Permission Check Query:**
+
 ```sql
 SELECT role FROM workspace_members
 WHERE workspace_id = $1 AND user_id = $2
@@ -161,6 +172,7 @@ LIMIT 1;
 ```
 
 **Update Query (executed via Supabase):**
+
 ```sql
 UPDATE workspaces
 SET name = $1, updated_at = NOW()
@@ -171,6 +183,7 @@ RETURNING *;
 ```
 
 **RLS Policy Enforcement:**
+
 - Supabase Row Level Security validates owner_id = auth.uid()
 - Cannot update workspace if not owner (RLS blocks at database level)
 - Provides defense-in-depth security
@@ -178,11 +191,13 @@ RETURNING *;
 ### Data Transformations
 
 **Input Transformations:**
+
 - Request body `name` → trimmed and validated
 - Null/undefined fields → omitted from update
 - Extra fields in body → ignored by Zod schema
 
 **Output Transformations:**
+
 - Database record → JSON serialization
 - Timestamp fields → ISO 8601 format (handled by Supabase)
 - All fields from WorkspaceDto → returned as-is
@@ -194,11 +209,13 @@ RETURNING *;
 ### Authentication & Authorization
 
 **Authentication:**
+
 - User JWT token validated via Supabase middleware (context.locals.supabase)
 - Implemented via: `const user = await supabase.auth.getUser()`
 - Returns 401 if token missing, expired, or invalid
 
 **Authorization:**
+
 - Two-layer permission check:
   1. Service layer: Query workspace_members to verify role = 'owner'
   2. RLS policy: Database enforces owner_id = auth.uid()
@@ -208,21 +225,25 @@ RETURNING *;
 ### Input Validation & Data Safety
 
 **Client-Side Validation (optional, secondary):**
+
 - Zod schema validates all inputs before service layer call
 - Min/max length constraints enforced
 - Type checking ensures string types
 
 **Server-Side Validation (mandatory):**
+
 - Zod schema revalidated on API route handler
 - Prevents invalid data from reaching service layer
 - Custom error messages in user's language (Polish)
 
 **SQL Injection Prevention:**
+
 - Supabase uses parameterized queries ($1, $2, etc.)
 - No string concatenation in SQL
 - Input values passed as parameters, not interpolated
 
 **XSS Prevention:**
+
 - User input not directly rendered in HTML responses
 - JSON encoding handles special characters safely
 - No unescaped user content in responses
@@ -230,20 +251,24 @@ RETURNING *;
 ### Attack Surface Mitigation
 
 **Denial of Service (DoS):**
+
 - Rate limiting should be implemented at API gateway level (not in this endpoint)
 - Database constraints prevent duplicate workspaces
 - No unbounded queries or operations
 
 **Privilege Escalation:**
+
 - User cannot change workspace owner_id (not in update)
 - User cannot change their own role (separate endpoint)
 - RLS policies enforce tenant isolation
 
 **Timing Attacks:**
+
 - Constant-time operations used for permission checks
 - No early returns that leak information about missing resources
 
 **CSRF:**
+
 - JWT token-based auth inherently CSRF-safe
 - Token must be in Authorization header (not cookies)
 - SameSite attribute not applicable
@@ -255,6 +280,7 @@ RETURNING *;
 ### Error Classification & Response
 
 **Validation Errors (400 Bad Request)**
+
 ```typescript
 // Invalid JSON format
 {
@@ -278,6 +304,7 @@ RETURNING *;
 ```
 
 **Authentication Errors (401 Unauthorized)**
+
 ```typescript
 {
   "error": "Nie jesteś uwierzytelniony",
@@ -286,6 +313,7 @@ RETURNING *;
 ```
 
 **Authorization Errors (403 Forbidden)**
+
 ```typescript
 {
   "error": "Tylko właściciel workspace'u może go aktualizować",
@@ -294,6 +322,7 @@ RETURNING *;
 ```
 
 **Not Found Errors (404 Not Found)**
+
 ```typescript
 {
   "error": "Workspace nie został znaleziony",
@@ -302,6 +331,7 @@ RETURNING *;
 ```
 
 **Server Errors (500 Internal Server Error)**
+
 ```typescript
 {
   "error": "Nie udało się zaktualizować workspace'u",
@@ -312,6 +342,7 @@ RETURNING *;
 ### Error Logging Strategy
 
 **Success Logging:**
+
 ```typescript
 console.info("PATCH /api/workspaces/:workspace_id - Sukces:", {
   workspaceId: "550e8400-e29b-41d4-a716-446655440000",
@@ -322,6 +353,7 @@ console.info("PATCH /api/workspaces/:workspace_id - Sukces:", {
 ```
 
 **Error Logging:**
+
 ```typescript
 console.error("PATCH /api/workspaces/:workspace_id - Błąd:", {
   workspaceId: "550e8400-e29b-41d4-a716-446655440000",
@@ -333,6 +365,7 @@ console.error("PATCH /api/workspaces/:workspace_id - Błąd:", {
 ```
 
 **Unexpected Error Logging:**
+
 ```typescript
 console.error("Unexpected error in PATCH /api/workspaces/:workspace_id:", {
   workspaceId: "...",
@@ -349,21 +382,25 @@ console.error("Unexpected error in PATCH /api/workspaces/:workspace_id:", {
 ### Database Query Optimization
 
 **Current Query Performance:**
+
 - Permission check: `workspace_members` query with indexed columns (workspace_id, user_id)
 - Update query: `workspaces` table with UUID primary key
 - Both queries are O(log n) due to B-tree indexes
 
 **No N+1 Query Issues:**
+
 - Single permission check query
 - Single update query
 - No additional queries needed
 
 **Index Strategy:**
+
 - workspace_members: index on (workspace_id, user_id) for permission check
 - workspaces: PRIMARY KEY on id for update
 - Existing indexes in schema support efficient lookups
 
 **Caching Considerations:**
+
 - User shouldn't cache workspace data longer than a few seconds
 - updated_at timestamp allows clients to detect changes
 - Frontend should invalidate cache after successful PATCH
@@ -371,16 +408,19 @@ console.error("Unexpected error in PATCH /api/workspaces/:workspace_id:", {
 ### Request/Response Size
 
 **Request Size:**
+
 - Max size: ~300 bytes (workspace_id + "name" field with 255 chars)
 - Typical size: ~100 bytes
 - Well within HTTP limits
 
 **Response Size:**
+
 - Typical: ~200-300 bytes
 - All workspace fields + updated timestamp
 - No nested objects or large payloads
 
 **Bottlenecks:**
+
 - Database round-trip is bottleneck, not data transfer
 - Network latency > processing time
 - Solution: Batch updates if multiple fields need changing
@@ -458,9 +498,11 @@ console.error("Unexpected error in PATCH /api/workspaces/:workspace_id:", {
 ### New/Modified Files
 
 **Files to Create:**
+
 1. `src/lib/validators/workspace.validators.ts` - Zod schemas for workspace validation
 
 **Files to Modify:**
+
 1. `src/types.ts` - Add PatchWorkspaceRequest and PatchWorkspaceResponse types
 2. `src/lib/services/workspace.service.ts` - Add updateWorkspace() function and custom error classes
 3. `src/pages/api/workspaces/[workspace_id].ts` - Add PATCH handler (file already exists with GET)
@@ -657,19 +699,19 @@ If critical issues discovered post-deployment:
 
 ## 13. Summary Table
 
-| Aspect | Details |
-|--------|---------|
-| **Endpoint** | PATCH /api/workspaces/:workspace_id |
-| **Purpose** | Update workspace properties (name, description) |
-| **Files Changed** | 3 files (types.ts, workspace.service.ts, workspace/[workspace_id].ts) |
-| **Files Created** | 1 file (workspace.validators.ts) |
-| **Est. Dev Time** | 4-6 hours (includes testing) |
-| **RLS Policy** | Verify owner_id = auth.uid() |
-| **Permission Model** | User must be workspace owner |
-| **Success Status** | 200 OK |
-| **Error Statuses** | 400, 401, 403, 404, 500 |
-| **Database Queries** | 2 queries (permission check + update) |
-| **Blocking Dependencies** | None - can implement independently |
+| Aspect                    | Details                                                               |
+| ------------------------- | --------------------------------------------------------------------- |
+| **Endpoint**              | PATCH /api/workspaces/:workspace_id                                   |
+| **Purpose**               | Update workspace properties (name, description)                       |
+| **Files Changed**         | 3 files (types.ts, workspace.service.ts, workspace/[workspace_id].ts) |
+| **Files Created**         | 1 file (workspace.validators.ts)                                      |
+| **Est. Dev Time**         | 4-6 hours (includes testing)                                          |
+| **RLS Policy**            | Verify owner_id = auth.uid()                                          |
+| **Permission Model**      | User must be workspace owner                                          |
+| **Success Status**        | 200 OK                                                                |
+| **Error Statuses**        | 400, 401, 403, 404, 500                                               |
+| **Database Queries**      | 2 queries (permission check + update)                                 |
+| **Blocking Dependencies** | None - can implement independently                                    |
 
 ---
 

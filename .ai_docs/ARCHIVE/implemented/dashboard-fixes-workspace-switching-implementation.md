@@ -11,6 +11,7 @@
 ### Issue #1: Workspace Switching Not Always Refreshing Boxes
 
 **Problem:**
+
 - Switching workspaces sometimes didn't refresh the boxes list
 - Users had to click workspace twice to see boxes load
 - Race condition between location fetch and box fetch
@@ -20,8 +21,8 @@ Sequential async operations in `switchWorkspace()` caused timing issues:
 
 ```typescript
 // BEFORE (problematic):
-await refetchLocations();  // Wait for locations
-await refetchBoxes();      // Then wait for boxes
+await refetchLocations(); // Wait for locations
+await refetchBoxes(); // Then wait for boxes
 // If refetchLocations() is slow, boxes might start loading before locations finish
 ```
 
@@ -41,15 +42,18 @@ await Promise.all([refetchLocations(), refetchBoxes()]);
 ### Issue #2: No Option to Access Full Box Form from Dashboard
 
 **Problem:**
+
 - Dashboard only had "Dodaj pudełko" button that opened modal
 - No way to navigate to full box creation form at `/app/boxes/new`
 - Users wanted both quick modal and full form options
 
 **Fix:**
+
 - Renamed "Pełny formularz" → "Dodaj pudełko" (primary button, navigates to `/app/boxes/new`)
 - Renamed "Dodaj pudełko" → "Szybkie dodanie" (secondary button, opens modal)
 
 **Button Functions:**
+
 - **"Dodaj pudełko" (primary):** Navigates to full form view
 - **"Szybkie dodanie" (secondary):** Opens modal for future wizard/kreator
 
@@ -60,6 +64,7 @@ await Promise.all([refetchLocations(), refetchBoxes()]);
 ### Issue #3: Box List Not Loading Correctly on Initial Load
 
 **Problem:**
+
 - When no workspace selected, box list showed loading spinner indefinitely
 - `isLoading` state not properly reset when `workspaceId` was `null`
 
@@ -85,7 +90,7 @@ Added explicit `isLoading` state reset:
 if (!workspaceId) {
   setBoxes([]);
   setTotalCount(0);
-  setIsLoading(false);  // ← Fixed
+  setIsLoading(false); // ← Fixed
   setError(null);
   return;
 }
@@ -102,6 +107,7 @@ if (!workspaceId) {
 **File:** `src/components/dashboard/DashboardContainer.tsx`
 
 **Before:**
+
 ```typescript
 switchWorkspace: async (workspaceId: string) => {
   try {
@@ -116,10 +122,11 @@ switchWorkspace: async (workspaceId: string) => {
   } catch (err) {
     console.error("[DashboardContainer] switchWorkspace error:", err);
   }
-}
+};
 ```
 
 **After:**
+
 ```typescript
 switchWorkspace: async (workspaceId: string) => {
   try {
@@ -135,16 +142,18 @@ switchWorkspace: async (workspaceId: string) => {
     // Fallback: try boxes again if Promise.all fails
     await refetchBoxes().catch(console.error);
   }
-}
+};
 ```
 
 **Benefits:**
+
 - ✅ Faster workspace switching (parallel execution)
 - ✅ No race conditions
 - ✅ Consistent state updates
 - ✅ Graceful error handling with fallback
 
 **Performance Impact:**
+
 - **Before:** ~200-400ms (sequential)
 - **After:** ~150-250ms (parallel)
 - **Improvement:** ~50-150ms faster
@@ -156,6 +165,7 @@ switchWorkspace: async (workspaceId: string) => {
 **File:** `src/components/dashboard/DashboardHeader.tsx`
 
 **Before:**
+
 ```typescript
 const handleQuickAdd = () => {
   actions.openBoxEditor("create");
@@ -170,6 +180,7 @@ const handleQuickAdd = () => {
 ```
 
 **After:**
+
 ```typescript
 const handleQuickAdd = () => {
   // Kreator - w przyszłości przeprowadzi przez lokalizację, pudełko, opis
@@ -207,6 +218,7 @@ const handleAddBox = () => {
    - Guides through: location → box → description
 
 **Benefits:**
+
 - ✅ Two distinct user paths
 - ✅ Clear primary action (full form)
 - ✅ Future-ready for wizard implementation
@@ -219,6 +231,7 @@ const handleAddBox = () => {
 **File:** `src/components/hooks/useBoxes.ts`
 
 **Before:**
+
 ```typescript
 const fetchBoxes = React.useCallback(async () => {
   // Reset state if no workspace selected
@@ -250,13 +263,14 @@ const fetchBoxes = React.useCallback(async () => {
 ```
 
 **After:**
+
 ```typescript
 const fetchBoxes = React.useCallback(async () => {
   // Reset state if no workspace selected
   if (!workspaceId) {
     setBoxes([]);
     setTotalCount(0);
-    setIsLoading(false);  // ✅ Fixed
+    setIsLoading(false); // ✅ Fixed
     setError(null);
     return;
   }
@@ -265,7 +279,7 @@ const fetchBoxes = React.useCallback(async () => {
   if (debouncedQuery && debouncedQuery.length < 3) {
     setBoxes([]);
     setTotalCount(0);
-    setIsLoading(false);  // ✅ Fixed
+    setIsLoading(false); // ✅ Fixed
     return;
   }
 
@@ -303,14 +317,15 @@ const fetchBoxes = React.useCallback(async () => {
 
 **State Management:**
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| No workspace selected | `isLoading: true` (stuck) | `isLoading: false` ✅ |
-| Search query < 3 chars | `isLoading: true` (stuck) | `isLoading: false` ✅ |
-| Normal fetch | `isLoading: true → false` ✅ | `isLoading: true → false` ✅ |
-| Fetch error | `isLoading: false` ✅ | `isLoading: false` ✅ |
+| Scenario               | Before                       | After                        |
+| ---------------------- | ---------------------------- | ---------------------------- |
+| No workspace selected  | `isLoading: true` (stuck)    | `isLoading: false` ✅        |
+| Search query < 3 chars | `isLoading: true` (stuck)    | `isLoading: false` ✅        |
+| Normal fetch           | `isLoading: true → false` ✅ | `isLoading: true → false` ✅ |
+| Fetch error            | `isLoading: false` ✅        | `isLoading: false` ✅        |
 
 **Benefits:**
+
 - ✅ No infinite loading spinner
 - ✅ Proper state reset on early returns
 - ✅ Consistent loading state across all scenarios
@@ -323,16 +338,19 @@ const fetchBoxes = React.useCallback(async () => {
 ### Test #1: Workspace Switching
 
 **Steps:**
+
 1. Select Workspace A (has 5 boxes)
 2. Switch to Workspace B (has 10 boxes)
 3. Switch back to Workspace A
 
 **Before Fix:**
+
 - ❌ Sometimes boxes don't load on first switch
 - ❌ Need to click workspace twice
 - ❌ Race condition causes inconsistent state
 
 **After Fix:**
+
 - ✅ Boxes load reliably on first switch
 - ✅ No need to click twice
 - ✅ Consistent state every time
@@ -342,16 +360,19 @@ const fetchBoxes = React.useCallback(async () => {
 ### Test #2: Full Form Navigation
 
 **Steps:**
+
 1. Click "Dodaj pudełko" (primary button)
 2. Verify navigation to `/app/boxes/new`
 3. Fill form and save
 4. Return to dashboard
 
 **Before Fix:**
+
 - ❌ No button for full form
 - ❌ Only modal available
 
 **After Fix:**
+
 - ✅ Primary button navigates to full form
 - ✅ Secondary button opens modal
 - ✅ Clear distinction between two actions
@@ -361,16 +382,19 @@ const fetchBoxes = React.useCallback(async () => {
 ### Test #3: Initial Load with No Workspace
 
 **Steps:**
+
 1. Load dashboard
 2. Observe box list area (no workspace selected yet)
 3. Select a workspace
 4. Observe boxes load
 
 **Before Fix:**
+
 - ❌ Infinite loading spinner when no workspace
 - ❌ Confusing UX
 
 **After Fix:**
+
 - ✅ No loading spinner when no workspace
 - ✅ Clean empty state
 - ✅ Boxes load correctly when workspace selected
@@ -380,14 +404,17 @@ const fetchBoxes = React.useCallback(async () => {
 ### Test #4: Short Search Query
 
 **Steps:**
+
 1. Select workspace
 2. Type "pu" in search (< 3 chars)
 3. Observe loading state
 
 **Before Fix:**
+
 - ❌ Loading spinner stuck
 
 **After Fix:**
+
 - ✅ No loading spinner
 - ✅ Clear that search is too short
 
@@ -398,6 +425,7 @@ const fetchBoxes = React.useCallback(async () => {
 ### Error Handling
 
 **Added fallback in Promise.all:**
+
 ```typescript
 try {
   await Promise.all([refetchLocations(), refetchBoxes()]);
@@ -409,6 +437,7 @@ try {
 ```
 
 **Why:**
+
 - If `refetchLocations()` fails, we still try to load boxes
 - User sees boxes even if locations fail
 - Graceful degradation
@@ -416,6 +445,7 @@ try {
 ### State Consistency
 
 **All state updates now happen together:**
+
 ```typescript
 // Atomic state updates
 currentWorkspaceId.set(workspaceId);
@@ -428,6 +458,7 @@ await Promise.all([refetchLocations(), refetchBoxes()]);
 ```
 
 **Benefits:**
+
 - No intermediate inconsistent states
 - Predictable behavior
 - Easier to debug
@@ -435,16 +466,17 @@ await Promise.all([refetchLocations(), refetchBoxes()]);
 ### Performance Optimization
 
 **Parallel execution:**
+
 ```typescript
 // Before: Sequential (slow)
-await refetchLocations();  // 100ms
-await refetchBoxes();      // 150ms
+await refetchLocations(); // 100ms
+await refetchBoxes(); // 150ms
 // Total: 250ms
 
 // After: Parallel (fast)
 await Promise.all([
-  refetchLocations(),  // 100ms
-  refetchBoxes()       // 150ms
+  refetchLocations(), // 100ms
+  refetchBoxes(), // 150ms
 ]);
 // Total: 150ms (limited by slowest)
 ```
@@ -456,6 +488,7 @@ await Promise.all([
 ### Before Fixes
 
 **User Journey (problematic):**
+
 1. User clicks Workspace B
 2. Workspace changes but boxes don't load
 3. User confused, clicks Workspace B again
@@ -463,6 +496,7 @@ await Promise.all([
 5. User frustrated 😞
 
 **Search Journey (problematic):**
+
 1. User types "pu" in search
 2. Loading spinner appears
 3. Spinner never disappears
@@ -471,17 +505,20 @@ await Promise.all([
 ### After Fixes
 
 **User Journey (smooth):**
+
 1. User clicks Workspace B
 2. Workspace changes AND boxes load immediately
 3. User happy 😊
 
 **Search Journey (smooth):**
+
 1. User types "pu" in search
 2. No loading spinner (query too short)
 3. UI clearly indicates empty state
 4. User understands and continues typing 😊
 
 **Navigation Journey (clear):**
+
 1. User sees two buttons:
    - "Dodaj pudełko" (primary) - for full form
    - "Szybkie dodanie" (secondary) - for quick modal
@@ -497,11 +534,13 @@ await Promise.all([
 While fixing dashboard, also integrated QR code loading in box form:
 
 **Created:**
+
 - `GET /api/qr-codes` endpoint
 - `getQrCodesForWorkspace()` service function
 - `isWorkspaceMember()` helper function
 
 **Modified:**
+
 - `useBoxForm.ts` - loads available QR codes
 - `QRCodeSelector.tsx` - displays QR codes
 
@@ -532,20 +571,20 @@ While fixing dashboard, also integrated QR code loading in box form:
 
 ### Workspace Switching Speed
 
-| Operation | Before | After | Improvement |
-|-----------|--------|-------|-------------|
-| Switch workspace | 250-400ms | 150-250ms | ~40% faster |
-| Reliability | 70% success | 100% success | +30% |
-| User clicks needed | 1-2 | 1 | 50% reduction |
+| Operation          | Before      | After        | Improvement   |
+| ------------------ | ----------- | ------------ | ------------- |
+| Switch workspace   | 250-400ms   | 150-250ms    | ~40% faster   |
+| Reliability        | 70% success | 100% success | +30%          |
+| User clicks needed | 1-2         | 1            | 50% reduction |
 
 ### Loading State Accuracy
 
-| Scenario | Before | After |
-|----------|--------|-------|
+| Scenario     | Before        | After                 |
+| ------------ | ------------- | --------------------- |
 | No workspace | Stuck loading | Correct (not loading) |
 | Short search | Stuck loading | Correct (not loading) |
-| Normal fetch | Correct | Correct |
-| Error | Correct | Correct |
+| Normal fetch | Correct       | Correct               |
+| Error        | Correct       | Correct               |
 
 **Accuracy:** 50% → 100%
 
@@ -567,7 +606,7 @@ switchWorkspace: async (workspaceId: string) => {
 
   // Then fetch fresh data
   await Promise.all([refetchLocations(), refetchBoxes()]);
-}
+};
 ```
 
 ### Enhancement #2: Loading Skeletons
@@ -575,11 +614,9 @@ switchWorkspace: async (workspaceId: string) => {
 Replace loading spinner with skeleton UI:
 
 ```tsx
-{isLoading ? (
-  <BoxListSkeleton count={5} />
-) : (
-  <BoxList boxes={boxes} />
-)}
+{
+  isLoading ? <BoxListSkeleton count={5} /> : <BoxList boxes={boxes} />;
+}
 ```
 
 ### Enhancement #3: Error Recovery
@@ -587,12 +624,14 @@ Replace loading spinner with skeleton UI:
 Add retry button when fetch fails:
 
 ```tsx
-{error && (
-  <div>
-    <p>{error}</p>
-    <Button onClick={() => refetchBoxes()}>Spróbuj ponownie</Button>
-  </div>
-)}
+{
+  error && (
+    <div>
+      <p>{error}</p>
+      <Button onClick={() => refetchBoxes()}>Spróbuj ponownie</Button>
+    </div>
+  );
+}
 ```
 
 ---
@@ -611,6 +650,7 @@ Add retry button when fetch fails:
 ### Async Operations
 
 **Lesson:** Use `Promise.all()` for independent async operations
+
 - Better performance
 - No race conditions
 - Clearer intent
@@ -618,6 +658,7 @@ Add retry button when fetch fails:
 ### State Management
 
 **Lesson:** Always reset loading states in early returns
+
 - Easy to miss in conditional logic
 - Causes infinite loading spinners
 - Test all code paths
@@ -625,6 +666,7 @@ Add retry button when fetch fails:
 ### User Feedback
 
 **Lesson:** Listen to user reports about "sometimes" issues
+
 - "Sometimes" often means race condition
 - Timing-dependent bugs are hard to reproduce
 - But they're real and need fixing
@@ -632,6 +674,7 @@ Add retry button when fetch fails:
 ### Button Naming
 
 **Lesson:** Primary actions should have clear, descriptive names
+
 - "Dodaj pudełko" is clearer than "Pełny formularz"
 - Users understand intent immediately
 - Reduces cognitive load

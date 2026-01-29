@@ -5,13 +5,13 @@
  * Simplifies integration testing of REST API endpoints.
  */
 
-import request from 'supertest';
+import request from "supertest";
 
 /**
  * Base API URL for tests
  * Priority: TEST_API_URL (set by global setup) > APP_URL > default localhost:3000
  */
-const API_BASE_URL = process.env.TEST_API_URL || process.env.APP_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.TEST_API_URL || process.env.APP_URL || "http://localhost:3000";
 
 /**
  * Create a Supertest agent for making API requests
@@ -42,7 +42,7 @@ export function createAPIClient() {
  * @returns Promise<Response>
  */
 export async function authenticatedGet(path: string, token: string) {
-  return createAPIClient().get(path).set('Authorization', `Bearer ${token}`);
+  return createAPIClient().get(path).set("Authorization", `Bearer ${token}`);
 }
 
 /**
@@ -60,15 +60,8 @@ export async function authenticatedGet(path: string, token: string) {
  * @param body - Request body
  * @returns Promise<Response>
  */
-export async function authenticatedPost(
-  path: string,
-  token: string,
-  body: Record<string, unknown>
-) {
-  return createAPIClient()
-    .post(path)
-    .set('Authorization', `Bearer ${token}`)
-    .send(body);
+export async function authenticatedPost(path: string, token: string, body: Record<string, unknown>) {
+  return createAPIClient().post(path).set("Authorization", `Bearer ${token}`).send(body);
 }
 
 /**
@@ -86,15 +79,8 @@ export async function authenticatedPost(
  * @param body - Request body
  * @returns Promise<Response>
  */
-export async function authenticatedPatch(
-  path: string,
-  token: string,
-  body: Record<string, unknown>
-) {
-  return createAPIClient()
-    .patch(path)
-    .set('Authorization', `Bearer ${token}`)
-    .send(body);
+export async function authenticatedPatch(path: string, token: string, body: Record<string, unknown>) {
+  return createAPIClient().patch(path).set("Authorization", `Bearer ${token}`).send(body);
 }
 
 /**
@@ -111,7 +97,7 @@ export async function authenticatedPatch(
  * @returns Promise<Response>
  */
 export async function authenticatedDelete(path: string, token: string) {
-  return createAPIClient().delete(path).set('Authorization', `Bearer ${token}`);
+  return createAPIClient().delete(path).set("Authorization", `Bearer ${token}`);
 }
 
 /**
@@ -131,10 +117,7 @@ export async function unauthenticatedGet(path: string) {
  * @param body - Request body
  * @returns Promise<Response>
  */
-export async function unauthenticatedPost(
-  path: string,
-  body: Record<string, unknown>
-) {
+export async function unauthenticatedPost(path: string, body: Record<string, unknown>) {
   return createAPIClient().post(path).send(body);
 }
 
@@ -152,9 +135,7 @@ export async function unauthenticatedPost(
  */
 export function assertSuccess(response: any): void {
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(
-      `Expected successful response (2xx), got ${response.status}: ${JSON.stringify(response.body)}`
-    );
+    throw new Error(`Expected successful response (2xx), got ${response.status}: ${JSON.stringify(response.body)}`);
   }
 }
 
@@ -172,21 +153,13 @@ export function assertSuccess(response: any): void {
  * @param expectedMessage - Optional expected error message substring
  * @throws Error if response doesn't match expectations
  */
-export function assertError(
-  response: any,
-  expectedStatus: number,
-  expectedMessage?: string
-): void {
+export function assertError(response: any, expectedStatus: number, expectedMessage?: string): void {
   if (response.status !== expectedStatus) {
-    throw new Error(
-      `Expected status ${expectedStatus}, got ${response.status}: ${JSON.stringify(response.body)}`
-    );
+    throw new Error(`Expected status ${expectedStatus}, got ${response.status}: ${JSON.stringify(response.body)}`);
   }
 
   if (expectedMessage && !JSON.stringify(response.body).includes(expectedMessage)) {
-    throw new Error(
-      `Expected error message to contain "${expectedMessage}", got: ${JSON.stringify(response.body)}`
-    );
+    throw new Error(`Expected error message to contain "${expectedMessage}", got: ${JSON.stringify(response.body)}`);
   }
 }
 
@@ -230,9 +203,7 @@ export function assertPaginated(response: any, expectedMinItems = 0): void {
   }
 
   if (response.body.length < expectedMinItems) {
-    throw new Error(
-      `Expected at least ${expectedMinItems} items, got ${response.body.length}`
-    );
+    throw new Error(`Expected at least ${expectedMinItems} items, got ${response.body.length}`);
   }
 }
 
@@ -253,7 +224,7 @@ export function extractId(response: any): string {
   assertSuccess(response);
 
   const id = response.body?.id;
-  if (!id || typeof id !== 'string') {
+  if (!id || typeof id !== "string") {
     throw new Error(`Cannot extract ID from response: ${JSON.stringify(response.body)}`);
   }
 

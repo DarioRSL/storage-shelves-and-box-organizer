@@ -8,14 +8,14 @@
  * - Testing library utilities
  */
 
-import { expect, vi, beforeAll, afterEach } from 'vitest';
-import '@testing-library/jest-dom';
+import { expect, vi, beforeAll, afterEach } from "vitest";
+import "@testing-library/jest-dom";
 
 // Mock environment variables
 beforeAll(() => {
-  process.env.PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-  process.env.PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+  process.env.PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+  process.env.PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
 });
 
 // Clean up mocks after each test
@@ -46,22 +46,22 @@ export const mockSupabaseClient = {
 
 // Helper to create mock authenticated user
 export const createMockUser = (overrides = {}) => ({
-  id: 'test-user-id',
-  email: 'test@example.com',
+  id: "test-user-id",
+  email: "test@example.com",
   app_metadata: {},
   user_metadata: {},
-  aud: 'authenticated',
+  aud: "authenticated",
   created_at: new Date().toISOString(),
   ...overrides,
 });
 
 // Helper to create mock workspace
 export const createMockWorkspace = (overrides = {}) => ({
-  id: 'test-workspace-id',
-  name: 'Test Workspace',
+  id: "test-workspace-id",
+  name: "Test Workspace",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  owner_id: 'test-user-id',
+  owner_id: "test-user-id",
   ...overrides,
 });
 

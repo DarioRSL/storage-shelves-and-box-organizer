@@ -10,65 +10,65 @@
  * - Using proper locators for resilient element selection
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Playwright Setup Verification', () => {
-  test('should load the homepage', async ({ page }) => {
+test.describe("Playwright Setup Verification", () => {
+  test("should load the homepage", async ({ page }) => {
     // Navigate to the homepage
-    await page.goto('/');
+    await page.goto("/");
 
     // Verify the page loads successfully
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
   });
 
-  test('should have a title', async ({ page }) => {
-    await page.goto('/');
+  test("should have a title", async ({ page }) => {
+    await page.goto("/");
 
     // Verify page has a title (adjust as needed for your actual homepage)
     await expect(page).toHaveTitle(/Storage|Box|Organizer/i);
   });
 
-  test('should support navigation', async ({ page }) => {
-    await page.goto('/');
+  test("should support navigation", async ({ page }) => {
+    await page.goto("/");
 
     // Example: Test navigation (adjust selectors based on your actual app)
     // This is a placeholder - replace with actual navigation elements
-    const links = page.locator('a[href]');
+    const links = page.locator("a[href]");
     const count = await links.count();
 
     expect(count).toBeGreaterThan(0);
   });
 
-  test('should be responsive', async ({ page }) => {
+  test("should be responsive", async ({ page }) => {
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
+    await page.goto("/");
 
     // Verify page is accessible on mobile
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
 
     // Test desktop viewport
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto('/');
+    await page.goto("/");
 
     // Verify page is accessible on desktop
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
   });
 });
 
 // Example: Testing with Browser Context for isolation
-test.describe('Browser Context Example', () => {
-  test('should support isolated test context', async ({ browser }) => {
+test.describe("Browser Context Example", () => {
+  test("should support isolated test context", async ({ browser }) => {
     // Create a new context with specific settings
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
-      userAgent: 'Playwright Test Agent',
+      userAgent: "Playwright Test Agent",
     });
 
     const page = await context.newPage();
-    await page.goto('/');
+    await page.goto("/");
 
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL("/");
 
     // Clean up
     await context.close();
@@ -76,10 +76,10 @@ test.describe('Browser Context Example', () => {
 });
 
 // Example: Testing with API calls
-test.describe('API Testing Example', () => {
-  test('should make API requests', async ({ request }) => {
+test.describe("API Testing Example", () => {
+  test("should make API requests", async ({ request }) => {
     // Example API health check (adjust endpoint as needed)
-    const response = await request.get('/api/health').catch(() => null);
+    const response = await request.get("/api/health").catch(() => null);
 
     // This is just an example - your app might not have a health endpoint
     // Adjust or remove based on your actual API

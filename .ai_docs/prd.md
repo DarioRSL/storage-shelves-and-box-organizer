@@ -8,11 +8,11 @@
 
 ### Implementation Status Summary
 
-| Category | Total Stories | Completed | Partial | Deferred | Completion |
-|----------|--------------|-----------|---------|----------|------------|
-| **MVP Stories** | 24 | 24 | 0 | 0 | ✅ 100% |
-| **Post-MVP** | 11 | 1 | 0 | 10 | 📋 9% |
-| **TOTAL** | 35 | 25 | 0 | 10 | ✅ 71% |
+| Category        | Total Stories | Completed | Partial | Deferred | Completion |
+| --------------- | ------------- | --------- | ------- | -------- | ---------- |
+| **MVP Stories** | 24            | 24        | 0       | 0        | ✅ 100%    |
+| **Post-MVP**    | 11            | 1         | 0       | 10       | 📋 9%      |
+| **TOTAL**       | 35            | 25        | 0       | 10       | ✅ 71%     |
 
 **MVP Release (Current Status: COMPLETE):**
 
@@ -668,7 +668,7 @@ ID: US-037
 3. ✅ Zaimplementowano poziomy logowania (error, warn, info, debug) zgodne z RFC 5424
 4. ✅ Skonfigurowano rotację logów (daily, 14 days retention, 20MB max, gzip)
 5. ✅ Logs nie zawierają wrażliwych danych (no PII, passwords, JWT tokens sanitized)
-6. ✅ W produkcji logi zapisywane są do plików JSON (logs/combined-*, logs/error-*)
+6. ✅ W produkcji logi zapisywane są do plików JSON (logs/combined-_, logs/error-_)
 7. ✅ `console.*` w frontend pozostawione dla browser debugging (46 calls intentional)
 
 **Implementacja:**
@@ -1220,25 +1220,25 @@ ID: US-052
 
 ### Breakdown by Priority
 
-| Priorytet | Ilość | User Stories |
-|-----------|-------|--------------|
-| 🔴 **CRITICAL** | 1 | US-036 |
-| 🔴 **HIGH** | 1 | US-037 |
-| 🟡 **MEDIUM** | 7 | US-038, US-039, US-040, US-041, US-042, US-045, US-049 |
-| 🟢 **LOW** | 8 | US-043, US-044, US-046, US-047, US-048, US-050, US-051, US-052 |
+| Priorytet       | Ilość | User Stories                                                   |
+| --------------- | ----- | -------------------------------------------------------------- |
+| 🔴 **CRITICAL** | 1     | US-036                                                         |
+| 🔴 **HIGH**     | 1     | US-037                                                         |
+| 🟡 **MEDIUM**   | 7     | US-038, US-039, US-040, US-041, US-042, US-045, US-049         |
+| 🟢 **LOW**      | 8     | US-043, US-044, US-046, US-047, US-048, US-050, US-051, US-052 |
 
 ### Breakdown by Category
 
-| Kategoria | Ilość | User Stories |
-|-----------|-------|--------------|
-| **Bezpieczeństwo i Zgodność** | 2 | US-036, US-037 |
-| **Brakujące Widoki UI** | 2 | US-038, US-039 |
-| **Jakość Kodu i Testowanie** | 2 | US-040, US-041 |
-| **Internacjonalizacja i UX** | 2 | US-042, US-043 |
-| **System Powiadomień** | 1 | US-044 |
-| **Funkcje Post-MVP (High Priority)** | 3 | US-045, US-046, US-047 |
-| **Accessibility i Performance** | 2 | US-048, US-049 |
-| **Funkcje Zaawansowane (Future)** | 3 | US-050, US-051, US-052 |
+| Kategoria                            | Ilość | User Stories           |
+| ------------------------------------ | ----- | ---------------------- |
+| **Bezpieczeństwo i Zgodność**        | 2     | US-036, US-037         |
+| **Brakujące Widoki UI**              | 2     | US-038, US-039         |
+| **Jakość Kodu i Testowanie**         | 2     | US-040, US-041         |
+| **Internacjonalizacja i UX**         | 2     | US-042, US-043         |
+| **System Powiadomień**               | 1     | US-044                 |
+| **Funkcje Post-MVP (High Priority)** | 3     | US-045, US-046, US-047 |
+| **Accessibility i Performance**      | 2     | US-048, US-049         |
+| **Funkcje Zaawansowane (Future)**    | 3     | US-050, US-051, US-052 |
 
 ### Recommended Implementation Path
 
@@ -1248,33 +1248,19 @@ ID: US-052
 2. ✅ US-037: Usunięcie console.log (2-3h) - **SHOULD HAVE**
 3. ✅ US-042: Polska lokalizacja formularzy (2-3h) - **SHOULD HAVE**
 
-**Phase 1: Optional Pre-Launch (11-17 godzin)**
-4. 🟡 US-038: Widok szczegółów pudełka (2-4h)
-5. 🟡 US-039: UI generatora QR (4-6h)
-6. 🟡 US-040: Naprawa ESLint (2-3h)
-7. 🟡 US-049: WCAG 2.1 AA (6-8h)
+**Phase 1: Optional Pre-Launch (11-17 godzin)** 4. 🟡 US-038: Widok szczegółów pudełka (2-4h) 5. 🟡 US-039: UI generatora QR (4-6h) 6. 🟡 US-040: Naprawa ESLint (2-3h) 7. 🟡 US-049: WCAG 2.1 AA (6-8h)
 
-**Phase 2: Post-MVP Phase 1 (20-30 godzin)**
-8. US-044: Toast notifications (3-4h)
-9. US-045: Reset hasła (6-8h)
-10. US-041: Testy automatyczne (16-20h)
+**Phase 2: Post-MVP Phase 1 (20-30 godzin)** 8. US-044: Toast notifications (3-4h) 9. US-045: Reset hasła (6-8h) 10. US-041: Testy automatyczne (16-20h)
 
-**Phase 3: Post-MVP Phase 2 (15-25 godzin)**
-11. US-046: Sortowanie (3-4h)
-12. US-047: Duplikowanie (2-3h)
-13. US-048: Wirtualizacja (4-6h)
-14. US-050: Filtrowanie po tagach (4-6h)
-15. US-051: Drag & Drop (8-10h)
+**Phase 3: Post-MVP Phase 2 (15-25 godzin)** 11. US-046: Sortowanie (3-4h) 12. US-047: Duplikowanie (2-3h) 13. US-048: Wirtualizacja (4-6h) 14. US-050: Filtrowanie po tagach (4-6h) 15. US-051: Drag & Drop (8-10h)
 
-**Phase 4: Future Enhancements (6-8 godzin)**
-16. US-043: Breadcrumbs (2-3h)
-17. US-052: Szablony pudełek (6-8h)
+**Phase 4: Future Enhancements (6-8 godzin)** 16. US-043: Breadcrumbs (2-3h) 17. US-052: Szablony pudełek (6-8h)
 
 **Updated Totals (Including After Review):**
 
-| Category | Total Stories | Completed | New (After Review) | Total Pending |
-|----------|--------------|-----------|-------------------|---------------|
-| **MVP Stories** | 24 | 24 | 0 | 0 |
-| **Post-MVP (Original)** | 11 | 1 | 0 | 10 |
-| **After Review (New)** | 17 | 0 | 17 | 17 |
-| **TOTAL** | **52** | **25** | **17** | **27** |
+| Category                | Total Stories | Completed | New (After Review) | Total Pending |
+| ----------------------- | ------------- | --------- | ------------------ | ------------- |
+| **MVP Stories**         | 24            | 24        | 0                  | 0             |
+| **Post-MVP (Original)** | 11            | 1         | 0                  | 10            |
+| **After Review (New)**  | 17            | 0         | 17                 | 17            |
+| **TOTAL**               | **52**        | **25**    | **17**             | **27**        |

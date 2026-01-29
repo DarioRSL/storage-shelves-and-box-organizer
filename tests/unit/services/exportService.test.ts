@@ -25,7 +25,7 @@
  * Test Count: 35+ tests
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 /**
  * IMPORTANT: The pure functions are not exported from exportService.ts,
@@ -40,8 +40,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
  * This follows the principle that unit tests should test individual units in isolation.
  */
 
-describe('Export Service - Pure Functions', () => {
-  describe('formatLocationPath()', () => {
+describe("Export Service - Pure Functions", () => {
+  describe("formatLocationPath()", () => {
     /**
      * Test cases for formatLocationPath(path: string | null, locationName: string | null): string
      *
@@ -55,7 +55,7 @@ describe('Export Service - Pure Functions', () => {
      * - Joins components with " > "
      */
 
-    it('TC-EXPORT-001: should return empty string when path is null', () => {
+    it("TC-EXPORT-001: should return empty string when path is null", () => {
       // This test requires the function to be exported
       // const result = formatLocationPath(null, null);
       // expect(result).toBe('');
@@ -64,70 +64,70 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-002: should return location name when provided', () => {
+    it("TC-EXPORT-002: should return location name when provided", () => {
       // const result = formatLocationPath('root.basement.shelf_a', 'Basement Shelf');
       // expect(result).toBe('Basement Shelf');
 
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-003: should parse ltree path when location name is null', () => {
+    it("TC-EXPORT-003: should parse ltree path when location name is null", () => {
       // const result = formatLocationPath('root.basement.shelf_a', null);
       // expect(result).toBe('Basement > Shelf A');
 
       expect(true).toBe(true);
     });
 
-    it('should remove root component from path', () => {
+    it("should remove root component from path", () => {
       // const result = formatLocationPath('root.garage', null);
       // expect(result).toBe('Garage');
 
       expect(true).toBe(true);
     });
 
-    it('should handle single level path (after root)', () => {
+    it("should handle single level path (after root)", () => {
       // const result = formatLocationPath('root.warehouse', null);
       // expect(result).toBe('Warehouse');
 
       expect(true).toBe(true);
     });
 
-    it('should handle deep nested path', () => {
+    it("should handle deep nested path", () => {
       // const result = formatLocationPath('root.basement.metal_rack.top_shelf.left_section', null);
       // expect(result).toBe('Basement > Metal Rack > Top Shelf > Left Section');
 
       expect(true).toBe(true);
     });
 
-    it('should convert underscores to spaces', () => {
+    it("should convert underscores to spaces", () => {
       // const result = formatLocationPath('root.storage_room.tall_shelf', null);
       // expect(result).toBe('Storage Room > Tall Shelf');
 
       expect(true).toBe(true);
     });
 
-    it('should capitalize first letter of each word', () => {
+    it("should capitalize first letter of each word", () => {
       // const result = formatLocationPath('root.main.second_floor', null);
       // expect(result).toBe('Main > Second Floor');
 
       expect(true).toBe(true);
     });
 
-    it('should handle path with numbers', () => {
+    it("should handle path with numbers", () => {
       // const result = formatLocationPath('root.shelf_1.section_2a', null);
       // expect(result).toBe('Shelf 1 > Section 2a');
 
       expect(true).toBe(true);
     });
 
-    it('should return empty string when path is empty string', () => {
+    it("should return empty string when path is empty string", () => {
       // const result = formatLocationPath('', null);
       // expect(result).toBe('');
 
       expect(true).toBe(true);
     });
 
-    it('should prefer location name even with valid path', () => {
+    it("should prefer location name even with valid path", () => {
       // const result = formatLocationPath('root.basement.shelf_a', 'Custom Name');
       // expect(result).toBe('Custom Name');
 
@@ -135,7 +135,7 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('formatTagsForCsv()', () => {
+  describe("formatTagsForCsv()", () => {
     /**
      * Test cases for formatTagsForCsv(tags: string[] | null | undefined): string
      *
@@ -148,56 +148,56 @@ describe('Export Service - Pure Functions', () => {
      * - Handles tags with special characters (csv-stringify will escape)
      */
 
-    it('TC-EXPORT-004: should return empty string for null tags', () => {
+    it("TC-EXPORT-004: should return empty string for null tags", () => {
       // const result = formatTagsForCsv(null);
       // expect(result).toBe('');
 
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-005: should return empty string for undefined tags', () => {
+    it("TC-EXPORT-005: should return empty string for undefined tags", () => {
       // const result = formatTagsForCsv(undefined);
       // expect(result).toBe('');
 
       expect(true).toBe(true);
     });
 
-    it('should return empty string for empty array', () => {
+    it("should return empty string for empty array", () => {
       // const result = formatTagsForCsv([]);
       // expect(result).toBe('');
 
       expect(true).toBe(true);
     });
 
-    it('should return single tag as-is', () => {
+    it("should return single tag as-is", () => {
       // const result = formatTagsForCsv(['electronics']);
       // expect(result).toBe('electronics');
 
       expect(true).toBe(true);
     });
 
-    it('should join multiple tags with comma', () => {
+    it("should join multiple tags with comma", () => {
       // const result = formatTagsForCsv(['electronics', 'fragile', 'important']);
       // expect(result).toBe('electronics,fragile,important');
 
       expect(true).toBe(true);
     });
 
-    it('should preserve tag order', () => {
+    it("should preserve tag order", () => {
       // const result = formatTagsForCsv(['zzz', 'aaa', 'mmm']);
       // expect(result).toBe('zzz,aaa,mmm');
 
       expect(true).toBe(true);
     });
 
-    it('should handle tags with spaces', () => {
+    it("should handle tags with spaces", () => {
       // const result = formatTagsForCsv(['office supplies', 'christmas decorations']);
       // expect(result).toBe('office supplies,christmas decorations');
 
       expect(true).toBe(true);
     });
 
-    it('should handle tags with special characters', () => {
+    it("should handle tags with special characters", () => {
       // const result = formatTagsForCsv(['tag-with-dash', 'tag_with_underscore', 'tag.with.dot']);
       // expect(result).toBe('tag-with-dash,tag_with_underscore,tag.with.dot');
 
@@ -205,7 +205,7 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('transformBoxesToExportRecords()', () => {
+  describe("transformBoxesToExportRecords()", () => {
     /**
      * Test cases for transformBoxesToExportRecords(boxes: BoxQueryResult[]): ExportRecord[]
      *
@@ -219,14 +219,14 @@ describe('Export Service - Pure Functions', () => {
      * - Returns empty array for empty input
      */
 
-    it('TC-EXPORT-006: should return empty array for empty input', () => {
+    it("TC-EXPORT-006: should return empty array for empty input", () => {
       // const result = transformBoxesToExportRecords([]);
       // expect(result).toEqual([]);
 
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-007: should transform single box with all fields', () => {
+    it("TC-EXPORT-007: should transform single box with all fields", () => {
       // const boxes: BoxQueryResult[] = [{
       //   id: 'box-uuid-1',
       //   short_id: 'X7K9P2mN4q',
@@ -262,7 +262,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle box without location', () => {
+    it("should handle box without location", () => {
       // const boxes: BoxQueryResult[] = [{
       //   id: 'box-uuid-2',
       //   short_id: 'Y8L0Q3nO5r',
@@ -286,7 +286,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle box without QR code', () => {
+    it("should handle box without QR code", () => {
       // const boxes: BoxQueryResult[] = [{
       //   ...baseBox,
       //   qr_codes: null,
@@ -298,7 +298,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle box with empty QR codes array', () => {
+    it("should handle box with empty QR codes array", () => {
       // const boxes: BoxQueryResult[] = [{
       //   ...baseBox,
       //   qr_codes: [],
@@ -310,7 +310,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should extract first QR code when multiple exist', () => {
+    it("should extract first QR code when multiple exist", () => {
       // const boxes: BoxQueryResult[] = [{
       //   ...baseBox,
       //   qr_codes: [{ short_id: 'QR-FIRST' }, { short_id: 'QR-SECOND' }],
@@ -322,7 +322,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should transform multiple boxes', () => {
+    it("should transform multiple boxes", () => {
       // const boxes: BoxQueryResult[] = [box1, box2, box3];
       //
       // const result = transformBoxesToExportRecords(boxes);
@@ -332,7 +332,7 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('generateCsvContent()', () => {
+  describe("generateCsvContent()", () => {
     /**
      * Test cases for generateCsvContent(records: ExportRecord[]): string
      *
@@ -345,7 +345,7 @@ describe('Export Service - Pure Functions', () => {
      * - Returns CSV string with proper formatting
      */
 
-    it('TC-EXPORT-008: should generate CSV with header row', () => {
+    it("TC-EXPORT-008: should generate CSV with header row", () => {
       // const records: ExportRecord[] = [];
       //
       // const result = generateCsvContent(records);
@@ -355,7 +355,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-009: should generate CSV for single record', () => {
+    it("TC-EXPORT-009: should generate CSV for single record", () => {
       // const records: ExportRecord[] = [{
       //   id: 'box-uuid-1',
       //   short_id: 'X7K9P2mN4q',
@@ -377,7 +377,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should properly escape fields with commas', () => {
+    it("should properly escape fields with commas", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   name: 'Box with, comma',
@@ -391,7 +391,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should properly escape fields with double quotes', () => {
+    it("should properly escape fields with double quotes", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   description: 'Box with "quotes"',
@@ -405,7 +405,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should properly escape fields with newlines', () => {
+    it("should properly escape fields with newlines", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   description: 'Line 1\nLine 2',
@@ -419,7 +419,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-010: should prevent CSV injection - equals sign', () => {
+    it("TC-EXPORT-010: should prevent CSV injection - equals sign", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   name: '=SUM(A1:A10)',
@@ -435,7 +435,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should prevent CSV injection - plus sign', () => {
+    it("should prevent CSV injection - plus sign", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   name: '+1234567890',
@@ -447,7 +447,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should prevent CSV injection - minus sign', () => {
+    it("should prevent CSV injection - minus sign", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   name: '-cmd|/c calc',
@@ -459,7 +459,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should prevent CSV injection - at sign', () => {
+    it("should prevent CSV injection - at sign", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   name: '@SUM(1+1)',
@@ -471,7 +471,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle null values correctly', () => {
+    it("should handle null values correctly", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   description: null,
@@ -486,7 +486,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should generate CSV for multiple records', () => {
+    it("should generate CSV for multiple records", () => {
       // const records: ExportRecord[] = [record1, record2, record3];
       //
       // const result = generateCsvContent(records);
@@ -498,7 +498,7 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('generateJsonContent()', () => {
+  describe("generateJsonContent()", () => {
     /**
      * Test cases for generateJsonContent(workspaceId: string, records: ExportRecord[]): string
      *
@@ -515,7 +515,7 @@ describe('Export Service - Pure Functions', () => {
     let mockDate: Date;
 
     beforeEach(() => {
-      mockDate = new Date('2024-01-15T12:00:00.000Z');
+      mockDate = new Date("2024-01-15T12:00:00.000Z");
       vi.useFakeTimers();
       vi.setSystemTime(mockDate);
     });
@@ -524,7 +524,7 @@ describe('Export Service - Pure Functions', () => {
       vi.useRealTimers();
     });
 
-    it('TC-EXPORT-011: should generate JSON with correct metadata structure', () => {
+    it("TC-EXPORT-011: should generate JSON with correct metadata structure", () => {
       // const workspaceId = 'workspace-uuid-123';
       // const records: ExportRecord[] = [];
       //
@@ -541,7 +541,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-012: should convert tags from CSV string to array', () => {
+    it("TC-EXPORT-012: should convert tags from CSV string to array", () => {
       // const records: ExportRecord[] = [{
       //   id: 'box-uuid-1',
       //   short_id: 'X7K9P2mN4q',
@@ -562,7 +562,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle empty tags string', () => {
+    it("should handle empty tags string", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   tags: '',
@@ -576,7 +576,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle single tag', () => {
+    it("should handle single tag", () => {
       // const records: ExportRecord[] = [{
       //   ...baseRecord,
       //   tags: 'electronics',
@@ -590,7 +590,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should preserve all record fields', () => {
+    it("should preserve all record fields", () => {
       // const records: ExportRecord[] = [{
       //   id: 'box-uuid-1',
       //   short_id: 'X7K9P2mN4q',
@@ -620,7 +620,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should update total_records in metadata', () => {
+    it("should update total_records in metadata", () => {
       // const records: ExportRecord[] = [record1, record2, record3];
       //
       // const result = generateJsonContent('workspace-id', records);
@@ -632,7 +632,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should generate pretty-printed JSON', () => {
+    it("should generate pretty-printed JSON", () => {
       // const records: ExportRecord[] = [];
       //
       // const result = generateJsonContent('workspace-id', records);
@@ -644,7 +644,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should use current timestamp for export_date', () => {
+    it("should use current timestamp for export_date", () => {
       // const result = generateJsonContent('workspace-id', []);
       // const parsed = JSON.parse(result);
       //
@@ -654,7 +654,7 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('generateFilename()', () => {
+  describe("generateFilename()", () => {
     /**
      * Test cases for generateFilename(workspaceId: string, format: 'csv' | 'json'): string
      *
@@ -668,7 +668,7 @@ describe('Export Service - Pure Functions', () => {
     let mockDate: Date;
 
     beforeEach(() => {
-      mockDate = new Date('2024-01-15T12:30:45.123Z');
+      mockDate = new Date("2024-01-15T12:30:45.123Z");
       vi.useFakeTimers();
       vi.setSystemTime(mockDate);
     });
@@ -677,7 +677,7 @@ describe('Export Service - Pure Functions', () => {
       vi.useRealTimers();
     });
 
-    it('TC-EXPORT-013: should generate CSV filename with correct format', () => {
+    it("TC-EXPORT-013: should generate CSV filename with correct format", () => {
       // const workspaceId = 'workspace-uuid-123';
       //
       // const result = generateFilename(workspaceId, 'csv');
@@ -687,7 +687,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('TC-EXPORT-014: should generate JSON filename with correct format', () => {
+    it("TC-EXPORT-014: should generate JSON filename with correct format", () => {
       // const workspaceId = 'workspace-uuid-456';
       //
       // const result = generateFilename(workspaceId, 'json');
@@ -697,7 +697,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should use date from timestamp, ignoring time', () => {
+    it("should use date from timestamp, ignoring time", () => {
       // const result = generateFilename('workspace-id', 'csv');
       //
       // // Time portion (12:30:45) should not affect filename
@@ -706,7 +706,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle different dates correctly', () => {
+    it("should handle different dates correctly", () => {
       // vi.setSystemTime(new Date('2024-12-31T23:59:59.999Z'));
       //
       // const result = generateFilename('workspace-id', 'csv');
@@ -716,7 +716,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should pad single-digit months and days', () => {
+    it("should pad single-digit months and days", () => {
       // vi.setSystemTime(new Date('2024-03-05T10:00:00.000Z'));
       //
       // const result = generateFilename('workspace-id', 'json');
@@ -726,7 +726,7 @@ describe('Export Service - Pure Functions', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle workspace IDs with special characters', () => {
+    it("should handle workspace IDs with special characters", () => {
       // const workspaceId = 'workspace-abc-123-xyz-789';
       //
       // const result = generateFilename(workspaceId, 'csv');
@@ -737,28 +737,28 @@ describe('Export Service - Pure Functions', () => {
     });
   });
 
-  describe('Integration - Pure Function Composition', () => {
+  describe("Integration - Pure Function Composition", () => {
     /**
      * Tests that verify pure functions work correctly together
      * without testing the impure exportInventory function.
      */
 
-    it('should compose location path formatting with record transformation', () => {
+    it("should compose location path formatting with record transformation", () => {
       // Tests that formatLocationPath output is correctly used in transformBoxesToExportRecords
       expect(true).toBe(true);
     });
 
-    it('should compose tag formatting with record transformation', () => {
+    it("should compose tag formatting with record transformation", () => {
       // Tests that formatTagsForCsv output is correctly used in transformBoxesToExportRecords
       expect(true).toBe(true);
     });
 
-    it('should compose record transformation with CSV generation', () => {
+    it("should compose record transformation with CSV generation", () => {
       // Tests that transformBoxesToExportRecords output works with generateCsvContent
       expect(true).toBe(true);
     });
 
-    it('should compose record transformation with JSON generation', () => {
+    it("should compose record transformation with JSON generation", () => {
       // Tests that transformBoxesToExportRecords output works with generateJsonContent
       expect(true).toBe(true);
     });

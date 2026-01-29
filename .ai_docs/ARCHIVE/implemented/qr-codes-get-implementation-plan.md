@@ -46,16 +46,19 @@ QR codes are workspace-scoped resources. This endpoint provides filtered access 
 ### Request Examples
 
 **Get all QR codes for workspace:**
+
 ```bash
 GET /api/qr-codes?workspace_id=a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 
 **Get only unassigned QR codes:**
+
 ```bash
 GET /api/qr-codes?workspace_id=a1b2c3d4-e5f6-7890-abcd-ef1234567890&status=generated
 ```
 
 **Get assigned QR codes:**
+
 ```bash
 GET /api/qr-codes?workspace_id=a1b2c3d4-e5f6-7890-abcd-ef1234567890&status=assigned
 ```
@@ -69,11 +72,11 @@ GET /api/qr-codes?workspace_id=a1b2c3d4-e5f6-7890-abcd-ef1234567890&status=assig
 ```typescript
 // Response item (from database)
 export interface QrCodeDetailDto {
-  id: string;              // UUID primary key
-  short_id: string;        // Display ID (QR-XXXXXX format)
-  box_id: string | null;   // Linked box (null if unassigned)
+  id: string; // UUID primary key
+  short_id: string; // Display ID (QR-XXXXXX format)
+  box_id: string | null; // Linked box (null if unassigned)
   status: "generated" | "assigned" | "printed";
-  workspace_id: string;    // Owner workspace
+  workspace_id: string; // Owner workspace
 }
 
 // Error response
@@ -110,6 +113,7 @@ CREATE UNIQUE INDEX qr_codes_short_id_idx ON qr_codes(short_id);
 ### Success Response (200 OK)
 
 **Example: All QR codes**
+
 ```json
 [
   {
@@ -130,6 +134,7 @@ CREATE UNIQUE INDEX qr_codes_short_id_idx ON qr_codes(short_id);
 ```
 
 **Example: Empty result**
+
 ```json
 []
 ```
@@ -246,11 +251,13 @@ CREATE UNIQUE INDEX qr_codes_short_id_idx ON qr_codes(short_id);
 ### Authorization
 
 **Workspace Membership Validation:**
+
 - Explicit check via `isWorkspaceMember()` before querying QR codes
 - Prevents cross-workspace data access
 - Returns 403 if user is not a workspace member
 
 **Row Level Security:**
+
 - RLS policies on `qr_codes` table automatically filter results
 - Double-layer protection (explicit check + RLS)
 
@@ -286,6 +293,7 @@ CREATE UNIQUE INDEX qr_codes_short_id_idx ON qr_codes(short_id);
   - 1000 codes ≈ 150KB response
 
 **No pagination implemented** because:
+
 - QR codes are typically small dataset per workspace
 - UI (QRCodeSelector) needs full list for dropdown
 - Can add pagination later if needed (limit + offset pattern)
@@ -529,58 +537,74 @@ export async function isWorkspaceMember(
 ### Manual Testing
 
 **Test 1: Get all QR codes for workspace**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=YOUR_WORKSPACE_ID" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 200 OK with array of all QR codes
 
 **Test 2: Filter by status - only unassigned**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=YOUR_WORKSPACE_ID&status=generated" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 200 OK with array of QR codes where `status: "generated"`
 
 **Test 3: Filter by status - only assigned**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=YOUR_WORKSPACE_ID&status=assigned" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 200 OK with array of QR codes where `status: "assigned"`
 
 **Test 4: Missing workspace_id**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 400 Bad Request with `{ "error": "workspace_id jest wymagane" }`
 
 **Test 5: Invalid workspace_id format**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=invalid-uuid" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 400 Bad Request with `{ "error": "Nieprawidłowy format workspace_id" }`
 
 **Test 6: Invalid status value**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=YOUR_WORKSPACE_ID&status=invalid" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 400 Bad Request with error listing valid statuses
 
 **Test 7: Not authenticated**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=YOUR_WORKSPACE_ID"
 ```
+
 Expected: 401 Unauthorized
 
 **Test 8: Not a workspace member**
+
 ```bash
 curl -X GET "http://localhost:3000/api/qr-codes?workspace_id=OTHER_USER_WORKSPACE_ID" \
   -H "Cookie: sb_session=YOUR_TOKEN"
 ```
+
 Expected: 403 Forbidden
 
 ### Edge Cases
@@ -639,6 +663,7 @@ React.useEffect(() => {
 **Component:** `src/components/forms/QRCodeSelector.tsx`
 
 Displays dropdown of available QR codes:
+
 ```tsx
 <select value={value || ""} onChange={(e) => onChange(e.target.value || null)}>
   <option value="">Choose a QR code...</option>
@@ -657,22 +682,26 @@ Displays dropdown of available QR codes:
 ### Design Decisions
 
 **Why no pagination?**
+
 - QR codes are typically small dataset (10-100 per workspace)
 - UI needs full list for dropdown selection
 - 1000 QR codes ≈ 150KB response (acceptable)
 - Can add pagination later if needed
 
 **Why filter by status in query?**
+
 - Box Form only needs `status: "generated"` QR codes (unassigned)
 - Filtering in database is more efficient than client-side
 - Reduces response payload size
 
 **Why graceful failure (empty array on error)?**
+
 - QR code assignment is optional feature
 - Shouldn't block box creation/editing
 - Better UX than showing error for non-critical feature
 
 **Why check workspace membership explicitly?**
+
 - Defense in depth (explicit check + RLS)
 - Clear error message (403 vs empty result)
 - Audit trail in application logs
@@ -680,6 +709,7 @@ Displays dropdown of available QR codes:
 ### Future Enhancements
 
 1. **Add pagination:**
+
    ```typescript
    // Query parameters
    ?workspace_id=uuid&status=generated&limit=50&offset=0
@@ -694,6 +724,7 @@ Displays dropdown of available QR codes:
    ```
 
 2. **Add search/filter:**
+
    ```typescript
    ?workspace_id=uuid&search=QR-A1B
    ```
