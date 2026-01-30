@@ -218,3 +218,37 @@ grant execute on function create_location_for_user(uuid, uuid, text, text, uuid)
 
 comment on function create_location_for_user(uuid, uuid, text, text, uuid) is
   'Creates a new location with membership validation. Uses SECURITY DEFINER to bypass RLS for server-side API calls.';
+
+
+-- ============================================================================
+-- Function: get_user_profile
+-- Description: Retrieves a user's profile by ID (bypasses RLS)
+-- ============================================================================
+create or replace function get_user_profile(p_user_id uuid)
+returns table (
+  id uuid,
+  email text,
+  full_name text,
+  avatar_url text,
+  created_at timestamptz,
+  updated_at timestamptz,
+  theme_preference text
+)
+security definer
+set search_path = public
+language plpgsql
+as $$
+begin
+  return query
+  select p.id, p.email, p.full_name, p.avatar_url, p.created_at, p.updated_at, p.theme_preference
+  from profiles p
+  where p.id = p_user_id;
+end;
+$$;
+
+-- Grant execute permission
+grant execute on function get_user_profile(uuid) to authenticated;
+grant execute on function get_user_profile(uuid) to anon;
+
+comment on function get_user_profile(uuid) is
+  'Retrieves a user profile by ID. Uses SECURITY DEFINER to bypass RLS for server-side API calls with custom session authentication.';
