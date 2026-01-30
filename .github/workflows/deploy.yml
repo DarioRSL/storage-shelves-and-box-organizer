@@ -46,6 +46,8 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_PUBLIC_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
 
       - name: Build Docker image
         env:
@@ -130,6 +132,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
         run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy Preview
@@ -190,6 +194,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
         run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy to Production
