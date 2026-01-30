@@ -69,7 +69,9 @@ export const POST: APIRoute = async ({ request }) => {
     const sessionData = JSON.stringify({ access_token: token, refresh_token: refreshToken });
 
     // 5. Set HttpOnly cookie with session data
-    const isProduction = import.meta.env.PROD;
+    // Only use Secure flag when COOKIE_SECURE is explicitly set to 'true'
+    // This allows HTTP in TEST environments while keeping HTTPS in PROD
+    const useSecureCookie = process.env.COOKIE_SECURE === "true";
     const cookieParts = [
       `sb_session=${encodeURIComponent(sessionData)}`, // Store both tokens as JSON
       "Path=/",
@@ -78,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
       "Max-Age=3600",
     ];
 
-    if (isProduction) {
+    if (useSecureCookie) {
       cookieParts.push("Secure");
     }
 
