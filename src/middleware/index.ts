@@ -4,6 +4,11 @@ import { parse } from "cookie";
 import type { Database } from "../db/database.types.ts";
 import { loggerMiddleware } from "@/lib/services/logger.middleware";
 
+// Support both build-time (import.meta.env) and runtime (process.env) environment variables
+// This is necessary for Docker/Node.js deployments where env vars are injected at runtime
+const getSupabaseUrl = () => import.meta.env.SUPABASE_URL || process.env.SUPABASE_URL || "";
+const getSupabaseKey = () => import.meta.env.SUPABASE_KEY || process.env.SUPABASE_KEY || "";
+
 const authMiddleware = defineMiddleware(async (context, next) => {
   // Parse cookies from request headers
   const cookieString = context.request.headers.get("cookie") || "";
@@ -47,7 +52,7 @@ const authMiddleware = defineMiddleware(async (context, next) => {
   if (authHeader?.startsWith("Bearer ") && sessionData) {
     // For Bearer token auth (API clients/tests), create a client with token in headers
     // This ensures auth.uid() works correctly for RLS policies
-    supabase = createClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+    supabase = createClient<Database>(getSupabaseUrl(), getSupabaseKey(), {
       global: {
         headers: {
           Authorization: authHeader,
@@ -101,7 +106,7 @@ const authMiddleware = defineMiddleware(async (context, next) => {
 
     // Create Supabase client with the token in the Authorization header
     // The token will be used for RLS policies in database queries
-    supabase = createClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+    supabase = createClient<Database>(getSupabaseUrl(), getSupabaseKey(), {
       global: {
         headers: {
           Authorization: `Bearer ${sessionData.access_token}`,
@@ -115,7 +120,7 @@ const authMiddleware = defineMiddleware(async (context, next) => {
     });
   } else {
     // No session data - create basic client for non-authenticated requests
-    supabase = createClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+    supabase = createClient<Database>(getSupabaseUrl(), getSupabaseKey(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
