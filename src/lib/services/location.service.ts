@@ -193,6 +193,9 @@ async function checkSiblingNameConflict(
 /**
  * Creates a new location in the hierarchical storage structure.
  *
+ * Uses a SECURITY DEFINER function to bypass RLS policies, which is necessary
+ * when using custom session cookie authentication where auth.uid() is not available.
+ *
  * @param supabase - Supabase client instance
  * @param userId - Authenticated user's ID
  * @param request - Location creation request data
@@ -210,139 +213,145 @@ export async function createLocation(
 ): Promise<LocationDto> {
   const { workspace_id, name, description, parent_id } = request;
 
-  // Step 1: Validate workspace membership
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("user_id")
-    .eq("workspace_id", workspace_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (membershipError) {
-    log.error("Failed to check workspace membership", {
-      workspaceId: workspace_id,
-      userId,
-      error: membershipError.message,
-      code: membershipError.code,
+  try {
+    // Use SECURITY DEFINER function to bypass RLS
+    // This handles membership check, path generation, depth validation, and conflict check
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: locationId, error: createError } = await (supabase.rpc as any)("create_location_for_user", {
+      p_user_id: userId,
+      p_workspace_id: workspace_id,
+      p_name: name,
+      p_description: description || null,
+      p_parent_id: parent_id || null,
     });
-    throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
-  }
 
-  if (!membership) {
-    throw new WorkspaceMembershipError();
-  }
+    if (createError) {
+      const errorMessage = createError.message || "";
 
-  // Step 2: Validate parent location if provided
-  let parentPath: string | null = null;
+      // Map database errors to appropriate exceptions
+      if (errorMessage.includes("not a member")) {
+        throw new WorkspaceMembershipError();
+      }
+      if (errorMessage.includes("Parent location not found")) {
+        throw new ParentNotFoundError();
+      }
+      if (errorMessage.includes("Maximum location depth exceeded")) {
+        throw new MaxDepthExceededError();
+      }
+      if (errorMessage.includes("already exists at this level")) {
+        throw new SiblingConflictError();
+      }
 
-  if (parent_id) {
-    const { data: parent, error: parentError } = await supabase
-      .from("locations")
-      .select("id, workspace_id, path, is_deleted")
-      .eq("id", parent_id)
-      .maybeSingle();
-
-    if (parentError) {
-      log.error("Failed to fetch parent location", {
-        parentId: parent_id,
+      log.error("Failed to create location via RPC", {
         workspaceId: workspace_id,
-        error: parentError.message,
-        code: parentError.code,
+        name,
+        error: createError.message,
+        code: createError.code,
       });
-      throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
+      throw new Error("Nie udało się utworzyć lokalizacji");
     }
 
-    if (!parent) {
-      throw new ParentNotFoundError();
+    if (!locationId) {
+      throw new Error("Nie udało się utworzyć lokalizacji - brak ID");
     }
 
-    // Verify parent belongs to same workspace
-    if (parent.workspace_id !== workspace_id) {
-      throw new ParentNotFoundError();
-    }
-
-    // Verify parent is not soft-deleted
-    if (parent.is_deleted) {
-      throw new ParentNotFoundError();
-    }
-
-    parentPath = parent.path as string;
-  }
-
-  // Step 3: Check hierarchy depth
-  const normalizedName = normalizeLocationName(name);
-  const targetPath = buildLocationPath(parentPath, normalizedName);
-  const targetDepth = getPathDepth(targetPath);
-
-  if (targetDepth > 5) {
-    throw new MaxDepthExceededError();
-  }
-
-  // Step 4: Check for sibling name conflicts
-  const { data: existingLocation, error: conflictError } = await supabase
-    .from("locations")
-    .select("id")
-    .eq("workspace_id", workspace_id)
-    .eq("path", targetPath)
-    .eq("is_deleted", false)
-    .maybeSingle();
-
-  if (conflictError) {
-    log.error("Failed to check for sibling name conflicts", {
-      workspaceId: workspace_id,
-      targetPath,
-      error: conflictError.message,
-      code: conflictError.code,
+    // Fetch the created location to return full data
+    // Use direct query since we just created it and know it exists
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: locations, error: fetchError } = await (supabase.rpc as any)("get_workspace_locations", {
+      p_user_id: userId,
+      p_workspace_id: workspace_id,
     });
-    throw new Error("Nie udało się sprawdzić unikalności nazwy lokalizacji");
-  }
 
-  if (existingLocation) {
-    throw new SiblingConflictError();
-  }
+    if (fetchError) {
+      log.error("Failed to fetch created location", {
+        locationId,
+        error: fetchError.message,
+      });
+      // Return minimal data since creation succeeded
+      return {
+        id: locationId,
+        workspace_id,
+        name,
+        description: description || null,
+        path: "",
+        parent_id: parent_id || null,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
 
-  // Step 5: Create location
-  const { data: newLocation, error: insertError } = await supabase
-    .from("locations")
-    .insert({
-      workspace_id,
-      path: targetPath,
-      name,
-      description: description || null,
-    })
-    .select()
-    .single();
+    // Find the newly created location in the results
+    interface LocationRow {
+      id: string;
+      workspace_id: string;
+      path: string;
+      name: string;
+      description: string | null;
+      is_deleted: boolean;
+      created_at: string;
+      updated_at: string;
+    }
+    const newLocation = (locations || []).find((loc: { id: string }) => loc.id === locationId) as
+      | LocationRow
+      | undefined;
 
-  if (insertError) {
-    log.error("Failed to insert location", {
+    if (!newLocation) {
+      // Return minimal data since creation succeeded
+      return {
+        id: locationId,
+        workspace_id,
+        name,
+        description: description || null,
+        path: "",
+        parent_id: parent_id || null,
+        is_deleted: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+
+    // Prepare response
+    const locationDto: LocationDto = {
+      id: newLocation.id,
+      workspace_id: newLocation.workspace_id,
+      name: newLocation.name,
+      description: newLocation.description,
+      path: newLocation.path,
+      parent_id: parent_id || null,
+      is_deleted: newLocation.is_deleted,
+      created_at: newLocation.created_at,
+      updated_at: newLocation.updated_at,
+    };
+
+    return locationDto;
+  } catch (error) {
+    // Re-throw known errors
+    if (
+      error instanceof WorkspaceMembershipError ||
+      error instanceof ParentNotFoundError ||
+      error instanceof MaxDepthExceededError ||
+      error instanceof SiblingConflictError
+    ) {
+      throw error;
+    }
+
+    log.error("Unexpected error in createLocation", {
       workspaceId: workspace_id,
       name,
-      error: insertError.message,
-      code: insertError.code,
+      error: error instanceof Error ? error.message : String(error),
     });
-    throw new Error("Nie udało się utworzyć lokalizacji");
+    throw error instanceof Error ? error : new Error("Nie udało się utworzyć lokalizacji");
   }
-
-  // Step 6: Prepare response
-  // Convert ltree path to string and derive parent_id
-  const locationDto: LocationDto = {
-    id: newLocation.id,
-    workspace_id: newLocation.workspace_id,
-    name: newLocation.name,
-    description: newLocation.description,
-    path: newLocation.path as string,
-    parent_id: parent_id || null,
-    is_deleted: newLocation.is_deleted,
-    created_at: newLocation.created_at,
-    updated_at: newLocation.updated_at,
-  };
-
-  return locationDto;
 }
 
 /**
  * Retrieves all locations for a specific workspace with optional parent filtering.
  * Supports hierarchical lazy loading by filtering direct children of a parent location.
+ *
+ * Uses a SECURITY DEFINER function to bypass RLS policies, which is necessary
+ * when using custom session cookie authentication where auth.uid() is not available.
  *
  * @param supabase - Supabase client instance
  * @param userId - Authenticated user's ID
@@ -366,162 +375,112 @@ export async function getLocations(
   workspaceId: string,
   parentId?: string | null
 ): Promise<LocationDto[]> {
-  // Step 1: Validate workspace membership
-  const { data: membership, error: membershipError } = await supabase
-    .from("workspace_members")
-    .select("user_id")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (membershipError) {
-    log.error("Failed to check workspace membership", {
-      workspaceId: workspace_id,
-      userId,
-      error: membershipError.message,
-      code: membershipError.code,
+  try {
+    // Use SECURITY DEFINER function to bypass RLS
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)("get_workspace_locations", {
+      p_user_id: userId,
+      p_workspace_id: workspaceId,
+      p_parent_id: parentId || null,
     });
-    throw new Error("Nie udało się sprawdzić członkostwa w przestrzeni roboczej");
-  }
 
-  if (!membership) {
-    throw new WorkspaceMembershipError("Nie masz uprawnień do przeglądania lokalizacji w tej przestrzeni roboczej");
-  }
+    if (error) {
+      const errorMessage = error.message || "";
 
-  // Step 2: Build base query
-  const query = supabase
-    .from("locations")
-    .select("*")
-    .eq("workspace_id", workspaceId)
-    .eq("is_deleted", false)
-    .order("name", { ascending: true });
+      if (errorMessage.includes("not a member")) {
+        throw new WorkspaceMembershipError("Nie masz uprawnień do przeglądania lokalizacji w tej przestrzeni roboczej");
+      }
 
-  // Step 3: Get parent path if needed for hierarchical filtering
-  let parentPath: string | null = null;
-
-  if (parentId !== undefined && parentId !== null) {
-    const { data: parent, error: parentError } = await supabase
-      .from("locations")
-      .select("path")
-      .eq("id", parentId)
-      .eq("is_deleted", false)
-      .maybeSingle();
-
-    if (parentError) {
-      log.error("Failed to fetch parent location", {
-        parentId: parent_id,
-        workspaceId: workspace_id,
-        error: parentError.message,
-        code: parentError.code,
-      });
-      throw new Error("Nie udało się pobrać lokalizacji nadrzędnej");
-    }
-
-    if (!parent) {
-      throw new ParentNotFoundError();
-    }
-
-    parentPath = parent.path as string;
-  }
-
-  // Step 4: Execute query - fetch all locations then filter client-side for ltree hierarchy
-  const { data, error } = await query;
-
-  if (error) {
-    log.error("Failed to fetch locations", { workspaceId, error: error.message, code: error.code });
-    throw new Error("Nie udało się pobrać lokalizacji");
-  }
-
-  // Step 5: Filter by hierarchy depth client-side (ltree comparisons not directly supported by Supabase JS client)
-  let filteredData = data;
-
-  if (parentId === undefined || parentId === null) {
-    // Root-level locations have depth 2 (e.g., "root.garage")
-    filteredData = data.filter((loc) => {
-      const pathSegments = (loc.path as string).split(".");
-      return pathSegments.length === 2;
-    });
-  } else if (parentPath) {
-    // Direct children of parent (depth = parent depth + 1)
-    const parentDepth = parentPath.split(".").length;
-    const targetDepth = parentDepth + 1;
-
-    filteredData = data.filter((loc) => {
-      const pathSegments = (loc.path as string).split(".");
-      // Must be direct child (next level only) and start with parent path
-      return pathSegments.length === targetDepth && (loc.path as string).startsWith(`${parentPath}.`);
-    });
-  }
-
-  // Step 6: Derive parent_id for all filtered locations
-  // Build a map of parent paths to fetch parent IDs in a single query
-  const parentPathsToFetch = new Set<string>();
-  const locationDataMap = new Map();
-
-  filteredData.forEach((location) => {
-    const path = location.path as string;
-    const pathSegments = path.split(".");
-
-    locationDataMap.set(location.id, { location, path, pathSegments });
-
-    // For non-root locations (depth > 2), we need to find parent_id
-    if (pathSegments.length > 2) {
-      // Parent path is all segments except the last one
-      const parentPath = pathSegments.slice(0, -1).join(".");
-      parentPathsToFetch.add(parentPath);
-    }
-  });
-
-  // Step 7: Fetch all parent IDs in a single query (if needed)
-  const parentPathToIdMap = new Map<string, string>();
-
-  if (parentPathsToFetch.size > 0) {
-    const { data: parentLocations, error: parentQueryError } = await supabase
-      .from("locations")
-      .select("id, path")
-      .eq("workspace_id", workspaceId)
-      .in("path", Array.from(parentPathsToFetch));
-
-    if (parentQueryError) {
-      log.error("Failed to fetch parent location information", {
+      log.error("Failed to fetch locations via RPC", {
         workspaceId,
-        error: parentQueryError.message,
-        code: parentQueryError.code,
+        error: error.message,
+        code: error.code,
       });
-      throw new Error("Nie udało się pobrać informacji o lokalizacjach nadrzędnych");
+      throw new Error("Nie udało się pobrać lokalizacji");
     }
 
-    // Build map of parent path -> parent ID
-    parentLocations?.forEach((parent) => {
-      parentPathToIdMap.set(parent.path as string, parent.id);
+    // Cast the data to the expected type
+    interface LocationRow {
+      id: string;
+      workspace_id: string;
+      path: string;
+      name: string;
+      description: string | null;
+      is_deleted: boolean;
+      created_at: string;
+      updated_at: string;
+    }
+    const locations = (data || []) as LocationRow[];
+
+    // Filter by hierarchy depth client-side
+    let filteredData = locations;
+
+    if (parentId === undefined || parentId === null) {
+      // Root-level locations have depth 2 (e.g., "root.garage")
+      filteredData = locations.filter((loc) => {
+        const pathSegments = loc.path.split(".");
+        return pathSegments.length === 2;
+      });
+    } else {
+      // Find parent path first
+      const parent = locations.find((loc) => loc.id === parentId);
+      if (parent) {
+        const parentPath = parent.path;
+        const parentDepth = parentPath.split(".").length;
+        const targetDepth = parentDepth + 1;
+
+        filteredData = locations.filter((loc) => {
+          const pathSegments = loc.path.split(".");
+          return pathSegments.length === targetDepth && loc.path.startsWith(`${parentPath}.`);
+        });
+      } else {
+        throw new ParentNotFoundError();
+      }
+    }
+
+    // Build parent path to ID map for deriving parent_id
+    const pathToIdMap = new Map<string, string>();
+    locations.forEach((loc) => {
+      pathToIdMap.set(loc.path, loc.id);
     });
-  }
 
-  // Step 8: Transform filtered data to LocationDto format with parent_id
-  return filteredData.map((location) => {
-    const { path, pathSegments } = locationDataMap.get(location.id);
-    let derivedParentId: string | null = null;
+    // Transform to LocationDto format with parent_id
+    return filteredData.map((location) => {
+      const pathSegments = location.path.split(".");
+      let derivedParentId: string | null = null;
 
-    // For non-root locations, look up parent_id from the map
-    if (pathSegments.length > 2) {
-      const parentPath = pathSegments.slice(0, -1).join(".");
-      derivedParentId = parentPathToIdMap.get(parentPath) || null;
+      // For non-root locations, derive parent_id from path
+      if (pathSegments.length > 2) {
+        const parentPath = pathSegments.slice(0, -1).join(".");
+        derivedParentId = pathToIdMap.get(parentPath) || null;
+      }
+
+      const locationDto: LocationDto = {
+        id: location.id,
+        workspace_id: location.workspace_id,
+        name: location.name,
+        description: location.description,
+        path: location.path,
+        parent_id: derivedParentId,
+        is_deleted: location.is_deleted,
+        created_at: location.created_at,
+        updated_at: location.updated_at,
+      };
+
+      return locationDto;
+    });
+  } catch (error) {
+    // Re-throw known errors
+    if (error instanceof WorkspaceMembershipError || error instanceof ParentNotFoundError) {
+      throw error;
     }
 
-    const locationDto: LocationDto = {
-      id: location.id,
-      workspace_id: location.workspace_id,
-      name: location.name,
-      description: location.description,
-      path: path,
-      parent_id: derivedParentId,
-      is_deleted: location.is_deleted,
-      created_at: location.created_at,
-      updated_at: location.updated_at,
-    };
-
-    return locationDto;
-  });
+    log.error("Unexpected error in getLocations", {
+      workspaceId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error instanceof Error ? error : new Error("Nie udało się pobrać lokalizacji");
+  }
 }
 
 /**

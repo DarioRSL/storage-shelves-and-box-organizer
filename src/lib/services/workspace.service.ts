@@ -142,9 +142,8 @@ export async function createWorkspace(
 /**
  * Retrieves all workspaces that the authenticated user is a member of.
  *
- * Uses a join with workspace_members to filter workspaces where the user
- * has membership. Row Level Security (RLS) policies automatically ensure
- * users only see workspaces they belong to.
+ * Uses a SECURITY DEFINER function to bypass RLS policies, which is necessary
+ * when using custom session cookie authentication where auth.uid() is not available.
  *
  * @param supabase - Supabase client instance with user context
  * @param userId - ID of the authenticated user
@@ -153,33 +152,35 @@ export async function createWorkspace(
  */
 export async function getUserWorkspaces(supabase: SupabaseClient, userId: string): Promise<WorkspaceDto[]> {
   try {
-    // Query workspaces joined with workspace_members
-    // Using the more explicit approach with select
-    const { data, error } = await supabase
-      .from("workspace_members")
-      .select(
-        `
-        workspace:workspaces(*)
-      `
-      )
-      .eq("user_id", userId);
+    // Use SECURITY DEFINER function to bypass RLS
+    // This is necessary because our custom session cookie auth doesn't set auth.uid()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)("get_user_workspaces", {
+      p_user_id: userId,
+    });
 
     if (error) {
       log.error("Failed to fetch user workspaces", { userId, error: error.message, code: error.code });
       throw new Error("Failed to retrieve workspaces");
     }
 
-    // Transform the nested structure to flat WorkspaceDto array
-    // Filter out any null workspace references and sort by created_at DESC
-    const workspaces = (data || [])
-      .map((item) => item.workspace)
-      .filter((workspace): workspace is WorkspaceDto => workspace !== null)
-      .sort((a, b) => {
-        // Sort by created_at descending (newest first)
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
+    // Data is already in the correct format from the function
+    interface WorkspaceRow {
+      id: string;
+      owner_id: string;
+      name: string;
+      created_at: string;
+      updated_at: string;
+    }
+    const rows = (data || []) as WorkspaceRow[];
+
+    const workspaces: WorkspaceDto[] = rows.map((row) => ({
+      id: row.id,
+      owner_id: row.owner_id,
+      name: row.name,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
 
     return workspaces;
   } catch (error) {
