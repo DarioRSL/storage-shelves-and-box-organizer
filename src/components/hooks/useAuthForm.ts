@@ -165,11 +165,14 @@ export function useAuthForm(options?: UseAuthFormOptions) {
 
         if (authError) {
           let errorMsg = "Błąd rejestracji. Spróbuj ponownie.";
-          if (authError.message.includes("already exists")) {
+          if (authError.message.includes("already exists") || authError.message.includes("already registered")) {
             errorMsg = "Email jest już zarejestrowany";
           } else if (authError.message.includes("weak")) {
             errorMsg = "Hasło jest zbyt słabe";
+          } else if (authError.message.includes("not authorized") || authError.message.includes("Signups not allowed")) {
+            errorMsg = "Rejestracja jest obecnie wyłączona";
           }
+          console.error("Registration error:", authError.message, authError);
           setError(errorMsg);
           options?.onError?.(errorMsg);
           return;
