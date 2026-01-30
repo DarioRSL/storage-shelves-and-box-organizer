@@ -52,3 +52,4 @@ playwright-report/
 # playwright
 .playwright/
 .vercel
+supabase/combined_migrations.sql
