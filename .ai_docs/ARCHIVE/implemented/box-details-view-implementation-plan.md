@@ -52,22 +52,26 @@ BoxDetailsView (Astro page component)
 **Description:** Main page component that handles routing, data loading, and loading/error states. It is an Astro layout that renders content on the server and hydrates interactive React components.
 
 **Main Elements:**
+
 - Page header with navigation breadcrumb
 - Container with dynamic content
 - Error boundary for error handling
 - Loading spinner during data fetch
 
 **Supported Interactions:**
+
 - Page load - initiates GET request for the box
 - Error handling - displays error messages
 - Retry logic - button to retry loading after error
 
 **Validation:**
+
 - ID from URL params must be a valid UUID
 - Check if user is authenticated
 - Check access to box (RLS)
 
 **Types:**
+
 - `BoxDto` - complete box data
 - `ErrorResponse` - API error response structure
 
@@ -80,26 +84,31 @@ BoxDetailsView (Astro page component)
 **Description:** Main React component that manages loading state, box data, and coordinates the display of all sub-components. Handles fetching box data from the API on mount and manages error/loading states.
 
 **Main Elements:**
+
 - State variables for box data, loading, error
 - useEffect hook for data fetching
 - Conditional rendering based on loading/error states
 - Container div with Tailwind styling
 
 **Supported Interactions:**
+
 - Component mount - fetch box data
 - Error handling - show error message with retry
 - Successful load - render box details
 
 **Validation:**
+
 - Check if id from params is a valid UUID
 - API validation errors (400, 404, 500)
 - Network error handling
 
 **Types:**
+
 - `BoxDto` - response from GET /api/boxes/:id
 - `ErrorResponse` - error response
 
 **Props:**
+
 ```typescript
 interface BoxDetailsContentProps {
   boxId: string; // UUID from URL params
@@ -114,21 +123,26 @@ interface BoxDetailsContentProps {
 **Description:** Component displaying the box header with its name and metadata (creation date, last update). Provides clear visual distinction of the box title from the rest of the content.
 
 **Main Elements:**
+
 - `<h1>` tag with box name
 - Metadata section with formatted dates
 - Icon or badge if the box has a special status
 
 **Supported Interactions:**
+
 - Display only (no interactions)
 
 **Validation:**
+
 - Check that name is not empty
 - Date format (created_at, updated_at)
 
 **Types:**
+
 - `BoxDto` - source of data
 
 **Props:**
+
 ```typescript
 interface BoxHeaderProps {
   name: string;
@@ -144,25 +158,30 @@ interface BoxHeaderProps {
 **Description:** Component displaying the hierarchical location path of the box in breadcrumb navigation format. If the box has no assigned location, displays an "Unassigned" status.
 
 **Main Elements:**
+
 - `<nav>` semantic element with aria-label
 - List of path segments separated by ">"
 - Link to each hierarchy level (optional)
 - Empty state for unassigned boxes
 
 **Supported Interactions:**
+
 - Display breadcrumb path
 - Conditional rendering for unassigned state
 - Optional click handlers on segments (if implementing location filtering)
 
 **Validation:**
+
 - Check if location exists
 - Parse path string from API format
 - Handle null/undefined location
 
 **Types:**
+
 - `BoxLocationSummary` (from BoxDto.location)
 
 **Props:**
+
 ```typescript
 interface LocationBreadcrumbsProps {
   location?: BoxLocationSummary | null;
@@ -176,23 +195,28 @@ interface LocationBreadcrumbsProps {
 **Description:** Component displaying the descriptive content of the box. Handles long text (up to 10,000 characters) with whitespace preservation and text wrapping.
 
 **Main Elements:**
+
 - Section tag with aria-label
 - Description text with preformatted whitespace
 - Empty state message if description is empty
 - Section heading
 
 **Supported Interactions:**
+
 - Display only
 
 **Validation:**
+
 - Handle empty/null description
 - Limit length display if needed
 - Sanitize HTML characters if description comes from user input
 
 **Types:**
+
 - `string | null` - description content
 
 **Props:**
+
 ```typescript
 interface DescriptionSectionProps {
   description?: string | null;
@@ -206,24 +230,29 @@ interface DescriptionSectionProps {
 **Description:** Component displaying the list of box tags. Each tag is displayed as a badge and can optionally be clickable for filtering.
 
 **Main Elements:**
+
 - Container for tag list
 - Individual tag badges (Shadcn Badge component)
 - Empty state if no tags
 - Section heading
 
 **Supported Interactions:**
+
 - Display tag list
 - Optional click handler (filter by tag) - if implementing
 - Keyboard accessibility for tags
 
 **Validation:**
+
 - Handle empty/null tags array
 - Validate array structure
 
 **Types:**
+
 - `string[]` - tags array
 
 **Props:**
+
 ```typescript
 interface TagsDisplayProps {
   tags?: string[] | null;
@@ -237,6 +266,7 @@ interface TagsDisplayProps {
 **Description:** Component displaying the box's QR code and its text identifier (short_id). Includes a print button for the QR code. If the box has no assigned QR code, displays an appropriate message.
 
 **Main Elements:**
+
 - QR code visual (react-qr-code library)
 - short_id label below the code
 - Print button with icon
@@ -244,18 +274,22 @@ interface TagsDisplayProps {
 - Section container
 
 **Supported Interactions:**
+
 - Print button click - trigger browser print dialog
 - QR code might be scannable directly from screen
 
 **Validation:**
+
 - Check if qr_code exists in response
 - Validate short_id format (QR-XXXXXX)
 - Handle missing QR code gracefully
 
 **Types:**
+
 - `BoxQrCodeSummary` (from BoxDto.qr_code)
 
 **Props:**
+
 ```typescript
 interface QrCodeDisplayProps {
   qrCode?: BoxQrCodeSummary | null;
@@ -269,21 +303,25 @@ interface QrCodeDisplayProps {
 **Description:** Component containing action buttons for the box (Edit, Delete). Positioned at the bottom of the view, contains an Edit button that navigates to the edit form and a Delete button that opens a confirmation dialog.
 
 **Main Elements:**
+
 - Container flex for button layout
 - Edit button (Shadcn Button)
 - Delete button (Shadcn Button - danger variant)
 - Spacing and responsive layout
 
 **Supported Interactions:**
+
 - Edit button click - navigate to `/app/boxes/[id]/edit`
 - Delete button click - open confirmation dialog
 
 **Validation:**
+
 - Buttons enabled based on state (disabled while deleting)
 
 **Types:** None (pure UI)
 
 **Props:**
+
 ```typescript
 interface ActionButtonsSectionProps {
   boxId: string;
@@ -299,6 +337,7 @@ interface ActionButtonsSectionProps {
 **Description:** Modal dialog component for confirming box deletion. Displays a warning about the irreversibility of the operation and requires user confirmation.
 
 **Main Elements:**
+
 - Shadcn Dialog component as modal
 - Warning icon and text
 - Confirmation message
@@ -307,6 +346,7 @@ interface ActionButtonsSectionProps {
 - Loading state during deletion
 
 **Supported Interactions:**
+
 - Dialog open/close
 - Cancel button - close dialog without action
 - Confirm button - call delete API and close dialog
@@ -314,13 +354,16 @@ interface ActionButtonsSectionProps {
 - Click outside - close dialog (if dialog supports this)
 
 **Validation:**
+
 - Dialog opened only when explicitly triggered
 - Button states during API call
 
 **Types:**
+
 - `BoxDto` (optional, for displaying information)
 
 **Props:**
+
 ```typescript
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -338,6 +381,7 @@ interface DeleteConfirmationDialogProps {
 **Description:** Component displaying loading state while fetching box data from the API.
 
 **Main Elements:**
+
 - Spinner/loader animation
 - Text "Loading box data..."
 - Center alignment in viewport
@@ -347,6 +391,7 @@ interface DeleteConfirmationDialogProps {
 **Types:** None
 
 **Props:**
+
 ```typescript
 interface LoadingSpinnerProps {
   message?: string;
@@ -360,6 +405,7 @@ interface LoadingSpinnerProps {
 **Description:** Component displaying errors during box loading or operations. Contains an error message and a retry button.
 
 **Main Elements:**
+
 - Alert box (Shadcn Alert)
 - Error message
 - Retry button
@@ -367,13 +413,16 @@ interface LoadingSpinnerProps {
 - Error icon
 
 **Supported Interactions:**
+
 - Retry button - retry last API call
 - Close button - dismiss alert
 
 **Types:**
+
 - `ErrorResponse` - error data
 
 **Props:**
+
 ```typescript
 interface ErrorAlertProps {
   error: string;
@@ -419,9 +468,9 @@ export interface BoxDto extends Tables<"boxes"> {
 
 ```typescript
 export interface BoxLocationSummary {
-  id?: string;        // Location UUID
-  name: string;       // Location name
-  path?: string;      // Hierarchical path (e.g., "root.basement.shelf_a")
+  id?: string; // Location UUID
+  name: string; // Location name
+  path?: string; // Hierarchical path (e.g., "root.basement.shelf_a")
 }
 ```
 
@@ -429,8 +478,8 @@ export interface BoxLocationSummary {
 
 ```typescript
 export interface BoxQrCodeSummary {
-  id: string;         // QR code UUID
-  short_id: string;   // QR code short ID (format: QR-XXXXXX)
+  id: string; // QR code UUID
+  short_id: string; // QR code short ID (format: QR-XXXXXX)
 }
 ```
 
@@ -493,6 +542,7 @@ const [isDeleting, setIsDeleting] = useState(false);
 ```
 
 **State flow:**
+
 1. On mount: `isLoading = true`
 2. During fetch: maintain `isLoading = true`
 3. On success: `isLoading = false`, `box = data`, `error = null`
@@ -505,6 +555,7 @@ const [isDeleting, setIsDeleting] = useState(false);
 ### 6.2 useEffect Hooks
 
 **Effect 1: Fetch box data on mount**
+
 ```typescript
 useEffect(() => {
   if (!boxId) return;
@@ -515,13 +566,13 @@ useEffect(() => {
     try {
       const response = await fetch(`/api/boxes/${boxId}`);
       if (!response.ok) {
-        const errorData = await response.json() as ErrorResponse;
-        throw new Error(errorData.error || 'Failed to fetch box');
+        const errorData = (await response.json()) as ErrorResponse;
+        throw new Error(errorData.error || "Failed to fetch box");
       }
-      const data = await response.json() as BoxDto;
+      const data = (await response.json()) as BoxDto;
       setBox(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
@@ -550,13 +601,13 @@ function useBoxDetails(boxId: string) {
     try {
       const response = await fetch(`/api/boxes/${boxId}`);
       if (!response.ok) {
-        const errorData = await response.json() as ErrorResponse;
+        const errorData = (await response.json()) as ErrorResponse;
         throw new Error(errorData.error);
       }
-      const data = await response.json() as BoxDto;
+      const data = (await response.json()) as BoxDto;
       setBox(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
@@ -587,12 +638,14 @@ function useBoxDetails(boxId: string) {
 **Purpose:** Fetch complete box data
 
 **Request:**
+
 ```
 GET /api/boxes/{boxId}
 Header: Authorization: Bearer {jwt_token}
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "b1b48d97-501c-4709-bd7b-d96519721367",
@@ -618,12 +671,14 @@ Header: Authorization: Bearer {jwt_token}
 ```
 
 **Error Responses:**
+
 - 400 Bad Request: Invalid UUID format
 - 401 Unauthorized: Missing/invalid JWT token
 - 404 Not Found: Box doesn't exist or user lacks access (RLS)
 - 500 Internal Server Error: Database/server error
 
 **Frontend handling:**
+
 - Display BoxDto data in all sub-components
 - Handle all error cases
 - Show loading spinner during fetch
@@ -633,12 +688,14 @@ Header: Authorization: Bearer {jwt_token}
 **Purpose:** Permanently delete a box
 
 **Request:**
+
 ```
 DELETE /api/boxes/{boxId}
 Header: Authorization: Bearer {jwt_token}
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Box deleted successfully."
@@ -646,6 +703,7 @@ Header: Authorization: Bearer {jwt_token}
 ```
 
 **Error Responses:**
+
 - 400 Bad Request: Invalid UUID format
 - 401 Unauthorized: Missing/invalid JWT
 - 403 Forbidden: User doesn't have permission
@@ -653,6 +711,7 @@ Header: Authorization: Bearer {jwt_token}
 - 500 Internal Server Error: Database error
 
 **Frontend handling:**
+
 - Show confirmation dialog before delete
 - Set `isDeleting = true` during API call
 - Disable buttons during delete
@@ -667,6 +726,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 8.1 Scenario 1: Opening the view
 
 **Steps:**
+
 1. User navigates to `/app/boxes/[id]` (e.g., via QR scan or box list click)
 2. Astro renders page, passes boxId to React component
 3. React component mounts, initiates GET /api/boxes/:id
@@ -679,6 +739,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 8.2 Scenario 2: Editing the box
 
 **Steps:**
+
 1. User clicks "Edit" button
 2. Navigation triggered: `navigate('/app/boxes/' + boxId + '/edit')`
 3. Edit form page loads (different page)
@@ -688,6 +749,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 8.3 Scenario 3: Deleting the box
 
 **Steps:**
+
 1. User clicks "Delete" button
 2. DeleteConfirmationDialog opens
 3. User reads warning message
@@ -702,6 +764,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 8.4 Scenario 4: Canceling deletion
 
 **Steps:**
+
 1. User clicks "Delete" button
 2. DeleteConfirmationDialog opens
 3. User clicks "Cancel" or clicks outside dialog
@@ -712,6 +775,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 8.5 Scenario 5: Error handling during loading
 
 **Steps:**
+
 1. User opens box details view
 2. GET /api/boxes/:id request fails (network error or 404)
 3. Loading spinner removed
@@ -729,6 +793,7 @@ Header: Authorization: Bearer {jwt_token}
 ### 9.1 URL Parameter Validation
 
 **Condition:** Box ID must be a valid UUID format
+
 - **Component:** BoxDetailsContent
 - **Validation:** On load, check if `boxId` matches UUID regex
 - **Impact:** If invalid, show error "Invalid box identifier"
@@ -740,6 +805,7 @@ const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 ### 9.2 API Response Validation
 
 **Condition:** Response from GET /api/boxes/:id must contain required fields
+
 - **Component:** BoxDetailsContent (in try-catch)
 - **Required fields:** `id`, `name`, `workspace_id`
 - **Impact:** If validation fails, show error message
@@ -748,6 +814,7 @@ const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 ### 9.3 Box State Validation
 
 **Condition:** Box must exist in database and be accessible to current user
+
 - **Component:** BoxDetailsContent
 - **Validation:** API checks (RLS) on backend
 - **HTTP Status:** 404 if not found, 403 if no access
@@ -756,9 +823,9 @@ const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 ```typescript
 if (!response.ok) {
   if (response.status === 404) {
-    setError('Box not found');
+    setError("Box not found");
   } else if (response.status === 403) {
-    setError('Access denied to this box');
+    setError("Access denied to this box");
   }
 }
 ```
@@ -766,6 +833,7 @@ if (!response.ok) {
 ### 9.4 Box Data Validation
 
 **Conditions:**
+
 - `name`: string, min length 1
 - `description`: string | null, max 10,000 characters
 - `tags`: string[] | null
@@ -773,6 +841,7 @@ if (!response.ok) {
 - `qr_code`: BoxQrCodeSummary | null
 
 **Frontend display:**
+
 - Empty states for null/empty values
 - Formatting for large texts
 - CSS white-space preservation for descriptions
@@ -780,11 +849,13 @@ if (!response.ok) {
 ### 9.5 Delete Action Validation
 
 **Conditions:**
+
 - Delete button only enabled when not loading
 - Confirm button in dialog disabled during API call
 - User must be member of workspace (RLS)
 
 **UI Impact:**
+
 - Buttons disabled: `isDeleting || isLoading`
 - Loading spinner visible: `isDeleting`
 
@@ -797,10 +868,11 @@ if (!response.ok) {
 **Scenario:** User navigates with invalid ID format
 
 **Handling:**
+
 ```typescript
 const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(boxId);
 if (!isValidUUID) {
-  setError('Invalid box identifier');
+  setError("Invalid box identifier");
   return;
 }
 ```
@@ -814,9 +886,10 @@ if (!isValidUUID) {
 **Scenario:** Box was deleted or ID is wrong
 
 **Handling:**
+
 ```typescript
 if (response.status === 404) {
-  setError('Box not found or access has been revoked');
+  setError("Box not found or access has been revoked");
 }
 ```
 
@@ -829,9 +902,10 @@ if (response.status === 404) {
 **Scenario:** User is not a member of box workspace (RLS)
 
 **Handling:**
+
 ```typescript
 if (response.status === 403) {
-  setError('Access denied to this box');
+  setError("Access denied to this box");
 }
 ```
 
@@ -844,6 +918,7 @@ if (response.status === 403) {
 **Scenario:** No connectivity, timeout, etc.
 
 **Handling:**
+
 ```typescript
 catch (err) {
   setError('Network error while fetching data. Please try again.');
@@ -859,9 +934,10 @@ catch (err) {
 **Scenario:** Delete API request failed on backend
 
 **Handling:**
+
 ```typescript
 if (!response.ok) {
-  const errorData = await response.json() as ErrorResponse;
+  const errorData = (await response.json()) as ErrorResponse;
   setError(`Failed to delete box: ${errorData.error}`);
   setIsDeleting(false);
 }
@@ -933,10 +1009,11 @@ if (!response.ok) {
 7. Render BoxDetailsContent with props (id, userId)
 
 **File structure:**
+
 ```astro
 ---
-import { type APIRoute } from 'astro';
-import BoxDetailsContent from '@/components/BoxDetailsContent';
+import { type APIRoute } from "astro";
+import BoxDetailsContent from "@/components/BoxDetailsContent";
 
 export const prerender = false;
 
@@ -945,7 +1022,7 @@ const { id } = Astro.params;
 
 // Validation
 if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
-  return Astro.redirect('/app');
+  return Astro.redirect("/app");
 }
 ---
 
@@ -966,11 +1043,20 @@ if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
 8. Render all sub-components
 
 **Key functions:**
+
 ```typescript
-async function fetchBox() { /* ... */ }
-async function handleConfirmDelete() { /* ... */ }
-function handleDeleteClick() { /* ... */ }
-function handleRetry() { /* ... */ }
+async function fetchBox() {
+  /* ... */
+}
+async function handleConfirmDelete() {
+  /* ... */
+}
+function handleDeleteClick() {
+  /* ... */
+}
+function handleRetry() {
+  /* ... */
+}
 ```
 
 ---
@@ -997,6 +1083,7 @@ function handleRetry() { /* ... */ }
 6. Handle unassigned case (display "Unassigned")
 
 **Accessibility:**
+
 - Use semantic `<nav>`
 - Set `aria-label="Location path"`
 - Use `aria-current="page"` for last item
@@ -1036,6 +1123,7 @@ function handleRetry() { /* ... */ }
 8. Handle print button click
 
 **Print functionality:**
+
 ```typescript
 function handlePrint() {
   window.print();
@@ -1054,6 +1142,7 @@ function handlePrint() {
 5. Disable buttons based on `isDeleting` || `isLoading`
 
 **Navigation:**
+
 ```typescript
 function handleEditClick() {
   navigate(`/app/boxes/${boxId}/edit`);
@@ -1167,6 +1256,7 @@ function handleEditClick() {
 ## Summary
 
 The Box Details View is a central interface for viewing box details. The implementation requires:
+
 - Loading data from API GET /boxes/:id
 - Displaying multi-part information (header, location, description, tags, QR code)
 - Handling deletion with confirmation

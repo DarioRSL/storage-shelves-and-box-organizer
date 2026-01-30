@@ -565,10 +565,7 @@ describe("useFetch", () => {
       );
 
       await waitFor(() => {
-        expect(apiFetch).toHaveBeenCalledWith(
-          "/api/boxes/1",
-          expect.objectContaining({ method: "PATCH" })
-        );
+        expect(apiFetch).toHaveBeenCalledWith("/api/boxes/1", expect.objectContaining({ method: "PATCH" }));
       });
       unmount1();
 
@@ -582,10 +579,7 @@ describe("useFetch", () => {
       );
 
       await waitFor(() => {
-        expect(apiFetch).toHaveBeenCalledWith(
-          "/api/boxes/1",
-          expect.objectContaining({ method: "DELETE" })
-        );
+        expect(apiFetch).toHaveBeenCalledWith("/api/boxes/1", expect.objectContaining({ method: "DELETE" }));
       });
       unmount2();
 
@@ -599,10 +593,7 @@ describe("useFetch", () => {
       );
 
       await waitFor(() => {
-        expect(apiFetch).toHaveBeenCalledWith(
-          "/api/boxes/1",
-          expect.objectContaining({ method: "PUT" })
-        );
+        expect(apiFetch).toHaveBeenCalledWith("/api/boxes/1", expect.objectContaining({ method: "PUT" }));
       });
     });
 

@@ -38,6 +38,7 @@ This document outlines the systematic testing plan for the remaining RLS-protect
 **Why**: Workspace DELETE policy requires `auth.uid()` to verify owner role
 
 **Test Steps**:
+
 ```bash
 # Test as workspace owner
 1. Login as user with workspace
@@ -48,14 +49,17 @@ This document outlines the systematic testing plan for the remaining RLS-protect
 ```
 
 **Expected Result**:
+
 - Workspace deleted successfully
 - User redirected appropriately
 - All related data handled correctly (cascade or soft delete)
 
 **Failure Scenario**:
+
 - If fails: Create `delete_workspace_for_user()` SECURITY DEFINER function
 
 **Files to Monitor**:
+
 - `src/pages/api/workspaces/[workspace_id].ts` - DELETE handler
 - `src/lib/services/workspace.service.ts` - deleteWorkspace()
 - Database RLS policy: `workspaces DELETE policy`
@@ -69,6 +73,7 @@ This document outlines the systematic testing plan for the remaining RLS-protect
 **Why**: Already tested and verified in previous session
 
 **Evidence**: RLS_ANALYSIS.md line 187-188
+
 ```
 ### ✅ Update Workspace Name
 - **Status**: Works correctly
@@ -83,6 +88,7 @@ This document outlines the systematic testing plan for the remaining RLS-protect
 **Why**: `workspace_members INSERT` policy requires existing owner/admin via `auth.uid()`
 
 **Test Steps**:
+
 ```bash
 # Setup: Need two user accounts
 1. Login as User A (workspace owner)
@@ -93,20 +99,24 @@ This document outlines the systematic testing plan for the remaining RLS-protect
 ```
 
 **Expected Result**:
+
 - Member invitation succeeds
 - New member record created with correct role
 - No RLS policy violations
 
 **Failure Scenario**:
+
 - If fails: Create `invite_workspace_member()` SECURITY DEFINER function
 - Alternative: Use existing `create_workspace_for_user()` pattern
 
 **Files to Monitor**:
+
 - `src/pages/api/workspaces/[workspace_id]/members.ts` - POST handler
 - `src/lib/services/workspace.service.ts` - addWorkspaceMember()
 - Database RLS policy: `workspace_members INSERT policy`
 
 **RLS Policy**:
+
 ```sql
 -- From RLS_ANALYSIS.md lines 26-35
 with check (
@@ -125,6 +135,7 @@ with check (
 **Why**: Verify owner/admin can change member roles
 
 **Test Steps**:
+
 ```bash
 1. Login as workspace owner (User A)
 2. Navigate to workspace members list
@@ -134,13 +145,16 @@ with check (
 ```
 
 **Expected Result**:
+
 - Role updated successfully
 - Changes reflected immediately in UI
 
 **Failure Scenario**:
+
 - If fails: Create `update_member_role()` SECURITY DEFINER function
 
 **Files to Monitor**:
+
 - `src/pages/api/workspaces/[workspace_id]/members/[user_id].ts` - PATCH handler
 - `src/lib/services/workspace.service.ts` - updateWorkspaceMember()
 
@@ -151,6 +165,7 @@ with check (
 **Why**: Verify owner/admin can remove members
 
 **Test Steps**:
+
 ```bash
 1. Login as workspace owner
 2. Navigate to workspace members
@@ -160,13 +175,16 @@ with check (
 ```
 
 **Expected Result**:
+
 - Member removed successfully
 - No cascade deletion of user's data
 
 **Failure Scenario**:
+
 - If fails: Create `remove_workspace_member()` SECURITY DEFINER function
 
 **Files to Monitor**:
+
 - `src/pages/api/workspaces/[workspace_id]/members/[user_id].ts` - DELETE handler
 - `src/lib/services/workspace.service.ts` - removeWorkspaceMember()
 
@@ -179,6 +197,7 @@ with check (
 **Why**: Uses `is_workspace_member()` SECURITY DEFINER helper - likely works
 
 **Test Steps**:
+
 ```bash
 1. Login as workspace member
 2. Navigate to dashboard
@@ -190,6 +209,7 @@ with check (
 **Expected Result**: ✅ Should work (uses SECURITY DEFINER helper)
 
 **Files to Monitor**:
+
 - `src/pages/api/locations/index.ts` - POST handler
 - `src/lib/services/location.service.ts` - createLocation()
 
@@ -202,6 +222,7 @@ with check (
 **Why**: Verify location management works end-to-end
 
 **Test Steps**:
+
 ```bash
 # Update
 1. Select existing location
@@ -218,6 +239,7 @@ with check (
 **Expected Result**: ✅ Should work (uses SECURITY DEFINER helper)
 
 **Files to Monitor**:
+
 - `src/pages/api/locations/[id].ts` - PATCH/DELETE handlers
 - `src/lib/services/location.service.ts`
 
@@ -228,6 +250,7 @@ with check (
 **Why**: Uses `is_workspace_member()` - likely works
 
 **Test Steps**:
+
 ```bash
 1. Login as workspace member
 2. Navigate to dashboard
@@ -240,6 +263,7 @@ with check (
 **Expected Result**: ✅ Should work (uses SECURITY DEFINER helper)
 
 **Files to Monitor**:
+
 - `src/pages/api/boxes.ts` - POST handler
 - `src/lib/services/box.service.ts` - createBox()
 
@@ -250,6 +274,7 @@ with check (
 **Why**: Verify box CRUD works end-to-end
 
 **Test Steps**:
+
 ```bash
 # Update
 1. Select existing box
@@ -267,6 +292,7 @@ with check (
 **Expected Result**: ✅ Should work (uses SECURITY DEFINER helper)
 
 **Files to Monitor**:
+
 - `src/pages/api/boxes/[id].ts` - PATCH/DELETE handlers
 - `src/lib/services/box.service.ts`
 
@@ -277,6 +303,7 @@ with check (
 **Why**: Uses `is_workspace_member()` - likely works
 
 **Test Steps**:
+
 ```bash
 1. Navigate to QR Generator page
 2. Request batch generation (e.g., 10 codes)
@@ -288,6 +315,7 @@ with check (
 **Expected Result**: ✅ Should work (uses SECURITY DEFINER helper)
 
 **Files to Monitor**:
+
 - `src/pages/api/qr-codes/batch.ts` - POST handler
 - `src/lib/services/qr-code.service.ts` - generateQRCodes()
 
@@ -300,6 +328,7 @@ with check (
 **Why**: CRITICAL - Verify RLS actually prevents cross-workspace access
 
 **Test Steps**:
+
 ```bash
 # Setup: Two users in different workspaces
 User A: Workspace "Alpha" (ID: xxx)
@@ -320,6 +349,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 ```
 
 **Expected Result**:
+
 - User B **CANNOT** see User A's data
 - API returns 403 or 404
 - No data leakage in responses
@@ -327,6 +357,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 **CRITICAL FAILURE**: If User B can see User A's data → RLS IS BROKEN
 
 **Files to Monitor**:
+
 - All API endpoints with `workspace_id` filtering
 - Middleware auth checks
 - Database RLS policies
@@ -338,6 +369,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 **Why**: Verify members can ONLY see workspace data
 
 **Test Steps**:
+
 ```bash
 # Setup: User C is member (not owner) of Workspace Alpha
 
@@ -353,6 +385,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 ```
 
 **Expected Result**:
+
 - Members can view workspace data
 - Members cannot modify workspace settings
 - Members cannot invite others (unless admin)
@@ -365,17 +398,18 @@ EXPECTED: 403 Forbidden or 404 Not Found
 
 **Test Matrix**:
 
-| Action | Owner | Admin | Member | Expected Behavior |
-|--------|-------|-------|--------|-------------------|
-| View boxes | ✅ | ✅ | ✅ | All can view |
-| Create box | ✅ | ✅ | ✅ | All can create |
-| Delete box | ✅ | ✅ | ✅ | All can delete own boxes |
-| Invite member | ✅ | ✅ | ❌ | Only owner/admin |
-| Remove member | ✅ | ✅ | ❌ | Only owner/admin |
-| Delete workspace | ✅ | ❌ | ❌ | Only owner |
-| Update workspace | ✅ | ✅ | ❌ | Only owner/admin |
+| Action           | Owner | Admin | Member | Expected Behavior        |
+| ---------------- | ----- | ----- | ------ | ------------------------ |
+| View boxes       | ✅    | ✅    | ✅     | All can view             |
+| Create box       | ✅    | ✅    | ✅     | All can create           |
+| Delete box       | ✅    | ✅    | ✅     | All can delete own boxes |
+| Invite member    | ✅    | ✅    | ❌     | Only owner/admin         |
+| Remove member    | ✅    | ✅    | ❌     | Only owner/admin         |
+| Delete workspace | ✅    | ❌    | ❌     | Only owner               |
+| Update workspace | ✅    | ✅    | ❌     | Only owner/admin         |
 
 **Test Steps**:
+
 ```bash
 # Create test users with different roles
 1. User A: Owner of "Test Workspace"
@@ -391,6 +425,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 ## 📋 Testing Checklist Summary
 
 ### High Priority (Must Test)
+
 - [ ] Workspace deletion (DELETE policy uses auth.uid())
 - [ ] Invite member to workspace (INSERT policy uses auth.uid())
 - [ ] Update member role
@@ -399,6 +434,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 - [ ] Role-based permission matrix
 
 ### Medium Priority (✅ COMPLETED - 2026-01-11)
+
 - [x] Create location (uses SECURITY DEFINER helper) ✅
 - [x] Update location ✅
 - [x] Delete location (soft delete) ✅
@@ -408,6 +444,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 - [ ] Generate QR codes (batch) - Not yet tested
 
 ### Low Priority (Already Working)
+
 - [x] Workspace creation ✅
 - [x] Workspace update (rename) ✅
 - [x] Delete account ✅
@@ -419,6 +456,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 ## 🛠️ Recommended Testing Order
 
 ### Week 1: Critical Operations
+
 1. **Day 1**: Multi-user isolation testing (Phase 4.1, 4.2)
    - If fails → **CRITICAL BUG** - halt and fix immediately
 2. **Day 2**: Workspace deletion (Phase 1.1)
@@ -427,6 +465,7 @@ EXPECTED: 403 Forbidden or 404 Not Found
 5. **Day 5**: Role-based permissions (Phase 4.3)
 
 ### Week 2: CRUD Operations
+
 1. **Day 1-2**: Location operations (Phase 3.1, 3.2)
 2. **Day 3-4**: Box operations (Phase 3.3, 3.4)
 3. **Day 5**: QR code generation (Phase 3.5)
@@ -436,19 +475,25 @@ EXPECTED: 403 Forbidden or 404 Not Found
 ## 🚨 If Tests Fail: Decision Tree
 
 ### Scenario A: 1-2 operations fail
+
 **Action**: Implement SECURITY DEFINER functions for those operations (Option B)
+
 - Create function (e.g., `delete_workspace_for_user()`)
 - Update service layer to use RPC
 - Test again
 
 ### Scenario B: 3+ operations fail
+
 **Action**: Fix auth context globally (Option A)
+
 - Investigate `auth.uid()` context in middleware
 - Ensure JWT properly set in Supabase client
 - May need to modify `setSession()` implementation
 
 ### Scenario C: Multi-user isolation fails (CRITICAL)
+
 **Action**: HALT ALL DEVELOPMENT
+
 1. Do NOT deploy to production
 2. Review ALL RLS policies
 3. Test with Supabase service role to verify policies are active
@@ -462,25 +507,30 @@ After each test, document results in `RLS_TESTING_RESULTS_2026_01_XX.md`:
 
 ```markdown
 ## Test: [Operation Name]
+
 **Date**: 2026-01-XX
 **Tester**: [Name]
 **Status**: ✅ PASS / ❌ FAIL
 
 ### Test Steps Executed
+
 1. [Step 1]
 2. [Step 2]
-...
+   ...
 
 ### Results
+
 - Expected: [What should happen]
 - Actual: [What actually happened]
 - Evidence: [Screenshots, logs, database queries]
 
 ### Issues Found
+
 - [Issue 1 with details]
 - [Issue 2 with details]
 
 ### Fix Applied (if any)
+
 - [Description of fix]
 - [Files modified]
 - [Commit hash]

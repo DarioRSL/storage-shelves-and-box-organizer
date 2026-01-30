@@ -10,6 +10,7 @@
 ### 1.1 The Issue
 
 **Error Encountered:**
+
 ```
 operator does not exist: ltree ~~ unknown
 ```
@@ -17,6 +18,7 @@ operator does not exist: ltree ~~ unknown
 **When:** Calling `GET /api/locations` endpoint
 
 **Root Cause:** PostgREST API (Supabase's REST layer) doesn't support PostgreSQL's native ltree operators:
+
 - `~` (exact match)
 - `@@` (full-text search on ltree)
 - `@>` (contains)
@@ -25,6 +27,7 @@ operator does not exist: ltree ~~ unknown
 - And others...
 
 **Impact:** The entire locations feature was broken:
+
 - ❌ Could not retrieve location hierarchy
 - ❌ Dashboard couldn't display location tree
 - ❌ Box assignment to locations failed
@@ -33,17 +36,20 @@ operator does not exist: ltree ~~ unknown
 ### 1.2 Why PostgREST Doesn't Support ltree Operators
 
 PostgREST is a **generic REST-to-SQL translator** for PostgreSQL. It:
+
 1. Accepts HTTP query parameters
 2. Translates them to SQL WHERE clauses
 3. Executes the query
 4. Returns JSON results
 
 **Problem:** ltree operators are PostgreSQL-specific and complex:
+
 - They don't map cleanly to REST query parameters
 - They require specialized syntax
 - PostgREST treats them as unknown operators
 
 **Solution:** Don't use ltree operators in queries sent to PostgREST. Instead:
+
 - Fetch data without ltree operators (simple WHERE clauses work)
 - Do hierarchical filtering in JavaScript
 - Reconstruct the tree structure in application code
@@ -55,6 +61,7 @@ PostgREST is a **generic REST-to-SQL translator** for PostgreSQL. It:
 ### 2.1 Attempted SQL Query
 
 **Pseudocode:**
+
 ```sql
 -- Try to get children of a location
 SELECT * FROM locations
@@ -70,11 +77,13 @@ WHERE path @> 'root.garage.shelf_a'  -- ltree operator @> (is contained by)
 ```
 
 **Result:**
+
 ```
 ERROR: operator does not exist: ltree ~~ unknown
 ```
 
 **Why It Failed:**
+
 - PostgREST SQL builder doesn't recognize ltree syntax
 - Query sent to PostgreSQL would work, but REST layer blocks it
 - This is a fundamental PostgREST limitation, not a PostgreSQL issue
@@ -82,12 +91,10 @@ ERROR: operator does not exist: ltree ~~ unknown
 ### 2.2 Why Direct SQL Wouldn't Work Either
 
 Even if we could execute raw SQL with ltree operators:
+
 ```typescript
 // This won't work in Supabase
-const { data, error } = await supabase
-  .from('locations')
-  .select('*')
-  .filter('path', '~', 'root.garage.*');  // ← PostgREST doesn't support this
+const { data, error } = await supabase.from("locations").select("*").filter("path", "~", "root.garage.*"); // ← PostgREST doesn't support this
 ```
 
 ---
@@ -187,16 +194,16 @@ export function normalizeLocationName(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9_]/g, "_")  // Replace special chars with _
-    .replace(/_+/g, "_")           // Collapse multiple _
-    .replace(/^_|_$/g, "");        // Remove leading/trailing _
+    .replace(/[^a-z0-9_]/g, "_") // Replace special chars with _
+    .replace(/_+/g, "_") // Collapse multiple _
+    .replace(/^_|_$/g, ""); // Remove leading/trailing _
 }
 
 // Examples:
-normalizeLocationName("Garage")        // "garage"
-normalizeLocationName("Top Shelf")     // "top_shelf"
-normalizeLocationName("Box #123")      // "box_123"
-normalizeLocationName("!!!Test!!!")    // "test"
+normalizeLocationName("Garage"); // "garage"
+normalizeLocationName("Top Shelf"); // "top_shelf"
+normalizeLocationName("Box #123"); // "box_123"
+normalizeLocationName("!!!Test!!!"); // "test"
 ```
 
 **Why:** PostgreSQL ltree labels must match regex `[A-Za-z0-9_]`
@@ -211,9 +218,9 @@ export function getParentPath(path: string): string {
 }
 
 // Examples:
-getParentPath("root.garage.shelf_a")  // "root.garage"
-getParentPath("root.garage")           // "root"
-getParentPath("root")                  // ""
+getParentPath("root.garage.shelf_a"); // "root.garage"
+getParentPath("root.garage"); // "root"
+getParentPath("root"); // ""
 ```
 
 **Purpose:** Extract parent path from full path
@@ -221,19 +228,16 @@ getParentPath("root")                  // ""
 **3. buildLocationPath()**
 
 ```typescript
-export function buildLocationPath(
-  parentPath: string | null,
-  normalizedName: string
-): string {
+export function buildLocationPath(parentPath: string | null, normalizedName: string): string {
   if (!parentPath) {
-    return `root.${normalizedName}`;  // Root level
+    return `root.${normalizedName}`; // Root level
   }
-  return `${parentPath}.${normalizedName}`;  // Child level
+  return `${parentPath}.${normalizedName}`; // Child level
 }
 
 // Examples:
-buildLocationPath(null, "garage")              // "root.garage"
-buildLocationPath("root.garage", "shelf_a")    // "root.garage.shelf_a"
+buildLocationPath(null, "garage"); // "root.garage"
+buildLocationPath("root.garage", "shelf_a"); // "root.garage.shelf_a"
 ```
 
 **Purpose:** Build ltree path from parent and name
@@ -272,7 +276,7 @@ export async function getLocations(
     // Get root-level locations
     filteredLocations = allLocations.filter((loc) => {
       const segments = loc.path.split(".");
-      return segments.length === 2;  // root.* format
+      return segments.length === 2; // root.* format
     });
   }
 
@@ -284,7 +288,7 @@ export async function getLocations(
     return {
       id: loc.id,
       workspace_id: loc.workspace_id,
-      parent_id: parent?.id || null,  // ← Derived parent ID
+      parent_id: parent?.id || null, // ← Derived parent ID
       name: loc.name,
       description: loc.description,
       path: loc.path,
@@ -297,6 +301,7 @@ export async function getLocations(
 ```
 
 **Key Insights:**
+
 - ✅ No ltree operators in SQL query
 - ✅ Single database query (efficient)
 - ✅ In-memory filtering (simple logic)
@@ -333,6 +338,7 @@ export function getAllLocationChildren(
 ### 4.1 Query Complexity
 
 **Original Approach (If PostgREST Supported ltree):**
+
 ```sql
 SELECT * FROM locations
 WHERE workspace_id = $1
@@ -342,10 +348,12 @@ ORDER BY name;
 ```
 
 **Complexity:** O(n) where n = all locations in workspace
+
 - Database evaluates ltree operators for each row
 - Index lookup possible but complex
 
 **New Approach:**
+
 ```sql
 SELECT * FROM locations
 WHERE workspace_id = $1
@@ -354,6 +362,7 @@ ORDER BY name;
 ```
 
 **Complexity:** O(n) where n = all locations in workspace
+
 - Index on workspace_id + is_deleted
 - Simple equality checks (very fast)
 - No complex operator evaluation
@@ -362,14 +371,15 @@ ORDER BY name;
 
 **Scenario:** 1000 locations, 50 direct children under Garage
 
-| Operation | Old (ltree) | New (JS) | Winner |
-|-----------|------------|----------|--------|
-| Get root-level locations | 5ms (estimated) | 2ms | ✅ New |
-| Get direct children | 8ms (estimated) | 3ms | ✅ New |
-| Get all descendants | 10ms (estimated) | 4ms | ✅ New |
-| Memory used | Small | ~50KB | ≈ Same |
+| Operation                | Old (ltree)      | New (JS) | Winner |
+| ------------------------ | ---------------- | -------- | ------ |
+| Get root-level locations | 5ms (estimated)  | 2ms      | ✅ New |
+| Get direct children      | 8ms (estimated)  | 3ms      | ✅ New |
+| Get all descendants      | 10ms (estimated) | 4ms      | ✅ New |
+| Memory used              | Small            | ~50KB    | ≈ Same |
 
 **Advantages of New Approach:**
+
 1. ✅ **Faster:** PostgREST doesn't optimize ltree queries well
 2. ✅ **Simpler:** Standard SQL (no operator dependencies)
 3. ✅ **Maintainable:** JavaScript logic easier to debug
@@ -387,10 +397,10 @@ ORDER BY name;
 export const GET = async ({ locals, url }) => {
   // Validate auth
   if (!locals.user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -399,38 +409,34 @@ export const GET = async ({ locals, url }) => {
     const parentId = url.searchParams.get("parent_id");
 
     if (!workspaceId) {
-      return new Response(
-        JSON.stringify({ error: "workspace_id required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "workspace_id required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Validate UUID format
     if (!isValidUUID(workspaceId) || (parentId && !isValidUUID(parentId))) {
-      return new Response(
-        JSON.stringify({ error: "Invalid UUID format" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Invalid UUID format" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Call service (performs all filtering)
-    const locations = await getLocations(
-      workspaceId,
-      parentId,
-      locals.supabase
-    );
+    const locations = await getLocations(workspaceId, parentId, locals.supabase);
 
     // Return filtered locations
     return new Response(JSON.stringify(locations), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[GET /api/locations] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
@@ -442,10 +448,10 @@ export const GET = async ({ locals, url }) => {
 ```typescript
 export const POST = async ({ locals, request }) => {
   if (!locals.user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -464,9 +470,7 @@ export const POST = async ({ locals, request }) => {
     // Get parent if specified
     let parentPath = null;
     if (validated.parent_id) {
-      const parent = existingLocations.find(
-        (loc) => loc.id === validated.parent_id
-      );
+      const parent = existingLocations.find((loc) => loc.id === validated.parent_id);
       if (!parent) throw new ParentNotFoundError();
       parentPath = parent.path;
     }
@@ -498,31 +502,28 @@ export const POST = async ({ locals, request }) => {
 
     return new Response(JSON.stringify(data), {
       status: 201,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     // Handle custom errors with appropriate status codes
     if (error instanceof ParentNotFoundError) {
       return new Response(JSON.stringify({ error: error.message }), {
-        status: 404
+        status: 404,
       });
     }
     if (error instanceof MaxDepthExceededError) {
       return new Response(JSON.stringify({ error: error.message }), {
-        status: 400
+        status: 400,
       });
     }
     if (error instanceof SiblingConflictError) {
       return new Response(JSON.stringify({ error: error.message }), {
-        status: 409
+        status: 409,
       });
     }
 
     console.error("[POST /api/locations] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
   }
 };
 ```
@@ -535,30 +536,28 @@ export const POST = async ({ locals, request }) => {
 
 ```typescript
 // Get root locations
-const rootLocations = await apiFetch('/api/locations?workspace_id=123');
+const rootLocations = await apiFetch("/api/locations?workspace_id=123");
 
 // Get children of specific location
-const children = await apiFetch(
-  '/api/locations?workspace_id=123&parent_id=456'
-);
+const children = await apiFetch("/api/locations?workspace_id=123&parent_id=456");
 
 // Data returned:
 [
   {
-    id: 'uuid-1',
+    id: "uuid-1",
     parent_id: null,
-    name: 'Garage',
-    path: 'root.garage',
-    description: 'Main storage area'
+    name: "Garage",
+    path: "root.garage",
+    description: "Main storage area",
   },
   {
-    id: 'uuid-2',
-    parent_id: 'uuid-1',
-    name: 'Shelf A',
-    path: 'root.garage.shelf_a',
-    description: 'Top metal shelf'
-  }
-]
+    id: "uuid-2",
+    parent_id: "uuid-1",
+    name: "Shelf A",
+    path: "root.garage.shelf_a",
+    description: "Top metal shelf",
+  },
+];
 ```
 
 ### 6.2 Building Tree Component
@@ -566,11 +565,11 @@ const children = await apiFetch(
 ```typescript
 // Recursive tree building
 function buildLocationTree(locations, parentId = null) {
-  const children = locations.filter(loc => loc.parent_id === parentId);
+  const children = locations.filter((loc) => loc.parent_id === parentId);
 
-  return children.map(loc => ({
+  return children.map((loc) => ({
     ...loc,
-    children: buildLocationTree(locations, loc.id)
+    children: buildLocationTree(locations, loc.id),
   }));
 }
 
@@ -597,37 +596,35 @@ const tree = buildLocationTree(allLocations);
 ### 7.1 Unit Tests
 
 ```typescript
-describe('normalizeLocationName', () => {
-  test('converts to lowercase', () => {
-    expect(normalizeLocationName('Garage')).toBe('garage');
+describe("normalizeLocationName", () => {
+  test("converts to lowercase", () => {
+    expect(normalizeLocationName("Garage")).toBe("garage");
   });
 
-  test('replaces spaces with underscores', () => {
-    expect(normalizeLocationName('Top Shelf')).toBe('top_shelf');
+  test("replaces spaces with underscores", () => {
+    expect(normalizeLocationName("Top Shelf")).toBe("top_shelf");
   });
 
-  test('removes special characters', () => {
-    expect(normalizeLocationName('Box #123!')).toBe('box_123');
+  test("removes special characters", () => {
+    expect(normalizeLocationName("Box #123!")).toBe("box_123");
   });
 
-  test('collapses multiple underscores', () => {
-    expect(normalizeLocationName('Test___Name')).toBe('test_name');
+  test("collapses multiple underscores", () => {
+    expect(normalizeLocationName("Test___Name")).toBe("test_name");
   });
 });
 
-describe('getParentPath', () => {
-  test('returns parent for nested path', () => {
-    expect(getParentPath('root.garage.shelf_a'))
-      .toBe('root.garage');
+describe("getParentPath", () => {
+  test("returns parent for nested path", () => {
+    expect(getParentPath("root.garage.shelf_a")).toBe("root.garage");
   });
 
-  test('returns parent for root child', () => {
-    expect(getParentPath('root.garage'))
-      .toBe('root');
+  test("returns parent for root child", () => {
+    expect(getParentPath("root.garage")).toBe("root");
   });
 
-  test('returns empty string for root', () => {
-    expect(getParentPath('root')).toBe('');
+  test("returns empty string for root", () => {
+    expect(getParentPath("root")).toBe("");
   });
 });
 ```
@@ -687,22 +684,23 @@ path ~ 'root.*'  -- All descendants
 
 ```typescript
 // Match (exact)
-loc.path === 'root.garage'
-
-// Match multiple
-['root.shelf', 'root.box'].includes(loc.path)
+loc.path ===
+  "root.garage"[
+    // Match multiple
+    ("root.shelf", "root.box")
+  ].includes(loc.path);
 
 // Contains (location contains this as descendant)
-loc.path.startsWith('root.garage.shelf_a')
+loc.path.startsWith("root.garage.shelf_a");
 
 // Is contained by (this is descendant of location)
-loc.path.startsWith('root.garage')
+loc.path.startsWith("root.garage");
 
 // Concat
-loc.path + '.newchild'
+loc.path + ".newchild";
 
 // Subtree (all descendants)
-loc.path.startsWith('root.')
+loc.path.startsWith("root.");
 ```
 
 **Key Insight:** JavaScript string operations are simpler and don't require special operators!
@@ -716,6 +714,7 @@ loc.path.startsWith('root.')
 **Problem:** Could we create: `root.a.b` then make `a` a child of `b`?
 
 **Prevention:**
+
 - When creating location, validate that parent path doesn't start with child path
 - Example: Can't make `root.a` a child of `root.a.b`
 
@@ -730,13 +729,14 @@ if (parentPath && parentPath.startsWith(newPath)) {
 **Rule:** Max 5 levels deep
 
 ```typescript
-const depth = parentPath.split('.').length;
+const depth = parentPath.split(".").length;
 if (depth >= 5) {
   throw new MaxDepthExceededError();
 }
 ```
 
 **Example paths:**
+
 - `root` - Level 1 ✅
 - `root.garage` - Level 2 ✅
 - `root.garage.shelf_a` - Level 3 ✅
@@ -751,11 +751,7 @@ if (depth >= 5) {
 **Solution:** Always filter with `is_deleted = false`
 
 ```typescript
-const { data } = await supabase
-  .from('locations')
-  .select('*')
-  .eq('workspace_id', workspaceId)
-  .eq('is_deleted', false);  // ← Critical
+const { data } = await supabase.from("locations").select("*").eq("workspace_id", workspaceId).eq("is_deleted", false); // ← Critical
 ```
 
 ---
@@ -789,11 +785,7 @@ function invalidateLocationCache(workspaceId) {
 ### 10.2 Pagination
 
 ```typescript
-async function getLocationsWithPagination(
-  workspaceId,
-  page = 1,
-  pageSize = 50
-) {
+async function getLocationsWithPagination(workspaceId, page = 1, pageSize = 50) {
   const offset = (page - 1) * pageSize;
 
   const locations = await getLocations(workspaceId);
@@ -803,7 +795,7 @@ async function getLocationsWithPagination(
     total: locations.length,
     page,
     pageSize,
-    pages: Math.ceil(locations.length / pageSize)
+    pages: Math.ceil(locations.length / pageSize),
   };
 }
 ```
@@ -832,12 +824,14 @@ The **location service optimization** solves the PostgREST ltree operator limita
 4. ✅ **Transforming** to DTOs for frontend
 
 **Results:**
+
 - 🎯 Faster queries (simple SQL)
 - 🎯 Easier to debug (JavaScript logic)
 - 🎯 No PostgREST limitations
 - 🎯 Production-ready
 
 **Trade-offs:**
+
 - Fetches all locations (not just filtered subset)
 - Requires more JavaScript processing
 - Works well for typical use case (hundreds of locations)

@@ -7,6 +7,7 @@ This directory contains all tests for the Storage & Box Organizer application.
 **Status**: Complete and ready for verification
 
 The test infrastructure has been set up with:
+
 - **Test Supabase Configuration**: `supabase/config.test.toml` (ports 54421-54422)
 - **Environment Variables**: `.env.test` with test database credentials
 - **Test Helpers** (4 critical files created):
@@ -44,11 +45,13 @@ npm run test:verify
 ```
 
 **Important Security Notes:**
+
 - Never commit `.env.test` - it contains sensitive tokens
 - Use `.env.test.example` as a template for new developers
 - Get credentials from `supabase status` when running locally
 
 The verification script checks:
+
 - ✓ Environment variables loaded correctly
 - ✓ Database connection works
 - ✓ All required tables exist (profiles, workspaces, locations, boxes, qr_codes)
@@ -90,6 +93,7 @@ tests/
 ## Running Tests
 
 ### Unit Tests
+
 ```bash
 # Run all unit tests
 npm run test:unit
@@ -102,12 +106,14 @@ npm run test:ui
 ```
 
 ### Integration Tests
+
 ```bash
 # Run integration tests
 npm run test:integration
 ```
 
 ### E2E Tests
+
 ```bash
 # Run E2E tests
 npm run test:e2e
@@ -123,12 +129,14 @@ npm run test:e2e:debug
 ```
 
 ### Coverage
+
 ```bash
 # Generate coverage report
 npm run test:coverage
 ```
 
 ### Run All Tests
+
 ```bash
 npm run test:all
 ```
@@ -148,11 +156,12 @@ Follow the guidelines in [.claude/commands/guideline_testing.md](.claude/command
 - Enable TypeScript type checking in tests
 
 Example:
-```typescript
-import { describe, it, expect, vi } from 'vitest';
 
-describe('MyService', () => {
-  it('should do something', () => {
+```typescript
+import { describe, it, expect, vi } from "vitest";
+
+describe("MyService", () => {
+  it("should do something", () => {
     // Arrange
     const mockFn = vi.fn();
 
@@ -175,14 +184,15 @@ Follow the guidelines in [.claude/commands/guideline_testing.md](.claude/command
 - Use beforeEach/afterEach hooks for database setup and teardown
 
 Example:
-```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllTestData } from '../helpers/db-setup';
-import { createAuthenticatedUser } from '../helpers/auth-helper';
-import { authenticatedGet, assertSuccess } from '../helpers/api-client';
-import { seedInitialDataset } from '../fixtures/initial-dataset';
 
-describe('API Endpoints', () => {
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { clearAllTestData } from "../helpers/db-setup";
+import { createAuthenticatedUser } from "../helpers/auth-helper";
+import { authenticatedGet, assertSuccess } from "../helpers/api-client";
+import { seedInitialDataset } from "../fixtures/initial-dataset";
+
+describe("API Endpoints", () => {
   let dataset;
 
   beforeEach(async () => {
@@ -194,11 +204,8 @@ describe('API Endpoints', () => {
     await clearAllTestData();
   });
 
-  it('should list workspaces', async () => {
-    const response = await authenticatedGet(
-      '/api/workspaces',
-      dataset.users.admin.token
-    );
+  it("should list workspaces", async () => {
+    const response = await authenticatedGet("/api/workspaces", dataset.users.admin.token);
     assertSuccess(response);
     expect(response.body).toHaveLength(2);
   });
@@ -218,11 +225,12 @@ import {
   PRIMARY_WORKSPACE,
   ROOT_GARAGE,
   ELECTRONICS_BOX,
-  QR_ASSIGNED_ELECTRONICS
-} from '../fixtures';
+  QR_ASSIGNED_ELECTRONICS,
+} from "../fixtures";
 ```
 
 **Available Fixtures:**
+
 - **Users**: `ADMIN_USER`, `MEMBER_USER`, `VIEWER_USER`, `ISOLATED_USER`
 - **Workspaces**: `PRIMARY_WORKSPACE`, `SECONDARY_WORKSPACE`
 - **Locations**: `ROOT_GARAGE`, `METAL_RACK`, `TOP_SHELF`, etc. (3-level hierarchy)
@@ -234,16 +242,16 @@ import {
 Located in `tests/helpers/db-setup.ts`:
 
 ```typescript
-import { clearAllTestData, seedTable, getTableCount } from '../helpers/db-setup';
+import { clearAllTestData, seedTable, getTableCount } from "../helpers/db-setup";
 
 // Clear all test data (use in beforeEach/afterEach)
 await clearAllTestData();
 
 // Seed a specific table
-const workspaces = await seedTable('workspaces', [workspaceData]);
+const workspaces = await seedTable("workspaces", [workspaceData]);
 
 // Get row count for verification
-const count = await getTableCount('boxes');
+const count = await getTableCount("boxes");
 ```
 
 ### Authentication Helpers
@@ -251,13 +259,13 @@ const count = await getTableCount('boxes');
 Located in `tests/helpers/auth-helper.ts`:
 
 ```typescript
-import { createAuthenticatedUser, getAuthHeader } from '../helpers/auth-helper';
+import { createAuthenticatedUser, getAuthHeader } from "../helpers/auth-helper";
 
 // Create user with session and JWT token
 const user = await createAuthenticatedUser({
-  email: 'test@example.com',
-  password: 'TestPass123!',
-  full_name: 'Test User'
+  email: "test@example.com",
+  password: "TestPass123!",
+  full_name: "Test User",
 });
 
 // Use token for authenticated requests
@@ -273,18 +281,18 @@ import {
   createWorkspaceFixture,
   createLocationFixture,
   createBoxFixture,
-  createQRCodeFixture
-} from '../helpers/factory';
+  createQRCodeFixture,
+} from "../helpers/factory";
 
 // Generate test data without IDs (let database generate them)
 const workspaceData = createWorkspaceFixture({
-  name: 'Test Workspace',
-  owner_id: userId
+  name: "Test Workspace",
+  owner_id: userId,
 });
 
 const locationData = createLocationFixture(workspaceId, {
-  name: 'Test Location',
-  path: 'root.testlocation'
+  name: "Test Location",
+  path: "root.testlocation",
 });
 ```
 
@@ -300,21 +308,21 @@ import {
   authenticatedDelete,
   assertSuccess,
   assertError,
-  extractId
-} from '../helpers/api-client';
+  extractId,
+} from "../helpers/api-client";
 
 // Make authenticated requests
-const response = await authenticatedGet('/api/workspaces', userToken);
+const response = await authenticatedGet("/api/workspaces", userToken);
 assertSuccess(response);
 
 // Create and extract ID
-const createResponse = await authenticatedPost('/api/workspaces', userToken, {
-  name: 'New Workspace'
+const createResponse = await authenticatedPost("/api/workspaces", userToken, {
+  name: "New Workspace",
 });
 const workspaceId = extractId(createResponse);
 
 // Assert errors
-const errorResponse = await unauthenticatedGet('/api/workspaces');
+const errorResponse = await unauthenticatedGet("/api/workspaces");
 assertError(errorResponse, 401);
 ```
 
@@ -323,7 +331,7 @@ assertError(errorResponse, 401);
 Located in `tests/fixtures/initial-dataset.ts`:
 
 ```typescript
-import { seedInitialDataset } from '../fixtures/initial-dataset';
+import { seedInitialDataset } from "../fixtures/initial-dataset";
 
 // Create complete test environment
 const dataset = await seedInitialDataset();
@@ -336,6 +344,7 @@ const firstBox = dataset.boxes.primary[0];
 ```
 
 The dataset includes:
+
 - 3 users (admin, member, viewer)
 - 2 workspaces (primary, secondary)
 - 7 locations across both workspaces (hierarchical)
@@ -345,8 +354,9 @@ The dataset includes:
 ### Common Test Patterns
 
 **Pattern 1: Simple Test with User**
+
 ```typescript
-describe('My Test', () => {
+describe("My Test", () => {
   let user;
 
   beforeEach(async () => {
@@ -358,16 +368,17 @@ describe('My Test', () => {
     await clearAllTestData();
   });
 
-  it('should do something', async () => {
-    const response = await authenticatedGet('/api/endpoint', user.token);
+  it("should do something", async () => {
+    const response = await authenticatedGet("/api/endpoint", user.token);
     assertSuccess(response);
   });
 });
 ```
 
 **Pattern 2: Full Dataset Test**
+
 ```typescript
-describe('Complex Feature', () => {
+describe("Complex Feature", () => {
   let dataset;
 
   beforeEach(async () => {
@@ -379,20 +390,18 @@ describe('Complex Feature', () => {
     await clearAllTestData();
   });
 
-  it('should handle complex scenario', async () => {
+  it("should handle complex scenario", async () => {
     // All test data is ready to use
-    const response = await authenticatedGet(
-      '/api/workspaces',
-      dataset.users.admin.token
-    );
+    const response = await authenticatedGet("/api/workspaces", dataset.users.admin.token);
     expect(response.body).toHaveLength(2);
   });
 });
 ```
 
 **Pattern 3: Custom Factory Data**
+
 ```typescript
-describe('Custom Test', () => {
+describe("Custom Test", () => {
   let user, workspace;
 
   beforeEach(async () => {
@@ -400,18 +409,17 @@ describe('Custom Test', () => {
     user = await createAuthenticatedUser();
 
     const workspaceData = createWorkspaceFixture({
-      name: 'Custom Workspace',
-      owner_id: user.id
+      name: "Custom Workspace",
+      owner_id: user.id,
     });
-    [workspace] = await seedTable('workspaces', [workspaceData]);
+    [workspace] = await seedTable("workspaces", [workspaceData]);
   });
 
-  it('should work with custom data', async () => {
+  it("should work with custom data", async () => {
     // Test with your custom setup
   });
 });
 ```
-
 
 ### E2E Tests (Playwright)
 
@@ -425,16 +433,17 @@ Follow the guidelines in [.claude/commands/guideline_testing.md](.claude/command
 - Use expect assertions with specific matchers
 
 Example:
+
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Feature Name', () => {
-  test('should perform user action', async ({ page }) => {
-    await page.goto('/feature');
+test.describe("Feature Name", () => {
+  test("should perform user action", async ({ page }) => {
+    await page.goto("/feature");
 
-    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.getByRole("button", { name: "Submit" }).click();
 
-    await expect(page.getByText('Success')).toBeVisible();
+    await expect(page.getByText("Success")).toBeVisible();
   });
 });
 ```
@@ -448,6 +457,7 @@ test.describe('Feature Name', () => {
 ## CI/CD Integration
 
 Tests are automatically run on:
+
 - Pull request creation
 - Push to main/master branch
 - Manual workflow dispatch
@@ -455,6 +465,7 @@ Tests are automatically run on:
 ## Debugging Tests
 
 ### Vitest
+
 ```bash
 # Run specific test file
 npm run test -- tests/unit/my-test.test.ts
@@ -467,6 +478,7 @@ npm run test -- -t "pattern"
 ```
 
 ### Playwright
+
 ```bash
 # Debug mode (step through tests)
 npm run test:e2e:debug

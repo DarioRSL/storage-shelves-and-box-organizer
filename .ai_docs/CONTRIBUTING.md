@@ -5,11 +5,13 @@ Welcome! This guide will help you understand the project structure and contribut
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 22.14.0 (use `nvm use`)
 - npm 10.x
 - Supabase CLI (for local development)
 
 ### Setup
+
 ```bash
 # Clone and install
 git clone <repo-url>
@@ -37,22 +39,26 @@ See `CLAUDE.md` for complete project structure. Key directories:
 ## Development Workflow
 
 ### 1. Find an Issue
+
 - Browse [GitHub Issues](https://github.com/DarioRSL/storage-shelves-and-box-organizer/issues)
 - Look for `good-first-issue` label for beginner-friendly tasks
 - Check issue is not already assigned
 
 ### 2. Create Branch
+
 ```bash
 git checkout -b feature/issue-123-short-description
 ```
 
 ### 3. Make Changes
+
 - Follow existing code patterns
 - Use TypeScript strict mode
 - Add Polish translations for UI strings
 - Test changes locally
 
 ### 4. Code Quality
+
 ```bash
 # Lint and format
 npm run lint:fix
@@ -66,6 +72,7 @@ npm run build
 ```
 
 ### 5. Commit
+
 ```bash
 git add .
 git commit -m "feat: add password reset functionality (#123)
@@ -78,6 +85,7 @@ Closes #123"
 ```
 
 **Commit Message Format:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation only
@@ -86,11 +94,13 @@ Closes #123"
 - `chore:` - Maintenance tasks
 
 ### 6. Push & Create PR
+
 ```bash
 git push origin feature/issue-123-short-description
 ```
 
 Then create Pull Request on GitHub:
+
 - Reference issue number in description
 - Add screenshots if UI change
 - Request review from maintainers
@@ -98,29 +108,34 @@ Then create Pull Request on GitHub:
 ## Code Standards
 
 ### TypeScript
+
 - Use strict mode
 - Avoid `any` types (use `unknown` if necessary)
 - Define types in `src/types.ts` for shared types
 
 ### React Components
+
 - Use functional components with hooks
 - Prefer `React.memo()` for optimization
 - Use `useCallback()` and `useMemo()` where appropriate
 - Custom hooks in `src/components/hooks/`
 
 ### API Endpoints
+
 - Validate input with Zod schemas
 - Use `context.locals.supabase` for database access
 - Return proper HTTP status codes
 - Handle errors with Polish messages
 
 ### Accessibility
+
 - Use semantic HTML first
 - Add ARIA attributes where needed
 - Test with keyboard only
 - Test with screen reader (VoiceOver/NVDA)
 
 ### Localization
+
 - All UI text in Polish
 - Use translation keys (not hardcoded strings)
 - Consistent terminology
@@ -128,6 +143,7 @@ Then create Pull Request on GitHub:
 ## Database Migrations
 
 ### Creating Migrations
+
 ```bash
 # Generate timestamp
 date -u +"%Y%m%d%H%M%S"
@@ -137,6 +153,7 @@ touch supabase/migrations/20260106120000_your_description.sql
 ```
 
 **Migration Guidelines:**
+
 - Use lowercase SQL
 - Add header comments explaining purpose
 - Enable RLS on new tables
@@ -147,6 +164,7 @@ touch supabase/migrations/20260106120000_your_description.sql
 ## Testing
 
 ### Manual Testing
+
 - Test happy path
 - Test error cases
 - Test with different user roles
@@ -154,17 +172,20 @@ touch supabase/migrations/20260106120000_your_description.sql
 - Test keyboard navigation
 
 ### Future: Automated Tests
+
 (Coming soon - Jest + React Testing Library)
 
 ## Documentation
 
 ### When to Update Docs
+
 - New API endpoint → Update `.ai_docs/api-plan.md`
 - Database change → Update `.ai_docs/db-plan.md`
 - New feature → Update `.ai_docs/ROADMAP.md` backlog
 - Architecture change → Update `CLAUDE.md`
 
 ### Documentation Style
+
 - Use Polish for user-facing content
 - Use English for technical documentation
 - Include code examples
@@ -180,12 +201,14 @@ touch supabase/migrations/20260106120000_your_description.sql
 ## Code Review Process
 
 ### As Author
+
 - Self-review your PR before requesting review
 - Respond to feedback promptly
 - Update PR based on review comments
 - Notify reviewer when ready for re-review
 
 ### As Reviewer
+
 - Review within 48 hours
 - Check code style, logic, tests
 - Be constructive and specific

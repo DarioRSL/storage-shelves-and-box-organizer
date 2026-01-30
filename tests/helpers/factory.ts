@@ -12,13 +12,13 @@ import type {
   CreateBoxRequest,
   WorkspaceMemberDto,
   ProfileDto,
-} from '@/types';
-import type { Database } from '@/db/database.types';
-import { seedTable } from './db-setup';
-import type { TestUser } from './auth-helper';
+} from "@/types";
+import type { Database } from "@/db/database.types";
+import { seedTable } from "./db-setup";
+import type { TestUser } from "./auth-helper";
 
-type QRCodeInsert = Database['public']['Tables']['qr_codes']['Insert'];
-type LocationInsert = Database['public']['Tables']['locations']['Insert'];
+type QRCodeInsert = Database["public"]["Tables"]["qr_codes"]["Insert"];
+type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
 
 /**
  * Generate unique identifier for test data
@@ -41,7 +41,7 @@ export function createWorkspaceFixture(
 
   return {
     name: `Test Workspace ${id}`,
-    owner_id: overrides?.owner_id || '',
+    owner_id: overrides?.owner_id || "",
     ...overrides,
   };
 }
@@ -63,10 +63,10 @@ export function createLocationFixture(
     description: string | null;
     path: string;
   }>
-): Omit<CreateLocationRequest, 'parent_id'> & { path: string } {
+): Omit<CreateLocationRequest, "parent_id"> & { path: string } {
   const id = uniqueId();
   const name = overrides?.name || `Location ${id}`;
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
   return {
     workspace_id: workspaceId,
@@ -88,7 +88,7 @@ export function createRootLocationFixture(
   name?: string
 ): CreateLocationRequest & { path: string } {
   const locationName = name || `Root Location ${uniqueId()}`;
-  const slug = locationName.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const slug = locationName.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
   return {
     workspace_id: workspaceId,
@@ -106,13 +106,9 @@ export function createRootLocationFixture(
  * @param name - Location name (optional)
  * @returns Child location data with path
  */
-export function createChildLocationFixture(
-  workspaceId: string,
-  parentPath: string,
-  name?: string
-): LocationInsert {
+export function createChildLocationFixture(workspaceId: string, parentPath: string, name?: string): LocationInsert {
   const locationName = name || `Child Location ${uniqueId()}`;
-  const slug = locationName.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const slug = locationName.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
   return {
     workspace_id: workspaceId,
@@ -136,17 +132,15 @@ export function createChildLocationFixture(
 export function createBoxFixture(
   workspaceId: string,
   locationId?: string | null,
-  overrides?: Partial<Omit<CreateBoxRequest, 'qr_code_id'>>
-): Omit<CreateBoxRequest, 'qr_code_id'> {
+  overrides?: Partial<Omit<CreateBoxRequest, "qr_code_id">>
+): Omit<CreateBoxRequest, "qr_code_id"> {
   const id = uniqueId();
 
   return {
     workspace_id: workspaceId,
     name: overrides?.name || `Test Box ${id}`,
-    description: overrides?.description !== undefined
-      ? overrides.description
-      : `Test box description ${id}`,
-    tags: overrides?.tags || ['test', 'fixture'],
+    description: overrides?.description !== undefined ? overrides.description : `Test box description ${id}`,
+    tags: overrides?.tags || ["test", "fixture"],
     location_id: overrides?.location_id !== undefined ? overrides.location_id : locationId || null,
   };
 }
@@ -158,14 +152,11 @@ export function createBoxFixture(
  * @param overrides - Optional field overrides
  * @returns QR code data for insertion
  */
-export function createQRCodeFixture(
-  workspaceId: string,
-  overrides?: Partial<QRCodeInsert>
-): QRCodeInsert {
+export function createQRCodeFixture(workspaceId: string, overrides?: Partial<QRCodeInsert>): QRCodeInsert {
   // Generate QR code in format QR-XXXXXX (6 uppercase alphanumeric)
   const generateQRCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'QR-';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "QR-";
     for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -175,7 +166,7 @@ export function createQRCodeFixture(
   return {
     workspace_id: workspaceId,
     short_id: overrides?.short_id || generateQRCode(),
-    status: overrides?.status || 'generated',
+    status: overrides?.status || "generated",
     box_id: overrides?.box_id !== undefined ? overrides.box_id : null,
     ...overrides,
   };
@@ -190,15 +181,15 @@ export function createQRCodeFixture(
  */
 export function createProfileFixture(
   userId: string,
-  overrides?: Partial<Omit<ProfileDto, 'id' | 'created_at' | 'updated_at'>>
-): Omit<ProfileDto, 'id' | 'created_at' | 'updated_at'> {
+  overrides?: Partial<Omit<ProfileDto, "id" | "created_at" | "updated_at">>
+): Omit<ProfileDto, "id" | "created_at" | "updated_at"> {
   const id = uniqueId();
 
   return {
     email: overrides?.email || `test-${id}@test.com`,
     full_name: overrides?.full_name || `Test User ${id}`,
     avatar_url: overrides?.avatar_url || null,
-    theme_preference: overrides?.theme_preference || 'system',
+    theme_preference: overrides?.theme_preference || "system",
   };
 }
 
@@ -213,8 +204,8 @@ export function createProfileFixture(
 export function createWorkspaceMemberFixture(
   workspaceId: string,
   userId: string,
-  role: 'owner' | 'admin' | 'member' | 'read_only' = 'member'
-): Omit<WorkspaceMemberDto, 'joined_at'> {
+  role: "owner" | "admin" | "member" | "read_only" = "member"
+): Omit<WorkspaceMemberDto, "joined_at"> {
   return {
     workspace_id: workspaceId,
     user_id: userId,
@@ -228,10 +219,10 @@ export function createWorkspaceMemberFixture(
  */
 export interface TestScenario {
   users: TestUser[];
-  workspaces: Array<{ id: string; name: string; owner_id: string }>;
-  locations: Array<{ id: string; name: string; workspace_id: string; path: string }>;
-  boxes: Array<{ id: string; name: string; workspace_id: string; location_id: string | null }>;
-  qrCodes: Array<{ id: string; short_id: string; workspace_id: string; status: string }>;
+  workspaces: { id: string; name: string; owner_id: string }[];
+  locations: { id: string; name: string; workspace_id: string; path: string }[];
+  boxes: { id: string; name: string; workspace_id: string; location_id: string | null }[];
+  qrCodes: { id: string; short_id: string; workspace_id: string; status: string }[];
 }
 
 /**
@@ -278,11 +269,9 @@ export interface TestScenarioConfig {
  * @param config - Scenario configuration
  * @returns Promise<TestScenario> - Complete test scenario
  */
-export async function createTestScenario(
-  config: TestScenarioConfig = {}
-): Promise<TestScenario> {
+export async function createTestScenario(config: TestScenarioConfig = {}): Promise<TestScenario> {
   // Import here to avoid circular dependencies
-  const { createAuthenticatedUser } = await import('./auth-helper');
+  const { createAuthenticatedUser } = await import("./auth-helper");
 
   const {
     users: userCount = 1,
@@ -294,10 +283,10 @@ export async function createTestScenario(
   } = config;
 
   const users: TestUser[] = [];
-  const workspaces: TestScenario['workspaces'] = [];
-  const locations: TestScenario['locations'] = [];
-  const boxes: TestScenario['boxes'] = [];
-  const qrCodes: TestScenario['qrCodes'] = [];
+  const workspaces: TestScenario["workspaces"] = [];
+  const locations: TestScenario["locations"] = [];
+  const boxes: TestScenario["boxes"] = [];
+  const qrCodes: TestScenario["qrCodes"] = [];
 
   // Create users
   for (let i = 0; i < userCount; i++) {
@@ -314,44 +303,38 @@ export async function createTestScenario(
         owner_id: user.id,
       });
 
-      const [workspace] = await seedTable('workspaces', [workspaceData]);
+      const [workspace] = await seedTable("workspaces", [workspaceData]);
       workspaces.push(workspace);
 
       // Add user as owner in workspace_members
-      await seedTable('workspace_members', [
-        createWorkspaceMemberFixture(workspace.id, user.id, 'owner'),
-      ]);
+      await seedTable("workspace_members", [createWorkspaceMemberFixture(workspace.id, user.id, "owner")]);
 
       // Create locations for workspace
       const workspaceLocations: typeof locations = [];
 
       if (hierarchicalLocations && locationsPerWorkspace >= 2) {
         // Create hierarchical structure: root → child → grandchild
-        const root = createRootLocationFixture(workspace.id, 'Garage');
-        const [rootLocation] = await seedTable('locations', [root]);
+        const root = createRootLocationFixture(workspace.id, "Garage");
+        const [rootLocation] = await seedTable("locations", [root]);
         workspaceLocations.push(rootLocation);
 
         // Create child under root
         if (locationsPerWorkspace >= 2) {
-          const child = createChildLocationFixture(workspace.id, rootLocation.path, 'Metal Rack');
-          const [childLocation] = await seedTable('locations', [child]);
+          const child = createChildLocationFixture(workspace.id, rootLocation.path, "Metal Rack");
+          const [childLocation] = await seedTable("locations", [child]);
           workspaceLocations.push(childLocation);
 
           // Create grandchild if requested
           if (locationsPerWorkspace >= 3) {
-            const grandchild = createChildLocationFixture(
-              workspace.id,
-              childLocation.path,
-              'Top Shelf'
-            );
-            const [grandchildLocation] = await seedTable('locations', [grandchild]);
+            const grandchild = createChildLocationFixture(workspace.id, childLocation.path, "Top Shelf");
+            const [grandchildLocation] = await seedTable("locations", [grandchild]);
             workspaceLocations.push(grandchildLocation);
           }
 
           // Create remaining locations as siblings of root
           for (let k = 3; k < locationsPerWorkspace; k++) {
             const sibling = createRootLocationFixture(workspace.id, `Location ${k + 1}`);
-            const [siblingLocation] = await seedTable('locations', [sibling]);
+            const [siblingLocation] = await seedTable("locations", [sibling]);
             workspaceLocations.push(siblingLocation);
           }
         }
@@ -359,7 +342,7 @@ export async function createTestScenario(
         // Create flat locations (all root level)
         for (let k = 0; k < locationsPerWorkspace; k++) {
           const location = createRootLocationFixture(workspace.id, `Location ${k + 1}`);
-          const [createdLocation] = await seedTable('locations', [location]);
+          const [createdLocation] = await seedTable("locations", [location]);
           workspaceLocations.push(createdLocation);
         }
       }
@@ -370,16 +353,15 @@ export async function createTestScenario(
       const workspaceBoxes: typeof boxes = [];
       for (let k = 0; k < boxesPerWorkspace; k++) {
         // Assign some boxes to locations, leave some unassigned
-        const locationId =
-          k < workspaceLocations.length ? workspaceLocations[k % workspaceLocations.length].id : null;
+        const locationId = k < workspaceLocations.length ? workspaceLocations[k % workspaceLocations.length].id : null;
 
         const boxData = createBoxFixture(workspace.id, locationId, {
           name: `Box ${k + 1}`,
           description: `Test box ${k + 1} in ${workspace.name}`,
-          tags: ['test', `box-${k + 1}`],
+          tags: ["test", `box-${k + 1}`],
         });
 
-        const [box] = await seedTable('boxes', [boxData]);
+        const [box] = await seedTable("boxes", [boxData]);
         workspaceBoxes.push(box);
       }
 
@@ -391,15 +373,15 @@ export async function createTestScenario(
         // Assign half the QR codes to boxes
         const assignToBox = k < Math.floor(qrCodesPerWorkspace / 2);
         const boxId = assignToBox ? workspaceBoxes[k % workspaceBoxes.length]?.id : null;
-        const status = assignToBox ? 'assigned' : 'generated';
+        const status = assignToBox ? "assigned" : "generated";
 
         const qrData = createQRCodeFixture(workspace.id, {
-          short_id: `QR-${String(k).padStart(6, '0')}`,
+          short_id: `QR-${String(k).padStart(6, "0")}`,
           box_id: boxId,
           status,
         });
 
-        const [qrCode] = await seedTable('qr_codes', [qrData]);
+        const [qrCode] = await seedTable("qr_codes", [qrData]);
         workspaceQRCodes.push(qrCode);
       }
 

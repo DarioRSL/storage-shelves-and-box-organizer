@@ -21,13 +21,13 @@
  * 8. Verify box exists in database
  */
 
-import { test, expect, type Page } from '@playwright/test';
-import { setupE2ETest, cleanupE2ETest, loginViaUI, type E2ETestSetup } from '../../helpers/e2e-setup';
-import { getAdminSupabaseClient } from '../../helpers/supabase-test-client';
-import { DashboardPage } from '../page-objects/DashboardPage';
-import { BoxFormPage } from '../page-objects/BoxFormPage';
+import { test, expect, type Page } from "@playwright/test";
+import { setupE2ETest, cleanupE2ETest, loginViaUI, type E2ETestSetup } from "../../helpers/e2e-setup";
+import { getAdminSupabaseClient } from "../../helpers/supabase-test-client";
+import { DashboardPage } from "../page-objects/DashboardPage";
+import { BoxFormPage } from "../page-objects/BoxFormPage";
 
-test.describe('Box Creation E2E (US-028)', () => {
+test.describe("Box Creation E2E (US-028)", () => {
   let testSetup: E2ETestSetup;
   let page: Page;
 
@@ -47,7 +47,7 @@ test.describe('Box Creation E2E (US-028)', () => {
     await cleanupE2ETest(testSetup.workspace.id);
   });
 
-  test('should create a new box with all fields filled', async () => {
+  test("should create a new box with all fields filled", async () => {
     // Note: Already logged in and on dashboard via loginViaUI in beforeEach
     const dashboard = new DashboardPage(page);
 
@@ -55,17 +55,17 @@ test.describe('Box Creation E2E (US-028)', () => {
     await dashboard.navigateToNewBox();
 
     // 3. Verify we're on the new box form page
-    await expect(page).toHaveURL('/app/boxes/new');
+    await expect(page).toHaveURL("/app/boxes/new");
 
     // 4. Fill out form using Page Object
     const boxForm = new BoxFormPage(page);
     await boxForm.waitForForm();
 
     // Fill required and optional fields
-    await boxForm.fillName('Test Electronics Box');
-    await boxForm.fillDescription('Cables, chargers, and old electronics components');
-    await boxForm.addTag('electronics');
-    await boxForm.addTag('cables');
+    await boxForm.fillName("Test Electronics Box");
+    await boxForm.fillDescription("Cables, chargers, and old electronics components");
+    await boxForm.addTag("electronics");
+    await boxForm.addTag("cables");
 
     // Select location (first location from test setup)
     if (testSetup.locations.length > 0) {
@@ -82,28 +82,28 @@ test.describe('Box Creation E2E (US-028)', () => {
 
     // 6. Wait for redirect to dashboard
     await boxForm.waitForSuccess();
-    await expect(page).toHaveURL('/app');
+    await expect(page).toHaveURL("/app");
 
     // 7. Verify box appears in dashboard
     // Note: May need to wait for the box list to update
     await page.waitForTimeout(1000); // Give time for data to load
 
-    const boxLocator = dashboard.findBoxByName('Test Electronics Box');
+    const boxLocator = dashboard.findBoxByName("Test Electronics Box");
     await expect(boxLocator).toBeVisible({ timeout: 10000 });
 
     // 8. Verify database state
     const adminClient = getAdminSupabaseClient();
     const { data: boxes, error } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', testSetup.workspace.id)
-      .eq('name', 'Test Electronics Box');
+      .from("boxes")
+      .select("*")
+      .eq("workspace_id", testSetup.workspace.id)
+      .eq("name", "Test Electronics Box");
 
     expect(error).toBeNull();
     expect(boxes).toHaveLength(1);
-    expect(boxes![0].description).toBe('Cables, chargers, and old electronics components');
-    expect(boxes![0].tags).toContain('electronics');
-    expect(boxes![0].tags).toContain('cables');
+    expect(boxes![0].description).toBe("Cables, chargers, and old electronics components");
+    expect(boxes![0].tags).toContain("electronics");
+    expect(boxes![0].tags).toContain("cables");
 
     // Verify QR code was assigned
     if (testSetup.qrCodes.length > 0) {
@@ -111,16 +111,16 @@ test.describe('Box Creation E2E (US-028)', () => {
 
       // Verify QR code status changed to 'assigned'
       const { data: qrCode } = await adminClient
-        .from('qr_codes')
-        .select('status')
-        .eq('id', testSetup.qrCodes[0].id)
+        .from("qr_codes")
+        .select("status")
+        .eq("id", testSetup.qrCodes[0].id)
         .single();
 
-      expect(qrCode?.status).toBe('assigned');
+      expect(qrCode?.status).toBe("assigned");
     }
   });
 
-  test('should create a box with minimal fields (name only)', async () => {
+  test("should create a box with minimal fields (name only)", async () => {
     // Navigate to new box form
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
@@ -129,22 +129,22 @@ test.describe('Box Creation E2E (US-028)', () => {
     // Fill only the required name field
     const boxForm = new BoxFormPage(page);
     await boxForm.waitForForm();
-    await boxForm.fillName('Minimal Box');
+    await boxForm.fillName("Minimal Box");
 
     // Submit form
     await boxForm.submitForm();
 
     // Wait for success
     await boxForm.waitForSuccess();
-    await expect(page).toHaveURL('/app');
+    await expect(page).toHaveURL("/app");
 
     // Verify box exists in database
     const adminClient = getAdminSupabaseClient();
     const { data: boxes } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', testSetup.workspace.id)
-      .eq('name', 'Minimal Box');
+      .from("boxes")
+      .select("*")
+      .eq("workspace_id", testSetup.workspace.id)
+      .eq("name", "Minimal Box");
 
     expect(boxes).toHaveLength(1);
     expect(boxes![0].description).toBeNull();
@@ -152,7 +152,7 @@ test.describe('Box Creation E2E (US-028)', () => {
     expect(boxes![0].location_id).toBeNull();
   });
 
-  test('should show validation error for empty name', async () => {
+  test("should show validation error for empty name", async () => {
     // Navigate to new box form
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
@@ -166,23 +166,20 @@ test.describe('Box Creation E2E (US-028)', () => {
     await boxForm.submitForm();
 
     // Should still be on the form page (not redirected)
-    await expect(page).toHaveURL('/app/boxes/new');
+    await expect(page).toHaveURL("/app/boxes/new");
 
     // Check for validation error
-    const hasError = await boxForm.hasError('box-name');
+    const hasError = await boxForm.hasError("box-name");
     expect(hasError).toBeTruthy();
 
     // Verify no box was created
     const adminClient = getAdminSupabaseClient();
-    const { data: boxes } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', testSetup.workspace.id);
+    const { data: boxes } = await adminClient.from("boxes").select("*").eq("workspace_id", testSetup.workspace.id);
 
     expect(boxes).toHaveLength(0);
   });
 
-  test('should handle form cancellation', async () => {
+  test("should handle form cancellation", async () => {
     // Navigate to new box form
     const dashboard = new DashboardPage(page);
     await dashboard.goto();
@@ -191,22 +188,22 @@ test.describe('Box Creation E2E (US-028)', () => {
     // Fill some fields
     const boxForm = new BoxFormPage(page);
     await boxForm.waitForForm();
-    await boxForm.fillName('Cancelled Box');
+    await boxForm.fillName("Cancelled Box");
 
     // Click cancel button
-    const cancelButton = page.locator('button', { hasText: /anuluj|cancel/i });
+    const cancelButton = page.locator("button", { hasText: /anuluj|cancel/i });
     await cancelButton.click();
 
     // Should redirect to dashboard
-    await expect(page).toHaveURL('/app', { timeout: 5000 });
+    await expect(page).toHaveURL("/app", { timeout: 5000 });
 
     // Verify no box was created
     const adminClient = getAdminSupabaseClient();
     const { data: boxes } = await adminClient
-      .from('boxes')
-      .select('*')
-      .eq('workspace_id', testSetup.workspace.id)
-      .eq('name', 'Cancelled Box');
+      .from("boxes")
+      .select("*")
+      .eq("workspace_id", testSetup.workspace.id)
+      .eq("name", "Cancelled Box");
 
     expect(boxes).toHaveLength(0);
   });

@@ -43,6 +43,7 @@ Added response contract for account deletion endpoint - returns only success mes
 - Base `AppError` class with status codes for all errors
 
 This consolidation allows:
+
 - Easier error handling across services
 - Consistent status code mapping
 - Better error categorization
@@ -62,6 +63,7 @@ This consolidation allows:
 7. **Auth User** → Deferred (requires service role privileges - TODO for later)
 
 **Error Handling**:
+
 - Early returns for validation errors
 - Proper error propagation with custom error classes
 - Detailed logging for audit trail (anonymized user ID)
@@ -71,12 +73,14 @@ This consolidation allows:
 **Endpoint**: `DELETE /api/auth/delete-account`
 
 **Flow**:
+
 1. Extract Supabase client from context
 2. Verify JWT authentication
 3. Call service layer
 4. Handle all error types with appropriate HTTP status codes
 
 **HTTP Status Codes**:
+
 - `401` - Missing/invalid JWT
 - `404` - User account not found
 - `500` - Database deletion or auth failure
@@ -85,12 +89,14 @@ This consolidation allows:
 ### 5. Database Verification
 
 **Indexes** ✅ All required indexes present:
+
 - `boxes_workspace_id_idx` - For fast deletion of boxes
 - `locations_workspace_id_idx` - For fast deletion of locations
 - `workspace_members_workspace_id_idx`, `workspace_members_user_id_idx` - For fast deletion
 - `qr_codes_workspace_id_idx` - For fast QR code reset
 
 **Foreign Key Constraints** ✅ CASCADE rules properly configured:
+
 - `boxes.workspace_id` → `workspaces.id` [CASCADE]
 - `locations.workspace_id` → `workspaces.id` [CASCADE]
 - `qr_codes.workspace_id` → `workspaces.id` [CASCADE]
@@ -108,6 +114,7 @@ This consolidation allows:
 **Test 3**: Cascade deletion of test data → ✅ **Database records deleted properly**
 
 **Test Data Deletion Verified**:
+
 - Profile deleted
 - Workspace deleted
 - Boxes deleted
@@ -131,6 +138,7 @@ The Supabase Auth user deletion step is currently **deferred**:
 ```
 
 **Why**:
+
 - `supabase.auth.admin.deleteUser()` requires **service role** privileges
 - Current client uses **anon key** (insufficient permissions)
 - Profile deletion effectively marks user as deleted in app layer
@@ -142,6 +150,7 @@ The Supabase Auth user deletion step is currently **deferred**:
 ### Row Level Security (RLS) Policies
 
 RLS policies on `profiles` table are **not yet implemented** (as per requirements). This means:
+
 - Any user can currently delete any profile via SQL
 - RLS will be implemented in separate phase
 - Current implementation handles authorization via:
@@ -197,11 +206,11 @@ curl -X DELETE http://localhost:3000/api/auth/delete-account \
 
 ```typescript
 async function deleteUserAccount(token: string) {
-  const response = await fetch('/api/auth/delete-account', {
-    method: 'DELETE',
+  const response = await fetch("/api/auth/delete-account", {
+    method: "DELETE",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
 
@@ -214,7 +223,7 @@ async function deleteUserAccount(token: string) {
   console.log(data.message); // "Account successfully deleted"
 
   // Logout and redirect
-  window.location.href = '/login';
+  window.location.href = "/login";
 }
 ```
 
@@ -225,6 +234,7 @@ async function deleteUserAccount(token: string) {
 ### 1. Cascade Deletion Order
 
 **Why this specific order?**
+
 - **Boxes first**: Triggers database cascade for QR code resets
 - **QR codes explicit reset**: Ensures no orphaned assigned codes remain
 - **Locations**: Can be deleted after boxes (no remaining dependencies)
@@ -236,6 +246,7 @@ async function deleteUserAccount(token: string) {
 ### 2. Error Classes Centralization
 
 **Benefits**:
+
 - Reusable across all services
 - Consistent HTTP status codes
 - Type-safe error handling in routes
@@ -245,6 +256,7 @@ async function deleteUserAccount(token: string) {
 ### 3. No Direct Auth Deletion
 
 **Why not call `auth.admin.deleteUser()`?**
+
 - Requires service role privileges (not available in anon key)
 - Would require separate admin endpoint or background job
 - Marking user as deleted in app layer (profile deletion) is sufficient
@@ -263,6 +275,7 @@ bash .ai_docs/testing/test-delete-account.sh
 ```
 
 **Tests included**:
+
 1. Missing authentication header → 401
 2. Invalid JWT format → 401
 3. Cascade deletion verification → Records properly deleted

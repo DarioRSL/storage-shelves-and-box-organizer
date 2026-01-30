@@ -31,6 +31,7 @@ Phase 6 (2-3d): Testing & Polish
 ```
 
 **File Structure:**
+
 ```
 src/
 ├── components/shared/
@@ -63,6 +64,7 @@ src/
 ```
 
 **Key Endpoints Used:**
+
 - `signInWithPassword()` (Supabase Auth)
 - `signUp()` (Supabase Auth)
 - `GET /api/profiles/me`
@@ -81,6 +83,7 @@ src/
 ```
 
 **Key Endpoints Used:**
+
 - `GET /api/workspaces`
 - `GET /api/locations`
 - `GET /api/boxes`
@@ -89,6 +92,7 @@ src/
 - `DELETE /api/locations/:id`
 
 **Dependencies:**
+
 - `react-window` (virtual scrolling)
 - Nano Stores
 - Context API
@@ -104,6 +108,7 @@ src/
 ```
 
 **Integrates:**
+
 - Uses shared FormInput, Modal, ErrorAlert
 - Submits to endpoints from Phase 2
 
@@ -118,6 +123,7 @@ src/
 ```
 
 **Key Endpoints Used:**
+
 - `GET /api/boxes/:id`
 - `POST /api/boxes`
 - `PATCH /api/boxes/:id`
@@ -128,6 +134,7 @@ src/
 ## PHASE 5 TASKS
 
 ### 5A: QR Generator (can run parallel with 5B)
+
 ```
 5A.1 Form Components (NumberInput 1-100, GenerateButton, InstructionsPanel)
 5A.2 Generation Hooks (useQRCodeGeneration, usePDFGeneration)
@@ -135,13 +142,16 @@ src/
 ```
 
 **Dependencies:**
+
 - `jspdf` library
 - `qrcode` library
 
 **Key Endpoint:**
+
 - `POST /api/qr-codes/batch`
 
 ### 5B: Settings (can run parallel with 5A)
+
 ```
 5B.1 Workspace Management (create, edit, delete workspace)
 5B.2 Theme Toggle + Account Management
@@ -149,6 +159,7 @@ src/
 ```
 
 **Key Endpoints:**
+
 - `GET /api/workspaces`
 - `POST /api/workspaces`
 - `PATCH /api/workspaces/:id` (⚠️ MISSING - implement in Phase 1-2)
@@ -161,6 +172,7 @@ src/
 ## CRITICAL PATHS
 
 ### Must Be Implemented Before Phase 3
+
 ```
 PATCH /api/workspaces/:workspace_id    ← Settings Edit
 DELETE /api/workspaces/:workspace_id   ← Settings Delete
@@ -187,18 +199,18 @@ Utils/Services:     camelCase.ts            (e.g., validation.ts)
 
 ```typescript
 // Common Validators
-emailSchema              // email format
-passwordSchema          // min 8 chars
-nameSchema              // 1-255 chars
-descriptionSchema       // max 10k chars
-uuidSchema              // UUID format
-tagsSchema              // max 10, each max 50 chars
-workspaceNameSchema     // 1-255 chars
+emailSchema; // email format
+passwordSchema; // min 8 chars
+nameSchema; // 1-255 chars
+descriptionSchema; // max 10k chars
+uuidSchema; // UUID format
+tagsSchema; // max 10, each max 50 chars
+workspaceNameSchema; // 1-255 chars
 
 // Import from:
-import { CommonValidation } from '@/lib/validation/schemas';
+import { CommonValidation } from "@/lib/validation/schemas";
 // or specific:
-import { loginSchema } from '@/lib/validation/auth';
+import { loginSchema } from "@/lib/validation/auth";
 ```
 
 ---
@@ -206,11 +218,13 @@ import { loginSchema } from '@/lib/validation/auth';
 ## API ENDPOINTS BY PHASE
 
 ### Phase 0
+
 ```
 No API calls (infrastructure only)
 ```
 
 ### Phase 1
+
 ```
 POST   /auth/signin                     (Supabase)
 POST   /auth/signup                     (Supabase)
@@ -219,6 +233,7 @@ GET    /api/workspaces
 ```
 
 ### Phase 2
+
 ```
 GET    /api/locations
 GET    /api/boxes
@@ -228,6 +243,7 @@ DELETE /api/locations/:id
 ```
 
 ### Phase 3
+
 ```
 POST   /api/locations                   (reuse)
 PATCH  /api/locations/:id               (reuse)
@@ -238,6 +254,7 @@ DELETE /api/boxes/:id
 ```
 
 ### Phase 4
+
 ```
 GET    /api/boxes/:id
 POST   /api/boxes                       (reuse)
@@ -246,11 +263,13 @@ DELETE /api/boxes/:id                   (reuse)
 ```
 
 ### Phase 5A (QR Generator)
+
 ```
 POST   /api/qr-codes/batch
 ```
 
 ### Phase 5B (Settings)
+
 ```
 GET    /api/workspaces                  (reuse)
 POST   /api/workspaces                  (reuse)
@@ -265,22 +284,27 @@ GET    /api/export/inventory            (Optional)
 ## COMMON PATTERNS
 
 ### useForm Hook Usage
+
 ```typescript
 const { values, errors, touched, handleSubmit } = useForm({
-  initialValues: { email: '', password: '' },
+  initialValues: { email: "", password: "" },
   validationSchema: loginSchema,
-  onSubmit: async (values) => { /* ... */ },
+  onSubmit: async (values) => {
+    /* ... */
+  },
 });
 ```
 
 ### useFetch Hook Usage
+
 ```typescript
-const { data, loading, error } = useFetchData('/api/boxes');
+const { data, loading, error } = useFetchData("/api/boxes");
 // or direct call:
-const data = await useFetch('/api/boxes', { method: 'GET' });
+const data = await useFetch("/api/boxes", { method: "GET" });
 ```
 
 ### useDebounce Usage
+
 ```typescript
 const debouncedSearch = useDebounce(searchValue, 300);
 useEffect(() => {
@@ -289,19 +313,21 @@ useEffect(() => {
 ```
 
 ### API Client Usage
+
 ```typescript
-import { apiClient } from '@/lib/api/endpoints';
+import { apiClient } from "@/lib/api/endpoints";
 
 const profile = await apiClient.profiles.getMe();
 const workspaces = await apiClient.workspaces.list();
-const updated = await apiClient.workspaces.update(id, { name: 'New' });
+const updated = await apiClient.workspaces.update(id, { name: "New" });
 await apiClient.workspaces.delete(id);
 ```
 
 ### Nano Store Usage
+
 ```typescript
-import { authStore, setAuthSuccess } from '@/lib/stores/auth.store';
-import { useStore } from 'nanostores';
+import { authStore, setAuthSuccess } from "@/lib/stores/auth.store";
+import { useStore } from "nanostores";
 
 const auth = useStore(authStore);
 setAuthSuccess(profile, workspace, token);
@@ -312,6 +338,7 @@ setAuthSuccess(profile, workspace, token);
 ## COMPONENT PROPS TEMPLATES
 
 ### FormInput
+
 ```typescript
 <FormInput
   label="Email"
@@ -325,6 +352,7 @@ setAuthSuccess(profile, workspace, token);
 ```
 
 ### ConfirmationDialog
+
 ```typescript
 <ConfirmationDialog
   isOpen={isOpen}
@@ -338,6 +366,7 @@ setAuthSuccess(profile, workspace, token);
 ```
 
 ### Modal
+
 ```typescript
 <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Edit Box">
   {/* content */}
@@ -345,11 +374,13 @@ setAuthSuccess(profile, workspace, token);
 ```
 
 ### LoadingSpinner
+
 ```typescript
 <LoadingSpinner visible={isLoading} message="Loading..." />
 ```
 
 ### ErrorAlert
+
 ```typescript
 <ErrorAlert
   error={error}
@@ -377,6 +408,7 @@ VITE_LOG_LEVEL=info
 ## TESTING CHECKLIST PER PHASE
 
 ### Before Gate 0 → 1
+
 - [ ] All components render
 - [ ] All hooks initialize
 - [ ] Validation schemas work
@@ -385,6 +417,7 @@ VITE_LOG_LEVEL=info
 - [ ] ESLint: 0 errors
 
 ### Before Gate 1 → 2
+
 - [ ] Login works end-to-end
 - [ ] Registration works end-to-end
 - [ ] Session persists on refresh
@@ -393,6 +426,7 @@ VITE_LOG_LEVEL=info
 - [ ] Error messages display
 
 ### Before Gate 2 → 3
+
 - [ ] Dashboard loads
 - [ ] Location tree renders + expands
 - [ ] Box list displays
@@ -401,18 +435,21 @@ VITE_LOG_LEVEL=info
 - [ ] All data fetches correctly
 
 ### Before Gate 3 → 4
+
 - [ ] Modals open/close
 - [ ] Create/edit/delete flows work
 - [ ] Validation shows errors
 - [ ] Lists update after CRUD
 
 ### Before Gate 4 → 5
+
 - [ ] Box details page loads
 - [ ] Edit/delete work
 - [ ] Box form validates
 - [ ] Create/edit submit works
 
 ### Before Gate 5 → 6
+
 - [ ] QR generator works
 - [ ] PDF downloads
 - [ ] Settings page loads
@@ -420,6 +457,7 @@ VITE_LOG_LEVEL=info
 - [ ] Theme toggle works
 
 ### Before Production
+
 - [ ] All user flows tested
 - [ ] Errors handled gracefully
 - [ ] Mobile responsive
@@ -431,18 +469,18 @@ VITE_LOG_LEVEL=info
 
 ## COMMON ERRORS & FIXES
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| 401 Unauthorized | No JWT token | Check localStorage, login first |
-| 403 Forbidden | No permission | Check user role/workspace membership |
-| 404 Not Found | Resource missing | Verify ID is correct, check RLS |
-| 500 Server Error | Database error | Check backend logs, restart API |
-| Blank page | Component import missing | Check import path, verify file exists |
-| Type errors | Props mismatch | Check component props interface |
-| Validation not showing | Error state not set | Verify error field in state |
-| API not called | useEffect deps wrong | Check dependency array |
-| Infinite loop | Deps missing from useEffect | Add to dependency array |
-| Memory leak | Async not cleaned up | Add cleanup function to useEffect |
+| Error                  | Cause                       | Fix                                   |
+| ---------------------- | --------------------------- | ------------------------------------- |
+| 401 Unauthorized       | No JWT token                | Check localStorage, login first       |
+| 403 Forbidden          | No permission               | Check user role/workspace membership  |
+| 404 Not Found          | Resource missing            | Verify ID is correct, check RLS       |
+| 500 Server Error       | Database error              | Check backend logs, restart API       |
+| Blank page             | Component import missing    | Check import path, verify file exists |
+| Type errors            | Props mismatch              | Check component props interface       |
+| Validation not showing | Error state not set         | Verify error field in state           |
+| API not called         | useEffect deps wrong        | Check dependency array                |
+| Infinite loop          | Deps missing from useEffect | Add to dependency array               |
+| Memory leak            | Async not cleaned up        | Add cleanup function to useEffect     |
 
 ---
 
@@ -477,35 +515,41 @@ const debouncedSearch = useDebounce(searchValue, 300);
 ## DEBUGGING TIPS
 
 ### React DevTools
+
 - Check component props in browser DevTools → Components
 - Verify state changes in real-time
 - Find re-render bottlenecks with Profiler
 
 ### TypeScript
+
 ```bash
 npx tsc --noEmit  # Check types without compiling
 ```
 
 ### ESLint
+
 ```bash
 npm run lint       # Find issues
 npm run lint:fix   # Auto-fix
 ```
 
 ### API Calls
+
 ```typescript
 // Log all API calls
-console.log('API Call:', method, path);
-console.log('Response:', data);
+console.log("API Call:", method, path);
+console.log("Response:", data);
 ```
 
 ### State Management
+
 ```typescript
 // Log store changes (Nano)
 authStore.subscribe(console.log);
 ```
 
 ### Network
+
 - Use browser DevTools → Network tab
 - Check request/response headers
 - Verify JWT token in Authorization header
@@ -536,16 +580,16 @@ git checkout -b feature/phase-1-login-registration
 
 ## DOCUMENTATION LINKS
 
-| Document | Purpose |
-|----------|---------|
-| IMPLEMENTATION_ROADMAP.md | Detailed task breakdown per phase |
-| QUALITY_GATES.md | Test cases & verification per phase |
-| MISSING_API_ENDPOINTS.md | API specs for missing endpoints |
-| EXECUTION_SUMMARY.md | Overview & usage guide |
-| api-plan.md | Complete API specification |
-| db-plan.md | Database schema documentation |
-| prd.md | Product requirements |
-| tech-stack.md | Technology decisions |
+| Document                  | Purpose                             |
+| ------------------------- | ----------------------------------- |
+| IMPLEMENTATION_ROADMAP.md | Detailed task breakdown per phase   |
+| QUALITY_GATES.md          | Test cases & verification per phase |
+| MISSING_API_ENDPOINTS.md  | API specs for missing endpoints     |
+| EXECUTION_SUMMARY.md      | Overview & usage guide              |
+| api-plan.md               | Complete API specification          |
+| db-plan.md                | Database schema documentation       |
+| prd.md                    | Product requirements                |
+| tech-stack.md             | Technology decisions                |
 
 ---
 
@@ -592,6 +636,7 @@ Shift+F12       Find all references
 ## REMINDERS
 
 ✅ **Always:**
+
 - Test locally before pushing
 - Follow phase sequence
 - Verify quality gate before next phase
@@ -601,6 +646,7 @@ Shift+F12       Find all references
 - Request code review
 
 ❌ **Never:**
+
 - Skip quality gate checks
 - Push without testing
 - Use `any` types unnecessarily
@@ -612,28 +658,28 @@ Shift+F12       Find all references
 
 ## CONTACT QUICK LINKS
 
-| Role | Contact | For |
-|------|---------|-----|
-| Tech Lead | (assign) | Architecture questions |
-| Backend Lead | (assign) | API/database questions |
-| QA Lead | (assign) | Testing procedures |
-| PM | (assign) | Timeline/scope questions |
+| Role         | Contact  | For                      |
+| ------------ | -------- | ------------------------ |
+| Tech Lead    | (assign) | Architecture questions   |
+| Backend Lead | (assign) | API/database questions   |
+| QA Lead      | (assign) | Testing procedures       |
+| PM           | (assign) | Timeline/scope questions |
 
 ---
 
 ## ESTIMATED TIME BREAKDOWN
 
-| Phase | Duration | Dev Count | Total Hours |
-|-------|----------|-----------|------------|
-| 0 | 2-3d | 1 | 12-15 |
-| 1 | 2-3d | 1 | 16-20 |
-| 2 | 3-4d | 1-2 | 20-25 |
-| 3 | 1-2d | 1 | 8-10 |
-| 4 | 2-3d | 1-2 | 14-18 |
-| 5A | 1-2d | 1 | 10-12 |
-| 5B | 2-3d | 1 | 12-15 |
-| 6 | 2-3d | 2 | 10-15 |
-| **TOTAL** | **15-22d** | **3-5** | **102-130** |
+| Phase     | Duration   | Dev Count | Total Hours |
+| --------- | ---------- | --------- | ----------- |
+| 0         | 2-3d       | 1         | 12-15       |
+| 1         | 2-3d       | 1         | 16-20       |
+| 2         | 3-4d       | 1-2       | 20-25       |
+| 3         | 1-2d       | 1         | 8-10        |
+| 4         | 2-3d       | 1-2       | 14-18       |
+| 5A        | 1-2d       | 1         | 10-12       |
+| 5B        | 2-3d       | 1         | 12-15       |
+| 6         | 2-3d       | 2         | 10-15       |
+| **TOTAL** | **15-22d** | **3-5**   | **102-130** |
 
 ---
 

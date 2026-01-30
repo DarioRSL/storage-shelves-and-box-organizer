@@ -5,6 +5,7 @@
 **Implementation Period:** December 12, 2025 - January 2, 2026
 
 ## Overview
+
 This document provides a detailed implementation plan for the MVP release of Storage & Box Organizer. It prioritizes features based on user flow dependencies and development complexity.
 
 **🎉 MVP COMPLETE:** All planned features have been successfully implemented. See [MVP_STATUS_REPORT_2026_01_02.md](./MVP_STATUS_REPORT_2026_01_02.md) for current status and post-MVP roadmap.
@@ -14,9 +15,11 @@ This document provides a detailed implementation plan for the MVP release of Sto
 ## Frontend Implementation Phases
 
 ### Phase 1: Authentication & Core Navigation (Week 1)
+
 **Objective:** Enable users to create accounts and access the application
 
 #### Features:
+
 - **US-001: Login & Registration Pages**
   - Email/Password registration form
   - Email/Password login form
@@ -26,6 +29,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
   - Redirect authenticated users to /app
 
 #### Components to Build:
+
 - `LoginPage.tsx` - Login form with email/password inputs
 - `RegisterPage.tsx` - Registration form with confirmation
 - `AuthService` - Handle auth API calls to Supabase
@@ -34,15 +38,18 @@ This document provides a detailed implementation plan for the MVP release of Sto
 - Middleware update - Session validation
 
 #### Backend Requirement:
+
 - ✅ Supabase Auth is already configured
 - JWT token handling via Supabase
 
 ---
 
 ### Phase 2: Dashboard & Search (Week 1-2)
+
 **Objective:** Users can search and find boxes by name, description, tags
 
 #### Features:
+
 - **US-010: Live Search**
   - Search input component with debounce (300ms)
   - Real-time results dropdown
@@ -51,6 +58,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
   - Click result → navigate to box details
 
 #### Components to Build:
+
 - `Dashboard.astro` - Main app layout
 - `SearchInput.tsx` - Search component with debounce
 - `SearchResults.tsx` - Results dropdown/list
@@ -58,10 +66,12 @@ This document provides a detailed implementation plan for the MVP release of Sto
 - Pagination support (limit: 50)
 
 #### Backend Already Ready:
+
 - ✅ `GET /api/boxes?workspace_id=X&q=search_term`
 - Full-text search via search_vector
 
 #### Acceptance Criteria:
+
 - Search works with 3+ characters
 - Results appear within 100ms (visual feedback)
 - Can click result to go to box details
@@ -69,9 +79,11 @@ This document provides a detailed implementation plan for the MVP release of Sto
 ---
 
 ### Phase 3: Location Management (Week 2)
+
 **Objective:** Users can create and manage hierarchical locations
 
 #### Features:
+
 - **US-003: Add Locations**
   - Create location with name and optional description
   - Support nested locations (max 5 levels deep)
@@ -83,6 +95,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
   - Display unassigned boxes after deletion
 
 #### Components to Build:
+
 - `LocationTree.tsx` - Hierarchical tree view
 - `LocationForm.tsx` - Add/edit location modal
 - `AddLocationButton.tsx` - Trigger modal
@@ -90,12 +103,14 @@ This document provides a detailed implementation plan for the MVP release of Sto
 - `ConfirmationDialog.tsx` - Reusable confirmation component
 
 #### Backend Already Ready:
+
 - ✅ `GET /api/locations?workspace_id=X`
 - ✅ `POST /api/locations` (create)
 - ✅ `PATCH /api/locations/:id` (update)
 - ✅ `DELETE /api/locations/:id` (soft delete)
 
 #### UI Design Notes:
+
 - Desktop-first: Tree on left sidebar or collapsible panel
 - Show "Unassigned Boxes" as virtual location
 - Support expand/collapse for each node
@@ -103,9 +118,11 @@ This document provides a detailed implementation plan for the MVP release of Sto
 ---
 
 ### Phase 4: Box Management - Core CRUD (Week 2-3)
+
 **Objective:** Users can create, view, edit, and delete boxes
 
 #### Features:
+
 - **US-006: Create Box (via QR Scan)**
   - QR redirect page: `/qr/:short_id`
   - Logic: If QR unassigned → Show new box form with pre-filled ID
@@ -129,6 +146,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
   - Update location_id on save
 
 #### Components to Build:
+
 - `QrRedirect.astro` - Server-side redirect logic
 - `BoxForm.tsx` - Create/edit form
 - `BoxDetails.tsx` - Display box info
@@ -137,6 +155,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
 - `DeleteBoxConfirm.tsx` - Delete confirmation
 
 #### Backend Already Ready:
+
 - ✅ `GET /api/qr-codes/:short_id` (scan logic)
 - ✅ `POST /api/boxes` (create)
 - ✅ `GET /api/boxes/:id` (details)
@@ -144,6 +163,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
 - ✅ `DELETE /api/boxes/:id` (delete)
 
 #### UI Design Notes:
+
 - Form validation on client and server
 - Show loading state during API calls
 - Toast notifications for success/error
@@ -152,9 +172,11 @@ This document provides a detailed implementation plan for the MVP release of Sto
 ---
 
 ### Phase 5: QR Code Generation (Week 3)
+
 **Objective:** Users can generate QR codes for printing
 
 #### Features:
+
 - **US-005: QR Generator Page**
   - Input: quantity of codes (1-100)
   - Generate button → calls batch endpoint
@@ -163,16 +185,19 @@ This document provides a detailed implementation plan for the MVP release of Sto
   - Print functionality: window.print() for A4 layout
 
 #### Components to Build:
+
 - `QrGenerator.tsx` - Main generator page
 - `QrCodeDisplay.tsx` - Single QR code display
 - `QrCodeGrid.tsx` - Grid of all generated codes
 - CSS: Printable layout (3 columns × 7 rows for A4)
 
 #### Backend Already Ready:
+
 - ✅ `POST /api/qr-codes/batch` (generate batch)
 - Supabase returns QR short_ids
 
 #### Implementation Details:
+
 - Generate QR visuals client-side using: react-qr-code
 - Layout: 3 columns, 7 rows = 21 codes per A4 sheet
 - Print CSS: `@media print { ... }`
@@ -183,6 +208,7 @@ This document provides a detailed implementation plan for the MVP release of Sto
 ## Component Library Setup
 
 ### Global Components (to be built in Phase 1-5):
+
 ```
 src/components/
 ├── ui/                    # Shadcn/ui components
@@ -211,6 +237,7 @@ src/components/
 ## State Management Setup
 
 ### Nano Stores Structure:
+
 ```typescript
 // auth.store.ts
 export const authStore = map({
@@ -223,7 +250,7 @@ export const authStore = map({
 
 // ui.store.ts
 export const uiStore = map({
-  searchQuery: '',
+  searchQuery: "",
   selectedLocationId: null,
   selectedBoxId: null,
   isDarkMode: false,
@@ -235,6 +262,7 @@ export const uiStore = map({
 ## API Integration Checklist
 
 ### Already Implemented (Backend Ready):
+
 - ✅ User authentication (Supabase Auth)
 - ✅ Workspace creation on signup
 - ✅ Location CRUD
@@ -244,6 +272,7 @@ export const uiStore = map({
 - ✅ Search with full-text indexing
 
 ### Frontend API Layer Needed:
+
 - AuthService (login, register, logout)
 - BoxesService (CRUD + search)
 - LocationsService (CRUD + tree)
@@ -254,7 +283,9 @@ export const uiStore = map({
 ## Testing Strategy
 
 ### Phase Completion Criteria:
+
 Each phase must have:
+
 1. Happy path working (core flow)
 2. Error handling for API failures
 3. Form validation
@@ -262,6 +293,7 @@ Each phase must have:
 5. Accessibility basics (semantic HTML, ARIA)
 
 ### Manual Testing:
+
 - Test on Chrome/Firefox/Safari
 - Test with different screen sizes (desktop focus)
 - Test error scenarios (offline, API errors)
@@ -271,19 +303,20 @@ Each phase must have:
 
 ## Deployment Milestones
 
-| Phase | Timeline | Deploy Target |
-|-------|----------|----------------|
-| Phase 1 (Auth) | Week 1 | Staging |
-| Phase 2 (Search) | Week 1-2 | Staging |
-| Phase 3 (Locations) | Week 2 | Staging |
-| Phase 4 (Boxes) | Week 2-3 | Staging |
-| Phase 5 (QR Gen) | Week 3 | MVP Release |
+| Phase               | Timeline | Deploy Target |
+| ------------------- | -------- | ------------- |
+| Phase 1 (Auth)      | Week 1   | Staging       |
+| Phase 2 (Search)    | Week 1-2 | Staging       |
+| Phase 3 (Locations) | Week 2   | Staging       |
+| Phase 4 (Boxes)     | Week 2-3 | Staging       |
+| Phase 5 (QR Gen)    | Week 3   | MVP Release   |
 
 ---
 
 ## Success Metrics (from PRD)
 
 By end of MVP, we should see:
+
 1. ✅ Users can add boxes in <45 seconds
 2. ✅ Search results appear instantly
 3. ✅ QR codes generate and print
@@ -311,4 +344,3 @@ By end of MVP, we should see:
 4. What's the priority if we finish early? (dark mode, export, etc.)
 5. Should we add skeleton loaders for better UX?
 6. Any preference on error toast vs inline errors?
-

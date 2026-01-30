@@ -50,20 +50,24 @@ ProfileView (Astro container component)
 **Description:** Main container for the profile page. Astro component serving as layout, combining React sub-components and managing server-side data fetching.
 
 **Main Elements:**
+
 - Wrapper div with Tailwind classes (responsive layout, max-width container)
 - Heading: "Mój profil"
 - Card container for profile content
 - Back navigation link
 
 **Supported Interactions:**
+
 - Page load triggers fetching of user profile
 - Error clearing on state changes
 - Handling of success/error toasts
 
 **Validation:**
+
 - Authentication verification (Astro middleware)
 
 **Types:**
+
 - `ProfileDto`
 
 **Props:** None (Astro component)
@@ -75,6 +79,7 @@ ProfileView (Astro container component)
 **Description:** Main React component managing profile state, data fetching, and coordinating child components.
 
 **Main Elements:**
+
 - State management for profile data, loading, errors
 - useEffect for initial data fetch
 - Form state management
@@ -82,6 +87,7 @@ ProfileView (Astro container component)
 - Stats fetching
 
 **Supported Interactions:**
+
 - Load profile data on mount
 - Submit profile updates
 - Upload avatar
@@ -89,16 +95,19 @@ ProfileView (Astro container component)
 - Navigate back to dashboard
 
 **Validation:**
+
 - full_name: optional, max 255 characters
 - avatar: max 512KB, allowed types: image/jpeg, image/png, image/webp
 
 **Types:**
+
 - `ProfileDto`
 - `UpdateProfileRequest`
 - `UpdateProfileResponse`
 - `ProfileStats`
 
 **Props:**
+
 ```typescript
 interface ProfileContainerProps {
   userId: string;
@@ -113,6 +122,7 @@ interface ProfileContainerProps {
 **Description:** Component for displaying and managing user avatar with upload capability.
 
 **Main Elements:**
+
 - Avatar image display (128x128px, rounded-full)
 - Initials fallback (gradient background)
 - Hidden file input
@@ -123,17 +133,20 @@ interface ProfileContainerProps {
 - File size/type requirements text
 
 **Supported Interactions:**
+
 - Click upload button → trigger file input
 - Select file → client-side validate → upload
 - Click remove → confirmation → DELETE avatar
 - Hover state on avatar showing upload hint
 
 **Validation:**
+
 - File size: max 512KB (524,288 bytes)
 - File types: image/jpeg, image/png, image/webp
 - Client-side validation before upload
 
 **Types:**
+
 ```typescript
 interface AvatarSectionProps {
   avatarUrl: string | null;
@@ -154,6 +167,7 @@ interface AvatarSectionProps {
 **Description:** Form for editing profile fields (currently only full_name).
 
 **Main Elements:**
+
 - Label: "Nazwa wyświetlana"
 - Input field for full_name
 - Character counter (X / 255)
@@ -163,17 +177,20 @@ interface AvatarSectionProps {
 - Loading spinner on button during save
 
 **Supported Interactions:**
+
 - Edit full name
 - Submit form (Enter key or Save button)
 - Real-time character counting
 - isDirty detection (enable/disable Save button)
 
 **Validation:**
+
 - full_name: optional, max 255 characters, trimmed
 - Cannot change email (display only)
 - Save button disabled if not dirty
 
 **Types:**
+
 ```typescript
 interface ProfileFormProps {
   fullName: string | null;
@@ -192,6 +209,7 @@ interface ProfileFormProps {
 **Description:** Read-only section displaying account statistics.
 
 **Main Elements:**
+
 - Section header: "Statystyki konta"
 - "Członek od" + formatted date
 - "Liczba workspace'ów" + count
@@ -199,12 +217,15 @@ interface ProfileFormProps {
 - Icons for each stat
 
 **Supported Interactions:**
+
 - Display only (no interactions)
 
 **Validation:**
+
 - None (read-only display)
 
 **Types:**
+
 ```typescript
 interface AccountStatsSectionProps {
   createdAt: string;
@@ -220,15 +241,18 @@ interface AccountStatsSectionProps {
 **Description:** Alert component for displaying errors.
 
 **Main Elements:**
+
 - Alert container (Shadcn Alert)
 - Error icon
 - Error message
 - Dismiss button
 
 **Supported Interactions:**
+
 - Click dismiss → clear error
 
 **Types:**
+
 ```typescript
 interface ErrorAlertProps {
   error: string;
@@ -303,7 +327,7 @@ export const AvatarConstraints = {
   ALLOWED_EXTENSIONS: [".jpg", ".jpeg", ".png", ".webp"] as const,
 } as const;
 
-export type AllowedAvatarType = typeof AvatarConstraints.ALLOWED_TYPES[number];
+export type AllowedAvatarType = (typeof AvatarConstraints.ALLOWED_TYPES)[number];
 
 /**
  * Profile view state
@@ -328,6 +352,7 @@ export interface ProfileViewState {
 **Purpose:** Centralize management of profile data and operations.
 
 **State:**
+
 ```typescript
 const [profile, setProfile] = useState<ProfileDto | null>(null);
 const [isLoading, setIsLoading] = useState(true);
@@ -338,6 +363,7 @@ const [error, setError] = useState<string | null>(null);
 ```
 
 **Functions:**
+
 - `fetchProfile()` - Fetches profile on load
 - `updateProfile(data)` - Updates profile fields (full_name)
 - `uploadAvatar(file)` - Uploads avatar to Supabase Storage
@@ -346,6 +372,7 @@ const [error, setError] = useState<string | null>(null);
 - `clearError()` - Clears error message
 
 **Usage:**
+
 ```typescript
 const {
   profile,
@@ -357,7 +384,7 @@ const {
   updateProfile,
   uploadAvatar,
   removeAvatar,
-  refetch
+  refetch,
 } = useProfile(userId);
 
 useEffect(() => {
@@ -372,15 +399,18 @@ useEffect(() => {
 **Purpose:** Fetch and manage profile statistics.
 
 **State:**
+
 ```typescript
 const [stats, setStats] = useState<ProfileStats | null>(null);
 const [isLoading, setIsLoading] = useState(true);
 ```
 
 **Functions:**
+
 - `fetchStats()` - Fetches stats on load
 
 **Usage:**
+
 ```typescript
 const { stats, isLoading } = useProfileStats(userId);
 ```
@@ -423,6 +453,7 @@ const handleFullNameChange = (value: string) => {
 **Request Body:** None
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -436,6 +467,7 @@ const handleFullNameChange = (value: string) => {
 ```
 
 **Error Responses:**
+
 - 401 Unauthorized: Missing/invalid session
 - 404 Not Found: Profile not found
 - 500 Internal Server Error: Database error
@@ -451,12 +483,14 @@ const handleFullNameChange = (value: string) => {
 **URL:** `/api/profiles/me`
 
 **Headers:**
+
 ```
 Cookie: sb_session
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "full_name": "Nowa Nazwa"
@@ -464,24 +498,25 @@ Content-Type: application/json
 ```
 
 **Validation (Zod):**
+
 ```typescript
-const UpdateProfileSchema = z.object({
-  full_name: z.string()
-    .max(255, "Nazwa może mieć maksymalnie 255 znaków")
-    .transform(val => val?.trim() || null)
-    .nullable()
-    .optional(),
-  avatar_url: z.string()
-    .url("Nieprawidłowy URL")
-    .nullable()
-    .optional(),
-}).refine(
-  data => data.full_name !== undefined || data.avatar_url !== undefined,
-  { message: "Wymagane co najmniej jedno pole do aktualizacji" }
-);
+const UpdateProfileSchema = z
+  .object({
+    full_name: z
+      .string()
+      .max(255, "Nazwa może mieć maksymalnie 255 znaków")
+      .transform((val) => val?.trim() || null)
+      .nullable()
+      .optional(),
+    avatar_url: z.string().url("Nieprawidłowy URL").nullable().optional(),
+  })
+  .refine((data) => data.full_name !== undefined || data.avatar_url !== undefined, {
+    message: "Wymagane co najmniej jedno pole do aktualizacji",
+  });
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -492,12 +527,14 @@ const UpdateProfileSchema = z.object({
 ```
 
 **Error Responses:**
+
 - 400 Bad Request: Validation error
 - 401 Unauthorized: Not authenticated
 - 404 Not Found: Profile not found
 - 500 Internal Server Error: Database error
 
 **Implementation:**
+
 ```typescript
 const response = await apiFetch<UpdateProfileResponse>("/api/profiles/me", {
   method: "PATCH",
@@ -516,6 +553,7 @@ const response = await apiFetch<UpdateProfileResponse>("/api/profiles/me", {
 **URL:** `/api/profiles/me/avatar`
 
 **Headers:**
+
 ```
 Cookie: sb_session
 Content-Type: multipart/form-data
@@ -524,6 +562,7 @@ Content-Type: multipart/form-data
 **Request Body:** FormData with `avatar` field (File)
 
 **Server-side Validation:**
+
 ```typescript
 const AVATAR_MAX_SIZE = 524288; // 512KB
 const AVATAR_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -534,11 +573,13 @@ const AVATAR_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 ```
 
 **Storage Path Pattern:**
+
 ```
 avatars/{user_id}/{timestamp}_{sanitized_filename}
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "avatar_url": "https://xxx.supabase.co/storage/v1/object/public/avatars/user-id/1234567890_avatar.jpg",
@@ -547,11 +588,13 @@ avatars/{user_id}/{timestamp}_{sanitized_filename}
 ```
 
 **Error Responses:**
+
 - 400 Bad Request: "Brak pliku" / "Plik za duży (max 512KB)" / "Niedozwolony typ pliku"
 - 401 Unauthorized: Not authenticated
 - 500 Internal Server Error: Storage error
 
 **Implementation:**
+
 ```typescript
 const formData = new FormData();
 formData.append("avatar", file);
@@ -567,7 +610,7 @@ if (!response.ok) {
   throw new Error(error.error || "Błąd uploadu");
 }
 
-const data = await response.json() as UploadAvatarResponse;
+const data = (await response.json()) as UploadAvatarResponse;
 ```
 
 ---
@@ -585,12 +628,14 @@ const data = await response.json() as UploadAvatarResponse;
 **Request Body:** None
 
 **Server-side Steps:**
+
 1. Get current avatar_url from profile
 2. Extract storage path from URL
 3. Delete file from Supabase Storage
 4. Update profile.avatar_url = null
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Avatar usunięty"
@@ -598,6 +643,7 @@ const data = await response.json() as UploadAvatarResponse;
 ```
 
 **Error Responses:**
+
 - 401 Unauthorized: Not authenticated
 - 404 Not Found: No avatar to delete
 - 500 Internal Server Error: Storage error
@@ -615,6 +661,7 @@ const data = await response.json() as UploadAvatarResponse;
 **Headers:** Cookie: sb_session
 
 **Response (200 OK):**
+
 ```json
 {
   "created_at": "2023-10-27T10:00:00Z",
@@ -624,6 +671,7 @@ const data = await response.json() as UploadAvatarResponse;
 ```
 
 **Query (service layer):**
+
 ```sql
 SELECT
   p.created_at,
@@ -638,30 +686,30 @@ WHERE p.id = :userId
 
 ## 8. User Interactions
 
-| # | Interaction | Component | Expected Result | Flow |
-|---|---|---|---|---|
-| 1 | Page load `/app/profile` | ProfileView | Fetches profile and stats, displays data | useEffect hooks, API calls |
-| 2 | Display current avatar | AvatarSection | Avatar image shown (or initials fallback) | profile.avatar_url check |
-| 3 | Click "Zmień zdjęcie" | AvatarSection | File picker opens | hidden input click trigger |
-| 4 | Select valid image file | AvatarSection | Client validates, starts upload, shows progress | validation → POST /avatar |
-| 5 | Select oversized file (>512KB) | AvatarSection | Error message: "Plik za duży (max 512KB)" | client-side validation |
-| 6 | Select invalid file type | AvatarSection | Error message: "Dozwolone formaty: JPG, PNG, WebP" | client-side validation |
-| 7 | Upload completes | AvatarSection | Avatar updated, success toast shown | API response → state update |
-| 8 | Upload fails (server error) | AvatarSection | Error message shown, retry available | error state, keep UI usable |
-| 9 | Click "Usuń zdjęcie" | AvatarSection | Confirmation prompt | confirmation dialog |
-| 10 | Confirm avatar removal | AvatarSection | Avatar removed, initials shown | DELETE /avatar → state update |
-| 11 | Cancel avatar removal | AvatarSection | Dialog closes, no change | dialog close |
-| 12 | Edit full_name field | ProfileForm | Input value changes, isDirty becomes true | controlled input |
-| 13 | Clear full_name field | ProfileForm | Empty value allowed, isDirty true | validation passes |
-| 14 | Type > 255 characters | ProfileForm | Input prevented or truncated | maxLength attribute |
-| 15 | Click "Zapisz zmiany" | ProfileForm | PATCH /profiles/me → profile updated | API call, success toast |
-| 16 | Click Save when not dirty | ProfileForm | Button disabled, no action | isDirty check |
-| 17 | Save fails (validation) | ProfileForm | Error message below field | field-level error display |
-| 18 | Save fails (network) | ProfileForm | Error toast, form preserved | error state, retry available |
-| 19 | View account stats | AccountStatsSection | Stats displayed (member since, counts) | read-only display |
-| 20 | Click back button | ProfileHeader | Navigate to /app | Astro navigation |
-| 21 | 401 Unauthorized | Any component | Redirect to /auth | middleware or API response |
-| 22 | Network error | Any component | Error message, retry option | catch block, error state |
+| #   | Interaction                    | Component           | Expected Result                                    | Flow                          |
+| --- | ------------------------------ | ------------------- | -------------------------------------------------- | ----------------------------- |
+| 1   | Page load `/app/profile`       | ProfileView         | Fetches profile and stats, displays data           | useEffect hooks, API calls    |
+| 2   | Display current avatar         | AvatarSection       | Avatar image shown (or initials fallback)          | profile.avatar_url check      |
+| 3   | Click "Zmień zdjęcie"          | AvatarSection       | File picker opens                                  | hidden input click trigger    |
+| 4   | Select valid image file        | AvatarSection       | Client validates, starts upload, shows progress    | validation → POST /avatar     |
+| 5   | Select oversized file (>512KB) | AvatarSection       | Error message: "Plik za duży (max 512KB)"          | client-side validation        |
+| 6   | Select invalid file type       | AvatarSection       | Error message: "Dozwolone formaty: JPG, PNG, WebP" | client-side validation        |
+| 7   | Upload completes               | AvatarSection       | Avatar updated, success toast shown                | API response → state update   |
+| 8   | Upload fails (server error)    | AvatarSection       | Error message shown, retry available               | error state, keep UI usable   |
+| 9   | Click "Usuń zdjęcie"           | AvatarSection       | Confirmation prompt                                | confirmation dialog           |
+| 10  | Confirm avatar removal         | AvatarSection       | Avatar removed, initials shown                     | DELETE /avatar → state update |
+| 11  | Cancel avatar removal          | AvatarSection       | Dialog closes, no change                           | dialog close                  |
+| 12  | Edit full_name field           | ProfileForm         | Input value changes, isDirty becomes true          | controlled input              |
+| 13  | Clear full_name field          | ProfileForm         | Empty value allowed, isDirty true                  | validation passes             |
+| 14  | Type > 255 characters          | ProfileForm         | Input prevented or truncated                       | maxLength attribute           |
+| 15  | Click "Zapisz zmiany"          | ProfileForm         | PATCH /profiles/me → profile updated               | API call, success toast       |
+| 16  | Click Save when not dirty      | ProfileForm         | Button disabled, no action                         | isDirty check                 |
+| 17  | Save fails (validation)        | ProfileForm         | Error message below field                          | field-level error display     |
+| 18  | Save fails (network)           | ProfileForm         | Error toast, form preserved                        | error state, retry available  |
+| 19  | View account stats             | AccountStatsSection | Stats displayed (member since, counts)             | read-only display             |
+| 20  | Click back button              | ProfileHeader       | Navigate to /app                                   | Astro navigation              |
+| 21  | 401 Unauthorized               | Any component       | Redirect to /auth                                  | middleware or API response    |
+| 22  | Network error                  | Any component       | Error message, retry option                        | catch block, error state      |
 
 ## 9. Conditions and Validation
 
@@ -683,6 +731,7 @@ WHERE p.id = :userId
 ### Profile Update Conditions
 
 **Condition 1: full_name max 255 characters**
+
 - **Verification:** Client-side: `value.length <= 255`, Server-side: Zod validation
 - **Components Affected:** ProfileForm
 - **Impact:** Input field has maxLength, server rejects longer values
@@ -696,6 +745,7 @@ WHERE p.id = :userId
   ```
 
 **Condition 2: Save button disabled when not dirty**
+
 - **Verification:** `isDirty === false`
 - **Components Affected:** ProfileForm
 - **Impact:** Prevents unnecessary API calls
@@ -707,6 +757,7 @@ WHERE p.id = :userId
 ### Avatar Upload Conditions
 
 **Condition 1: File size max 512KB**
+
 - **Verification:** Client-side: `file.size <= 524288`, Server-side: same check
 - **Components Affected:** AvatarSection
 - **Impact:** Large files rejected with clear message
@@ -719,6 +770,7 @@ WHERE p.id = :userId
   ```
 
 **Condition 2: File type must be image/jpeg, image/png, or image/webp**
+
 - **Verification:** Client-side: type check, Server-side: MIME type validation
 - **Components Affected:** AvatarSection
 - **Impact:** Non-image files rejected
@@ -731,6 +783,7 @@ WHERE p.id = :userId
   ```
 
 **Condition 3: Remove button only visible when avatar exists**
+
 - **Verification:** `profile.avatar_url !== null`
 - **Components Affected:** AvatarSection
 - **Impact:** Clean UI, no confusing button
@@ -744,6 +797,7 @@ WHERE p.id = :userId
 ### RLS (Row Level Security) Conditions
 
 **Condition:** User can only access their own profile
+
 - **Verification:** RLS policy: `auth.uid() = id`
 - **Components Affected:** All profile operations
 - **Impact:** Database-level security
@@ -758,6 +812,7 @@ WHERE p.id = :userId
 **Components Affected:** All API calls
 
 **Handling Strategy:**
+
 1. Catch 401 response status
 2. Redirect to `/auth` page
 3. Clear any local state
@@ -778,6 +833,7 @@ if (response.status === 401) {
 **Components Affected:** Profile fetch
 
 **Handling Strategy:**
+
 1. Catch 404 response status
 2. Display error message
 3. Offer retry or redirect
@@ -797,6 +853,7 @@ if (response.status === 404) {
 **Components Affected:** ProfileForm, AvatarSection
 
 **Handling Strategy:**
+
 1. Catch 400 response status
 2. Parse error details from response
 3. Display field-specific error messages
@@ -818,6 +875,7 @@ if (response.status === 400) {
 **Components Affected:** AvatarSection
 
 **Handling Strategy:**
+
 1. Client-side: Validate before upload
 2. Server-side: Return 400 with message
 3. Display clear size limit in error
@@ -839,6 +897,7 @@ if (file.size > 524288) {
 **Components Affected:** AvatarSection
 
 **Handling Strategy:**
+
 1. Client-side: Validate MIME type
 2. Accept attribute on file input
 3. Clear error message
@@ -860,6 +919,7 @@ if (file.size > 524288) {
 **Components Affected:** AvatarSection
 
 **Handling Strategy:**
+
 1. Catch error from upload
 2. Display retry option
 3. Keep previous avatar unchanged
@@ -881,6 +941,7 @@ try {
 **Components Affected:** Any API call
 
 **Handling Strategy:**
+
 1. Catch network error (fetch throws)
 2. Display error message with retry option
 3. Preserve form state for retry
@@ -1050,6 +1111,7 @@ try {
 **Bucket name:** `avatars`
 
 **Configuration (SQL):**
+
 ```sql
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (

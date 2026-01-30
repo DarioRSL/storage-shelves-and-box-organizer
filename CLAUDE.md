@@ -175,6 +175,7 @@ See `.ai_docs/api-plan.md` for complete API specification.
 **Location:** `tests/` directory
 
 **Structure:**
+
 - `tests/unit/` - Unit tests for services, utilities, validation logic
 - `tests/integration/` - API integration tests with Supertest
 - `tests/e2e/` - End-to-end tests with Playwright (Chromium only)
@@ -183,13 +184,14 @@ See `.ai_docs/api-plan.md` for complete API specification.
 - `tests/setup.ts` - Global Vitest setup
 
 **Guidelines:** Follow `.claude/commands/guideline_testing.md` for:
+
 - Vitest: Use `vi` object for mocks/spies, factory patterns, inline snapshots
 - Playwright: Chromium only, Page Object Model, browser contexts for isolation
 - Supertest: async/await, test database setup/teardown with beforeEach/afterEach
 
 **Coverage Target:** 80% (lines, functions, branches, statements)
 
-See `TESTING.md` for complete testing documentation.
+See `tests/README.md` for complete testing documentation and `tests/QUICK_REFERENCE.md` for quick command reference.
 
 # AI Rules for {{project-name}}
 
@@ -222,9 +224,8 @@ See `TESTING.md` for complete testing documentation.
 - Use client:only for components that should never render on the server
 - Leverage client:idle for non-critical UI elements that can wait until the browser is idle
 - Implement client:load for components that should hydrate immediately
-- Use Astro's transition:* directives for view transitions between pages
+- Use Astro's transition:\* directives for view transitions between pages
 - Leverage props for passing data from Astro to framework components
-
 
 ### Guidelines for STYLING
 
@@ -253,7 +254,6 @@ See `TESTING.md` for complete testing documentation.
 - Implement the css prop for one-off styling needs
 - Use the & character for nesting selectors
 - Leverage the keyframes helper for animations
-
 
 ### Guidelines for ACCESSIBILITY
 
@@ -340,7 +340,6 @@ See `TESTING.md` for complete testing documentation.
 - Use tags to group related endpoints by resource or functional area
 - Implement examples for all endpoints to facilitate easier integration by consumers
 
-
 ### Guidelines for STATIC_ANALYSIS
 
 #### PRETTIER
@@ -370,16 +369,15 @@ See `TESTING.md` for complete testing documentation.
 - Use the --fix flag in CI/CD pipelines to automatically correct fixable issues
 - Implement staged linting with husky and lint-staged to prevent committing non-compliant code
 
-
 ### Guidelines for ARCHITECTURE
 
 #### ADR
 
 - Create ADRs in /docs/adr/{name}.md for:
-- 1) Major dependency changes
-- 2) Architectural pattern changes
-- 3) New integration patterns
-- 4) Database schema changes
+- 1. Major dependency changes
+- 2. Architectural pattern changes
+- 3. New integration patterns
+- 4. Database schema changes
 
 #### CLEAN_ARCHITECTURE
 
@@ -408,7 +406,6 @@ See `TESTING.md` for complete testing documentation.
 - Design for eventual consistency in data that spans multiple services
 - Implement service discovery and health checks for robust system operation
 
-
 ### Guidelines for VERSION_CONTROL
 
 #### GITHUB
@@ -419,3 +416,38 @@ See `TESTING.md` for complete testing documentation.
 - Use GitHub Actions for CI/CD workflows to automate testing and deployment
 - Implement CODEOWNERS files to automatically assign reviewers based on code paths
 - Use GitHub Projects for tracking work items and connecting them to code changes
+
+#### GITHUB ACTION Rules
+
+- Check if `package.json` exists in project root and summarize key scripts
+- Check if `.nvmrc` exists in project root
+- Check if `.env.example` exists in project root to identify key `env:` variables
+- Always use `git branch -a | cat` to verify whether we use `main` or `master` branch
+- Always use `env:` variables and secrets attached to jobs instead of global workflows
+- Always use `npm ci` for Node-based dependency setup
+- Extract common steps into composite actions in separate files
+- Once you're done, as a final step conduct the following:
+
+1. For each public action always use <tool>"Run Terminal"</tool> to see what is the most up-to-date version (use only major version):
+
+```bash
+curl -s https://api.github.com/repos/{owner}/{repo}/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([0-9]+).*/\1/'
+```
+
+2. (Ask if needed) Use <tool>"Run Terminal"</tool> to fetch README.md and see if we're not using any deprecated actions by mistake:
+
+```bash
+curl -s https://raw.githubusercontent.com/{owner}/{repo}/refs/tags/v{TAG_VERSION}/README.md
+```
+
+3. (Ask if needed) Use <tool>"Run Terminal"</tool> to fetch repo metadata and see if we're not using any deprecated actions by mistake:
+
+```bash
+curl -s https://api.github.com/repos/{owner}/{repo} | grep '"archived":'
+```
+
+4. (Ask if needed) In case of linter issues related to action parameters, try to fetch action description directly from GitHub and use the following command:
+
+```bash
+curl -s https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/{main/master}/action.yml
+```

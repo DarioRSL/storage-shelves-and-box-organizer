@@ -14,6 +14,7 @@
 ### Pre-Flight Checks
 
 #### ✅ File Structure
+
 - [x] All component files created in `src/components/shared/`
 - [x] All hook files created in `src/components/hooks/`
 - [x] All validation schemas created in `src/lib/validation/`
@@ -22,6 +23,7 @@
 - [x] No stray console.logs or TODOs
 
 #### ✅ Component Testing
+
 ```typescript
 // Test each component renders
 import { FormInput } from '@/components/shared';
@@ -48,6 +50,7 @@ import { Modal } from '@/components/shared';
 - [x] Modal opens/closes correctly
 
 #### ✅ Hook Testing
+
 ```typescript
 // Test each hook
 const { values, errors, handleSubmit } = useForm({...});
@@ -66,13 +69,14 @@ await useFetch('/api/test');
 - [x] useLocalStorage reads/writes correctly
 
 #### ✅ Validation Schemas
-```typescript
-import { loginSchema, registrationSchema } from '@/lib/validation';
 
-const valid = loginSchema.safeParse({ email: 'test@test.com', password: 'TestPass123' });
+```typescript
+import { loginSchema, registrationSchema } from "@/lib/validation";
+
+const valid = loginSchema.safeParse({ email: "test@test.com", password: "TestPass123" });
 // valid.success === true
 
-const invalid = loginSchema.safeParse({ email: 'invalid', password: 'short' });
+const invalid = loginSchema.safeParse({ email: "invalid", password: "short" });
 // invalid.success === false
 // invalid.error.format() contains error messages
 ```
@@ -87,14 +91,15 @@ const invalid = loginSchema.safeParse({ email: 'invalid', password: 'short' });
 - [x] All schemas export correctly
 
 #### ✅ API Client
+
 ```typescript
-import { apiClient } from '@/lib/api/client';
-import { profilesApi, workspacesApi, boxesApi } from '@/lib/api/endpoints';
+import { apiClient } from "@/lib/api/client";
+import { profilesApi, workspacesApi, boxesApi } from "@/lib/api/endpoints";
 
 // Test all endpoints
 const profile = await profilesApi.getMe();
 const workspaces = await workspacesApi.list();
-const boxes = await boxesApi.list('workspace-id');
+const boxes = await boxesApi.list("workspace-id");
 ```
 
 - [x] API client accepts valid JWT
@@ -107,9 +112,10 @@ const boxes = await boxesApi.list('workspace-id');
 - [x] All endpoints are type-safe
 
 #### ✅ Nano Stores
+
 ```typescript
-import { authStore, setAuthSuccess, clearAuth } from '@/lib/stores/auth.store';
-import { useStore } from 'nanostores';
+import { authStore, setAuthSuccess, clearAuth } from "@/lib/stores/auth.store";
+import { useStore } from "nanostores";
 
 const auth = useStore(authStore);
 ```
@@ -122,6 +128,7 @@ const auth = useStore(authStore);
 - [x] themeStore works
 
 #### ✅ TypeScript Compilation
+
 ```bash
 npx tsc --noEmit
 ```
@@ -133,6 +140,7 @@ npx tsc --noEmit
 - [x] Strict mode enabled
 
 #### ✅ Code Quality
+
 ```bash
 npm run lint
 npm run format
@@ -146,6 +154,7 @@ npm run format
 - [x] Proper indentation (2 spaces)
 
 #### ✅ Documentation
+
 - [x] JSDoc comments on components
 - [x] JSDoc comments on hooks
 - [x] JSDoc comments on validation schemas
@@ -159,7 +168,7 @@ npm run format
 - [ ] All checklist items complete
 - [ ] Ready to proceed to Phase 1
 
-**Sign-Off By:** _________________ **Date:** _______
+**Sign-Off By:** ********\_******** **Date:** **\_\_\_**
 
 ---
 
@@ -172,6 +181,7 @@ npm run format
 ### Functional Testing
 
 #### ✅ Login Flow
+
 1. **Navigate to /login**
    - [ ] Page loads without errors
    - [ ] Login form displays
@@ -210,6 +220,7 @@ npm run format
    - [ ] Redirect to /app (no login page)
 
 #### ✅ Registration Flow
+
 1. **Navigate to /register**
    - [ ] Page loads without errors
    - [ ] Registration form displays
@@ -250,6 +261,7 @@ npm run format
    - [ ] When checked, button enabled
 
 #### ✅ Tab Switching
+
 1. **Switch from Login to Register**
    - [ ] Form clears
    - [ ] Active tab changes
@@ -260,6 +272,7 @@ npm run format
    - [ ] Login form displays
 
 #### ✅ Logout Flow
+
 1. **Click logout button**
    - [ ] Confirmation dialog appears (or direct)
    - [ ] Button shows loading state
@@ -269,6 +282,7 @@ npm run format
    - [ ] /app is now inaccessible
 
 #### ✅ Session Persistence
+
 1. **Login successfully**
    - [ ] JWT stored in localStorage
    - [ ] User data stored in auth store
@@ -283,6 +297,7 @@ npm run format
    - [ ] Can access /app without re-login
 
 #### ✅ Middleware Checks
+
 1. **Unauthenticated user accesses /app**
    - [ ] Redirected to /login
 
@@ -297,18 +312,21 @@ npm run format
 ### Responsive Design Testing
 
 #### ✅ Desktop (1920px / 1440px)
+
 - [ ] Layout centered and readable
 - [ ] Form fields appropriate width
 - [ ] Buttons clickable
 - [ ] No horizontal scroll
 
 #### ✅ Tablet (768px)
+
 - [ ] Form adapts to screen width
 - [ ] Touch targets > 44px
 - [ ] Keyboard visible (if needed)
 - [ ] No layout break
 
 #### ✅ Mobile (375px)
+
 - [ ] Full width form
 - [ ] Touch targets > 48px
 - [ ] Single column layout
@@ -317,6 +335,7 @@ npm run format
 ### Accessibility Testing
 
 #### ✅ Keyboard Navigation
+
 1. **Tab through form**
    - [ ] Tab order: Email → Password → Confirm (if register) → Button
    - [ ] Focus outline visible
@@ -330,6 +349,7 @@ npm run format
    - [ ] Can close dialogs (if modal)
 
 #### ✅ Screen Reader
+
 1. **Form labels**
    - [ ] Email input has aria-label or associated label
    - [ ] Password input has aria-label
@@ -344,6 +364,7 @@ npm run format
    - [ ] "Loading" text announces
 
 #### ✅ Color Contrast
+
 - [ ] Text contrast ≥ 4.5:1 (normal)
 - [ ] Button contrast ≥ 4.5:1
 - [ ] Error text visible (not color alone)
@@ -383,7 +404,7 @@ npx tsc --noEmit
 - [ ] No critical bugs
 - [ ] All checklist items complete
 
-**Approved By:** _________________ **Date:** _______
+**Approved By:** ********\_******** **Date:** **\_\_\_**
 
 ---
 
@@ -396,6 +417,7 @@ npx tsc --noEmit
 ### Functional Testing
 
 #### ✅ Dashboard Page Load
+
 1. **Navigate to /app**
    - [ ] Page loads without errors
    - [ ] Header displays
@@ -416,6 +438,7 @@ npx tsc --noEmit
    - [ ] No loading spinner after fetch complete
 
 #### ✅ Location Tree
+
 1. **Display locations**
    - [ ] Root locations display
    - [ ] Each location shows name
@@ -448,6 +471,7 @@ npx tsc --noEmit
    - [ ] Spacing readable
 
 #### ✅ Box List
+
 1. **Display boxes**
    - [ ] For selected location, boxes display
    - [ ] Each box shows name
@@ -475,6 +499,7 @@ npx tsc --noEmit
    - [ ] Error state shows instead if API fails
 
 #### ✅ Search Functionality
+
 1. **Open search**
    - [ ] Search input displays in header
    - [ ] Placeholder text: "Search boxes..."
@@ -500,6 +525,7 @@ npx tsc --noEmit
    - [ ] Can clear search to reset
 
 #### ✅ Workspace Switching
+
 1. **Click workspace selector**
    - [ ] Dropdown/list displays workspaces
    - [ ] Current workspace highlighted
@@ -515,6 +541,7 @@ npx tsc --noEmit
    - [ ] UI remains responsive
 
 #### ✅ User Menu
+
 1. **Click user menu**
    - [ ] Dropdown/list displays
    - [ ] Options: Profile, Settings, Logout
@@ -528,6 +555,7 @@ npx tsc --noEmit
    - [ ] Navigates to /app/settings
 
 #### ✅ Error Handling
+
 1. **API error while fetching locations**
    - [ ] Error message displays
    - [ ] Retry button visible
@@ -545,6 +573,7 @@ npx tsc --noEmit
 ### Responsive Design Testing
 
 #### ✅ Desktop (1920px / 1440px)
+
 - [ ] Two-column layout (tree + list)
 - [ ] Location tree sidebar
 - [ ] Box list takes full width
@@ -552,12 +581,14 @@ npx tsc --noEmit
 - [ ] Comfortable spacing
 
 #### ✅ Tablet (768px)
+
 - [ ] Two-column layout maintained or stacked
 - [ ] Tree collapsible (hamburger?)
 - [ ] List takes appropriate width
 - [ ] Touch targets > 44px
 
 #### ✅ Mobile (375px)
+
 - [ ] Single column or tabs
 - [ ] Location tree in collapsible panel
 - [ ] Box list full width
@@ -567,6 +598,7 @@ npx tsc --noEmit
 ### Accessibility Testing
 
 #### ✅ Keyboard Navigation
+
 1. **Tab through page**
    - [ ] All buttons reachable via Tab
    - [ ] Focus outline visible
@@ -581,6 +613,7 @@ npx tsc --noEmit
    - [ ] Can activate with Enter
 
 #### ✅ Screen Reader
+
 1. **Announce location tree**
    - [ ] "Location tree" announces
    - [ ] Each location announces with level (e.g., "Level 1: Basement")
@@ -596,6 +629,7 @@ npx tsc --noEmit
    - [ ] Loading state announces
 
 #### ✅ Color Contrast
+
 - [ ] Text ≥ 4.5:1 contrast
 - [ ] Buttons ≥ 4.5:1 contrast
 - [ ] Error messages visible
@@ -603,16 +637,19 @@ npx tsc --noEmit
 ### Performance Testing
 
 #### ✅ Load Time
+
 - [ ] Dashboard page loads in < 2 seconds
 - [ ] Location tree initial render < 500ms
 - [ ] Box list initial render < 500ms
 
 #### ✅ Virtual Scrolling
+
 - [ ] 100+ boxes handled smoothly
 - [ ] Scroll FPS ≥ 60
 - [ ] Memory usage stable (no leak)
 
 #### ✅ API Calls
+
 - [ ] No duplicate requests
 - [ ] Debounce prevents excessive calls
 - [ ] Caching (if implemented) works
@@ -648,7 +685,7 @@ npx tsc --noEmit
 - [ ] Performance acceptable
 - [ ] All checklist items complete
 
-**Approved By:** _________________ **Date:** _______
+**Approved By:** ********\_******** **Date:** **\_\_\_**
 
 ---
 
@@ -661,6 +698,7 @@ npx tsc --noEmit
 ### Functional Testing
 
 #### ✅ Box Details View
+
 1. **Navigate to /app/boxes/[id]**
    - [ ] Page loads without errors
    - [ ] Box name displays as heading
@@ -692,6 +730,7 @@ npx tsc --noEmit
    - [ ] Network error → retry available
 
 #### ✅ Box Create Page
+
 1. **Navigate to /app/boxes/new**
    - [ ] Page loads
    - [ ] Form displays with empty fields
@@ -720,6 +759,7 @@ npx tsc --noEmit
    - [ ] Details page shows new box
 
 #### ✅ Box Edit Page
+
 1. **Navigate to /app/boxes/[id]/edit**
    - [ ] Page loads
    - [ ] Form pre-fills with current data
@@ -743,6 +783,7 @@ npx tsc --noEmit
    - [ ] Same flow as details page delete
 
 #### ✅ Form Features
+
 1. **Name input**
    - [ ] Max 255 chars
    - [ ] Error if empty
@@ -775,6 +816,7 @@ npx tsc --noEmit
    - [ ] Selection displays
 
 #### ✅ API Integration
+
 1. **Create box**
    - [ ] POST /api/boxes with correct payload
    - [ ] All required fields sent
@@ -794,11 +836,13 @@ npx tsc --noEmit
 ### Error Handling
 
 #### ✅ Validation Errors
+
 - [ ] Form doesn't submit with invalid data
 - [ ] Error messages show next to fields
 - [ ] Can retry after fixing
 
 #### ✅ API Errors
+
 - [ ] 400 Bad Request → show field errors
 - [ ] 401 Unauthorized → redirect to /login
 - [ ] 403 Forbidden → show "no permission"
@@ -806,6 +850,7 @@ npx tsc --noEmit
 - [ ] 500 Internal Server Error → show "server error"
 
 #### ✅ Network Errors
+
 - [ ] Connection failed → error message
 - [ ] Retry button available
 - [ ] Form state preserved
@@ -813,6 +858,7 @@ npx tsc --noEmit
 ### Responsive Design
 
 #### ✅ Desktop / Tablet / Mobile
+
 - [ ] Details page readable on all sizes
 - [ ] Form fields appropriate width
 - [ ] Buttons clickable
@@ -821,12 +867,14 @@ npx tsc --noEmit
 ### Accessibility
 
 #### ✅ Keyboard Navigation
+
 - [ ] Can Tab through form fields
 - [ ] Can submit with Enter
 - [ ] Focus outline visible
 - [ ] Tab order logical
 
 #### ✅ Screen Reader
+
 - [ ] Form inputs have labels
 - [ ] Error messages announce
 - [ ] Validation messages announce
@@ -851,7 +899,7 @@ npx tsc --noEmit
 - [ ] No critical bugs
 - [ ] All checklist items complete
 
-**Approved By:** _________________ **Date:** _______
+**Approved By:** ********\_******** **Date:** **\_\_\_**
 
 ---
 
@@ -864,6 +912,7 @@ npx tsc --noEmit
 ### Final Comprehensive Testing
 
 #### ✅ All User Flows (End-to-End)
+
 1. **Complete user journey:**
    - [ ] Create account
    - [ ] Login
@@ -892,6 +941,7 @@ npx tsc --noEmit
    - [ ] Logout from settings
 
 #### ✅ Error Scenarios
+
 - [ ] Invalid credentials → handled
 - [ ] Network offline → handled
 - [ ] API timeouts → handled
@@ -902,6 +952,7 @@ npx tsc --noEmit
 - [ ] Database errors → handled
 
 #### ✅ Edge Cases
+
 - [ ] Very long names (255 chars) → handled
 - [ ] Special characters in names → handled
 - [ ] Very deep location tree (5 levels) → handled
@@ -913,12 +964,14 @@ npx tsc --noEmit
 - [ ] No boxes → empty state shows
 
 #### ✅ Cross-Browser Testing
+
 - [ ] Chrome (latest) - ✅
 - [ ] Firefox (latest) - ✅
 - [ ] Safari (14+) - ✅
 - [ ] Edge (latest) - ✅
 
 #### ✅ Device Testing
+
 - [ ] Desktop 1920px - ✅
 - [ ] Desktop 1440px - ✅
 - [ ] Tablet 768px - ✅
@@ -927,6 +980,7 @@ npx tsc --noEmit
 - [ ] Mobile landscape - ✅
 
 #### ✅ Accessibility Audit
+
 - [ ] Keyboard navigation complete - ✅
 - [ ] Screen reader tested - ✅
 - [ ] Color contrast ≥ 4.5:1 - ✅
@@ -935,6 +989,7 @@ npx tsc --noEmit
 - [ ] Semantic HTML used - ✅
 
 #### ✅ Performance Audit
+
 - [ ] Page load time < 3 seconds - ✅
 - [ ] First Contentful Paint < 1.5s - ✅
 - [ ] Interaction time < 100ms - ✅
@@ -943,6 +998,7 @@ npx tsc --noEmit
 - [ ] Bundle size acceptable - ✅
 
 #### ✅ Security Audit
+
 - [ ] JWT tokens handled securely - ✅
 - [ ] No sensitive data in localStorage - ✅
 - [ ] HTTPS enforced - ✅
@@ -952,6 +1008,7 @@ npx tsc --noEmit
 - [ ] Input validation on all forms - ✅
 
 #### ✅ Code Quality
+
 ```bash
 npm run lint
 npm run format
@@ -970,6 +1027,7 @@ npm run preview
 - [ ] No debug code - ✅
 
 #### ✅ Documentation
+
 - [ ] README.md updated - ✅
 - [ ] CLAUDE.md updated - ✅
 - [ ] Component JSDoc comments - ✅
@@ -979,6 +1037,7 @@ npm run preview
 - [ ] Deployment guide included - ✅
 
 #### ✅ Git & CI/CD
+
 - [ ] All commits have descriptive messages - ✅
 - [ ] No large commits - ✅
 - [ ] Feature branch cleanup - ✅
@@ -990,6 +1049,7 @@ npm run preview
 ### Sign-Off by Stakeholders
 
 #### Tech Lead
+
 ```
 Technology Lead: ________________
 Sign-off Date: _________________
@@ -1004,6 +1064,7 @@ _________________________________________________________________
 ```
 
 #### Product Owner
+
 ```
 Product Owner: __________________
 Sign-off Date: _________________
@@ -1018,6 +1079,7 @@ _________________________________________________________________
 ```
 
 #### QA Lead
+
 ```
 QA Lead: _______________________
 Sign-off Date: _________________

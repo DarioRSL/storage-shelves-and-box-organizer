@@ -32,6 +32,7 @@ All phases (0-6) have been successfully delivered. This document is now **archiv
 ## EXECUTIVE SUMMARY
 
 This roadmap provides:
+
 - **Detailed phase breakdown** (0-6)
 - **Task-by-task implementation guide** per phase
 - **Quality gates between phases**
@@ -40,6 +41,7 @@ This roadmap provides:
 - **Parallelization opportunities**
 
 **Key Principles:**
+
 - ✅ Shared infrastructure first
 - ✅ Single source of truth (types, API, validation)
 - ✅ Strict dependency ordering
@@ -51,6 +53,7 @@ This roadmap provides:
 ## ARCHITECTURE OVERVIEW
 
 ### Dependency Graph
+
 ```
 Shared Infrastructure (Phase 0)
     ↓
@@ -68,6 +71,7 @@ Testing & Polish (Phase 6)
 ```
 
 ### Parallelization Opportunities
+
 ```
 Recommended Team Structure (5-6 developers):
 - Dev 1: Shared Infrastructure (Phase 0) - 2-3 days
@@ -94,6 +98,7 @@ Sequential Bottlenecks:
 ## Overview
 
 Establish foundational code that ALL views depend on:
+
 - Shared UI components
 - Reusable React hooks
 - Validation schemas (Zod)
@@ -102,6 +107,7 @@ Establish foundational code that ALL views depend on:
 - Type definitions
 
 **Why First?**
+
 - Prevents duplication across 6 views
 - Ensures consistency (error handling, forms, API calls)
 - Reduces rework in later phases
@@ -147,9 +153,11 @@ src/
 ### Task 0.1: Shared Components Foundation (2-3 hours)
 
 #### 0.1.1 Create `src/components/shared/FormInput.tsx`
+
 **Purpose:** Reusable form input with validation feedback
 
 **Features:**
+
 - Label + Input + Error message + Helper text
 - Support for text, email, password, number types
 - Real-time validation feedback
@@ -160,12 +168,13 @@ src/
 **Used by:** Login, Box Form, Settings
 
 **Implementation Notes:**
+
 ```typescript
 // Signature
 export interface FormInputProps {
   label: string;
   name: string;
-  type?: 'text' | 'email' | 'password' | 'number';
+  type?: "text" | "email" | "password" | "number";
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -187,9 +196,11 @@ export interface FormInputProps {
 ---
 
 #### 0.1.2 Create `src/components/shared/ConfirmationDialog.tsx`
+
 **Purpose:** Reusable modal for confirming dangerous actions (delete, logout, etc.)
 
 **Features:**
+
 - Modal overlay with dark background
 - Title, description, warning text
 - Input field for confirmation text (type "DELETE" to confirm)
@@ -202,6 +213,7 @@ export interface FormInputProps {
 **Used by:** Login (logout), Dashboard (delete box/location), Box Form (delete), Settings (delete workspace/account)
 
 **Implementation Notes:**
+
 ```typescript
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -217,6 +229,7 @@ export interface ConfirmationDialogProps {
 ```
 
 **Special Cases:**
+
 - Account deletion: "DELETE ACCOUNT" (case-sensitive)
 - Workspace deletion: "DELETE WORKSPACE" (case-sensitive)
 - Box deletion: "DELETE" or simpler message
@@ -225,9 +238,11 @@ export interface ConfirmationDialogProps {
 ---
 
 #### 0.1.3 Create `src/components/shared/ErrorAlert.tsx`
+
 **Purpose:** Display error messages with dismiss + optional retry
 
 **Features:**
+
 - Alert container with error styling
 - Error icon + title + message
 - Dismiss button (X)
@@ -238,6 +253,7 @@ export interface ConfirmationDialogProps {
 **Used by:** All views (network errors, API errors, form validation)
 
 **Implementation Notes:**
+
 ```typescript
 export interface ErrorAlertProps {
   error: string;
@@ -245,16 +261,18 @@ export interface ErrorAlertProps {
   onRetry?: () => void;
   title?: string;
   details?: string;
-  role?: 'alert' | 'status';
+  role?: "alert" | "status";
 }
 ```
 
 ---
 
 #### 0.1.4 Create `src/components/shared/LoadingSpinner.tsx`
+
 **Purpose:** Standardized loading indicator
 
 **Features:**
+
 - SVG or CSS spinner animation
 - Center alignment
 - Optional message text
@@ -264,22 +282,25 @@ export interface ErrorAlertProps {
 **Used by:** All views (data loading, form submission)
 
 **Implementation Notes:**
+
 ```typescript
 export interface LoadingSpinnerProps {
   message?: string;
   visible?: boolean;
   progress?: number; // 0-100 (optional)
-  size?: 'sm' | 'md' | 'lg';
-  ariaLive?: 'polite' | 'assertive';
+  size?: "sm" | "md" | "lg";
+  ariaLive?: "polite" | "assertive";
 }
 ```
 
 ---
 
 #### 0.1.5 Create `src/components/shared/Modal.tsx`
+
 **Purpose:** Reusable modal/dialog wrapper
 
 **Features:**
+
 - Overlay + content container
 - Close button (X in top right)
 - Click outside to close option
@@ -291,13 +312,14 @@ export interface LoadingSpinnerProps {
 **Used by:** All views (edit/create modals, confirmation dialogs)
 
 **Implementation Notes:**
+
 ```typescript
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   isDismissible?: boolean;
   className?: string;
 }
@@ -310,9 +332,11 @@ export interface ModalProps {
 ### Task 0.2: Shared React Hooks (2-3 hours)
 
 #### 0.2.1 Create `src/components/hooks/useForm.ts`
+
 **Purpose:** Generic form state management + client-side validation
 
 **Features:**
+
 - Manage form field values (with useReducer or useState)
 - Real-time validation with Zod schema
 - Track touched fields (to show errors only after interaction)
@@ -323,6 +347,7 @@ export interface ModalProps {
 **Used by:** Login, Box Form, Settings modals, Dashboard modals
 
 **Implementation Notes:**
+
 ```typescript
 export interface UseFormOptions<T extends Record<string, any>> {
   initialValues: T;
@@ -346,18 +371,22 @@ export interface UseFormReturn<T extends Record<string, any>> {
 
 // Usage in component:
 const { values, errors, touched, handleSubmit } = useForm({
-  initialValues: { email: '', password: '' },
+  initialValues: { email: "", password: "" },
   validationSchema: loginSchema,
-  onSubmit: async (values) => { /* ... */ }
+  onSubmit: async (values) => {
+    /* ... */
+  },
 });
 ```
 
 ---
 
 #### 0.2.2 Create `src/components/hooks/useFetch.ts`
+
 **Purpose:** Centralized API calls with auth, error handling, loading states
 
 **Features:**
+
 - Wrapper around native fetch
 - Auto-inject Authorization header (from localStorage/context)
 - Handle 401 → redirect to /login
@@ -370,10 +399,11 @@ const { values, errors, touched, handleSubmit } = useForm({
 **Used by:** All API calls across all views
 
 **Implementation Notes:**
+
 ```typescript
 export interface UseFetchOptions<T = any> {
   url: string;
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: any;
   headers?: Record<string, string>;
   timeout?: number;
@@ -388,17 +418,12 @@ export interface ApiError {
   details?: unknown;
 }
 
-export async function useFetch<T = any>(
-  options: UseFetchOptions<T>
-): Promise<T> {
+export async function useFetch<T = any>(options: UseFetchOptions<T>): Promise<T> {
   // Implementation
 }
 
 // Or as hook:
-export function useFetchData<T = any>(
-  url: string,
-  options?: Omit<UseFetchOptions<T>, 'url'>
-) {
+export function useFetchData<T = any>(url: string, options?: Omit<UseFetchOptions<T>, "url">) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
@@ -417,9 +442,11 @@ export function useFetchData<T = any>(
 ---
 
 #### 0.2.3 Create `src/components/hooks/useDebounce.ts`
+
 **Purpose:** Debounce value changes (search, input)
 
 **Features:**
+
 - Delay value update by N ms
 - Cancel pending debounce on unmount
 - Configurable delay
@@ -427,11 +454,9 @@ export function useFetchData<T = any>(
 **Used by:** Dashboard search, Settings filters
 
 **Implementation Notes:**
+
 ```typescript
-export function useDebounce<T>(
-  value: T,
-  delayMs: number = 300
-): T {
+export function useDebounce<T>(value: T, delayMs: number = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -449,9 +474,11 @@ export function useDebounce<T>(
 ---
 
 #### 0.2.4 Create `src/components/hooks/useLocalStorage.ts`
+
 **Purpose:** Safe localStorage access with type safety
 
 **Features:**
+
 - Get/set with automatic JSON stringify/parse
 - Type-safe with generics
 - Fallback if localStorage unavailable (private browsing)
@@ -460,11 +487,9 @@ export function useDebounce<T>(
 **Used by:** Theme toggle (Settings)
 
 **Implementation Notes:**
+
 ```typescript
-export function useLocalStorage<T>(
-  key: string,
-  initialValue: T
-): [T, (value: T) => void] {
+export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   // Implementation
 }
 ```
@@ -474,47 +499,44 @@ export function useLocalStorage<T>(
 ### Task 0.3: Validation Schemas (1-2 hours)
 
 #### 0.3.1 Create `src/lib/validation/schemas.ts`
+
 **Purpose:** Common validation patterns
 
 **Contents:**
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // Common patterns
-export const emailSchema = z.string()
-  .email('Invalid email format')
+export const emailSchema = z.string().email("Invalid email format").trim();
+
+export const passwordSchema = z.string().min(8, "Password must be at least 8 characters").trim();
+
+export const nameSchema = z
+  .string()
+  .min(1, "Name cannot be empty")
+  .max(255, "Name must be less than 255 characters")
   .trim();
 
-export const passwordSchema = z.string()
-  .min(8, 'Password must be at least 8 characters')
-  .trim();
-
-export const nameSchema = z.string()
-  .min(1, 'Name cannot be empty')
-  .max(255, 'Name must be less than 255 characters')
-  .trim();
-
-export const descriptionSchema = z.string()
-  .max(10000, 'Description cannot exceed 10,000 characters')
+export const descriptionSchema = z
+  .string()
+  .max(10000, "Description cannot exceed 10,000 characters")
   .trim()
   .optional()
   .nullable();
 
-export const uuidSchema = z.string()
-  .uuid('Invalid ID format');
+export const uuidSchema = z.string().uuid("Invalid ID format");
 
-export const tagsSchema = z.array(
-  z.string()
-    .max(50, 'Tag must be less than 50 characters')
-    .trim()
-)
-  .max(10, 'Maximum 10 tags')
+export const tagsSchema = z
+  .array(z.string().max(50, "Tag must be less than 50 characters").trim())
+  .max(10, "Maximum 10 tags")
   .optional()
   .nullable();
 
-export const workspaceNameSchema = z.string()
-  .min(1, 'Workspace name cannot be empty')
-  .max(255, 'Workspace name must be less than 255 characters')
+export const workspaceNameSchema = z
+  .string()
+  .min(1, "Workspace name cannot be empty")
+  .max(255, "Workspace name must be less than 255 characters")
   .trim();
 
 // Export all for convenience
@@ -532,30 +554,31 @@ export const CommonValidation = {
 ---
 
 #### 0.3.2 Create `src/lib/validation/auth.ts`
+
 **Purpose:** Authentication-specific validation
 
 **Contents:**
+
 ```typescript
-import { z } from 'zod';
-import { CommonValidation } from './schemas';
+import { z } from "zod";
+import { CommonValidation } from "./schemas";
 
 export const loginSchema = z.object({
   email: CommonValidation.email,
   password: CommonValidation.password,
 });
 
-export const registrationSchema = z.object({
-  email: CommonValidation.email,
-  password: CommonValidation.password,
-  confirmPassword: z.string(),
-  agreeToPasswordLimitation: z.boolean(),
-}).refine(
-  (data) => data.password === data.confirmPassword,
-  {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  }
-);
+export const registrationSchema = z
+  .object({
+    email: CommonValidation.email,
+    password: CommonValidation.password,
+    confirmPassword: z.string(),
+    agreeToPasswordLimitation: z.boolean(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -564,6 +587,7 @@ export type RegistrationFormData = z.infer<typeof registrationSchema>;
 ---
 
 #### 0.3.3 Create `src/lib/validation/workspace.ts` & `box.ts` & `location.ts`
+
 **Similar to above but for specific domains**
 
 ---
@@ -571,9 +595,11 @@ export type RegistrationFormData = z.infer<typeof registrationSchema>;
 ### Task 0.4: API Client Layer (2-3 hours)
 
 #### 0.4.1 Create `src/lib/api/client.ts`
+
 **Purpose:** Centralized authenticated API client
 
 **Features:**
+
 - Inject JWT token from localStorage/context
 - Handle 401 → redirect to /login
 - Handle 403 → permission error
@@ -583,6 +609,7 @@ export type RegistrationFormData = z.infer<typeof registrationSchema>;
 - Request logging (optional)
 
 **Implementation Skeleton:**
+
 ```typescript
 export interface ApiErrorResponse {
   status: number;
@@ -598,12 +625,12 @@ export class ApiError extends Error {
     public details?: unknown
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
 export interface ApiClientOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';
+  method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
   headers?: Record<string, string>;
   body?: any;
   timeout?: number; // default 30000
@@ -613,19 +640,16 @@ export interface ApiClientOptions {
  * Main API client function
  * Handles auth, errors, and common response parsing
  */
-export async function apiClient<T = any>(
-  path: string,
-  options?: ApiClientOptions
-): Promise<T> {
-  const url = `${process.env.SUPABASE_URL || 'http://localhost:3000'}${path}`;
+export async function apiClient<T = any>(path: string, options?: ApiClientOptions): Promise<T> {
+  const url = `${process.env.SUPABASE_URL || "http://localhost:3000"}${path}`;
   const token = getToken(); // from localStorage or context
 
   const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
+    defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
   const mergedHeaders = { ...defaultHeaders, ...options?.headers };
@@ -641,16 +665,16 @@ export async function apiClient<T = any>(
 // Export for convenience in components
 export const apiClient = {
   get<T = any>(path: string, options?: ApiClientOptions) {
-    return apiClient<T>(path, { ...options, method: 'GET' });
+    return apiClient<T>(path, { ...options, method: "GET" });
   },
   post<T = any>(path: string, body?: any, options?: ApiClientOptions) {
-    return apiClient<T>(path, { ...options, method: 'POST', body });
+    return apiClient<T>(path, { ...options, method: "POST", body });
   },
   patch<T = any>(path: string, body?: any, options?: ApiClientOptions) {
-    return apiClient<T>(path, { ...options, method: 'PATCH', body });
+    return apiClient<T>(path, { ...options, method: "PATCH", body });
   },
   delete<T = any>(path: string, options?: ApiClientOptions) {
-    return apiClient<T>(path, { ...options, method: 'DELETE' });
+    return apiClient<T>(path, { ...options, method: "DELETE" });
   },
 };
 ```
@@ -658,18 +682,21 @@ export const apiClient = {
 ---
 
 #### 0.4.2 Create `src/lib/api/endpoints.ts`
+
 **Purpose:** Type-safe API endpoint definitions
 
 **Features:**
+
 - Strongly typed request/response
 - Centralized URL construction
 - Error handling abstraction
 - Request validation before sending
 
 **Implementation Skeleton:**
+
 ```typescript
-import { apiClient, ApiError } from './client';
-import * as types from '@/types';
+import { apiClient, ApiError } from "./client";
+import * as types from "@/types";
 
 // AUTH
 export const authApi = {
@@ -687,59 +714,56 @@ export const authApi = {
 
 // PROFILES
 export const profilesApi = {
-  getMe: () => apiClient<types.ProfileDto>('/api/profiles/me'),
+  getMe: () => apiClient<types.ProfileDto>("/api/profiles/me"),
 };
 
 // WORKSPACES
 export const workspacesApi = {
-  list: () => apiClient<types.WorkspaceDto[]>('/api/workspaces'),
+  list: () => apiClient<types.WorkspaceDto[]>("/api/workspaces"),
 
   create: (name: string) =>
-    apiClient<types.WorkspaceDto>('/api/workspaces', {
-      method: 'POST',
+    apiClient<types.WorkspaceDto>("/api/workspaces", {
+      method: "POST",
       body: { name },
     }),
 
   update: (id: string, name: string) =>
     apiClient<types.WorkspaceDto>(`/api/workspaces/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: { name },
     }),
 
   delete: (id: string) =>
     apiClient<{ message: string }>(`/api/workspaces/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     }),
 
-  getMembers: (id: string) =>
-    apiClient<types.WorkspaceMemberWithProfileDto[]>(
-      `/api/workspaces/${id}/members`
-    ),
+  getMembers: (id: string) => apiClient<types.WorkspaceMemberWithProfileDto[]>(`/api/workspaces/${id}/members`),
 };
 
 // LOCATIONS
 export const locationsApi = {
   list: (workspaceId: string, parentId?: string | null) => {
     const params = new URLSearchParams({ workspace_id: workspaceId });
-    if (parentId) params.set('parent_id', parentId);
+    if (parentId) params.set("parent_id", parentId);
     return apiClient<types.LocationDto[]>(`/api/locations?${params}`);
   },
 
   create: (data: types.CreateLocationRequest) =>
-    apiClient<types.LocationDto>('/api/locations', {
-      method: 'POST',
+    apiClient<types.LocationDto>("/api/locations", {
+      method: "POST",
       body: data,
     }),
 
   update: (id: string, data: Partial<types.LocationDto>) =>
     apiClient<types.LocationDto>(`/api/locations/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: data,
     }),
 
   delete: (id: string) =>
     apiClient<{ message: string }>(`/api/locations/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     }),
 };
 
@@ -747,48 +771,45 @@ export const locationsApi = {
 export const boxesApi = {
   list: (workspaceId: string, locationId?: string | null, q?: string) => {
     const params = new URLSearchParams({ workspace_id: workspaceId });
-    if (locationId) params.set('location_id', locationId);
-    if (q) params.set('q', q);
+    if (locationId) params.set("location_id", locationId);
+    if (q) params.set("q", q);
     return apiClient<types.BoxDto[]>(`/api/boxes?${params}`);
   },
 
   get: (id: string) => apiClient<types.BoxDto>(`/api/boxes/${id}`),
 
   create: (data: types.CreateBoxRequest) =>
-    apiClient<types.BoxDto>('/api/boxes', {
-      method: 'POST',
+    apiClient<types.BoxDto>("/api/boxes", {
+      method: "POST",
       body: data,
     }),
 
   update: (id: string, data: Partial<types.UpdateBoxRequest>) =>
     apiClient<types.BoxDto>(`/api/boxes/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: data,
     }),
 
   delete: (id: string) =>
     apiClient<{ message: string }>(`/api/boxes/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     }),
 };
 
 // QR CODES
 export const qrCodesApi = {
   generateBatch: (workspaceId: string, quantity: number) =>
-    apiClient<types.BatchGenerateQrCodesResponse>(
-      '/api/qr-codes/batch',
-      {
-        method: 'POST',
-        body: { workspace_id: workspaceId, quantity },
-      }
-    ),
+    apiClient<types.BatchGenerateQrCodesResponse>("/api/qr-codes/batch", {
+      method: "POST",
+      body: { workspace_id: workspaceId, quantity },
+    }),
 };
 
 // EXPORT
 export const exportApi = {
   inventory: (workspaceId: string) =>
     apiClient<Blob>(`/api/export/inventory?workspace_id=${workspaceId}`, {
-      headers: { 'Accept': 'text/csv' },
+      headers: { Accept: "text/csv" },
     }),
 };
 ```
@@ -798,12 +819,14 @@ export const exportApi = {
 ### Task 0.5: Global Stores (Nano) (1 hour)
 
 #### 0.5.1 Create `src/lib/stores/auth.store.ts`
+
 **Purpose:** Global authentication state
 
 **Contents:**
+
 ```typescript
-import { atom } from 'nanostores';
-import type { ProfileDto, WorkspaceDto } from '@/types';
+import { atom } from "nanostores";
+import type { ProfileDto, WorkspaceDto } from "@/types";
 
 export const authStore = atom<{
   isLoading: boolean;
@@ -823,11 +846,11 @@ export const authStore = atom<{
 
 // Actions
 export function setAuthLoading(loading: boolean) {
-  authStore.setKey('isLoading', loading);
+  authStore.setKey("isLoading", loading);
 }
 
 export function setAuthError(error: string | null) {
-  authStore.setKey('error', error);
+  authStore.setKey("error", error);
 }
 
 export function setAuthSuccess(user: ProfileDto, workspace: WorkspaceDto, token: string) {
@@ -856,6 +879,7 @@ export function clearAuth() {
 ---
 
 #### 0.5.2 Create `src/lib/stores/workspace.store.ts` & `theme.store.ts`
+
 **Similar pattern to auth.store**
 
 ---
@@ -863,7 +887,9 @@ export function clearAuth() {
 ### Task 0.6: Type Extensions (30 min)
 
 #### 0.6.1 Update `src/types.ts`
+
 **Add new types:**
+
 ```typescript
 // Form states
 export interface FormFieldError {
@@ -884,7 +910,7 @@ export interface WorkspaceWithOwnershipInfo extends WorkspaceDto {
 }
 
 // Theme
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = "light" | "dark" | "system";
 
 // Add more as needed (copy from view plans)
 ```
@@ -907,6 +933,7 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 - [ ] Components render without runtime errors
 
 **Test Checklist:**
+
 ```typescript
 // Test FormInput
 <FormInput
@@ -951,6 +978,7 @@ const profile = await apiClient.get('/api/profiles/me');
 ## Overview
 
 Build complete authentication flow:
+
 - Login form page
 - Registration form page
 - Auth stores + Nano integration
@@ -985,9 +1013,11 @@ src/
 ### Task 1.1: Create Auth Page Structure (2 hours)
 
 #### 1.1.1 Create `src/pages/auth/index.astro`
+
 **Purpose:** Main authentication page (handles both /login and /register)
 
 **Features:**
+
 - Dynamic route handling (detect /login vs /register from URL)
 - SSR with no prerendering
 - Pass route to React component
@@ -995,22 +1025,23 @@ src/
 - Metadata (title, description)
 
 **Implementation Skeleton:**
+
 ```astro
 ---
 export const prerender = false;
 
 // Get current route
 const { pathname } = Astro.url;
-const mode = pathname.includes('register') ? 'register' : 'login';
+const mode = pathname.includes("register") ? "register" : "login";
 
 // Redirect if already authenticated
 const session = Astro.locals.session;
 if (session?.user) {
-  return Astro.redirect('/app');
+  return Astro.redirect("/app");
 }
 ---
 
-<Layout title={mode === 'login' ? 'Login' : 'Register'}>
+<Layout title={mode === "login" ? "Login" : "Register"}>
   <AuthPage client:load mode={mode} />
 </Layout>
 ```
@@ -1018,9 +1049,11 @@ if (session?.user) {
 ---
 
 #### 1.1.2 Create `src/components/auth/AuthLayout.tsx`
+
 **Purpose:** Main container managing auth state and layout
 
 **Features:**
+
 - Responsive container (centered card)
 - Logo/branding section
 - AuthCard + forms
@@ -1029,28 +1062,32 @@ if (session?.user) {
 - Footer with links
 
 **Props:**
+
 ```typescript
 interface AuthLayoutProps {
-  initialMode?: 'login' | 'register';
+  initialMode?: "login" | "register";
 }
 ```
 
 ---
 
 #### 1.1.3 Create `src/components/auth/AuthCard.tsx`
+
 **Purpose:** Card with tab switcher between login/register
 
 **Features:**
+
 - Two tabs: "Login" / "Register"
 - Tab switch clears form errors
 - Conditional form rendering
 - Maintains form state when switching tabs (optional)
 
 **Props:**
+
 ```typescript
 interface AuthCardProps {
-  activeMode: 'login' | 'register';
-  onModeChange: (mode: 'login' | 'register') => void;
+  activeMode: "login" | "register";
+  onModeChange: (mode: "login" | "register") => void;
   children: React.ReactNode;
 }
 ```
@@ -1060,9 +1097,11 @@ interface AuthCardProps {
 ### Task 1.2: Create Form Components (6-8 hours)
 
 #### 1.2.1 Create `src/components/auth/LoginForm.tsx`
+
 **Purpose:** Login form with email/password
 
 **Features:**
+
 - Use shared FormInput component
 - Use useAuthForm hook for state
 - Submit via Supabase Auth
@@ -1071,6 +1110,7 @@ interface AuthCardProps {
 - Links: "Forgot Password?" (disabled in MVP), "Create account"
 
 **Flow:**
+
 1. User enters email + password
 2. Click Login
 3. Call supabaseClient.auth.signInWithPassword(email, password)
@@ -1078,6 +1118,7 @@ interface AuthCardProps {
 5. On error: Display error message
 
 **Implementation Notes:**
+
 ```typescript
 async function handleLogin(values: LoginFormData) {
   setIsLoading(true);
@@ -1105,9 +1146,9 @@ async function handleLogin(values: LoginFormData) {
     setAuthSuccess(profile, workspaces[0], token);
 
     // 6. Redirect to /app
-    window.location.href = '/app';
+    window.location.href = "/app";
   } catch (err) {
-    setError(err instanceof Error ? err.message : 'Login failed');
+    setError(err instanceof Error ? err.message : "Login failed");
   } finally {
     setIsLoading(false);
   }
@@ -1117,9 +1158,11 @@ async function handleLogin(values: LoginFormData) {
 ---
 
 #### 1.2.2 Create `src/components/auth/RegistrationForm.tsx`
+
 **Purpose:** Registration form with email/password/confirm
 
 **Features:**
+
 - Use shared FormInput
 - Use useAuthForm hook
 - Password strength indicator
@@ -1130,6 +1173,7 @@ async function handleLogin(values: LoginFormData) {
 - Error display
 
 **Flow:**
+
 1. User enters email + password + confirm + checkbox
 2. Click Register
 3. Call supabaseClient.auth.signUp(email, password)
@@ -1137,6 +1181,7 @@ async function handleLogin(values: LoginFormData) {
 5. On error: Display error (email exists, weak password, etc.)
 
 **Implementation Notes:**
+
 - Use PasswordStrengthIndicator component
 - Must check agreeToPasswordLimitation before submit
 - Create workspace via POST /api/workspaces
@@ -1144,18 +1189,21 @@ async function handleLogin(values: LoginFormData) {
 ---
 
 #### 1.2.3 Create `src/components/auth/PasswordStrengthIndicator.tsx`
+
 **Purpose:** Visual feedback on password strength
 
 **Features:**
+
 - Progress bar with color (red → yellow → green)
 - Text: "Weak" / "Medium" / "Strong"
 - Optional requirements list
 - Update in real-time as user types
 
 **Algorithm:**
+
 ```typescript
 function evaluatePasswordStrength(password: string): {
-  level: 'weak' | 'medium' | 'strong';
+  level: "weak" | "medium" | "strong";
   score: number; // 0-100
   feedback: string;
 } {
@@ -1168,9 +1216,9 @@ function evaluatePasswordStrength(password: string): {
   if (/[0-9]/.test(password)) score += 10;
   if (/[^a-zA-Z0-9]/.test(password)) score += 10;
 
-  const level = score < 50 ? 'weak' : score < 75 ? 'medium' : 'strong';
+  const level = score < 50 ? "weak" : score < 75 ? "medium" : "strong";
 
-  return { level, score: Math.min(score, 100), feedback: '...' };
+  return { level, score: Math.min(score, 100), feedback: "..." };
 }
 ```
 
@@ -1179,9 +1227,11 @@ function evaluatePasswordStrength(password: string): {
 ### Task 1.3: Create Auth Hook (3-4 hours)
 
 #### 1.3.1 Create `src/components/hooks/useAuthForm.ts`
+
 **Purpose:** Specialized form hook for auth with Supabase integration
 
 **Features:**
+
 - Manage email, password, confirmPassword, agreeToPasswordLimitation
 - Validate with Zod schema
 - Handle Supabase auth errors (translate to user messages)
@@ -1191,6 +1241,7 @@ function evaluatePasswordStrength(password: string): {
 - Session restoration on mount
 
 **Implementation Skeleton:**
+
 ```typescript
 export interface UseAuthFormOptions {
   mode: 'login' | 'register';
@@ -1236,9 +1287,11 @@ export function useAuthForm(options: UseAuthFormOptions) {
 ### Task 1.4: Update Middleware (1-2 hours)
 
 #### 1.4.1 Update `src/middleware/index.ts`
+
 **Purpose:** Add authentication checks for protected routes
 
 **Features:**
+
 - Check JWT token in cookies
 - Redirect unauthenticated users from /app to /login
 - Redirect authenticated users from /login to /app
@@ -1246,6 +1299,7 @@ export function useAuthForm(options: UseAuthFormOptions) {
 - Attach user to context.locals
 
 **Implementation Skeleton:**
+
 ```typescript
 import { defineMiddleware } from 'astro:middleware';
 
@@ -1284,32 +1338,36 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ### Task 1.5: Error Handling & Edge Cases (2-3 hours)
 
 #### 1.5.1 Handle Supabase Auth Errors
+
 **Translate to user-friendly messages:**
+
 ```typescript
 function translateAuthError(error: any): string {
-  const message = error.message?.toLowerCase() || '';
+  const message = error.message?.toLowerCase() || "";
 
-  if (message.includes('invalid')) {
-    return 'Invalid email or password';
+  if (message.includes("invalid")) {
+    return "Invalid email or password";
   }
-  if (message.includes('exists')) {
-    return 'Email already registered';
+  if (message.includes("exists")) {
+    return "Email already registered";
   }
-  if (message.includes('weak')) {
-    return 'Password is too weak';
+  if (message.includes("weak")) {
+    return "Password is too weak";
   }
-  if (message.includes('network')) {
-    return 'Network error. Please try again.';
+  if (message.includes("network")) {
+    return "Network error. Please try again.";
   }
 
-  return 'Authentication failed. Please try again.';
+  return "Authentication failed. Please try again.";
 }
 ```
 
 ---
 
 #### 1.5.2 Handle Session Persistence
+
 **Store token in localStorage + cookies:**
+
 - After successful login: localStorage.setItem('auth_token', token)
 - On page load: Check localStorage → restore auth store
 - On logout: Clear both localStorage and cookies
@@ -1342,6 +1400,7 @@ function translateAuthError(error: any): string {
 - [ ] No TypeScript errors
 
 **Test Checklist:**
+
 1. Create account with valid email/password
 2. Try to create with existing email (should fail)
 3. Try to login with valid credentials
@@ -1364,6 +1423,7 @@ function translateAuthError(error: any): string {
 ## Overview
 
 Build the central hub of the app:
+
 - Hierarchical location tree with expand/collapse
 - Real-time box search with debounce
 - Virtual list for 100+ boxes
@@ -1413,15 +1473,17 @@ src/
 ### Task 2.1: Setup Stores & Context (2-3 hours)
 
 #### 2.1.1 Create `src/lib/stores/dashboard.store.ts`
+
 **Purpose:** Global dashboard state (Nano)
 
 **State:**
+
 ```typescript
-import { atom } from 'nanostores';
+import { atom } from "nanostores";
 
 export const currentWorkspaceId = atom<string | null>(null);
 export const selectedLocationId = atom<string | null>(null);
-export const searchQuery = atom<string>('');
+export const searchQuery = atom<string>("");
 export const expandedLocationIds = atom<Set<string>>(new Set());
 export const isLoadingBoxes = atom<boolean>(false);
 export const isLoadingLocations = atom<boolean>(false);
@@ -1430,9 +1492,11 @@ export const isLoadingLocations = atom<boolean>(false);
 ---
 
 #### 2.1.2 Create `src/contexts/DashboardContext.tsx`
+
 **Purpose:** Action functions for dashboard
 
 **Type:**
+
 ```typescript
 export interface DashboardContextType {
   state: DashboardState;
@@ -1443,11 +1507,11 @@ export interface DashboardContextType {
     setSearchQuery: (query: string) => void;
     clearSearch: () => void;
 
-    openLocationEditor: (mode: 'create' | 'edit', parentId?: string, itemId?: string) => void;
+    openLocationEditor: (mode: "create" | "edit", parentId?: string, itemId?: string) => void;
     closeLocationEditor: () => void;
     submitLocationEditor: (data: CreateLocationRequest) => Promise<void>;
 
-    openBoxEditor: (mode: 'create' | 'edit', itemId?: string) => void;
+    openBoxEditor: (mode: "create" | "edit", itemId?: string) => void;
     closeBoxEditor: () => void;
     submitBoxEditor: (data: CreateBoxRequest | UpdateBoxRequest) => Promise<void>;
 
@@ -1469,9 +1533,11 @@ export interface DashboardContextType {
 ### Task 2.2: Setup Custom Hooks (4-5 hours)
 
 #### 2.2.1 Create `src/components/hooks/useWorkspaces.ts`
+
 **Purpose:** Fetch user's workspaces
 
 **Implementation:**
+
 ```typescript
 export function useWorkspaces() {
   const [workspaces, setWorkspaces] = useState<WorkspaceDto[]>([]);
@@ -1487,7 +1553,7 @@ export function useWorkspaces() {
           currentWorkspaceId.set(data[0].id);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch workspaces');
+        setError(err instanceof Error ? err.message : "Failed to fetch workspaces");
       } finally {
         setIsLoading(false);
       }
@@ -1503,9 +1569,11 @@ export function useWorkspaces() {
 ---
 
 #### 2.2.2 Create `src/components/hooks/useLocations.ts`
+
 **Purpose:** Fetch locations with caching + refetch
 
 **Implementation:**
+
 ```typescript
 export function useLocations(workspaceId: string, parentId?: string | null) {
   const [locations, setLocations] = useState<LocationTreeNode[]>([]);
@@ -1518,17 +1586,17 @@ export function useLocations(workspaceId: string, parentId?: string | null) {
       const data = await apiClient.locations.list(workspaceId, parentId);
 
       // Transform to LocationTreeNode
-      const nodes: LocationTreeNode[] = data.map(loc => ({
+      const nodes: LocationTreeNode[] = data.map((loc) => ({
         ...loc,
         boxCount: 0,
         isExpanded: false,
         isLoading: false,
-        level: loc.path.split('.').length - 1,
+        level: loc.path.split(".").length - 1,
       }));
 
       setLocations(nodes);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch locations');
+      setError(err instanceof Error ? err.message : "Failed to fetch locations");
     } finally {
       setIsLoading(false);
     }
@@ -1545,15 +1613,13 @@ export function useLocations(workspaceId: string, parentId?: string | null) {
 ---
 
 #### 2.2.3 Create `src/components/hooks/useBoxes.ts`
+
 **Purpose:** Fetch boxes with search + location filtering
 
 **Implementation:**
+
 ```typescript
-export function useBoxes(
-  workspaceId: string,
-  locationId?: string | null,
-  searchQuery?: string
-) {
+export function useBoxes(workspaceId: string, locationId?: string | null, searchQuery?: string) {
   const [boxes, setBoxes] = useState<BoxListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1566,14 +1632,10 @@ export function useBoxes(
 
     try {
       setIsLoading(true);
-      const data = await apiClient.boxes.list(
-        workspaceId,
-        locationId,
-        debouncedQuery
-      );
+      const data = await apiClient.boxes.list(workspaceId, locationId, debouncedQuery);
       setBoxes(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch boxes');
+      setError(err instanceof Error ? err.message : "Failed to fetch boxes");
     } finally {
       setIsLoading(false);
     }
@@ -1592,9 +1654,11 @@ export function useBoxes(
 ### Task 2.3: Layout Components (3-4 hours)
 
 #### 2.3.1 Create `src/pages/app.astro`
+
 **Purpose:** Main app page
 
 **Implementation:**
+
 ```astro
 ---
 export const prerender = false;
@@ -1602,7 +1666,7 @@ export const prerender = false;
 // Check auth in middleware
 const session = Astro.locals.session;
 if (!session?.user) {
-  return Astro.redirect('/login');
+  return Astro.redirect("/login");
 }
 ---
 
@@ -1614,9 +1678,11 @@ if (!session?.user) {
 ---
 
 #### 2.3.2 Create `src/components/dashboard/DashboardContainer.tsx`
+
 **Purpose:** Main orchestrator of dashboard state
 
 **Responsibilities:**
+
 - Fetch initial data (workspaces, locations, boxes)
 - Setup Nano store listeners
 - Manage modal open/close states
@@ -1624,6 +1690,7 @@ if (!session?.user) {
 - Error handling + display
 
 **Implementation Skeleton:**
+
 ```typescript
 export function DashboardContainer() {
   // Fetch data
@@ -1659,9 +1726,11 @@ export function DashboardContainer() {
 ---
 
 #### 2.3.3 Create `src/components/dashboard/DashboardHeader.tsx`
+
 **Purpose:** Top bar with workspace selector + user menu
 
 **Components:**
+
 - WorkspaceSelector (dropdown)
 - UserMenu (avatar + dropdown)
 - Logo/title
@@ -1669,9 +1738,11 @@ export function DashboardContainer() {
 ---
 
 #### 2.3.4 Create `src/components/dashboard/SearchInput.tsx`
+
 **Purpose:** Search box with debounce
 
 **Features:**
+
 - Placeholder: "Search boxes..."
 - X button to clear
 - Loading spinner
@@ -1683,9 +1754,11 @@ export function DashboardContainer() {
 ### Task 2.4: Location Tree (3-4 hours)
 
 #### 2.4.1 Create `src/components/dashboard/LocationTree.tsx`
+
 **Purpose:** Root location tree component
 
 **Features:**
+
 - Render "Unassigned" node first
 - Map through locations
 - Render LocationTreeNode for each
@@ -1695,9 +1768,11 @@ export function DashboardContainer() {
 ---
 
 #### 2.4.2 Create `src/components/dashboard/LocationTreeNode.tsx`
+
 **Purpose:** Recursive location node
 
 **Features:**
+
 - Expand/collapse arrow
 - Location name
 - Box count badge
@@ -1710,9 +1785,11 @@ export function DashboardContainer() {
 ---
 
 #### 2.4.3 Create `src/components/dashboard/LocationContextMenu.tsx`
+
 **Purpose:** Right-click menu for location
 
 **Options:**
+
 - Add sublocation
 - Edit
 - Delete (with confirmation)
@@ -1722,9 +1799,11 @@ export function DashboardContainer() {
 ### Task 2.5: Box List (3-4 hours)
 
 #### 2.5.1 Create `src/components/dashboard/BoxListContainer.tsx`
+
 **Purpose:** Container for virtualized box list
 
 **Responsibilities:**
+
 - Show loading state
 - Show empty state
 - Pass to BoxList component
@@ -1733,15 +1812,18 @@ export function DashboardContainer() {
 ---
 
 #### 2.5.2 Create `src/components/dashboard/BoxList.tsx`
+
 **Purpose:** Virtualized box list (using react-window)
 
 **Features:**
+
 - Virtual scrolling (only render visible items)
 - 50-100 boxes per page (performance)
 - Loading skeleton
 - Empty state
 
 **Installation:**
+
 ```bash
 npm install react-window
 npm install --save-dev @types/react-window
@@ -1750,9 +1832,11 @@ npm install --save-dev @types/react-window
 ---
 
 #### 2.5.3 Create `src/components/dashboard/BoxListItem.tsx`
+
 **Purpose:** Single box in list
 
 **Shows:**
+
 - Box name
 - Location breadcrumb
 - Description (truncated)
@@ -1763,9 +1847,11 @@ npm install --save-dev @types/react-window
 ---
 
 #### 2.5.4 Create `src/components/dashboard/BoxContextMenu.tsx`
+
 **Purpose:** Right-click menu for box
 
 **Options:**
+
 - View details (navigate)
 - Edit
 - Move (future)
@@ -1774,9 +1860,11 @@ npm install --save-dev @types/react-window
 ---
 
 #### 2.5.5 Create `src/components/dashboard/EmptyState.tsx`
+
 **Purpose:** Welcome screen for new users
 
 **Shows:**
+
 - Illustration / icon
 - "Create your first location"
 - Buttons:
@@ -1808,6 +1896,7 @@ npm install --save-dev @types/react-window
 - [ ] No TypeScript errors
 
 **Test Checklist:**
+
 1. Navigate to /app (should work if logged in)
 2. Verify workspace list loaded
 3. Click location to expand → children load
@@ -1832,6 +1921,7 @@ npm install --save-dev @types/react-window
 ## Overview
 
 Complete the dashboard with missing modals:
+
 - LocationEditorModal (create/edit location)
 - BoxEditorModal (create/edit box)
 - DeleteConfirmationDialog (reuse from shared)
@@ -1854,6 +1944,7 @@ src/
 ### Task 3.1: LocationEditorModal (3 hours)
 
 **Features:**
+
 - Form with Name + Description fields
 - Parent location selector
 - Validation (name required, unique siblings)
@@ -1862,6 +1953,7 @@ src/
 - Error handling + display
 
 **Use shared components:**
+
 - FormInput (name, description)
 - Modal wrapper
 - ErrorAlert
@@ -1871,6 +1963,7 @@ src/
 ### Task 3.2: BoxEditorModal (3 hours)
 
 **Features:**
+
 - Form with Name, Description, Tags, Location, QR Code
 - Character counter for description (10k limit)
 - Tag input with suggestions
@@ -1920,6 +2013,7 @@ src/
 ## Overview
 
 Complete box CRUD:
+
 - Box Details view (`/app/boxes/[id]`)
 - Box Form view (create/edit at `/app/boxes/new` and `/app/boxes/[id]/edit`)
 - Full forms with validation
@@ -1952,10 +2046,12 @@ src/
 ### Task 4.1: Box Details View (4-5 hours)
 
 **Pages:**
+
 - `src/pages/app/boxes/[id].astro` - Dynamic route
 - `src/components/box/BoxDetailsContent.tsx` - Main component
 
 **Features:**
+
 - Fetch box via GET /api/boxes/:id
 - Display all box information
 - Edit button → navigate to edit page
@@ -1966,6 +2062,7 @@ src/
 - Print QR button
 
 **Use shared components:**
+
 - ConfirmationDialog (delete)
 - LoadingSpinner
 - ErrorAlert
@@ -1975,10 +2072,12 @@ src/
 ### Task 4.2: Box Form View (6-8 hours)
 
 **Pages:**
+
 - `src/pages/app/boxes/new.astro` - Create
 - `src/pages/app/boxes/[id]/edit.astro` - Edit
 
 **Features:**
+
 - Universal BoxForm component (create/edit mode)
 - All box fields
 - Validation with Zod
@@ -1991,6 +2090,7 @@ src/
 - Error handling
 
 **Use shared components:**
+
 - FormInput
 - Modal (if modal view)
 - ErrorAlert
@@ -2001,6 +2101,7 @@ src/
 ### Task 4.3: Form Components (4-5 hours)
 
 **Create reusable form fields:**
+
 - NameInput.tsx
 - DescriptionTextarea.tsx
 - TagInput.tsx (with autocomplete)
@@ -2049,12 +2150,14 @@ src/
 **Estimated Dev Time:** 1-2 days
 
 ### Overview
+
 - Form to specify quantity (1-100)
 - Generate batch via POST /api/qr-codes/batch
 - Create PDF with A4 layout (4x5 grid = 20 per page)
 - Auto-download PDF
 
 ### Deliverables
+
 ```
 src/
 ├── pages/
@@ -2078,6 +2181,7 @@ src/
 ### Tasks
 
 #### Task 5A.1: QR Generator Form Components (3-4 hours)
+
 - NumberInput (1-100)
 - GenerateButton
 - InstructionsPanel
@@ -2085,16 +2189,19 @@ src/
 - Form layout
 
 #### Task 5A.2: QR Generation Hooks (3-4 hours)
+
 - useQRCodeGeneration → POST /api/qr-codes/batch
 - usePDFGeneration → jsPDF + qrcode library
 
 #### Task 5A.3: Integration & Polish (2-3 hours)
+
 - Setup page
 - Error handling
 - Loading states
 - Styling
 
 ### Libraries to install
+
 ```bash
 npm install jspdf qrcode
 ```
@@ -2107,6 +2214,7 @@ npm install jspdf qrcode
 **Estimated Dev Time:** 2-3 days
 
 ### Overview
+
 - Workspace management (create, edit, delete)
 - Theme toggle (light/dark/system)
 - Data export (CSV)
@@ -2114,6 +2222,7 @@ npm install jspdf qrcode
 - Logout
 
 ### Deliverables
+
 ```
 src/
 ├── pages/
@@ -2141,6 +2250,7 @@ src/
 ### Tasks
 
 #### Task 5B.1: Workspace Management (5-6 hours)
+
 - WorkspaceManagementSection
 - WorkspaceCard
 - WorkspaceCreateModal
@@ -2148,11 +2258,13 @@ src/
 - Delete workspace with confirmation
 
 #### Task 5B.2: Theme & Account (3-4 hours)
+
 - ThemeToggle with localStorage
 - LogoutButton
 - Account deletion with confirmation
 
 #### Task 5B.3: Integration & Polish (3-4 hours)
+
 - Page layout
 - Error handling
 - Data export
@@ -2163,6 +2275,7 @@ src/
 ## Quality Gate 5: Phase 5 Completion
 
 ✅ **QR Generator:**
+
 - [ ] Form loads
 - [ ] Number input validation (1-100)
 - [ ] Generate button works
@@ -2172,6 +2285,7 @@ src/
 - [ ] Errors handled
 
 ✅ **Settings:**
+
 - [ ] Page loads
 - [ ] Workspace list displays
 - [ ] Create workspace works
@@ -2195,6 +2309,7 @@ src/
 ## Tasks
 
 ### Task 6.1: Manual Testing (5-6 hours)
+
 - All user flows end-to-end
 - Error scenarios
 - Edge cases
@@ -2203,11 +2318,13 @@ src/
 - Accessibility (keyboard, screen reader)
 
 ### Task 6.2: Bug Fixes (3-4 hours)
+
 - Fix issues found in testing
 - Performance optimization
 - Code cleanup
 
 ### Task 6.3: Code Quality (2-3 hours)
+
 - npm run lint --fix
 - npm run format
 - TypeScript strict mode check
@@ -2215,6 +2332,7 @@ src/
 - JSDoc comments
 
 ### Task 6.4: Final Deployment (1-2 hours)
+
 - Build: npm run build
 - Preview: npm run preview
 - Deploy to staging
@@ -2243,8 +2361,10 @@ src/
 # QUALITY GATES (Summary)
 
 ## Gate 0 → Gate 1
+
 **Prerequisite:** Phase 0 complete (shared infrastructure)
 **Checklist:**
+
 - [x] All shared components created
 - [x] All shared hooks working
 - [x] Validation schemas complete
@@ -2258,8 +2378,10 @@ src/
 ---
 
 ## Gate 1 → Gate 2
+
 **Prerequisite:** Phase 1 complete (login/registration)
 **Checklist:**
+
 - [x] Login flow end-to-end
 - [x] Registration flow end-to-end
 - [x] Session persistence
@@ -2273,8 +2395,10 @@ src/
 ---
 
 ## Gate 2 → Gate 3
+
 **Prerequisite:** Phase 2 complete (dashboard)
 **Checklist:**
+
 - [x] Dashboard loads
 - [x] Location tree renders
 - [x] Search works
@@ -2288,8 +2412,10 @@ src/
 ---
 
 ## Gate 3 → Gate 4
+
 **Prerequisite:** Phase 3 complete (modals)
 **Checklist:**
+
 - [x] All modals open/close
 - [x] Create/edit/delete flows work
 - [x] Validation displays
@@ -2301,8 +2427,10 @@ src/
 ---
 
 ## Gate 4 → Gate 5
+
 **Prerequisite:** Phase 4 complete (box management)
 **Checklist:**
+
 - [x] All box CRUD works
 - [x] Details view displays correctly
 - [x] Form validation works
@@ -2313,8 +2441,10 @@ src/
 ---
 
 ## Gate 5 → Production
+
 **Prerequisite:** All phases complete
 **Checklist:**
+
 - [x] All features tested
 - [x] Zero critical bugs
 - [x] Performance acceptable
@@ -2333,11 +2463,13 @@ src/
 ## Critical Endpoints (NOW FULLY IMPLEMENTED! ✅)
 
 ### 1. `PATCH /api/workspaces/:workspace_id`
+
 **Status:** ✅ FULLY IMPLEMENTED
 **Implementation File:** `src/pages/api/workspaces/[workspace_id].ts` (lines 22-162)
 **Service Layer:** `src/lib/services/workspace.service.ts::updateWorkspace()`
 **Used by:** Settings (edit workspace name)
 **Endpoint:**
+
 ```http
 PATCH /api/workspaces/{workspace_id}
 Authorization: Bearer <JWT>
@@ -2363,6 +2495,7 @@ Error Responses:
 ```
 
 **Implementation Notes:**
+
 - Validate name (1-255 chars)
 - Check user is owner (RLS)
 - Update workspace row
@@ -2371,11 +2504,13 @@ Error Responses:
 ---
 
 ### 2. `DELETE /api/workspaces/:workspace_id`
+
 **Status:** ✅ FULLY IMPLEMENTED (8/8 tests passed)
 **Implementation File:** `src/pages/api/workspaces/[workspace_id].ts` (lines 181-297)
 **Service Layer:** `src/lib/services/workspace.service.ts::deleteWorkspace()`
 **Used by:** Settings (delete workspace)
 **Endpoint:**
+
 ```http
 DELETE /api/workspaces/{workspace_id}
 Authorization: Bearer <JWT>
@@ -2393,6 +2528,7 @@ Error Responses:
 ```
 
 **Implementation Notes:**
+
 - Check user is owner
 - Delete workspace + cascade (locations, boxes, qr_codes)
 - Return success message
@@ -2402,11 +2538,13 @@ Error Responses:
 ## Optional Features (SURPRISE: ALSO FULLY IMPLEMENTED! ✅)
 
 ### 3. `DELETE /api/auth/delete-account`
+
 **Status:** ✅ FULLY IMPLEMENTED
 **Implementation File:** `src/pages/api/auth/delete-account.ts`
 **Service Layer:** `src/lib/services/auth.service.ts::deleteUserAccount()`
 **Used by:** Settings (delete account)
 **Endpoint:**
+
 ```http
 DELETE /api/auth/delete-account
 Authorization: Bearer <JWT>
@@ -2420,11 +2558,13 @@ Response (200 OK):
 ---
 
 ### 4. `GET /api/export/inventory`
+
 **Status:** ✅ FULLY IMPLEMENTED
 **Implementation File:** `src/pages/api/export/inventory.ts`
 **Service Layer:** `src/lib/services/exportService.ts::exportInventory()`
 **Used by:** Settings (export CSV)
 **Endpoint:**
+
 ```http
 GET /api/export/inventory?workspace_id={workspace_id}
 Authorization: Bearer <JWT>
@@ -2442,8 +2582,10 @@ CSV file content (boxes with locations, tags, etc.)
 ## High Risk
 
 ### 1. Login/Auth Complexity (Phase 1)
+
 **Risk:** Session management, token storage, Supabase integration
 **Mitigation:**
+
 - Use Supabase Auth SDK (battle-tested)
 - Store token in localStorage + HTTP-only cookies
 - Validate token on every page load
@@ -2452,8 +2594,10 @@ CSV file content (boxes with locations, tags, etc.)
 ---
 
 ### 2. Dashboard State Management (Phase 2)
+
 **Risk:** Complex nested state (locations, boxes, search, selections)
 **Mitigation:**
+
 - Use Nano Store for global state
 - Use React Context for actions
 - Clear separation of concerns
@@ -2462,8 +2606,10 @@ CSV file content (boxes with locations, tags, etc.)
 ---
 
 ### 3. API Integration Consistency (Phase 0)
+
 **Risk:** Different error handling per view
 **Mitigation:**
+
 - Centralize in apiClient + endpoints
 - Single error handler
 - Test API layer before views
@@ -2473,8 +2619,10 @@ CSV file content (boxes with locations, tags, etc.)
 ## Medium Risk
 
 ### 1. Performance (Phase 2, 4)
+
 **Risk:** Large datasets (100+ boxes, deep location trees)
 **Mitigation:**
+
 - Virtual list for boxes (react-window)
 - Lazy load location children
 - Memoize components (React.memo)
@@ -2483,8 +2631,10 @@ CSV file content (boxes with locations, tags, etc.)
 ---
 
 ### 2. TypeScript Type Safety
+
 **Risk:** Bugs from type mismatches
 **Mitigation:**
+
 - Strict mode enabled
 - Generate types from Supabase schema
 - Use Zod for runtime validation
@@ -2493,8 +2643,10 @@ CSV file content (boxes with locations, tags, etc.)
 ---
 
 ### 3. Accessibility (All Phases)
+
 **Risk:** Not compliant with WCAG 2.1
 **Mitigation:**
+
 - Semantic HTML (nav, main, etc.)
 - ARIA labels on interactive elements
 - Keyboard navigation for all flows
@@ -2505,8 +2657,10 @@ CSV file content (boxes with locations, tags, etc.)
 ## Low Risk
 
 ### 1. Styling/CSS
+
 **Risk:** Inconsistent design
 **Mitigation:**
+
 - Use Tailwind CSS (consistent utilities)
 - Use Shadcn/ui components (pre-styled)
 - Design system + component library
@@ -2514,8 +2668,10 @@ CSV file content (boxes with locations, tags, etc.)
 ---
 
 ### 2. Browser Compatibility
+
 **Risk:** Not work in older browsers
 **Mitigation:**
+
 - Target modern browsers (Chrome, Firefox, Safari 14+)
 - Use CSS Grid/Flexbox (no IE 11)
 - Test in latest versions
@@ -2628,6 +2784,7 @@ Week 3:
 # APPENDIX: IMPLEMENTATION CHECKLIST
 
 ## Phase 0 Checklist
+
 - [ ] FormInput.tsx created + styled
 - [ ] ConfirmationDialog.tsx created
 - [ ] ErrorAlert.tsx created
@@ -2647,6 +2804,7 @@ Week 3:
 - [ ] All shared components can be imported
 
 ## Phase 1 Checklist
+
 - [ ] src/pages/auth/index.astro created
 - [ ] AuthLayout.tsx created
 - [ ] AuthCard.tsx created
@@ -2667,6 +2825,7 @@ Week 3:
 - [ ] npm run lint passes
 
 ## Phase 2 Checklist
+
 - [ ] src/pages/app.astro created
 - [ ] DashboardContainer.tsx created
 - [ ] DashboardHeader.tsx created
@@ -2694,6 +2853,7 @@ Week 3:
 - [ ] npm run lint passes
 
 ## Phase 3 Checklist
+
 - [ ] LocationEditorModal.tsx created
 - [ ] LocationSelector.tsx created (tree picker)
 - [ ] BoxEditorModal.tsx created
@@ -2710,6 +2870,7 @@ Week 3:
 - [ ] npm run lint passes
 
 ## Phase 4 Checklist
+
 - [ ] src/pages/app/boxes/new.astro created
 - [ ] src/pages/app/boxes/[id].astro created
 - [ ] src/pages/app/boxes/[id]/edit.astro created
@@ -2734,6 +2895,7 @@ Week 3:
 - [ ] npm run lint passes
 
 ## Phase 5A (QR Generator) Checklist
+
 - [ ] src/pages/app/qr-generator.astro created
 - [ ] QRGeneratorView.tsx created
 - [ ] QRGeneratorForm.tsx created
@@ -2753,6 +2915,7 @@ Week 3:
 - [ ] npm run lint passes
 
 ## Phase 5B (Settings) Checklist
+
 - [ ] src/pages/app/settings.astro created
 - [ ] SettingsView.tsx created
 - [ ] ProfileHeader.tsx created
@@ -2777,6 +2940,7 @@ Week 3:
 - [ ] np run lint passes
 
 ## Phase 6 Checklist
+
 - [ ] All user flows tested end-to-end
 - [ ] Error scenarios tested
 - [ ] Edge cases tested

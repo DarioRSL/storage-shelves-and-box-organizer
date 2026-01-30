@@ -10,10 +10,10 @@ Verify that RLS (Row Level Security) policies correctly prevent users from acces
 
 ### Test Users
 
-| User | Email | User ID | Workspace ID | Workspace Name |
-|------|-------|---------|--------------|----------------|
-| User A | darek2@testy.usera | `5dced942-8b32-41af-9bbc-f1204cdfd8df` | `d67c6cf7-c21d-400d-8193-ee1f31580953` | My Workspace |
-| User B | darek3@testy.usera | `d72e3106-8435-4587-b54e-d5f6b53232eb` | `a95fb5b4-d309-442b-9fdf-802b7be27b20` | My Workspace |
+| User   | Email              | User ID                                | Workspace ID                           | Workspace Name |
+| ------ | ------------------ | -------------------------------------- | -------------------------------------- | -------------- |
+| User A | darek2@testy.usera | `5dced942-8b32-41af-9bbc-f1204cdfd8df` | `d67c6cf7-c21d-400d-8193-ee1f31580953` | My Workspace   |
+| User B | darek3@testy.usera | `d72e3106-8435-4587-b54e-d5f6b53232eb` | `a95fb5b4-d309-442b-9fdf-802b7be27b20` | My Workspace   |
 
 ### Expected Behavior
 
@@ -42,6 +42,7 @@ Verify that RLS (Row Level Security) policies correctly prevent users from acces
 7. Keep this browser/window open for reference
 
 **Expected Result:**
+
 - ✅ Box created successfully
 - ✅ Box appears in User A's dashboard
 
@@ -66,9 +67,11 @@ Verify that RLS (Row Level Security) policies correctly prevent users from acces
    - Open browser console
    - Run:
      ```javascript
-     fetch('/api/boxes/[USER_A_BOX_ID]', {
-       credentials: 'include'
-     }).then(r => r.json()).then(console.log)
+     fetch("/api/boxes/[USER_A_BOX_ID]", {
+       credentials: "include",
+     })
+       .then((r) => r.json())
+       .then(console.log);
      ```
    - **Expected**: Should return `{ error: "..." }` with 403 or 404 status
 
@@ -81,12 +84,14 @@ Verify that RLS (Row Level Security) policies correctly prevent users from acces
 7. Monitor for any data leakage in API responses
 
 **Expected Results:**
+
 - ❌ User B CANNOT see User A's box in dashboard
 - ❌ Direct URL access returns 403 Forbidden or 404 Not Found
 - ❌ API call returns error (no data exposed)
 - ❌ No User A data visible in any API response bodies
 
 **CRITICAL FAILURE Indicators:**
+
 - 🚨 If User B can see User A's box data → **RLS IS BROKEN**
 - 🚨 If API returns User A's box details → **SECURITY VULNERABILITY**
 - 🚨 If User A's data appears in any network response → **DATA LEAK**
@@ -110,6 +115,7 @@ Verify that RLS (Row Level Security) policies correctly prevent users from acces
    - **Expected**: User B's box should NOT appear
 
 **Expected Results:**
+
 - ❌ User A CANNOT see User B's box
 - ❌ Isolation works bidirectionally
 
@@ -122,10 +128,13 @@ Test all critical API endpoints for cross-workspace access prevention:
 #### 4.1 GET /api/boxes (List)
 
 **As User B, try to list boxes:**
+
 ```javascript
-fetch('/api/boxes?workspace_id=[USER_A_WORKSPACE_ID]', {
-  credentials: 'include'
-}).then(r => r.json()).then(console.log)
+fetch("/api/boxes?workspace_id=[USER_A_WORKSPACE_ID]", {
+  credentials: "include",
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 **Expected**: Should return empty array or error (NOT User A's boxes)
@@ -133,10 +142,13 @@ fetch('/api/boxes?workspace_id=[USER_A_WORKSPACE_ID]', {
 #### 4.2 GET /api/boxes/[id] (Single Box)
 
 **As User B, try to get User A's box:**
+
 ```javascript
-fetch('/api/boxes/[USER_A_BOX_ID]', {
-  credentials: 'include'
-}).then(r => r.json()).then(console.log)
+fetch("/api/boxes/[USER_A_BOX_ID]", {
+  credentials: "include",
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 **Expected**: `404 Not Found` or `403 Forbidden`
@@ -144,13 +156,16 @@ fetch('/api/boxes/[USER_A_BOX_ID]', {
 #### 4.3 PATCH /api/boxes/[id] (Update)
 
 **As User B, try to update User A's box:**
+
 ```javascript
-fetch('/api/boxes/[USER_A_BOX_ID]', {
-  method: 'PATCH',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: 'HACKED BY USER B' })
-}).then(r => r.json()).then(console.log)
+fetch("/api/boxes/[USER_A_BOX_ID]", {
+  method: "PATCH",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: "HACKED BY USER B" }),
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 **Expected**: `404 Not Found` or `403 Forbidden` (box should NOT be updated)
@@ -158,11 +173,14 @@ fetch('/api/boxes/[USER_A_BOX_ID]', {
 #### 4.4 DELETE /api/boxes/[id] (Delete)
 
 **As User B, try to delete User A's box:**
+
 ```javascript
-fetch('/api/boxes/[USER_A_BOX_ID]', {
-  method: 'DELETE',
-  credentials: 'include'
-}).then(r => r.json()).then(console.log)
+fetch("/api/boxes/[USER_A_BOX_ID]", {
+  method: "DELETE",
+  credentials: "include",
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 **Expected**: `404 Not Found` or `403 Forbidden` (box should NOT be deleted)
@@ -170,10 +188,13 @@ fetch('/api/boxes/[USER_A_BOX_ID]', {
 #### 4.5 Locations API
 
 **As User B, try to access User A's locations:**
+
 ```javascript
-fetch('/api/locations?workspace_id=[USER_A_WORKSPACE_ID]', {
-  credentials: 'include'
-}).then(r => r.json()).then(console.log)
+fetch("/api/locations?workspace_id=[USER_A_WORKSPACE_ID]", {
+  credentials: "include",
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 **Expected**: Empty array or error (NOT User A's locations)
@@ -215,6 +236,7 @@ SELECT * FROM boxes WHERE workspace_id = 'd67c6cf7-c21d-400d-8193-ee1f31580953';
 ### ✅ PASS Criteria
 
 All of the following must be true:
+
 - User B cannot see User A's data through any method
 - All API calls return proper 403/404 errors
 - No data leakage in network responses
@@ -223,6 +245,7 @@ All of the following must be true:
 ### ❌ FAIL Criteria (CRITICAL)
 
 Any of the following indicates **RLS IS BROKEN**:
+
 - User B can see User A's box data
 - API returns User A's data to User B
 - User A's data appears in any response body

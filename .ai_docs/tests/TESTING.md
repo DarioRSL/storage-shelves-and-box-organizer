@@ -28,12 +28,12 @@ npm run test:coverage    # Generate coverage report (80%+ target)
 
 **All Phase 1 Quick Wins Completed!** (4/4 tasks)
 
-| Task | File | Tests | Coverage | Status |
-|------|------|-------|----------|--------|
-| **Task 1** | `transliterate.ts` | 63 tests | 100% | ✅ |
-| **Task 2** | `usePasswordStrength.ts` | 109 tests | 100% | ✅ |
-| **Task 3** | `qr-code.validators.ts` | 35 tests | 100% | ✅ |
-| **Task 4** | `box.validators.ts` | 93 tests | 100% | ✅ |
+| Task       | File                     | Tests     | Coverage | Status |
+| ---------- | ------------------------ | --------- | -------- | ------ |
+| **Task 1** | `transliterate.ts`       | 63 tests  | 100%     | ✅     |
+| **Task 2** | `usePasswordStrength.ts` | 109 tests | 100%     | ✅     |
+| **Task 3** | `qr-code.validators.ts`  | 35 tests  | 100%     | ✅     |
+| **Task 4** | `box.validators.ts`      | 93 tests  | 100%     | ✅     |
 
 **Total:** 300 unit tests passing with 100% coverage on all critical Phase 1 files.
 
@@ -41,12 +41,12 @@ See [UNIT_TEST_PLAN.md](UNIT_TEST_PLAN.md) for detailed test specifications and 
 
 ## Test Stack
 
-| Type | Framework | Purpose |
-|------|-----------|---------|
-| **Unit** | Vitest + Testing Library | Test services, utilities, validation |
-| **Integration** | Vitest + Supertest | Test API endpoints |
-| **E2E** | Playwright | Test user workflows |
-| **Coverage** | Vitest Coverage (v8) | Track code coverage |
+| Type            | Framework                | Purpose                              |
+| --------------- | ------------------------ | ------------------------------------ |
+| **Unit**        | Vitest + Testing Library | Test services, utilities, validation |
+| **Integration** | Vitest + Supertest       | Test API endpoints                   |
+| **E2E**         | Playwright               | Test user workflows                  |
+| **Coverage**    | Vitest Coverage (v8)     | Track code coverage                  |
 
 ## Directory Structure
 
@@ -73,6 +73,7 @@ tests/
 Based on [guideline_testing.md](.claude/commands/guideline_testing.md):
 
 **Best Practices:**
+
 - Use `vi.fn()` for function mocks
 - Use `vi.spyOn()` to monitor existing functions
 - Use `vi.mock()` factory patterns at top level
@@ -80,14 +81,15 @@ Based on [guideline_testing.md](.claude/commands/guideline_testing.md):
 - Use inline snapshots with `toMatchInlineSnapshot()`
 
 **Example:**
-```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { myService } from '@/lib/services/my-service';
 
-describe('MyService', () => {
-  it('should perform operation', () => {
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { myService } from "@/lib/services/my-service";
+
+describe("MyService", () => {
+  it("should perform operation", () => {
     // Arrange
-    const input = { id: '123' };
+    const input = { id: "123" };
     const mockFn = vi.fn();
 
     // Act
@@ -105,16 +107,18 @@ describe('MyService', () => {
 Based on [guideline_testing.md](.claude/commands/guideline_testing.md):
 
 **Best Practices:**
+
 - Use async/await with supertest
 - Implement test database setup/teardown
 - Use beforeEach/afterEach hooks for database cleanup
 
 **Example:**
-```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
 
-describe('API Endpoints', () => {
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
+
+describe("API Endpoints", () => {
   beforeEach(async () => {
     // Setup test database
     await seedTestDatabase();
@@ -125,13 +129,10 @@ describe('API Endpoints', () => {
     await cleanTestDatabase();
   });
 
-  it('GET /api/workspaces should return workspaces', async () => {
-    const response = await request(app)
-      .get('/api/workspaces')
-      .set('Cookie', authCookie)
-      .expect(200);
+  it("GET /api/workspaces should return workspaces", async () => {
+    const response = await request(app).get("/api/workspaces").set("Cookie", authCookie).expect(200);
 
-    expect(response.body).toHaveProperty('data');
+    expect(response.body).toHaveProperty("data");
     expect(Array.isArray(response.body.data)).toBe(true);
   });
 });
@@ -142,24 +143,26 @@ describe('API Endpoints', () => {
 Based on [guideline_testing.md](.claude/commands/guideline_testing.md):
 
 **Best Practices:**
+
 - Initialize with Chromium/Desktop Chrome only (configured)
 - Use browser contexts for isolation
 - Implement Page Object Model
 - Use locators for resilient element selection
 
 **Example:**
+
 ```typescript
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('User Authentication', () => {
-  test('should allow user to login', async ({ page }) => {
-    await page.goto('/auth');
+test.describe("User Authentication", () => {
+  test("should allow user to login", async ({ page }) => {
+    await page.goto("/auth");
 
-    await page.getByLabel('Email').fill('user@example.com');
-    await page.getByLabel('Password').fill('password');
-    await page.getByRole('button', { name: 'Zaloguj' }).click();
+    await page.getByLabel("Email").fill("user@example.com");
+    await page.getByLabel("Password").fill("password");
+    await page.getByRole("button", { name: "Zaloguj" }).click();
 
-    await expect(page).toHaveURL('/app');
+    await expect(page).toHaveURL("/app");
   });
 });
 ```
@@ -177,12 +180,14 @@ open coverage/index.html
 ```
 
 Coverage is configured in [vitest.config.ts](vitest.config.ts):
+
 - Includes: `src/**/*.{ts,tsx}`, `src/lib/services/**/*.{ts,tsx}`
 - Excludes: Type definitions, tests, auto-generated files
 
 ## Debugging Tests
 
 ### Vitest
+
 ```bash
 # Run specific test file
 npm run test -- tests/unit/my-test.test.ts
@@ -195,6 +200,7 @@ npm run test:ui
 ```
 
 ### Playwright
+
 ```bash
 # Debug mode (step through tests)
 npm run test:e2e:debug
@@ -212,11 +218,13 @@ npm run test:e2e -- tests/e2e/my-test.spec.ts
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Pull request creation
 - Push to main/master branch
 - Manual workflow dispatch
 
 ### GitHub Actions Example
+
 ```yaml
 - name: Run Unit Tests
   run: npm run test:unit
@@ -239,6 +247,7 @@ Tests run automatically on:
 From [guideline_testing.md](.claude/commands/guideline_testing.md):
 
 ### Vitest Guidelines
+
 - ✅ Leverage `vi` object for test doubles
 - ✅ Master `vi.mock()` factory patterns
 - ✅ Create setup files for reusable configuration
@@ -249,6 +258,7 @@ From [guideline_testing.md](.claude/commands/guideline_testing.md):
 - ✅ Leverage TypeScript type checking
 
 ### Playwright Guidelines
+
 - ✅ Initialize with Chromium/Desktop Chrome only
 - ✅ Use browser contexts for isolating environments
 - ✅ Implement Page Object Model
@@ -258,6 +268,7 @@ From [guideline_testing.md](.claude/commands/guideline_testing.md):
 - ✅ Leverage parallel execution
 
 ### Supertest Guidelines
+
 - ✅ Use async/await with supertest
 - ✅ Implement test database for integration tests
 - ✅ Use beforeEach/afterEach hooks for database setup/teardown
@@ -309,20 +320,24 @@ From [guideline_testing.md](.claude/commands/guideline_testing.md):
 ### Common Issues
 
 **Tests fail with "Cannot find module"**
+
 - Check path aliases in `vitest.config.ts`
 - Ensure imports use correct paths
 
 **Playwright tests timeout**
+
 - Increase timeout in `playwright.config.ts`
 - Check if dev server is running
 - Use `--headed` mode to debug
 
 **Coverage too low**
+
 - Focus on critical code paths first
 - Don't chase arbitrary percentages
 - Write meaningful tests, not just coverage
 
 **Database connection errors**
+
 - Check environment variables
 - Ensure test database is configured
 - Verify Supabase credentials
@@ -330,6 +345,7 @@ From [guideline_testing.md](.claude/commands/guideline_testing.md):
 ## Support
 
 For issues or questions:
+
 - Check [tests/README.md](tests/README.md) for detailed documentation
 - Review [guideline_testing.md](.claude/commands/guideline_testing.md) for best practices
 - Create an issue in the repository

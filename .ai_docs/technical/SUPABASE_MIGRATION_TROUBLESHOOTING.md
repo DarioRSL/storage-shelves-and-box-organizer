@@ -3,6 +3,7 @@
 ## The Problem: Duplicate Migration Key Error
 
 ### Symptom
+
 ```
 supabase_storage_supabase container logs:
 {"level":50,"time":"...","type":"startupError","error":{
@@ -33,11 +34,13 @@ The Supabase Storage API container maintains its own migration tracking table in
 ### Why First Run Succeeded, Second Run Failed
 
 **First Run:**
+
 - Fresh images pulled for `postgres`, `postgrest`, `realtime`, `storage-api`, etc.
 - Database volume was in a clean, consistent state
 - Migrations ran successfully and were recorded in `storage.migrations`
 
 **Second Run:**
+
 - Images marked as "already present locally"
 - Database restored from backed-up volume with migrations already recorded
 - Storage API attempted to re-apply migrations → **DUPLICATE KEY ERROR**
@@ -55,6 +58,7 @@ Use the provided repair script to fix the migration table without losing data.
 ```
 
 This script will:
+
 1. Stop Supabase if running
 2. Start only the PostgreSQL container
 3. Inspect `storage.migrations` for duplicates
@@ -132,6 +136,7 @@ supabase start
 Always let `supabase start` complete fully before running `supabase stop`. Partial startups can leave the database in an inconsistent state.
 
 **Bad:**
+
 ```bash
 supabase start
 # See an error
@@ -140,6 +145,7 @@ supabase start  # ← Will restore bad state
 ```
 
 **Good:**
+
 ```bash
 supabase start
 # Let it fail completely
@@ -281,24 +287,28 @@ psql postgresql://postgres:postgres@127.0.0.1:54399/postgres
 Supabase has **multiple independent migration tracking systems**:
 
 ### 1. Database Schema Migrations (Your Migrations)
+
 - Location: `supabase/migrations/`
 - Tracked in: `supabase_migrations.schema_migrations`
 - Applied by: `supabase start` (runs migrations from your project)
 - Purpose: Your application's database schema evolution
 
 ### 2. Storage API Migrations (Internal)
+
 - Location: Embedded in Storage API container image
 - Tracked in: `storage.migrations`
 - Applied by: Storage API container on startup
 - Purpose: Storage bucket schema, RLS policies, internal functions
 
 ### 3. Auth Migrations (Internal)
+
 - Location: Embedded in Auth container image
 - Tracked in: `auth.schema_migrations`
 - Applied by: Auth container on startup
 - Purpose: User auth tables, sessions, providers
 
 ### 4. Realtime Migrations (Internal)
+
 - Location: Embedded in Realtime container image
 - Tracked in: `realtime.schema_migrations`
 - Applied by: Realtime container on startup
@@ -310,14 +320,14 @@ Supabase has **multiple independent migration tracking systems**:
 
 ## When to Use Each Solution
 
-| Scenario | Recommended Solution | Reason |
-|----------|---------------------|--------|
-| First occurrence of error | Solution 2 (Remove storage volume) | Fast, low risk |
-| Have important local Storage files | Solution 1 (Surgical fix) | Preserves data |
-| Recurring errors | Solution 3 + Pin versions | Clean slate + prevention |
-| After Supabase CLI upgrade | Solution 3 (Full reset) | Avoid version conflicts |
-| After pulling new images | Check versions, possibly Solution 2 | Image compatibility |
-| Production deployment | Never happens - uses hosted Supabase | N/A |
+| Scenario                           | Recommended Solution                 | Reason                   |
+| ---------------------------------- | ------------------------------------ | ------------------------ |
+| First occurrence of error          | Solution 2 (Remove storage volume)   | Fast, low risk           |
+| Have important local Storage files | Solution 1 (Surgical fix)            | Preserves data           |
+| Recurring errors                   | Solution 3 + Pin versions            | Clean slate + prevention |
+| After Supabase CLI upgrade         | Solution 3 (Full reset)              | Avoid version conflicts  |
+| After pulling new images           | Check versions, possibly Solution 2  | Image compatibility      |
+| Production deployment              | Never happens - uses hosted Supabase | N/A                      |
 
 ---
 

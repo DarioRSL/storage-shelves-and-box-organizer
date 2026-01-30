@@ -72,6 +72,57 @@ export default tseslint.config(
     },
   },
   {
+    // Node.js script files - allow Node.js globals
+    files: ["scripts/**/*.{js,mjs,cjs}", "*.config.{js,mjs,cjs,ts}", "test-*.js"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        module: "readonly",
+        require: "readonly",
+        Buffer: "readonly",
+        fetch: "readonly",
+      },
+    },
+    rules: {
+      // Allow unused vars in scripts (common for optional features)
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    // Test files - allow Node.js globals and relax some rules
+    files: ["tests/**/*.{ts,tsx,js,mjs}", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        Request: "readonly",
+        Headers: "readonly",
+        FormData: "readonly",
+        Blob: "readonly",
+        File: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+      },
+    },
+    rules: {
+      // Allow non-null assertions in test files where we know values exist
+      "@typescript-eslint/no-non-null-assertion": "off",
+      // Allow unused vars in tests (common for test setup)
+      "@typescript-eslint/no-unused-vars": "off",
+      // Allow explicit any in tests for mocking purposes
+      "@typescript-eslint/no-explicit-any": "off",
+      // Allow empty functions in tests (common for mocks)
+      "@typescript-eslint/no-empty-function": "off",
+      // Allow useless constructors in tests (for testing purposes)
+      "@typescript-eslint/no-useless-constructor": "off",
+    },
+  },
+  {
     // Specifically ignore ThemeInitializer.astro due to define:vars syntax incompatibility
     ignores: ["**/theme/ThemeInitializer.astro"],
   }

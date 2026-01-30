@@ -44,6 +44,7 @@ MainDashboard (Astro page: /app)
 ## 4. Component Details
 
 ### DashboardContainer
+
 - **Description**: Main component managing the state of the entire dashboard. Coordinates data fetching from API, manages selected location and search results.
 - **Main elements**:
   - DashboardHeader with WorkspaceSelector and UserMenu
@@ -62,6 +63,7 @@ MainDashboard (Astro page: /app)
 - **Props**: None (Astro component)
 
 ### SearchInput
+
 - **Description**: Input field for real-time box search. Implements debouncing and enforces minimum 3 characters for searching.
 - **Main elements**:
   - Input field with placeholder "Search boxes..."
@@ -80,6 +82,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ value: string; onChange: (query: string) => void; isLoading: boolean; onClear: () => void }`
 
 ### LocationTree
+
 - **Description**: Hierarchical location tree supporting up to 5 levels of nesting. Renders special "Unassigned" node for boxes without location. Supports context menu for adding, editing, and deleting locations.
 - **Main elements**:
   - Recursive LocationTreeNode components
@@ -103,6 +106,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ locations: LocationTreeNode[]; selectedLocationId?: string; onSelectLocation: (id: string) => void; onAddLocation: (parentId?: string) => void; onEditLocation: (id: string) => void; onDeleteLocation: (id: string) => void; isLoading: boolean }`
 
 ### LocationTreeNode
+
 - **Description**: Recursive component for rendering individual location nodes in hierarchy.
 - **Main elements**:
   - Node item with folder icon
@@ -119,6 +123,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ node: LocationTreeNode; level: number; isSelected: boolean; onSelect: () => void; onToggleExpand: () => void; onContextMenu: (action: string) => void; onAddChild: () => void }`
 
 ### LocationContextMenu
+
 - **Description**: Context menu (dropdown) for each location with options to add, edit, and delete.
 - **Main elements**:
   - Menu items (Add sublocation, Edit, Delete)
@@ -133,6 +138,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ locationId: string; parentId?: string; hasChildren: boolean; onAdd: () => void; onEdit: () => void; onDelete: () => void }`
 
 ### BoxListContainer
+
 - **Description**: Container for box list. Manages loading state, handles pagination, and displays empty state.
 - **Main elements**:
   - BoxListHeader (with sorting options if available)
@@ -147,6 +153,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ boxes: BoxListItem[]; selectedLocationId?: string; searchQuery: string; isLoading: boolean; error?: string; onRefresh: () => void }`
 
 ### BoxList
+
 - **Description**: Virtualized box list for performance with large datasets.
 - **Main elements**:
   - Virtualized list (react-window or similar)
@@ -160,6 +167,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ items: BoxListItem[]; isLoading: boolean; onSelectBox: (id: string) => void; onEditBox: (id: string) => void; onDeleteBox: (id: string) => void }`
 
 ### BoxListItem
+
 - **Description**: Component displaying single box in list. Shows name, location, and quick action buttons.
 - **Main elements**:
   - Box name
@@ -179,6 +187,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ box: BoxListItem; isSelected: boolean; onSelect: () => void; onEdit: () => void; onDelete: () => void }`
 
 ### BoxContextMenu
+
 - **Description**: Context menu for box with options to view, edit, move, and delete.
 - **Main elements**:
   - Menu items (View details, Edit, Move, Delete)
@@ -194,6 +203,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ boxId: string; onViewDetails: () => void; onEdit: () => void; onMove: () => void; onDelete: () => void }`
 
 ### EmptyState
+
 - **Description**: Welcome component for new users without boxes or with no search results. Contains CTA buttons to add location or box.
 - **Main elements**:
   - Illustration / icon
@@ -209,6 +219,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ type: 'empty-workspace' | 'no-results'; onAddLocation?: () => void; onAddBox?: () => void; onScanQr?: () => void }`
 
 ### LocationEditorModal
+
 - **Description**: Modal dialog for creating new location or editing existing one. Supports hierarchical parent location selection.
 - **Main elements**:
   - Form fields: name (required), description (optional)
@@ -231,6 +242,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ isOpen: boolean; mode: 'create' | 'edit'; parentLocationId?: string; initialValues?: Partial<LocationDto>; onSubmit: (data: CreateLocationRequest) => void; onClose: () => void; isLoading: boolean }`
 
 ### BoxEditorModal
+
 - **Description**: Modal dialog for creating new box or editing existing one. Supports adding description, tags, and assigning location.
 - **Main elements**:
   - Form fields: name (required), description (optional, max 10k chars), tags (array), location_id (optional)
@@ -257,6 +269,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ isOpen: boolean; mode: 'create' | 'edit'; selectedLocationId?: string; initialValues?: Partial<BoxDto>; onSubmit: (data: CreateBoxRequest | UpdateBoxRequest) => void; onClose: () => void; isLoading: boolean; error?: string }`
 
 ### DeleteConfirmationDialog
+
 - **Description**: Generic confirmation dialog for deleting locations or boxes. Requires user confirmation.
 - **Main elements**:
   - Headline
@@ -272,6 +285,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ isOpen: boolean; type: 'location' | 'box'; title: string; description: string; itemName: string; warning?: string; isLoading: boolean; onConfirm: () => void; onCancel: () => void }`
 
 ### WorkspaceSelector
+
 - **Description**: Dropdown for workspace selection (if user belongs to more than one).
 - **Main elements**:
   - Current workspace name / badge
@@ -284,6 +298,7 @@ MainDashboard (Astro page: /app)
 - **Props**: `{ currentWorkspaceId: string; workspaces: WorkspaceDto[]; onSelectWorkspace: (id: string) => void }`
 
 ### UserMenu
+
 - **Description**: Menu with user options (Settings, Logout).
 - **Main elements**:
   - Avatar / user icon
@@ -302,6 +317,7 @@ MainDashboard (Astro page: /app)
 ## 5. Types
 
 ### DashboardState
+
 ```typescript
 interface DashboardState {
   // Workspace context
@@ -329,12 +345,12 @@ interface DashboardState {
 
   // UI state
   selectedBoxId: string | null;
-  activeModal: 'location-editor' | 'box-editor' | 'delete-confirm' | null;
+  activeModal: "location-editor" | "box-editor" | "delete-confirm" | null;
   modalData: {
-    mode: 'create' | 'edit';
+    mode: "create" | "edit";
     itemId?: string;
     parentId?: string;
-    itemType?: 'location' | 'box';
+    itemType?: "location" | "box";
   };
 
   // Error handling
@@ -344,6 +360,7 @@ interface DashboardState {
 ```
 
 ### LocationTreeNode
+
 ```typescript
 interface LocationTreeNode {
   id: string;
@@ -366,6 +383,7 @@ interface LocationTreeNode {
 ```
 
 ### BoxListItem
+
 ```typescript
 interface BoxListItem {
   // From API
@@ -400,6 +418,7 @@ interface BoxListItem {
 ```
 
 ### SearchQuery
+
 ```typescript
 interface SearchQuery {
   query: string;
@@ -411,6 +430,7 @@ interface SearchQuery {
 ```
 
 ### DashboardContextType
+
 ```typescript
 interface DashboardContextType {
   state: DashboardState;
@@ -421,11 +441,11 @@ interface DashboardContextType {
     setSearchQuery: (query: string) => void;
     clearSearch: () => void;
 
-    openLocationEditor: (mode: 'create' | 'edit', parentId?: string, itemId?: string) => void;
+    openLocationEditor: (mode: "create" | "edit", parentId?: string, itemId?: string) => void;
     closeLocationEditor: () => void;
     submitLocationEditor: (data: CreateLocationRequest) => Promise<void>;
 
-    openBoxEditor: (mode: 'create' | 'edit', itemId?: string) => void;
+    openBoxEditor: (mode: "create" | "edit", itemId?: string) => void;
     closeBoxEditor: () => void;
     submitBoxEditor: (data: CreateBoxRequest | UpdateBoxRequest) => Promise<void>;
 
@@ -443,13 +463,15 @@ interface DashboardContextType {
 ```
 
 ### LocationContextMenuAction
+
 ```typescript
-type LocationContextMenuAction = 'add' | 'edit' | 'delete';
+type LocationContextMenuAction = "add" | "edit" | "delete";
 ```
 
 ### EmptyStateType
+
 ```typescript
-type EmptyStateType = 'empty-workspace' | 'no-results' | 'no-locations';
+type EmptyStateType = "empty-workspace" | "no-results" | "no-locations";
 ```
 
 ## 6. State Management
@@ -460,11 +482,11 @@ Use Nano Stores for global data not sensitive to component re-renders:
 
 ```typescript
 // stores/dashboard.ts
-import { atom } from 'nanostores';
+import { atom } from "nanostores";
 
 export const currentWorkspaceId = atom<string | null>(null);
 export const selectedLocationId = atom<string | null>(null);
-export const searchQuery = atom<string>('');
+export const searchQuery = atom<string>("");
 export const expandedLocationIds = atom<Set<string>>(new Set());
 ```
 
@@ -474,14 +496,14 @@ Create DashboardContext for managing actions and more complex state:
 
 ```typescript
 // contexts/DashboardContext.ts
-import React from 'react';
+import React from "react";
 
 export const DashboardContext = React.createContext<DashboardContextType | undefined>(undefined);
 
 export function useDashboard() {
   const context = React.useContext(DashboardContext);
   if (!context) {
-    throw new Error('useDashboard must be used within DashboardProvider');
+    throw new Error("useDashboard must be used within DashboardProvider");
   }
   return context;
 }
@@ -490,6 +512,7 @@ export function useDashboard() {
 ### Component-Level State
 
 Use `useState` for:
+
 - Modal visibility state
 - Form input state
 - Loading states for individual components
@@ -498,6 +521,7 @@ Use `useState` for:
 ### Custom Hooks
 
 **useWorkspaces():**
+
 ```typescript
 function useWorkspaces() {
   const [workspaces, setWorkspaces] = React.useState<WorkspaceDto[]>([]);
@@ -507,7 +531,7 @@ function useWorkspaces() {
   React.useEffect(() => {
     async function fetch() {
       try {
-        const res = await fetch('/api/workspaces');
+        const res = await fetch("/api/workspaces");
         if (!res.ok) throw new Error(`${res.status}`);
         const data = await res.json();
         setWorkspaces(data);
@@ -515,7 +539,7 @@ function useWorkspaces() {
           currentWorkspaceId.set(data[0].id);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch workspaces');
+        setError(err instanceof Error ? err.message : "Failed to fetch workspaces");
       } finally {
         setIsLoading(false);
       }
@@ -529,6 +553,7 @@ function useWorkspaces() {
 ```
 
 **useLocations(workspaceId, parentId?):**
+
 ```typescript
 function useLocations(workspaceId: string, parentId?: string | null) {
   const [locations, setLocations] = React.useState<LocationTreeNode[]>([]);
@@ -539,7 +564,7 @@ function useLocations(workspaceId: string, parentId?: string | null) {
     try {
       setIsLoading(true);
       const params = new URLSearchParams({ workspace_id: workspaceId });
-      if (parentId) params.set('parent_id', parentId);
+      if (parentId) params.set("parent_id", parentId);
 
       const res = await fetch(`/api/locations?${params}`);
       if (!res.ok) throw new Error(`${res.status}`);
@@ -551,12 +576,12 @@ function useLocations(workspaceId: string, parentId?: string | null) {
         boxCount: 0, // Will be set from boxes data
         isExpanded: false,
         isLoading: false,
-        level: loc.path.split('.').length - 1,
+        level: loc.path.split(".").length - 1,
       }));
 
       setLocations(nodes);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch locations');
+      setError(err instanceof Error ? err.message : "Failed to fetch locations");
     } finally {
       setIsLoading(false);
     }
@@ -571,12 +596,9 @@ function useLocations(workspaceId: string, parentId?: string | null) {
 ```
 
 **useBoxes(workspaceId, locationId?, searchQuery?):**
+
 ```typescript
-function useBoxes(
-  workspaceId: string,
-  locationId?: string | null,
-  searchQuery?: string
-) {
+function useBoxes(workspaceId: string, locationId?: string | null, searchQuery?: string) {
   const [boxes, setBoxes] = React.useState<BoxListItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -590,11 +612,11 @@ function useBoxes(
     try {
       setIsLoading(true);
       const params = new URLSearchParams({ workspace_id: workspaceId });
-      if (debouncedQuery) params.set('q', debouncedQuery);
-      if (locationId) params.set('location_id', locationId);
+      if (debouncedQuery) params.set("q", debouncedQuery);
+      if (locationId) params.set("location_id", locationId);
       if (locationId === null && !debouncedQuery) {
         // "Unassigned" case
-        params.set('is_assigned', 'false');
+        params.set("is_assigned", "false");
       }
 
       const res = await fetch(`/api/boxes?${params}`);
@@ -603,7 +625,7 @@ function useBoxes(
 
       setBoxes(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch boxes');
+      setError(err instanceof Error ? err.message : "Failed to fetch boxes");
     } finally {
       setIsLoading(false);
     }
@@ -618,6 +640,7 @@ function useBoxes(
 ```
 
 **useDebounce(value, delay):**
+
 ```typescript
 function useDebounce<T>(value: T, delayMs: number): T {
   const [debouncedValue, setDebouncedValue] = React.useState(value);
@@ -639,6 +662,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
 ### Endpoints Used in Main Dashboard
 
 #### 1. GET /profiles/me
+
 - **When**: On page load (middleware/layout)
 - **Request type**: No body
 - **Response type**: `ProfileDto`
@@ -646,6 +670,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
 - **Error handling**: 401 → redirect to /login
 
 #### 2. GET /workspaces
+
 - **When**: On DashboardContainer load
 - **Request type**: No parameters (user from context)
 - **Response type**: `WorkspaceDto[]`
@@ -653,6 +678,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
 - **Error handling**: 401 → redirect, others → error message
 
 #### 3. GET /locations
+
 - **When**:
   - On page load (parent_id = null for root)
   - On click expand on LocationTreeNode
@@ -663,8 +689,10 @@ function useDebounce<T>(value: T, delayMs: number): T {
 - **Error handling**: 401 → redirect, 403 → error, 404 → remove from tree
 
 #### 4. POST /locations
+
 - **When**: Submit LocationEditorModal in create mode
 - **Request type**: `CreateLocationRequest`
+
 ```json
 {
   "workspace_id": "uuid",
@@ -673,6 +701,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
   "parent_id": "uuid (optional)"
 }
 ```
+
 - **Response type**: `LocationDto`
 - **Error handling**:
   - 400 → form validation error
@@ -682,18 +711,22 @@ function useDebounce<T>(value: T, delayMs: number): T {
   - 404 → parent not found
 
 #### 5. PATCH /locations/:id
+
 - **When**: Submit LocationEditorModal in edit mode
 - **Request type**: URL param `id`, body: `UpdateLocationRequest`
+
 ```json
 {
   "name": "string (optional)",
   "description": "string (optional)"
 }
 ```
+
 - **Response type**: `UpdateLocationResponse`
 - **Error handling**: 400 → validation, 401 → unauthorized, 404 → not found
 
 #### 6. DELETE /locations/:id
+
 - **When**: Confirm Delete in LocationContextMenu
 - **Request type**: URL param `id`
 - **Response type**: `{ message: string }`
@@ -705,6 +738,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
 - **Effect**: Boxes in location move to "Unassigned", location removed from tree
 
 #### 7. GET /boxes
+
 - **When**:
   - On page load
   - On location selection (location_id query param)
@@ -715,8 +749,10 @@ function useDebounce<T>(value: T, delayMs: number): T {
 - **Error handling**: 400 → validation, 401 → redirect, 500 → error
 
 #### 8. POST /boxes
+
 - **When**: Submit BoxEditorModal in create mode
 - **Request type**: `CreateBoxRequest`
+
 ```json
 {
   "workspace_id": "uuid",
@@ -727,6 +763,7 @@ function useDebounce<T>(value: T, delayMs: number): T {
   "qr_code_id": "uuid (optional)"
 }
 ```
+
 - **Response type**: `CreateBoxResponse`
 - **Error handling**:
   - 400 → validation error
@@ -736,8 +773,10 @@ function useDebounce<T>(value: T, delayMs: number): T {
   - 404 → location/QR not found
 
 #### 9. PATCH /boxes/:id
+
 - **When**: Submit BoxEditorModal in edit mode
 - **Request type**: URL param `id`, body: `UpdateBoxRequest`
+
 ```json
 {
   "name": "string (optional)",
@@ -746,10 +785,12 @@ function useDebounce<T>(value: T, delayMs: number): T {
   "location_id": "uuid (optional)"
 }
 ```
+
 - **Response type**: `UpdateBoxResponse`
 - **Error handling**: 400 → validation, 401 → unauthorized, 404 → not found
 
 #### 10. DELETE /boxes/:id
+
 - **When**: Confirm Delete in BoxContextMenu
 - **Request type**: URL param `id`
 - **Response type**: `{ message: string }`
@@ -809,6 +850,7 @@ User deletes box
 
 **User action**: User opens page `/app`
 **Expected result**:
+
 - Loading root locations list
 - Display "Unassigned" at top
 - Ability to expand/collapse each location
@@ -819,6 +861,7 @@ User deletes box
 
 **User action**: User clicks expand button on LocationTreeNode
 **Expected result**:
+
 - Load children locations via GET /locations?parent_id=...
 - Expand animation
 - Display children with proportional indentation
@@ -828,6 +871,7 @@ User deletes box
 
 **User action**: User clicks on LocationNodeItem
 **Expected result**:
+
 - Highlight selected location (visual feedback)
 - Refetch boxes: GET /boxes?location_id=...
 - Display boxes for selected location
@@ -838,6 +882,7 @@ User deletes box
 
 **User action**: User types in SearchInput
 **Expected result**:
+
 - Real-time update (debounce 300ms)
 - If < 3 chars: don't display results (show message)
 - If >= 3 chars: GET /boxes?q=...
@@ -850,6 +895,7 @@ User deletes box
 
 **User action**: User clicks X button in SearchInput
 **Expected result**:
+
 - Clear search query
 - Restore filtered list based on selectedLocationId
 - Focus remains in SearchInput
@@ -859,6 +905,7 @@ User deletes box
 
 **User action**: User clicks "Add location" in LocationContextMenu or CTA button
 **Expected result**:
+
 - Open LocationEditorModal in create mode
 - Parent location pre-selected (if from context menu)
 - Form fields: name, description
@@ -872,6 +919,7 @@ User deletes box
 
 **User action**: User clicks "Edit" in LocationContextMenu
 **Expected result**:
+
 - Open LocationEditorModal in edit mode
 - Pre-populate: name, description
 - On submit: PATCH /locations/:id
@@ -882,6 +930,7 @@ User deletes box
 
 **User action**: User clicks "Delete" in LocationContextMenu
 **Expected result**:
+
 - Open DeleteConfirmationDialog
 - Display: "All boxes in this location will be moved to Unassigned"
 - On confirm: DELETE /locations/:id
@@ -892,6 +941,7 @@ User deletes box
 
 **User action**: User clicks "Add box" button (CTA or header)
 **Expected result**:
+
 - Open BoxEditorModal in create mode
 - Current location pre-selected
 - Form fields: name, description, tags, location_id, qr_code_id
@@ -903,6 +953,7 @@ User deletes box
 
 **User action**: User clicks "Edit" on BoxListItem or BoxContextMenu
 **Expected result**:
+
 - Open BoxEditorModal in edit mode
 - Pre-populate: name, description, tags, location
 - On submit: PATCH /boxes/:id
@@ -913,6 +964,7 @@ User deletes box
 
 **User action**: User clicks "Delete" on BoxListItem or BoxContextMenu
 **Expected result**:
+
 - Open DeleteConfirmationDialog
 - Display: "This action is irreversible"
 - On confirm: DELETE /boxes/:id
@@ -923,6 +975,7 @@ User deletes box
 
 **User action**: User clicks "Move" in BoxContextMenu (future feature)
 **Expected result**:
+
 - Open LocationSelector modal
 - Select new location
 - On submit: PATCH /boxes/:id with new location_id
@@ -932,6 +985,7 @@ User deletes box
 
 **User action**: User clicks on workspace in WorkspaceSelector
 **Expected result**:
+
 - Switch workspace context
 - Refetch all data (locations, boxes)
 - Reset selectedLocationId
@@ -942,6 +996,7 @@ User deletes box
 
 **User action**: User clicks "Logout" in UserMenu
 **Expected result**:
+
 - Clear session/auth token
 - Redirect to /login
 - Clear all cached data
@@ -951,12 +1006,14 @@ User deletes box
 ### Component-Level Validation
 
 #### SearchInput
+
 - **Minimum 3 characters**: If < 3, don't send API call, display help text "Minimum 3 characters for search"
 - **Whitespace trim**: Automatically trim leading/trailing spaces
 - **Max 200 characters**: Prevent typing more
 - **Special characters**: Allow (will be escaped on API)
 
 #### LocationEditorModal
+
 - **Name required**: Show error if empty
 - **Name max 255 chars**: Real-time feedback
 - **Description max 1000 chars**: Counter + error
@@ -964,6 +1021,7 @@ User deletes box
 - **Sibling name uniqueness**: Backend validation (respond with 409 conflict), display error if conflict
 
 #### BoxEditorModal
+
 - **Name required**: Show error if empty
 - **Name max 255 chars**: Real-time feedback
 - **Description max 10000 chars**: Counter + error
@@ -972,11 +1030,13 @@ User deletes box
 - **QR code assignment**: Check on API if not already assigned (409 error)
 
 #### LocationTreeNode
+
 - **Level validation**: level < 5 (from path.split('.').length - 1)
 - **Disable delete**: If only root location (backend validation)
 - **Expand disabled**: If no children
 
 #### BoxListItem
+
 - **Location display**: If null, display "Unassigned"
 - **Description truncate**: Max 100 chars in preview
 - **Tags display**: Max 3 tags in preview, "+ N more" if more
@@ -1001,7 +1061,7 @@ function validateMaxDepth(level: number, maxDepth: number = 5): boolean {
 
 function getLocationLevel(path: string): number {
   // path format: "root.basement.shelf_a"
-  return path.split('.').length - 1;
+  return path.split(".").length - 1;
 }
 ```
 
@@ -1013,8 +1073,8 @@ Box count for location should be calculated from filtered boxes:
 function calculateBoxCounts(locations: LocationTreeNode[], boxes: BoxListItem[]): Map<string, number> {
   const counts = new Map<string, number>();
 
-  boxes.forEach(box => {
-    const locId = box.location_id || 'unassigned';
+  boxes.forEach((box) => {
+    const locId = box.location_id || "unassigned";
     counts.set(locId, (counts.get(locId) || 0) + 1);
   });
 
@@ -1106,11 +1166,7 @@ class DashboardErrorBoundary extends React.Component {
 For critical API calls (GET locations, GET boxes):
 
 ```typescript
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit = {},
-  maxRetries: number = 3
-): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries: number = 3): Promise<Response> {
   for (let i = 0; i < maxRetries; i++) {
     try {
       const res = await fetch(url, options);
@@ -1118,10 +1174,10 @@ async function fetchWithRetry(
       throw new Error(`HTTP ${res.status}`);
     } catch (err) {
       if (i === maxRetries - 1) throw err;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
     }
   }
-  throw new Error('Max retries exceeded');
+  throw new Error("Max retries exceeded");
 }
 ```
 

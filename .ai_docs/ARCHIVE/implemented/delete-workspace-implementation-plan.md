@@ -10,12 +10,14 @@
 Delete a workspace and all associated data in a cascading manner. This is an irreversible operation that removes the entire workspace along with all locations, boxes, QR codes, and workspace memberships.
 
 **Scope:**
+
 - Permanently removes workspace from the system
 - Cascades deletions to child entities (locations, boxes, qr_codes, workspace_members)
 - Resets associated QR code statuses back to 'generated' for reuse
 - Returns confirmation message with deleted workspace ID
 
 **Critical Safety Notes:**
+
 - **No Recovery:** Deletion is permanent and non-reversible
 - **Transaction Required:** All deletions must succeed together or rollback
 - **Permission Strict:** Only workspace owner can delete
@@ -26,11 +28,13 @@ Delete a workspace and all associated data in a cascading manner. This is an irr
 ## 2. Request Details
 
 ### HTTP Method & Route
+
 - **Method:** `DELETE`
 - **Path:** `/api/workspaces/:workspace_id`
 - **Full URL Example:** `DELETE http://localhost:3000/api/workspaces/550e8400-e29b-41d4-a716-446655440000`
 
 ### Authentication
+
 - **Required:** Yes
 - **Type:** Bearer Token (JWT)
 - **Header:** `Authorization: Bearer <JWT_TOKEN>`
@@ -72,6 +76,7 @@ curl -X DELETE \
 **Status Code:** 200
 
 **Response Body:**
+
 ```json
 {
   "message": "Workspace deleted successfully",
@@ -80,11 +85,13 @@ curl -X DELETE \
 ```
 
 **Headers:**
+
 ```
 Content-Type: application/json
 ```
 
 **Type Definition:**
+
 ```typescript
 interface DeleteWorkspaceResponse {
   message: string;
@@ -95,7 +102,9 @@ interface DeleteWorkspaceResponse {
 ### Error Responses
 
 #### 400 Bad Request
+
 **Condition:** Invalid workspace_id format (non-UUID)
+
 ```json
 {
   "error": "Bad Request",
@@ -104,7 +113,9 @@ interface DeleteWorkspaceResponse {
 ```
 
 #### 401 Unauthorized
+
 **Condition:** Missing or invalid JWT token
+
 ```json
 {
   "error": "Unauthorized",
@@ -113,7 +124,9 @@ interface DeleteWorkspaceResponse {
 ```
 
 #### 403 Forbidden
+
 **Condition:** User is not the workspace owner
+
 ```json
 {
   "error": "Forbidden",
@@ -122,7 +135,9 @@ interface DeleteWorkspaceResponse {
 ```
 
 #### 404 Not Found
+
 **Condition:** Workspace does not exist or user has no access
+
 ```json
 {
   "error": "Not Found",
@@ -131,7 +146,9 @@ interface DeleteWorkspaceResponse {
 ```
 
 #### 500 Internal Server Error
+
 **Condition:** Database transaction failed or other server error
+
 ```json
 {
   "error": "Internal Server Error",
@@ -244,12 +261,14 @@ COMMIT;
 ### Authentication & Authorization
 
 **Authentication Verification:**
+
 - JWT token extracted from `Authorization: Bearer <token>` header
 - Token validated via Supabase Auth
 - User ID extracted from `auth.uid()` in Supabase context
 - Invalid tokens result in 401 Unauthorized
 
 **Authorization Check:**
+
 - **Primary:** Verify via RLS policy on workspaces table
 - **Secondary:** Explicit query to confirm user is owner
   ```sql
@@ -263,17 +282,20 @@ COMMIT;
 ### Data Integrity
 
 **Transaction Isolation:**
+
 - Use explicit transaction to ensure atomic deletion
 - If any step fails, entire operation rolls back
 - No partial deletions left in database
 - All-or-nothing guarantee
 
 **Cascade Safety:**
+
 - Database constraints configured with `ON DELETE CASCADE`
 - Foreign keys ensure related rows automatically deleted
 - Explicit deletion steps for clarity and redundancy
 
 **Referential Integrity:**
+
 - Boxes depend on workspace → deleted when workspace deleted
 - Locations depend on workspace → deleted when workspace deleted
 - workspace_members depend on workspace → deleted when workspace deleted
@@ -282,30 +304,35 @@ COMMIT;
 ### Input Validation
 
 **Workspace ID:**
+
 - Must be valid UUID format (v4)
 - Validated against database (404 if not found)
 - No special characters or injection vectors
 - Length: 36 characters (UUID with hyphens)
 
 **No Request Body:**
+
 - No untrusted user input to validate
 - Reduces attack surface
 
 ### Sensitive Data Handling
 
 **What NOT to Log:**
+
 - JWT tokens or authentication headers
 - User passwords or private information
 - Workspace names or contents (may be sensitive)
 - Full error details that expose database schema
 
 **What to Log:**
+
 - Workspace ID (UUID - non-sensitive)
 - User ID (UUID - non-sensitive)
 - Operation status (success/failure)
 - Error category (not detailed error message)
 
 **On Success:**
+
 - Workspace is completely removed from system
 - Cannot be recovered (no soft delete or audit trail)
 
@@ -316,6 +343,7 @@ COMMIT;
 ### Validation Layer (Frontend)
 
 **Before calling endpoint:**
+
 - Confirm workspace_id is valid UUID format
 - Warn user about irreversible deletion
 - Require confirmation dialog
@@ -323,13 +351,13 @@ COMMIT;
 ### API Route Layer (Backend)
 
 **Request Validation:**
+
 ```typescript
 // 1. Validate JWT token
 if (!context.locals.user) {
-  return new Response(
-    JSON.stringify({ error: "Unauthorized", details: "Brakujący lub nieprawidłowy token JWT" }),
-    { status: 401 }
-  );
+  return new Response(JSON.stringify({ error: "Unauthorized", details: "Brakujący lub nieprawidłowy token JWT" }), {
+    status: 401,
+  });
 }
 
 // 2. Validate workspace_id format
@@ -354,11 +382,12 @@ if (!isOwner) {
 ### Database Layer
 
 **Transaction Handling:**
+
 ```typescript
 try {
-  const result = await supabase.rpc('delete_workspace', {
+  const result = await supabase.rpc("delete_workspace", {
     workspace_id: workspace_id,
-    user_id: context.locals.user.id
+    user_id: context.locals.user.id,
   });
 
   if (!result.data) {
@@ -366,10 +395,9 @@ try {
   }
 } catch (error) {
   if (error.message.includes("not found")) {
-    return new Response(
-      JSON.stringify({ error: "Not Found", details: "Przestrzeń robocza nie istnieje" }),
-      { status: 404 }
-    );
+    return new Response(JSON.stringify({ error: "Not Found", details: "Przestrzeń robocza nie istnieje" }), {
+      status: 404,
+    });
   }
 
   throw error; // Re-throw for 500 handling
@@ -379,32 +407,35 @@ try {
 ### Error Response Format
 
 **Structure:**
+
 ```typescript
 interface ErrorResponse {
-  error: string;        // HTTP status text
-  details?: string;     // User-friendly message (Polish)
+  error: string; // HTTP status text
+  details?: string; // User-friendly message (Polish)
 }
 ```
 
 **Examples:**
 
-| Status | Error | Details |
-|--------|-------|---------|
-| 400 | "Bad Request" | "Nieprawidłowy format identyfikatora przestrzeni roboczej" |
-| 401 | "Unauthorized" | "Brakujący lub nieprawidłowy token JWT" |
-| 403 | "Forbidden" | "Tylko właściciel przestrzeni roboczej może usunąć" |
-| 404 | "Not Found" | "Przestrzeń robocza nie istnieje" |
-| 500 | "Internal Server Error" | "Nie udało się usunąć przestrzeni roboczej" |
+| Status | Error                   | Details                                                    |
+| ------ | ----------------------- | ---------------------------------------------------------- |
+| 400    | "Bad Request"           | "Nieprawidłowy format identyfikatora przestrzeni roboczej" |
+| 401    | "Unauthorized"          | "Brakujący lub nieprawidłowy token JWT"                    |
+| 403    | "Forbidden"             | "Tylko właściciel przestrzeni roboczej może usunąć"        |
+| 404    | "Not Found"             | "Przestrzeń robocza nie istnieje"                          |
+| 500    | "Internal Server Error" | "Nie udało się usunąć przestrzeni roboczej"                |
 
 ### Rollback Scenarios
 
 **When transaction rolls back:**
+
 1. Database constraint violation (shouldn't happen with proper schema)
 2. Network failure during transaction
 3. Timeout during operation
 4. Explicit rollback on validation error
 
 **User Experience:**
+
 - User sees 500 error
 - Workspace remains intact in database
 - User can retry operation
@@ -417,16 +448,19 @@ interface ErrorResponse {
 ### Potential Bottlenecks
 
 **1. Large Workspace Deletion**
+
 - **Issue:** Workspaces with thousands of boxes/locations
 - **Solution:** Database indexes on foreign keys enable fast cascade deletes
 - **Monitoring:** Track deletion time in logs
 
 **2. QR Code Reset**
+
 - **Issue:** Updating many QR code records to 'generated' status
 - **Solution:** Batch update with indexed where clause
 - **Expected Time:** < 100ms for typical workspace
 
 **3. Transaction Lock Contention**
+
 - **Issue:** Long transaction locks workspace rows
 - **Solution:** Keep transaction scope minimal (no network calls during transaction)
 - **Expected Time:** < 1 second for complete deletion
@@ -434,6 +468,7 @@ interface ErrorResponse {
 ### Optimization Strategies
 
 **Database Indexes (Already Required):**
+
 ```sql
 -- These should already exist
 CREATE INDEX ON boxes(workspace_id);
@@ -443,23 +478,25 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ```
 
 **Query Optimization:**
+
 - Use single transaction instead of multiple API calls
 - Leverage database-level cascade deletes
 - No N+1 queries (all deletions in single transaction)
 
 **Transaction Scope:**
+
 - Do NOT fetch workspace data before deletion
 - Do NOT log full workspace contents
 - Keep transaction as minimal as possible
 
 ### Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| Small workspace (< 100 boxes) | < 500ms | Typical case |
-| Medium workspace (100-1000 boxes) | < 2s | With nested locations |
-| Large workspace (> 1000 boxes) | < 5s | Acceptable for batch operation |
-| API response time | < 100ms | After DB completes |
+| Metric                            | Target  | Notes                          |
+| --------------------------------- | ------- | ------------------------------ |
+| Small workspace (< 100 boxes)     | < 500ms | Typical case                   |
+| Medium workspace (100-1000 boxes) | < 2s    | With nested locations          |
+| Large workspace (> 1000 boxes)    | < 5s    | Acceptable for batch operation |
+| API response time                 | < 100ms | After DB completes             |
 
 ---
 
@@ -468,6 +505,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Phase 1: Type Definitions & Validation
 
 **Step 1.1: Update Type Definitions**
+
 - **File:** `src/types.ts`
 - **Action:** Add `DeleteWorkspaceResponse` interface if not exists
 - **Code:**
@@ -482,18 +520,21 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Step 1.2: Add Zod Validation Schema** (Optional but recommended)
+
 - **File:** `src/lib/validation/workspaceSchema.ts` (create if needed)
 - **Action:** Create schema for UUID validation
 - **Code:**
-  ```typescript
-  import { z } from 'zod';
 
-  export const workspaceIdSchema = z.string().uuid('Nieprawidłowy format identyfikatora przestrzeni roboczej');
+  ```typescript
+  import { z } from "zod";
+
+  export const workspaceIdSchema = z.string().uuid("Nieprawidłowy format identyfikatora przestrzeni roboczej");
   ```
 
 ### Phase 2: Service Layer Implementation
 
 **Step 2.1: Create or Update Workspace Service**
+
 - **File:** `src/lib/services/workspaceService.ts`
 - **Action:** Add `deleteWorkspace()` function with transaction logic
 - **Function Signature:**
@@ -511,22 +552,25 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   - Return workspace_id for confirmation
 
 **Step 2.2: Implement Ownership Verification**
+
 - **Location:** In service function
 - **Query:**
+
   ```typescript
   const { data: owner, error } = await supabase
-    .from('workspace_members')
-    .select('role')
-    .eq('workspace_id', workspaceId)
-    .eq('user_id', userId)
+    .from("workspace_members")
+    .select("role")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
     .single();
 
-  if (error || owner?.role !== 'owner') {
-    throw new Error('User is not workspace owner');
+  if (error || owner?.role !== "owner") {
+    throw new Error("User is not workspace owner");
   }
   ```
 
 **Step 2.3: Implement Transaction Deletion**
+
 - **Approach:** Use Supabase RPC function or raw SQL with `supabase.rpc()`
 - **Steps:**
   1. Create database function `delete_workspace_cascade()`
@@ -534,6 +578,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   3. Handle transaction atomicity
 
 **Alternative (if RPC not available):**
+
 - Use multiple delete calls in sequence
 - Verify each succeeds before proceeding
 - Implement rollback if any fails
@@ -541,9 +586,11 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Phase 3: API Route Implementation
 
 **Step 3.1: Create API Route File**
+
 - **File:** `src/pages/api/workspaces/[workspace_id].ts`
 - **Action:** Implement DELETE handler (add to existing file if PATCH/POST exists)
 - **Structure:**
+
   ```typescript
   export const prerender = false;
 
@@ -553,18 +600,20 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Step 3.2: Implement DELETE Handler**
+
 - **Authentication Check:**
+
   ```typescript
   const user = context.locals.user;
   if (!user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized", details: "Brakujący lub nieprawidłowy token JWT" }),
-      { status: 401 }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized", details: "Brakujący lub nieprawidłowy token JWT" }), {
+      status: 401,
+    });
   }
   ```
 
 - **Parameter Extraction & Validation:**
+
   ```typescript
   const { workspace_id } = context.params;
 
@@ -580,18 +629,15 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 - **Call Service Layer:**
+
   ```typescript
   try {
-    const result = await deleteWorkspace(
-      context.locals.supabase,
-      workspace_id,
-      user.id
-    );
+    const result = await deleteWorkspace(context.locals.supabase, workspace_id, user.id);
 
     return new Response(
       JSON.stringify({
         message: "Workspace deleted successfully",
-        workspace_id: result.workspace_id
+        workspace_id: result.workspace_id,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
@@ -601,6 +647,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 - **Error Handling:**
+
   ```typescript
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -630,9 +677,11 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Phase 4: Database Support (if needed)
 
 **Step 4.1: Create RPC Function (Optional)**
+
 - **File:** `supabase/migrations/YYYYMMDDHHMMSS_create_delete_workspace_function.sql`
 - **Action:** Create stored procedure for atomic deletion
 - **SQL:**
+
   ```sql
   CREATE OR REPLACE FUNCTION delete_workspace_cascade(
     p_workspace_id UUID,
@@ -669,6 +718,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Step 4.2: Verify RLS Policies**
+
 - **File:** Check existing migrations for RLS on workspaces table
 - **Required Policy:**
   ```sql
@@ -680,21 +730,23 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Phase 5: Frontend Integration
 
 **Step 5.1: Update API Client (if using client-side deletion)**
+
 - **File:** `src/lib/api/client.ts` or similar
 - **Action:** Add delete method or use standard DELETE HTTP method
 - **Usage:**
+
   ```typescript
   const deleteWorkspace = async (workspaceId: string) => {
     const response = await fetch(`/api/workspaces/${workspaceId}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete workspace');
+      throw new Error("Failed to delete workspace");
     }
 
     return response.json() as Promise<DeleteWorkspaceResponse>;
@@ -702,6 +754,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Step 5.2: Update Settings Component**
+
 - **File:** Settings view component (likely in `src/components/`)
 - **Action:** Wire delete button to API call
 - **Behavior:**
@@ -714,39 +767,42 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Phase 6: Testing
 
 **Step 6.1: Unit Tests - Service Layer**
+
 - **Test:** Ownership verification
+
   ```typescript
-  test('deleteWorkspace should throw if user is not owner', async () => {
+  test("deleteWorkspace should throw if user is not owner", async () => {
     const workspace = await createWorkspace(owner.id);
     const member = await createUser();
 
-    await expect(
-      deleteWorkspace(supabase, workspace.id, member.id)
-    ).rejects.toThrow('not owner');
+    await expect(deleteWorkspace(supabase, workspace.id, member.id)).rejects.toThrow("not owner");
   });
   ```
 
 **Step 6.2: Integration Tests - API Route**
+
 - **Test:** DELETE request with valid token
+
   ```typescript
-  test('DELETE /api/workspaces/:id should delete if owner', async () => {
+  test("DELETE /api/workspaces/:id should delete if owner", async () => {
     const response = await fetch(`/api/workspaces/${workspace.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${ownerToken}` }
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${ownerToken}` },
     });
 
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.message).toContain('deleted');
+    expect(data.message).toContain("deleted");
   });
   ```
 
 - **Test:** 403 Forbidden for non-owner
+
   ```typescript
-  test('DELETE /api/workspaces/:id should return 403 if not owner', async () => {
+  test("DELETE /api/workspaces/:id should return 403 if not owner", async () => {
     const response = await fetch(`/api/workspaces/${workspace.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${memberToken}` }
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${memberToken}` },
     });
 
     expect(response.status).toBe(403);
@@ -755,7 +811,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 
 - **Test:** Cascade deletion verification
   ```typescript
-  test('Cascade deletion should delete all related data', async () => {
+  test("Cascade deletion should delete all related data", async () => {
     // Create workspace with locations, boxes, etc.
     // Delete workspace
     // Verify all children deleted
@@ -763,6 +819,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Step 6.3: Manual Testing**
+
 - Test with curl/Postman
 - Test unauthorized (no token)
 - Test forbidden (not owner)
@@ -774,6 +831,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ## 9. Implementation Checklist
 
 ### Backend Development
+
 - [ ] Add `DeleteWorkspaceResponse` type to `src/types.ts`
 - [ ] Create/update `src/lib/services/workspaceService.ts` with `deleteWorkspace()`
 - [ ] Add UUID validation schema to validation utilities
@@ -786,6 +844,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 - [ ] Test endpoint with curl/Postman locally
 
 ### Testing
+
 - [ ] Unit test: Ownership verification fails for non-owner
 - [ ] Integration test: Owner can delete workspace
 - [ ] Integration test: Non-owner gets 403
@@ -796,12 +855,14 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 - [ ] Performance test: Measure deletion time for various workspace sizes
 
 ### Documentation
+
 - [ ] Update API documentation with DELETE endpoint
 - [ ] Add example curl commands
 - [ ] Document error responses
 - [ ] Update implementation checklist in main spec
 
 ### Deployment
+
 - [ ] Apply database migrations in production
 - [ ] Verify RLS policies enabled
 - [ ] Monitor first few deletions in production
@@ -815,12 +876,14 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Dependencies
 
 **Files This Depends On:**
+
 - `src/lib/services/workspaceService.ts` - Must implement deleteWorkspace()
 - `src/types.ts` - Must include DeleteWorkspaceResponse type
 - `src/pages/api/workspaces/[workspace_id].ts` - Must add DELETE handler
 - Database migrations - Must verify RLS and constraints
 
 **Files That Depend On This:**
+
 - Frontend Settings component - Calls this endpoint
 - Frontend workspace list - Updates after deletion
 - Frontend routing - Redirects after deletion
@@ -828,17 +891,20 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Existing Patterns to Follow
 
 **API Route Pattern:**
+
 - See existing POST `/api/workspaces` for structure
 - Use same error response format
 - Follow same authentication pattern
 
 **Service Layer Pattern:**
+
 - Extract to `src/lib/services/`
 - Use Supabase client passed as parameter
 - Throw descriptive errors
 - No side effects (no logging/state updates)
 
 **Type Definition Pattern:**
+
 - Define in `src/types.ts`
 - Export for use in API routes and components
 - Include JSDoc comments
@@ -850,11 +916,13 @@ CREATE INDEX ON qr_codes(workspace_id, status);
 ### Common Issues & Solutions
 
 **Issue: Transaction Timeout**
+
 - **Cause:** Workspace too large, deletion taking too long
 - **Solution:** Optimize indexes, consider async background job
 - **Monitoring:** Log deletion duration
 
 **Issue: RLS Policy Blocks Deletion**
+
 - **Cause:** RLS policy too restrictive
 - **Solution:** Verify policy allows owner deletion
 - **Check:**
@@ -863,6 +931,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Issue: Foreign Key Constraint Violation**
+
 - **Cause:** Related data not cascading properly
 - **Solution:** Verify ON DELETE CASCADE on all foreign keys
 - **Check:**
@@ -873,6 +942,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Issue: QR Codes Not Reset**
+
 - **Cause:** Deletion trigger not firing
 - **Solution:** Verify box deletion trigger exists and executes
 - **Check:**
@@ -881,6 +951,7 @@ CREATE INDEX ON qr_codes(workspace_id, status);
   ```
 
 **Issue: Users Get 500 Error**
+
 - **Cause:** Database error not caught properly
 - **Solution:** Check error logs, verify database connection
 - **Debug:** Add detailed logging to service layer

@@ -1,4 +1,5 @@
 # NEXT PHASE IMPLEMENTATION PLAN
+
 **Date:** 2025-12-31 | **Scope:** MVP Completion & Launch | **Duration:** 5-8 days
 
 ---
@@ -8,12 +9,14 @@
 This document outlines the complete implementation plan to move from current Phase 4 completion to MVP launch readiness.
 
 ### Current State
+
 - ✅ Phase 0-4 Complete (Infrastructure, Auth, Dashboard, Box Management)
 - 🟡 Phase 5 Partial (QR generation endpoint ready, UI pending)
 - ❌ Phase 6 Not Started (Testing & Polish)
 - ❌ Blockers identified and need resolution
 
 ### Target State (MVP Ready)
+
 - ✅ All code quality gates passed
 - ✅ Logging system implemented
 - ✅ All features working end-to-end
@@ -32,6 +35,7 @@ This document outlines the complete implementation plan to move from current Pha
 **Objective:** Complete QR batch generation workflow
 
 **Current Status:**
+
 - ✅ Backend endpoint: `POST /api/qr-codes/batch` - WORKING
 - ❌ Frontend page: `/app/qr/generate` - MISSING
 - ❌ QR display component - PARTIAL
@@ -62,6 +66,7 @@ if (!Astro.locals.user) {
 ```
 
 **Files to Create:**
+
 - [ ] `src/pages/app/qr/generate.astro`
 - [ ] `src/components/qr/QRGenerator.tsx` (main component)
 - [ ] `src/components/qr/QRCodeGrid.tsx` (grid display)
@@ -130,6 +135,7 @@ export default function QRGenerator() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] User can enter quantity (1-100)
 - [ ] Generate button calls API
 - [ ] QR codes display in grid
@@ -244,11 +250,13 @@ export default function QRCodeGrid({ codes }: QRCodeGridProps) {
 ```
 
 **Files to Create:**
+
 - [ ] `src/components/qr/QRCodeGrid.tsx`
 - [ ] `src/components/qr/QRCodeCard.tsx`
 - [ ] `src/styles/qr-print.css`
 
 **Acceptance Criteria:**
+
 - [ ] QR codes display in grid
 - [ ] 3-column layout on screen
 - [ ] 3-column layout in print
@@ -263,6 +271,7 @@ export default function QRCodeGrid({ codes }: QRCodeGridProps) {
 ##### Task 5.1.3: Integration & Testing (2 hours)
 
 **Integration Points:**
+
 - [ ] Dashboard navigation link to QR generator
 - [ ] User menu link to QR generator
 - [ ] Workspace-scoped QR generation
@@ -270,6 +279,7 @@ export default function QRCodeGrid({ codes }: QRCodeGridProps) {
 - [ ] Error handling for API failures
 
 **Testing Checklist:**
+
 - [ ] Generate 10 codes
 - [ ] Codes appear in grid
 - [ ] Each code has unique ID
@@ -289,6 +299,7 @@ export default function QRCodeGrid({ codes }: QRCodeGridProps) {
 **Objective:** Allow users to manage workspace and profile settings
 
 **Current Status:**
+
 - ❌ Settings page not created
 - ✅ Workspace update endpoint exists
 - ✅ Profile endpoints exist
@@ -345,6 +356,7 @@ export default function SettingsContainer() {
 ```
 
 **Sub-components to Create:**
+
 - [ ] `src/components/settings/WorkspaceSettings.tsx` (workspace name, delete)
 - [ ] `src/components/settings/ProfileSettings.tsx` (name, email)
 - [ ] `src/components/settings/MembersSettings.tsx` (add/remove members, roles)
@@ -356,6 +368,7 @@ export default function SettingsContainer() {
 ##### Task 5.2.2: Workspace Settings Tab (2 hours)
 
 **Features:**
+
 - Edit workspace name
 - Delete workspace (with confirmation)
 - Workspace created date info
@@ -367,6 +380,7 @@ export default function SettingsContainer() {
 ##### Task 5.2.3: Profile Settings Tab (2 hours)
 
 **Features:**
+
 - Edit full name
 - View email (read-only)
 - Change password (link to separate page - post-MVP)
@@ -379,6 +393,7 @@ export default function SettingsContainer() {
 ##### Task 5.2.4: Members Settings Tab (2 hours)
 
 **Features:**
+
 - List workspace members
 - Add new member by email
 - Change member role (owner, admin, member, read_only)
@@ -400,6 +415,7 @@ export default function SettingsContainer() {
 **Coverage Target:** 70%+
 
 **High Priority Tests:**
+
 - [ ] Authentication flow (login, logout, session)
 - [ ] Box CRUD operations
 - [ ] Location tree operations
@@ -419,6 +435,7 @@ export default function SettingsContainer() {
 **Tools:** Playwright or Cypress
 
 **Workflows to Test:**
+
 1. **User Registration & First Login**
    - [ ] Register new account
    - [ ] Auto-workspace creation
@@ -465,17 +482,20 @@ export default function SettingsContainer() {
 #### 6.3 Manual Testing (1-2 days)
 
 **Browsers:**
+
 - [ ] Chrome (latest)
 - [ ] Firefox (latest)
 - [ ] Safari (latest)
 
 **Devices:**
+
 - [ ] Desktop (1920x1080)
 - [ ] Laptop (1366x768)
 - [ ] Tablet (1024x768)
 - [ ] Mobile (375x667)
 
 **Test Scenarios:**
+
 1. Happy path flows (all workflows)
 2. Error scenarios (network errors, validation errors)
 3. Edge cases (empty states, large datasets)
@@ -491,6 +511,7 @@ export default function SettingsContainer() {
 **Scope:** OWASP Top 10 validation
 
 **Tests:**
+
 - [ ] **SQL Injection:** API endpoints accept malicious input safely
 - [ ] **XSS:** User input properly escaped in templates
 - [ ] **CSRF:** Token validation on state-changing requests
@@ -503,6 +524,7 @@ export default function SettingsContainer() {
 - [ ] **Insufficient Logging:** Logging system implemented
 
 **Tools:**
+
 - [ ] OWASP ZAP or Burp Suite (if available)
 - [ ] Manual code review for security patterns
 - [ ] Dependency audit: `npm audit`
@@ -514,6 +536,7 @@ export default function SettingsContainer() {
 #### 6.5 Performance Testing (1 day)
 
 **Metrics:**
+
 - [ ] Page load time < 3 seconds
 - [ ] Time to interactive < 2 seconds
 - [ ] Search results < 500ms
@@ -521,11 +544,13 @@ export default function SettingsContainer() {
 - [ ] Bundle size < 200KB (gzipped)
 
 **Tools:**
+
 - [ ] Google Lighthouse
 - [ ] WebPageTest
 - [ ] Chrome DevTools Performance
 
 **Optimizations to Test:**
+
 - [ ] Code splitting working
 - [ ] Images optimized
 - [ ] Lazy loading enabled
@@ -574,12 +599,14 @@ export default function SettingsContainer() {
 #### 7.2 Pre-Deployment Checklist (2-3 hours)
 
 **Code Quality:**
+
 - [ ] `npm run lint` passes (0 errors)
 - [ ] `npm run build` succeeds
 - [ ] No console.log statements
 - [ ] TypeScript strict mode enabled
 
 **Testing:**
+
 - [ ] Unit tests passing (90%+ coverage)
 - [ ] E2E tests passing
 - [ ] Manual testing on all browsers
@@ -587,6 +614,7 @@ export default function SettingsContainer() {
 - [ ] Security review completed
 
 **Documentation:**
+
 - [ ] README updated
 - [ ] API docs current
 - [ ] Deployment guide complete
@@ -594,12 +622,14 @@ export default function SettingsContainer() {
 - [ ] Changelog updated
 
 **Database:**
+
 - [ ] Migrations verified
 - [ ] RLS policies tested
 - [ ] Data backup strategy documented
 - [ ] Database performance acceptable
 
 **Infrastructure:**
+
 - [ ] Environment variables documented
 - [ ] Production secrets configured
 - [ ] Logging configured
@@ -613,12 +643,14 @@ export default function SettingsContainer() {
 #### 7.3 Deployment & Post-Launch (1-2 hours)
 
 **Staging Deployment:**
+
 - [ ] Deploy to staging environment
 - [ ] Run smoke tests
 - [ ] Verify all features working
 - [ ] Check logs for errors
 
 **Production Deployment:**
+
 - [ ] Create release branch
 - [ ] Tag release (v1.0.0)
 - [ ] Deploy to production
@@ -627,6 +659,7 @@ export default function SettingsContainer() {
 - [ ] Test critical workflows
 
 **Post-Launch Monitoring (First 24 hours):**
+
 - [ ] Monitor error logs
 - [ ] Track performance metrics
 - [ ] Respond to user feedback
@@ -673,40 +706,50 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 
 ### Work Breakdown by Phase
 
-| Phase | Name | Days | Cumulative |
-|-------|------|------|-----------|
-| Blockers | Fix ESLint, Logging, A11y | 2 | 2 |
-| 5.1 | QR Generator | 2 | 4 |
-| 5.2 | Settings Page | 2 | 6 |
-| 6.1-6.5 | Testing & Polish | 3 | 9 |
-| 7.1-7.3 | Docs & Deployment | 2 | 11 |
+| Phase    | Name                      | Days | Cumulative |
+| -------- | ------------------------- | ---- | ---------- |
+| Blockers | Fix ESLint, Logging, A11y | 2    | 2          |
+| 5.1      | QR Generator              | 2    | 4          |
+| 5.2      | Settings Page             | 2    | 6          |
+| 6.1-6.5  | Testing & Polish          | 3    | 9          |
+| 7.1-7.3  | Docs & Deployment         | 2    | 11         |
 
 ---
 
 ## RISK MITIGATION
 
 ### Risk 1: Blocker Fixes Take Longer Than Estimated
+
 **Probability:** MEDIUM | **Impact:** HIGH
+
 - **Mitigation:** Parallelize work (accessibility fixes while logging implemented)
 - **Backup Plan:** De-scope testing to critical paths only
 
 ### Risk 2: Accessibility Changes Break Existing Functionality
+
 **Probability:** MEDIUM | **Impact:** MEDIUM
+
 - **Mitigation:** Comprehensive regression testing after changes
 - **Backup Plan:** Revert to previous version and take incremental approach
 
 ### Risk 3: Testing Reveals Major Issues
+
 **Probability:** LOW | **Impact:** HIGH
+
 - **Mitigation:** Start testing early, parallel with development
 - **Backup Plan:** Extend testing phase, add contingency days
 
 ### Risk 4: Performance Issues Discovered Late
+
 **Probability:** MEDIUM | **Impact:** MEDIUM
+
 - **Mitigation:** Profile code early, optimize incrementally
 - **Backup Plan:** Implement performance improvements post-MVP
 
 ### Risk 5: Deployment to Production Fails
+
 **Probability:** LOW | **Impact:** CRITICAL
+
 - **Mitigation:** Dry-run deployment in staging first
 - **Backup Plan:** Have rollback plan ready, keep previous version running
 
@@ -717,17 +760,20 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 ### Recommended Team Structure
 
 **Option 1: Single Developer (Sequential)**
+
 - Total duration: 11 calendar days
 - Slower but focused
 - Risk: Blocked if issues discovered late
 
 **Option 2: Two Developers (Parallel)**
+
 - Developer 1: Blockers + Testing
 - Developer 2: Phase 5 features
 - Total duration: 8-9 calendar days
 - More efficient
 
 **Option 3: Three Developers (Parallel)**
+
 - Developer 1: Blockers fixes
 - Developer 2: Phase 5 QR generator
 - Developer 3: Phase 5 Settings + Testing preparation
@@ -739,6 +785,7 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 ## DEFINITION OF DONE (MVP Launch)
 
 ### Code Quality
+
 - ✅ All linting errors fixed (0 ESLint errors)
 - ✅ All console.log statements removed
 - ✅ Logging system implemented (Winston)
@@ -747,6 +794,7 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 - ✅ Code review passed
 
 ### Features
+
 - ✅ Authentication (login, logout, session management)
 - ✅ Workspace management (create, update, members)
 - ✅ Location hierarchy (create, edit, delete, tree view)
@@ -757,6 +805,7 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 - ✅ Settings page (workspace, profile, members)
 
 ### Testing
+
 - ✅ Unit tests: 70%+ coverage, all passing
 - ✅ E2E tests: Critical workflows passing
 - ✅ Manual testing: All browsers, devices
@@ -765,6 +814,7 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 - ✅ Performance: Metrics met
 
 ### Documentation
+
 - ✅ API documentation current
 - ✅ Database schema documented
 - ✅ Deployment guide written
@@ -773,6 +823,7 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 - ✅ Changelog updated
 
 ### Infrastructure
+
 - ✅ Staging deployment working
 - ✅ Production environment ready
 - ✅ Logging configured
@@ -786,16 +837,16 @@ Timeline: 4 weeks (8 working weeks post-blockers)
 
 **MVP Launch Success Criteria:**
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Build passes | ✅ Yes | ⏳ Pending fixes |
-| Linting passes | 0 errors | ⏳ 73 errors now |
-| Tests passing | 70%+ coverage | ⏳ Pending |
-| Accessibility | WCAG AA | ⏳ A11y issues |
-| Performance | < 3s load time | ✅ Likely OK |
-| Security | OWASP compliant | 🟡 Audit needed |
-| Documentation | Complete | 🟡 Near complete |
-| Uptime | 99.9% | ⏳ TBD |
+| Metric         | Target          | Status           |
+| -------------- | --------------- | ---------------- |
+| Build passes   | ✅ Yes          | ⏳ Pending fixes |
+| Linting passes | 0 errors        | ⏳ 73 errors now |
+| Tests passing  | 70%+ coverage   | ⏳ Pending       |
+| Accessibility  | WCAG AA         | ⏳ A11y issues   |
+| Performance    | < 3s load time  | ✅ Likely OK     |
+| Security       | OWASP compliant | 🟡 Audit needed  |
+| Documentation  | Complete        | 🟡 Near complete |
+| Uptime         | 99.9%           | ⏳ TBD           |
 
 ---
 

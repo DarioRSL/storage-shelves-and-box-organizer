@@ -1,28 +1,28 @@
 # Tech Stack - Storage & Box Organizer
 
-**Last Updated:** January 11, 2026
+**Last Updated:** January 17, 2026
 **Status:** ✅ **Production-Ready**
 **Node Version:** 22.14.0 (LTS)
 **Package Manager:** npm
 
 ## Technology Stack Summary
 
-| Layer | Technology | Version | Status |
-|-------|-----------|---------|--------|
-| **Frontend Framework** | Astro | 5.x | ✅ SSR configured |
-| **UI Library** | React | 19.x | ✅ Full integration |
-| **Language** | TypeScript | 5.x | ✅ Strict mode |
-| **Styling** | Tailwind CSS | 4.x | ✅ OKLCH colors |
-| **Component Library** | Shadcn/ui | Latest | ✅ Radix UI |
-| **State Management** | Nano Stores | Latest | ✅ Lightweight |
-| **Backend** | Supabase | Latest | ✅ PostgreSQL + Auth |
-| **Database** | PostgreSQL | 15.x | ✅ RLS ready |
-| **Validation** | Zod | Latest | ✅ Type-safe |
-| **Package Manager** | npm | 10.x | ✅ Lock file |
-| **Unit Testing** | Vitest | 1.x | 🔄 Planned |
-| **E2E Testing** | Playwright | 1.x | 🔄 Planned |
-| **API Testing** | Supertest | Latest | 🔄 Planned |
-| **Coverage** | Codecov | Latest | 🔄 Planned |
+| Layer                  | Technology   | Version | Status               |
+| ---------------------- | ------------ | ------- | -------------------- |
+| **Frontend Framework** | Astro        | 5.x     | ✅ SSR configured    |
+| **UI Library**         | React        | 19.x    | ✅ Full integration  |
+| **Language**           | TypeScript   | 5.x     | ✅ Strict mode       |
+| **Styling**            | Tailwind CSS | 4.x     | ✅ OKLCH colors      |
+| **Component Library**  | Shadcn/ui    | Latest  | ✅ Radix UI          |
+| **State Management**   | Nano Stores  | Latest  | ✅ Lightweight       |
+| **Backend**            | Supabase     | Latest  | ✅ PostgreSQL + Auth |
+| **Database**           | PostgreSQL   | 15.x    | ✅ RLS ready         |
+| **Validation**         | Zod          | Latest  | ✅ Type-safe         |
+| **Package Manager**    | npm          | 10.x    | ✅ Lock file         |
+| **Unit Testing**       | Vitest       | 1.x     | ✅ 324+ tests        |
+| **E2E Testing**        | Playwright   | 1.x     | ✅ Chromium          |
+| **API Testing**        | Supertest    | Latest  | ✅ Integration       |
+| **Coverage**           | c8/Istanbul  | Latest  | ✅ Configured        |
 
 ## Frontend Framework
 
@@ -332,6 +332,7 @@
 ## Security Best Practices
 
 ✅ **OWASP Top 10 Addressed**
+
 - A01: Broken Access Control - RLS + API validation
 - A02: Cryptographic Failures - HTTPS + secure cookies
 - A03: Injection - Supabase prepared statements
@@ -382,6 +383,7 @@
    - Dark mode toggle via class on `<html>` element
 
 **Color System**:
+
 - **Color Space**: OKLCH (perceptually uniform, better for interpolation)
 - **Semantic Tokens**: `--background`, `--foreground`, `--card`, `--border`, etc.
 - **Tailwind Integration**: `bg-background`, `text-foreground`, `border-border`
@@ -391,6 +393,7 @@
   - Muted: 0.30 → 0.35 (+17%)
 
 **Benefits**:
+
 - ✅ Cross-device theme sync (database-backed)
 - ✅ Zero FOUC (server-side theme application)
 - ✅ Optimistic UI (instant feedback)
@@ -398,6 +401,7 @@
 - ✅ System preference respect
 
 **Implementation Files**:
+
 - `src/components/hooks/useTheme.ts` - React hook
 - `src/components/theme/ThemeInitializer.astro` - SSR theme script
 - `src/components/settings/ThemeToggle.tsx` - UI component (Polish i18n)

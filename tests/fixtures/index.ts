@@ -10,8 +10,8 @@
  * ```
  */
 
-export * from './users';
-export * from './workspaces';
-export * from './locations';
-export * from './boxes';
-export * from './qr-codes';
+export * from "./users";
+export * from "./workspaces";
+export * from "./locations";
+export * from "./boxes";
+export * from "./qr-codes";
