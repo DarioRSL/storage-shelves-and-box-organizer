@@ -9,6 +9,8 @@ import DailyRotateFile from "winston-daily-rotate-file";
 // Environment-specific configuration
 const LOG_LEVEL = import.meta.env.LOG_LEVEL || (import.meta.env.PROD ? "info" : "debug");
 const IS_DEV = !import.meta.env.PROD;
+// Detect serverless environment (Vercel, AWS Lambda, etc.) - filesystem is read-only
+const IS_SERVERLESS = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 // JSON format for production
 const jsonFormat = winston.format.combine(
@@ -34,36 +36,38 @@ const devFormat = winston.format.combine(
 // Winston transports
 const transports: winston.transport[] = [];
 
-// Console transport (dev only)
-if (IS_DEV) {
+// Console transport (dev or serverless)
+if (IS_DEV || IS_SERVERLESS) {
   transports.push(
     new winston.transports.Console({
-      format: devFormat,
+      format: IS_SERVERLESS ? jsonFormat : devFormat,
     })
   );
 }
 
-// File transports (all environments)
-transports.push(
-  new DailyRotateFile({
-    filename: "logs/combined-%DATE%.log",
-    datePattern: "YYYY-MM-DD",
-    maxSize: "20m",
-    maxFiles: "14d",
-    format: jsonFormat,
-  })
-);
+// File transports (only for non-serverless environments with writable filesystem)
+if (!IS_SERVERLESS) {
+  transports.push(
+    new DailyRotateFile({
+      filename: "logs/combined-%DATE%.log",
+      datePattern: "YYYY-MM-DD",
+      maxSize: "20m",
+      maxFiles: "14d",
+      format: jsonFormat,
+    })
+  );
 
-transports.push(
-  new DailyRotateFile({
-    filename: "logs/error-%DATE%.log",
-    datePattern: "YYYY-MM-DD",
-    maxSize: "20m",
-    maxFiles: "14d",
-    level: "error",
-    format: jsonFormat,
-  })
-);
+  transports.push(
+    new DailyRotateFile({
+      filename: "logs/error-%DATE%.log",
+      datePattern: "YYYY-MM-DD",
+      maxSize: "20m",
+      maxFiles: "14d",
+      level: "error",
+      format: jsonFormat,
+    })
+  );
+}
 
 // Create Winston logger
 export const logger = winston.createLogger({

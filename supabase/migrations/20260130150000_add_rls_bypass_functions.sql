@@ -101,10 +101,10 @@ set search_path = public
 language plpgsql
 as $$
 begin
-  -- Check membership first
+  -- Check membership first (use table alias to avoid ambiguity)
   if not exists (
-    select 1 from workspace_members
-    where user_id = p_user_id and workspace_id = p_workspace_id
+    select 1 from workspace_members wm
+    where wm.user_id = p_user_id and wm.workspace_id = p_workspace_id
   ) then
     raise exception 'User is not a member of this workspace';
   end if;
@@ -150,10 +150,10 @@ declare
   v_normalized_name text;
   v_path_depth int;
 begin
-  -- Check membership first
+  -- Check membership first (use table alias to avoid ambiguity)
   if not exists (
-    select 1 from workspace_members
-    where user_id = p_user_id and workspace_id = p_workspace_id
+    select 1 from workspace_members wm
+    where wm.user_id = p_user_id and wm.workspace_id = p_workspace_id
   ) then
     raise exception 'User is not a member of this workspace';
   end if;
@@ -174,11 +174,11 @@ begin
     v_new_path := ('root.' || v_normalized_name)::ltree;
   else
     -- Get parent path
-    select path into v_parent_path
-    from locations
-    where id = p_parent_id
-      and workspace_id = p_workspace_id
-      and is_deleted = false;
+    select l.path into v_parent_path
+    from locations l
+    where l.id = p_parent_id
+      and l.workspace_id = p_workspace_id
+      and l.is_deleted = false;
 
     if v_parent_path is null then
       raise exception 'Parent location not found';
@@ -195,10 +195,10 @@ begin
 
   -- Check for duplicate path at same level
   if exists (
-    select 1 from locations
-    where workspace_id = p_workspace_id
-      and path = v_new_path
-      and is_deleted = false
+    select 1 from locations l
+    where l.workspace_id = p_workspace_id
+      and l.path = v_new_path
+      and l.is_deleted = false
   ) then
     raise exception 'Location with this name already exists at this level';
   end if;
