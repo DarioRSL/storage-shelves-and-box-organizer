@@ -1,26 +1,15 @@
-# Build stage
-FROM node:22-alpine AS builder
+# Production stage - uses pre-built dist from CI/CD
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install production dependencies only
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --omit=dev
 
-# Copy source and build
-COPY . .
-ENV BUILD_TARGET=node
-RUN npm run build
-
-# Production stage
-FROM node:22-alpine AS runner
-
-WORKDIR /app
-
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
+# Copy pre-built application from CI/CD pipeline
+# The dist folder must be built before running docker build
+COPY dist ./dist
 
 # Environment
 ENV HOST=0.0.0.0

@@ -1,8 +1,8 @@
 # Dependencies
 node_modules
 
-# Build output
-dist
+# Build output (keep dist - it's pre-built by CI/CD)
+# dist
 .vercel
 
 # Development files
