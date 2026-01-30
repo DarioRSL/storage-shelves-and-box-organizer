@@ -1,0 +1,198 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - test # Deploy to TEST server
+      - master # Deploy to PROD (Vercel)
+  pull_request:
+    branches:
+      - master # Preview deployment on Vercel
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================
+  # TEST DEPLOYMENT (push to test branch)
+  # ============================================
+  deploy-test:
+    name: Deploy to TEST Server
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/test' && github.event_name == 'push'
+    environment:
+      name: test
+      url: ${{ vars.TEST_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for TEST (Node adapter)
+        run: npm run build:test
+        env:
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
+
+      - name: Build Docker image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t storage-organizer:"$IMAGE_TAG" .
+          docker save storage-organizer:"$IMAGE_TAG" | gzip > image.tar.gz
+
+      - name: Copy files to TEST server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.TEST_SERVER_HOST }}
+          username: ${{ secrets.TEST_SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          source: "image.tar.gz,docker-compose.test.yml"
+          target: "/opt/storage-organizer"
+
+      - name: Deploy on TEST server
+        uses: appleboy/ssh-action@v1
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
+        with:
+          host: ${{ secrets.TEST_SERVER_HOST }}
+          username: ${{ secrets.TEST_SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          envs: IMAGE_TAG,SUPABASE_URL,SUPABASE_KEY
+          script: |
+            cd /opt/storage-organizer
+            gunzip -c image.tar.gz | docker load
+
+            # Create .env file with secrets
+            cat > .env << EOF
+            SUPABASE_URL=${SUPABASE_URL}
+            SUPABASE_KEY=${SUPABASE_KEY}
+            IMAGE_TAG=${IMAGE_TAG}
+            LOG_LEVEL=info
+            EOF
+
+            # Deploy with docker-compose
+            docker compose -f docker-compose.test.yml down || true
+            docker compose -f docker-compose.test.yml up -d
+
+            # Cleanup old images and temp files
+            docker image prune -f
+            rm -f image.tar.gz
+
+  # ============================================
+  # PREVIEW DEPLOYMENT (PRs to master)
+  # ============================================
+  deploy-preview:
+    name: Deploy Preview to Vercel
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build for Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy Preview
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment PR with Preview URL
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const previewUrl = process.env.PREVIEW_URL;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Preview Deployment\n\nPreview URL: ${previewUrl}`
+            });
+
+  # ============================================
+  # PRODUCTION DEPLOYMENT (push to master)
+  # ============================================
+  deploy-production:
+    name: Deploy to Production (Vercel)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ vars.PROD_URL }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build for Production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.PROD_SUPABASE_KEY }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

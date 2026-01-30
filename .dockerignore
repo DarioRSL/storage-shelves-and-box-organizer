@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+.vercel
+
+# Development files
+.git
+.gitignore
+.github
+
+# Environment files (will be injected at runtime)
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Test files
+tests
+coverage
+playwright-report
+test-results
+*.test.ts
+*.spec.ts
+
+# Documentation
+*.md
+!README.md
+docs
+.ai_docs
+
+# Supabase local config
+supabase
+
+# Logs
+logs
+*.log
+
+# Misc
+.eslintcache
+.prettierignore

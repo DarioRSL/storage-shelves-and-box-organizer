@@ -1,0 +1,26 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { BoxForm } from "@/components/forms/BoxForm";
+
+export const prerender = false;
+
+// Ensure user is authenticated
+if (!Astro.locals.user) {
+  return Astro.redirect("/auth");
+}
+
+// Get box ID from params
+const boxId = Astro.params.id;
+
+if (!boxId) {
+  return Astro.redirect("/app");
+}
+---
+
+<Layout title="Edit Box">
+  <main class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+      <BoxForm client:load mode="edit" boxId={boxId} />
+    </div>
+  </main>
+</Layout>

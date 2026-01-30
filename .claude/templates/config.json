@@ -1,0 +1,249 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Storage & Box Organizer",
+    "repository": "DarioRSL/storage-shelves-and-box-organizer",
+    "defaultBranch": "master"
+  },
+  "commit": {
+    "types": [
+      {
+        "type": "feat",
+        "description": "New feature or functionality",
+        "emoji": "✨",
+        "scopes": [
+          "ui",
+          "api",
+          "db",
+          "dashboard",
+          "settings",
+          "box-details",
+          "box-form",
+          "qr-generator",
+          "profile",
+          "auth",
+          "theme",
+          "shared",
+          "deps",
+          "pages",
+          "hooks",
+          "types",
+          "layout",
+          "forms",
+          "components"
+        ]
+      },
+      {
+        "type": "fix",
+        "description": "Bug fix",
+        "emoji": "🐛",
+        "scopes": [
+          "ui",
+          "api",
+          "db",
+          "dashboard",
+          "settings",
+          "auth",
+          "middleware",
+          "services",
+          "components",
+          "validation",
+          "rls",
+          "hooks",
+          "forms"
+        ]
+      },
+      {
+        "type": "docs",
+        "description": "Documentation changes",
+        "emoji": "📚",
+        "scopes": [
+          "ai_docs",
+          "api-plan",
+          "db-plan",
+          "ui-plan",
+          "prd",
+          "tech-stack",
+          "readme",
+          "claude",
+          "review",
+          "planning"
+        ]
+      },
+      {
+        "type": "refactor",
+        "description": "Code restructuring without behavior change",
+        "emoji": "♻️",
+        "scopes": ["types", "services", "components", "hooks", "middleware", "utils", "api", "ui"]
+      },
+      {
+        "type": "chore",
+        "description": "Maintenance and tooling",
+        "emoji": "🔧",
+        "scopes": ["deps", "build", "ci", "lint", "prettier", "gitignore", "config", "husky", "npm"]
+      },
+      {
+        "type": "style",
+        "description": "Code style and formatting",
+        "emoji": "💄",
+        "scopes": ["formatting", "lint", "prettier", "ui", "components"]
+      },
+      {
+        "type": "i18n",
+        "description": "Internationalization and localization",
+        "emoji": "🌐",
+        "scopes": ["polish", "english", "settings", "dashboard", "ui", "forms", "box-details"]
+      },
+      {
+        "type": "test",
+        "description": "Adding or updating tests",
+        "emoji": "✅",
+        "scopes": ["unit", "integration", "e2e", "api", "components"]
+      },
+      {
+        "type": "perf",
+        "description": "Performance improvements",
+        "emoji": "⚡",
+        "scopes": ["db", "api", "ui", "bundle", "render", "queries"]
+      },
+      {
+        "type": "security",
+        "description": "Security improvements",
+        "emoji": "🔒",
+        "scopes": ["auth", "rls", "api", "middleware", "validation"]
+      }
+    ],
+    "scopeCategories": {
+      "frontend": [
+        "ui",
+        "dashboard",
+        "settings",
+        "box-details",
+        "box-form",
+        "qr-generator",
+        "profile",
+        "theme",
+        "components",
+        "hooks",
+        "pages",
+        "layout",
+        "forms"
+      ],
+      "backend": ["api", "services", "middleware", "auth", "validation"],
+      "database": ["db", "rls", "migrations"],
+      "documentation": [
+        "ai_docs",
+        "api-plan",
+        "db-plan",
+        "ui-plan",
+        "prd",
+        "tech-stack",
+        "readme",
+        "claude",
+        "review",
+        "planning"
+      ],
+      "tooling": ["deps", "build", "ci", "lint", "prettier", "config", "husky", "npm"],
+      "shared": ["types", "utils", "shared"]
+    },
+    "maxHeadlineLength": 72,
+    "maxSummaryLength": 100
+  },
+  "pr": {
+    "sections": [
+      {
+        "id": "summary",
+        "title": "🎯 Summary",
+        "required": true,
+        "order": 1
+      },
+      {
+        "id": "changes_overview",
+        "title": "📊 Changes Overview",
+        "required": true,
+        "order": 2
+      },
+      {
+        "id": "technical_architecture",
+        "title": "🏗️ Technical Architecture",
+        "required": false,
+        "order": 3
+      },
+      {
+        "id": "testing",
+        "title": "🧪 Testing & User Feedback",
+        "required": true,
+        "order": 4
+      },
+      {
+        "id": "files_changed",
+        "title": "📁 Files Changed",
+        "required": true,
+        "order": 5
+      },
+      {
+        "id": "deployment_readiness",
+        "title": "🚀 Deployment Readiness",
+        "required": true,
+        "order": 6
+      },
+      {
+        "id": "related_issues",
+        "title": "📋 Related Issues",
+        "required": true,
+        "order": 7
+      },
+      {
+        "id": "next_steps",
+        "title": "🎯 Next Steps (After Merge)",
+        "required": false,
+        "order": 8
+      },
+      {
+        "id": "documentation",
+        "title": "📚 Documentation",
+        "required": false,
+        "order": 9
+      },
+      {
+        "id": "checklist",
+        "title": "✅ Checklist",
+        "required": true,
+        "order": 10
+      }
+    ],
+    "labels": {
+      "frontend": ["frontend"],
+      "backend": ["backend", "api"],
+      "database": ["database"],
+      "documentation": ["documentation"],
+      "enhancement": ["enhancement"],
+      "bug": ["bug"],
+      "blocker": ["blocker", "must-fix"],
+      "accessibility": ["accessibility"],
+      "logging": ["logging"],
+      "testing": ["testing"],
+      "code-quality": ["code-quality"],
+      "i18n": ["i18n", "internationalization"]
+    }
+  },
+  "github": {
+    "repository": "DarioRSL/storage-shelves-and-box-organizer",
+    "owner": "DarioRSL",
+    "defaultBranch": "master",
+    "issueTemplate": {
+      "planningPrefix": "📋 PLANNING:",
+      "blockerPrefix": "🚨 BLOCKER:",
+      "featurePrefix": "✨ FEATURE:",
+      "bugPrefix": "🐛 BUG:"
+    }
+  },
+  "filePatterns": {
+    "frontend": ["src/components/**", "src/pages/**", "src/layouts/**", "src/styles/**"],
+    "backend": ["src/pages/api/**", "src/lib/services/**", "src/middleware/**"],
+    "database": ["supabase/migrations/**", "src/db/**"],
+    "documentation": [".ai_docs/**", "*.md", "CLAUDE.md", "README.md"],
+    "config": ["*.config.*", "*.json", ".prettierrc", ".eslintrc", "tsconfig.json"],
+    "shared": ["src/types.ts", "src/lib/**"]
+  }
+}
