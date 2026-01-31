@@ -332,6 +332,12 @@ export function useBoxForm(mode: "create" | "edit", boxId?: string, workspaceId?
     } catch (error) {
       log.error("Form submission error", { error, mode, boxId, workspaceId: currentWorkspaceId });
 
+      // If this is a Zod validation error we already handled, just re-throw
+      // without overwriting the field-level errors
+      if (error instanceof Error && error.message === "Validation failed") {
+        throw error;
+      }
+
       if (error instanceof ApiError) {
         if (error.status === 401) {
           window.location.href = "/auth";
