@@ -123,21 +123,25 @@ jobs:
         uses: appleboy/ssh-action@v1
         env:
           IMAGE_TAG: ${{ github.sha }}
-          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
         with:
           host: ${{ secrets.TEST_SERVER_HOST }}
           username: ${{ secrets.TEST_SERVER_USER }}
           key: ${{ secrets.TEST_SERVER_SSH_KEY }}
-          envs: IMAGE_TAG,SUPABASE_URL,SUPABASE_KEY
+          envs: IMAGE_TAG,PUBLIC_SUPABASE_URL,SUPABASE_KEY
           script: |
             cd /opt/storage-organizer
             gunzip -c image.tar.gz | docker load
 
             # Create .env file with secrets
+            # SUPABASE_URL uses internal Docker network (kong:8000)
+            # PUBLIC_SUPABASE_URL uses public URL for browser access
             cat > .env << EOF
-            SUPABASE_URL=${SUPABASE_URL}
+            SUPABASE_URL=http://kong:8000
             SUPABASE_KEY=${SUPABASE_KEY}
+            PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL}
+            PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
             IMAGE_TAG=${IMAGE_TAG}
             LOG_LEVEL=info
             EOF
