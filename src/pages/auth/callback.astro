@@ -48,71 +48,71 @@ export const prerender = false;
       <p id="error" class="error" style="display: none;"></p>
     </div>
 
-    <script>
+    <script is:inline>
       async function handleCallback() {
-        const statusEl = document.getElementById('status');
-        const errorEl = document.getElementById('error');
+        const statusEl = document.getElementById("status");
+        const errorEl = document.getElementById("error");
 
         try {
           // Get tokens from URL hash (Supabase email confirmation format)
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          const refreshToken = hashParams.get('refresh_token');
-          const type = hashParams.get('type'); // 'signup', 'recovery', 'magiclink'
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
+          // type can be: signup, recovery, magiclink - not used currently
 
           // Also check query params (some Supabase flows use query params)
           const queryParams = new URLSearchParams(window.location.search);
-          const errorCode = queryParams.get('error');
-          const errorDescription = queryParams.get('error_description');
+          const errorCode = queryParams.get("error");
+          const errorDescription = queryParams.get("error_description");
 
           if (errorCode) {
-            throw new Error(errorDescription || 'Błąd potwierdzenia');
+            throw new Error(errorDescription || "Błąd potwierdzenia");
           }
 
           if (!accessToken) {
             // No tokens - might be an error or direct access
             // Redirect to auth page
-            statusEl.textContent = 'Przekierowanie...';
-            window.location.href = '/auth';
+            statusEl.textContent = "Przekierowanie...";
+            window.location.href = "/auth";
             return;
           }
 
-          statusEl.textContent = 'Logowanie...';
+          statusEl.textContent = "Logowanie...";
 
           // Set session via our API endpoint
-          const response = await fetch('/api/auth/session', {
-            method: 'POST',
+          const response = await fetch("/api/auth/session", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               access_token: accessToken,
-              refresh_token: refreshToken || '',
+              refresh_token: refreshToken || "",
             }),
           });
 
           if (!response.ok) {
             const data = await response.json().catch(() => ({}));
-            throw new Error(data.error || 'Błąd logowania');
+            throw new Error(data.error || "Błąd logowania");
           }
 
           // Success - redirect to app
-          statusEl.textContent = 'Konto potwierdzone! Przekierowanie...';
+          statusEl.textContent = "Konto potwierdzone! Przekierowanie...";
 
           // Small delay to show success message
           setTimeout(() => {
-            window.location.href = '/app';
+            window.location.href = "/app";
           }, 500);
-
         } catch (error) {
-          console.error('Callback error:', error);
-          errorEl.textContent = error.message || 'Wystąpił błąd. Spróbuj ponownie.';
-          errorEl.style.display = 'block';
-          statusEl.textContent = 'Błąd potwierdzenia';
+          // eslint-disable-next-line no-console
+          console.error("Callback error:", error);
+          errorEl.textContent = error.message || "Wystąpił błąd. Spróbuj ponownie.";
+          errorEl.style.display = "block";
+          statusEl.textContent = "Błąd potwierdzenia";
 
           // Redirect to auth after showing error
           setTimeout(() => {
-            window.location.href = '/auth';
+            window.location.href = "/auth";
           }, 3000);
         }
       }

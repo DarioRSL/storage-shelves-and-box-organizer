@@ -169,9 +169,13 @@ export function useAuthForm(options?: UseAuthFormOptions) {
             errorMsg = "Email jest już zarejestrowany";
           } else if (authError.message.includes("weak")) {
             errorMsg = "Hasło jest zbyt słabe";
-          } else if (authError.message.includes("not authorized") || authError.message.includes("Signups not allowed")) {
+          } else if (
+            authError.message.includes("not authorized") ||
+            authError.message.includes("Signups not allowed")
+          ) {
             errorMsg = "Rejestracja jest obecnie wyłączona";
           }
+          // eslint-disable-next-line no-console
           console.error("Registration error:", authError.message, authError);
           setError(errorMsg);
           options?.onError?.(errorMsg);

@@ -123,7 +123,7 @@ export default tseslint.config(
     },
   },
   {
-    // Specifically ignore ThemeInitializer.astro due to define:vars syntax incompatibility
-    ignores: ["**/theme/ThemeInitializer.astro"],
+    // Specifically ignore Astro files with inline scripts due to syntax incompatibility
+    ignores: ["**/theme/ThemeInitializer.astro", "**/auth/callback.astro"],
   }
 );
