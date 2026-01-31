@@ -1,11 +1,18 @@
 ---
-import Welcome from "../components/Welcome.astro";
 import Layout from "../layouts/Layout.astro";
 
-// Public pages use light theme by default
-const themePreference = "light";
+// Check if user is logged in
+const user = Astro.locals.user;
+
+// Redirect to auth page if not logged in
+if (!user) {
+  return Astro.redirect("/auth");
+}
+
+// Redirect to app if logged in
+return Astro.redirect("/app");
 ---
 
-<Layout themePreference={themePreference}>
-  <Welcome />
+<Layout themePreference="light">
+  <div>Redirecting...</div>
 </Layout>

@@ -213,6 +213,7 @@ Storage & Box Organizer solves the common problem of not knowing what's inside s
 For additional documentation, see:
 
 - [CLAUDE.md](CLAUDE.md) - Development guidelines and project overview
+- [.ai_docs/deployment.md](.ai_docs/deployment.md) - Deployment & environment documentation
 - [.ai_docs/prd.md](.ai_docs/prd.md) - Product requirements document
 - [.ai_docs/tech-stack.md](.ai_docs/tech-stack.md) - Detailed technology stack
 - [.ai_docs/api-plan.md](.ai_docs/api-plan.md) - API specification
