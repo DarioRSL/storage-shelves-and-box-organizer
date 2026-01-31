@@ -50,6 +50,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: quality
+    environment: test
     env:
       SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
