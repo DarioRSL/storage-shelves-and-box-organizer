@@ -8,14 +8,22 @@
  * - Testing library utilities
  */
 
-import { expect, vi, beforeAll, afterEach } from "vitest";
+import { vi, beforeAll, afterEach } from "vitest";
 import "@testing-library/jest-dom";
 
-// Mock environment variables
+// Mock environment variables only for unit tests
+// Integration tests need real Supabase credentials from .env.test
 beforeAll(() => {
-  process.env.PUBLIC_SUPABASE_URL = "https://test.supabase.co";
-  process.env.PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+  // Check if we're running integration tests by looking at the test file path
+  // Vitest sets __vitest_worker__ with the current test file info
+  const isIntegrationTest = process.env.npm_lifecycle_event?.includes("integration");
+
+  // Only set mock env vars for unit tests
+  if (!isIntegrationTest && !process.env.SUPABASE_URL?.includes("supabase.co")) {
+    process.env.PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
+  }
 });
 
 // Clean up mocks after each test
