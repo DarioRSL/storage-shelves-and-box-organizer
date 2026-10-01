@@ -1,6 +1,12 @@
 # Storage & Box Organizer - Product Roadmap
 
-**Last Updated:** 2026-01-17
+> ## ⚠️ DOKUMENT ZASTĄPIONY (2026-06-12)
+>
+> Aktualny plan: **`refactoring-launch-plan.md`** (+ szczegóły: `m1-stabilizacja.md`, `m3-refaktoryzacja-gdpr.md`) i issue-tracker **#191** na GitHubie. Milestony z tego dokumentu (Security Hardening, v1.0.0) zastąpione przez M1–M4 (#14–#17); otwarte zadania wcielone do nowych milestonów (#94→M3, #95→M2, #97/#98/#99→M4).
+>
+> **Korekta błędnego statusu:** sekcja „Task 1: RLS Policies ✅ COMPLETE" twierdzi, że „integration tests verify cross-workspace isolation (324+ tests)" — to NIEPRAWDA wg weryfikacji kodu z 2026-06-12: testy izolacji RLS w `tests/integration/database/rls-policies.test.ts` są **pominięte** (13× `it.skip` + 2× `describe.skip`). Weryfikacja izolacji = issues #169–#171 (M1, P0).
+
+**Last Updated:** 2026-01-17 (treść historyczna)
 **Current Phase:** Testing & Quality Assurance
 **Next Release:** v1.0.0 (Production Launch)
 
